@@ -1,0 +1,47 @@
+# Configuración del pipeline de ingesta — Benchmarking Salarial
+# Todas las decisiones de diseño viven aquí, no en el código.
+
+esquema:
+  # Columnas obligatorias de la plantilla estándar (nivel archivo: si falta alguna, se rechaza)
+  columnas_requeridas:
+    - "Tipo de identificación"
+    - "Identificación"
+    - "Tipo de empleado (incluir Jubilados y Jubilados en curso de pago)"
+    - "Apellidos"
+    - "Nombres"
+    - "Cargo"
+    - "Centro de costos"
+    - "Sexo"
+    - "Último sueldo/pensión mensual"
+    - "Comisiones mensuales promedio"
+    - "Horas extras mensuales promedio"
+    - "Otros mensuales promedio"
+    - "Fecha de nacimiento"
+    - "Fecha de primer ingreso"
+  min_filas: 10
+
+anonimizacion:
+  columnas_a_eliminar: ["Apellidos", "Nombres"]
+  columna_identificacion: "Identificación"
+  # El salt NUNCA va en este archivo en producción: leerlo de Secret Manager / variable de entorno.
+  salt_env_var: "PIPELINE_SALT"
+
+filtros:
+  # Decisión 9: solo empleados activos entran a clean/ (raw conserva todo).
+  # VERIFICAR códigos con la semántica oficial de la plantilla antes de la primera corrida multi-empresa.
+  tipos_empleado_activos: ["A"]
+
+validacion_filas:  # nivel fila: cuarentena con motivo, nunca eliminación silenciosa
+  remuneracion_total_minima: 0.01
+  edad_minima: 18
+  edad_maxima: 80
+  anio_nacimiento_minimo: 1940
+
+temporal:
+  # Decisión 10 (opción B): ventana de aceptación alrededor del corte de referencia.
+  ventana_meses: 6
+
+salidas:
+  zona_clean: "clean"
+  zona_cuarentena: "cuarentena"
+  formato: "parquet"

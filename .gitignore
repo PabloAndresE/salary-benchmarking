@@ -1,0 +1,27 @@
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# Datos reales — NUNCA al repo (regla de privacidad LOPDP del handoff)
+*.xlsx
+*.csv
+*.parquet
+data/
+clean/
+cuarentena/
+
+# Secretos / credenciales
+.env
+*.json
+!**/esquema_plantilla.yaml
+
+# SO
+Thumbs.db
+.DS_Store
