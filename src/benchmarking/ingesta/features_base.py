@@ -21,14 +21,16 @@ def agregar_features(df: pd.DataFrame, settings) -> pd.DataFrame:
         for rubro, pct in [("sueldo","pct_fijo"),("comisiones","pct_comisiones"),
                            ("extras","pct_extras"),("otros","pct_otros")]:
             out[pct] = (out[rubro].fillna(0) / out["total"]).where(tiene)
-    sbu = out["anio_valoracion"].map(lambda a: settings.get_sbu(int(a)))
+    # NaN-safe (data real de BQ): anio nulo -> 0, que get_sbu mapea a la SBU mas reciente
+    sbu = out["anio_valoracion"].map(lambda a: settings.get_sbu(0 if pd.isna(a) else int(a)))
     out["sueldo_sbu"] = out["total"] / sbu
     out["log_total"] = np.log(out["total"].where(out["total"] > 0))
     def _ant(row):
         fi = row.get("fecha_ingreso")
-        if fi is None or pd.isna(fi):
+        anio = row.get("anio_valoracion")
+        if fi is None or pd.isna(fi) or anio is None or pd.isna(anio):
             return None
-        return int(row["anio_valoracion"]) - fi.year
+        return int(anio) - fi.year
     out["antiguedad_total"] = out.apply(_ant, axis=1)
     out["tuvo_salidas"] = out.get("fecha_salida").notna() if "fecha_salida" in out else False
     return out

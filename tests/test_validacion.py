@@ -24,6 +24,12 @@ def test_motivo_cuarentena_nan_total(monkeypatch):
     base = dict(cargo_norm="CONTADOR", sueldo=500.0, total=float("nan"), edad=30)
     assert motivo_cuarentena(base, sbu=460, min_sbu=0.5, edad_min=18, edad_max=80) == "sueldo_no_positivo"
 
+def test_motivo_cuarentena_cargo_nan_placeholder():
+    # cargo nulo se normaliza a la cadena "NAN" (str(NaN).upper()) upstream;
+    # debe caer en cuarentena como placeholder, no colarse como cargo real.
+    base = dict(cargo_norm="NAN", sueldo=500.0, total=500.0, edad=30)
+    assert motivo_cuarentena(base, sbu=460, min_sbu=0.5, edad_min=18, edad_max=80) == "cargo_placeholder"
+
 def test_marcar_cuarentena_nan_anio(monkeypatch):
     monkeypatch.setenv("PIPELINE_SALT","x")
     s = cargar_settings()

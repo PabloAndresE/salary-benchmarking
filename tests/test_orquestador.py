@@ -78,3 +78,38 @@ def test_construir_base_tolera_fallo_de_plantilla(monkeypatch):
     assert df["pct_fijo"].isna().all()
     # total cae al respaldo remuneracion_promedio
     assert abs(df[df.cargo_norm=="VENDEDOR"].iloc[0].total - 700.0) < 1e-6
+
+def test_construir_base_dedup_composicion_evita_fanout(monkeypatch):
+    # Si la plantilla trae la misma cedula duplicada, el merge NO debe inflar el grano
+    # (una fila por persona-estudio).
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["GRANDE"],"ciiu_n1":["G"],
+                 "ciiu_n6":["G4711"],"n_empleados":[300]})
+        else:
+            m.to_dataframe.return_value = pd.DataFrame({
+                "identificacion":["1700000001","1700000002"],
+                "numero_proceso":["140672","140672"], "id_version":["abc","abc"],
+                "anio_valoracion":[2024,2024], "empresa_ruc":["1790011111001","1790011111001"],
+                "cargo":["VENDEDOR","OPERARIO"], "sexo":["F","M"], "edad":[30,40],
+                "sueldo":[600.0,500.0], "remuneracion_promedio":[700.0,550.0],
+                "fecha_ingreso":[dt.date(2014,1,1),dt.date(2010,1,1)]})
+        return m
+    runner.query.side_effect = fake_query
+
+    def plantilla_duplicada(raw):
+        return pd.DataFrame({
+            "identificacion": ["1700000001", "1700000001", "1700000002"],
+            "comisiones": [400.0, 400.0, 0.0],
+            "extras": [0.0, 0.0, 0.0],
+            "otros": [0.0, 0.0, 0.0],
+        })
+    monkeypatch.setattr("benchmarking.orquestador.parsear_plantilla", plantilla_duplicada)
+
+    df = construir_base(runner, "http://x", s, limite=1, descargar=lambda *a, **k: b"fake")
+    assert len(df) == 2   # sin fan-out: 2 personas en la base -> 2 filas en la salida
