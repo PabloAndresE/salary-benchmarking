@@ -60,7 +60,7 @@ Cada módulo tiene una responsabilidad y se testea por separado.
 
 ## 6. La tabla `nomina_features`
 
-**Grano:** una fila por persona-estudio (`id_hash` + `numero_proceso`). Anonimizada. Universo ~4,67 M filas; o N en modo muestra. Ubicación: dataset nuevo en **us-central1** (obligatorio para joins).
+**Grano:** una fila por persona-estudio (`id_hash` + `numero_proceso`). Anonimizada. La tesis usa el **universo completo** (~4,67 M filas); `--muestra` es solo para desarrollo. Ubicación: dataset nuevo en **us-central1** (obligatorio para joins).
 
 | Columna | Tipo | Origen | Uso previsto |
 |---|---|---|---|
@@ -89,7 +89,7 @@ Particionado por `anio_valoracion`, clusterizado por `empresa_ruc` (eficiencia d
 
 ## 7. Flujo de datos (Fase 1)
 
-1. **Adquisición:** leer estudios (persona-estudio) de BigQuery; listar los `(numero_proceso, id_version)` a procesar — el universo, o una **muestra estratificada** (por año reciente y variedad de sector/cargo, para que E2 vea el contraste comercial vs. estandarizado). La descarga de plantillas es **por estudio**, no por persona (los estudios son muchos menos que los 4,67 M registros).
+1. **Adquisición:** leer estudios (persona-estudio) de BigQuery; listar los `(numero_proceso, id_version)` a procesar. **Por defecto se procesa el universo completo** — la tesis usa toda la base. El único costo es descargar la composición: **una llamada por estudio** (no por persona; los estudios son decenas de miles, no los 4,67 M registros), estimado en ~1–3 h en modo completo, reanudable. La opción `--muestra` (estratificada por año y sector) queda solo como **utilidad de desarrollo**, para iterar rápido durante la construcción, no como base de la tesis.
 2. **Composición:** por estudio, descargar la plantilla, parsear la hoja de empleados, extraer cédula + sueldo/comisiones/extras/otros.
 3. **Validación → cuarentena:** sanity checks (cargo placeholder, jubilado, `sueldo_sbu < 0,5`, edad fuera de rango, total ≤ 0). Filas inválidas se marcan con `motivo_cuarentena`, nunca se borran.
 4. **Anonimización (frontera):** `id_hash = SHA-256(salt + cédula)[:16]`; se eliminan nombres/apellidos; se descartan las cédulas. Aguas abajo nadie ve identificadores.
@@ -146,3 +146,4 @@ Se **copian los módulos mínimos autocontenidos** (evita arrastrar Playwright):
 - Integración iess-scrapper: copiar módulos mínimos.
 - IESS scraper: descartado (no viable masivo).
 - Vectorización/clustering: fase posterior, fuera de este pipeline.
+- Tesis usa el universo completo; `--muestra` solo como utilidad de desarrollo.
