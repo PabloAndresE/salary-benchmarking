@@ -8,6 +8,12 @@ def escribir(df, client, project, dataset, tabla="nomina_features", location="us
     if fugas:
         raise ValueError(f"Frontera de privacidad violada: columnas PII presentes {fugas}")
     table_id = f"{project}.{dataset}.{tabla}"
+    if "anio_valoracion" in df.columns:
+        # Int64 nullable: si hay NaN, la columna es float64 y BQ autodetecta FLOAT,
+        # lo que rompe el RangePartitioning (exige un campo INTEGER). Los NULL
+        # ruteados a Int64 caen en la particion no-particionada.
+        df = df.copy()
+        df["anio_valoracion"] = df["anio_valoracion"].astype("Int64")
     job_config = bigquery.LoadJobConfig(
         write_disposition="WRITE_TRUNCATE",
         clustering_fields=["empresa_ruc"] if "empresa_ruc" in df.columns else None,

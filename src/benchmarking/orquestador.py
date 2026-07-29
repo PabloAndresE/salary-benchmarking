@@ -29,7 +29,9 @@ def _composicion_estudios(estudios, base_url, descargar):
         m["numero_proceso"] = e.numero_proceso
         partes.append(m)
     if partes:
-        return pd.concat(partes, ignore_index=True)
+        comp = pd.concat(partes, ignore_index=True)
+        # protege el grano: una plantilla con cedula duplicada no debe inflar el merge
+        return comp.drop_duplicates(subset=["numero_proceso", "identificacion"], keep="first")
     # Sin ninguna plantilla en el lote: columnas numéricas explícitas (no "object")
     # para que fillna/sum en agregar_features no degrade el dtype de `total`.
     return pd.DataFrame({

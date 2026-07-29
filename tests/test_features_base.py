@@ -31,6 +31,17 @@ def test_features_sin_composicion_usa_respaldo(monkeypatch):
     assert pd.isna(out.loc[0,"pct_fijo"])                     # sin composición -> NULL
     assert pd.isna(out.loc[0,"antiguedad_total"])            # sin fecha_ingreso
 
+def test_features_anio_valoracion_nan_no_falla(monkeypatch):
+    # NULL anio_valoracion ocurre en la vista real de BQ; no debe tumbar agregar_features
+    monkeypatch.setenv("PIPELINE_SALT","x")
+    s = cargar_settings()
+    df = pd.DataFrame([{"sueldo":600.0,"comisiones":300.0,"extras":20.0,"otros":0.0,
+                        "remuneracion_promedio":None,"anio_valoracion":float("nan"),
+                        "fecha_ingreso":dt.date(2014,1,1),"fecha_salida":None}])
+    out = agregar_features(df, s)                             # no debe lanzar ValueError
+    assert math.isfinite(out.loc[0,"sueldo_sbu"])              # usa la ultima SBU (anio=0)
+    assert pd.isna(out.loc[0,"antiguedad_total"])              # sin anio_valoracion -> None/NA
+
 def test_features_sin_warnings_cuando_total_cero(monkeypatch):
     # Verifica que no hay RuntimeWarning de 0/0 cuando total=0 pero hay composición
     monkeypatch.setenv("PIPELINE_SALT","x")

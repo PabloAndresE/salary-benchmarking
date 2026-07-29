@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 
-_PLACEHOLDERS = {"0","-","NA","N/A",".","--","S/N","SN","X",""}
+_PLACEHOLDERS = {"0","-","NA","N/A",".","--","S/N","SN","X","","NAN","NONE"}
 
 def motivo_cuarentena(fila, sbu, min_sbu, edad_min, edad_max):
     cargo = str(fila.get("cargo_norm") or "")
