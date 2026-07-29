@@ -970,6 +970,37 @@ def test_construir_base_end_to_end(monkeypatch, plantilla_xlsx_bytes):
     assert fila_ger.tiene_composicion == False
     assert pd.isna(fila_ger.pct_fijo)
     assert abs(fila_ger.total - 1100.0) < 1e-6
+
+def test_construir_base_tolera_fallo_de_plantilla(monkeypatch):
+    # Un estudio cuya plantilla falla al descargar/parsear se omite; el lote NO cae
+    # y las personas se conservan con composición NULL.
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["GRANDE"],"ciiu_n1":["G"],
+                 "ciiu_n6":["G4711"],"n_empleados":[300]})
+        else:
+            m.to_dataframe.return_value = pd.DataFrame({
+                "identificacion":["1700000001","1700000002"],
+                "numero_proceso":["140672","140672"], "id_version":["abc","abc"],
+                "anio_valoracion":[2024,2024], "empresa_ruc":["1790011111001","1790011111001"],
+                "cargo":["VENDEDOR","OPERARIO"], "sexo":["F","M"], "edad":[30,40],
+                "sueldo":[600.0,500.0], "remuneracion_promedio":[700.0,550.0],
+                "fecha_ingreso":[dt.date(2014,1,1),dt.date(2010,1,1)]})
+        return m
+    runner.query.side_effect = fake_query
+    def descargar_falla(*a, **k):
+        raise ValueError("XLSX corrupto")
+    df = construir_base(runner, "http://x", s, limite=1, descargar=descargar_falla)
+    assert len(df) == 2                                  # nadie se pierde
+    assert (~df["tiene_composicion"]).all()             # sin composición
+    assert df["pct_fijo"].isna().all()
+    # total cae al respaldo remuneracion_promedio
+    assert abs(df[df.cargo_norm=="VENDEDOR"].iloc[0].total - 700.0) < 1e-6
 ```
 
 - [ ] **Step 2: Ejecutar (debe fallar)**
@@ -991,13 +1022,23 @@ from .ingesta.features_base import agregar_features
 from .ingesta.enriquecimiento import unir_scvs
 
 def _composicion_estudios(estudios, base_url, descargar):
-    """Descarga la plantilla de cada estudio y devuelve solo los montos por (numero_proceso, cedula)."""
+    """Descarga la plantilla de cada estudio y devuelve solo los montos por (numero_proceso, cedula).
+
+    Resiliencia de lote: un estudio cuya plantilla no descarga o no parsea
+    (5xx agotados, XLSX corrupto, columna canónica ausente -> KeyError, etc.)
+    se OMITE con un aviso; nunca tumba el lote (~48k estudios). Las personas
+    de ese estudio se conservan en la base con composición NULL.
+    """
     partes = []
     for e in estudios.itertuples():
-        raw = descargar(e.numero_proceso, e.id_version, base_url)
-        if not raw:
-            continue                                   # 5xx agotados o sin plantilla: se omite el estudio
-        m = parsear_plantilla(raw)[["identificacion", "comisiones", "extras", "otros"]].copy()
+        try:
+            raw = descargar(e.numero_proceso, e.id_version, base_url)
+            if not raw:
+                continue                               # 5xx agotados o sin plantilla
+            m = parsear_plantilla(raw)[["identificacion", "comisiones", "extras", "otros"]].copy()
+        except Exception as exc:                        # noqa: BLE001 — omitir estudio, no el lote
+            print(f"[composicion] estudio {e.numero_proceso} omitido: {type(exc).__name__}: {exc}")
+            continue
         m["identificacion"] = m["identificacion"].astype(str)
         m["numero_proceso"] = e.numero_proceso
         partes.append(m)
