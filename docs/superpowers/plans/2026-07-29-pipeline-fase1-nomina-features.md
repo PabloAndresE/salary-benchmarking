@@ -794,8 +794,11 @@ SQL_SCVS = f"""
 WITH b AS (SELECT ruc, segmento, ciiu_n1, ciiu_n6, n_empleados,
              ROW_NUMBER() OVER(PARTITION BY ruc ORDER BY anio DESC) rn
            FROM {_BAL} WHERE segmento IS NOT NULL)
-SELECT ruc, segmento, ciiu_n1, ciiu_n6, n_empleados FROM b WHERE rn = 1
+SELECT CAST(ruc AS STRING) ruc, segmento, ciiu_n1, ciiu_n6, n_empleados
+FROM b WHERE rn = 1
 """
+# ruc se castea a STRING para que el join con empresa_ruc (tambien STRING en
+# SQL_PERSONAS) no falle en RUCs con provincia 01-09 por desajuste de dtype.
 
 def listar_estudios(runner, limite=None):
     sql = SQL_ESTUDIOS + (f"\nLIMIT {int(limite)}" if limite else "")
