@@ -19,3 +19,17 @@ def test_marcar_cuarentena(monkeypatch):
     out = marcar_cuarentena(df, s)
     assert out.loc[0,"en_clean"] and not out.loc[1,"en_clean"]
     assert out.loc[1,"motivo_cuarentena"] == "cargo_placeholder"
+
+def test_motivo_cuarentena_nan_total(monkeypatch):
+    base = dict(cargo_norm="CONTADOR", sueldo=500.0, total=float("nan"), edad=30)
+    assert motivo_cuarentena(base, sbu=460, min_sbu=0.5, edad_min=18, edad_max=80) == "sueldo_no_positivo"
+
+def test_marcar_cuarentena_nan_anio(monkeypatch):
+    monkeypatch.setenv("PIPELINE_SALT","x")
+    s = cargar_settings()
+    df = pd.DataFrame([{"cargo_norm":"CONTADOR","sueldo":500.0,"total":500.0,"edad":30,"anio_valoracion":float("nan")},
+                       {"cargo_norm":"CONTADOR","sueldo":500.0,"total":500.0,"edad":30,"anio_valoracion":2024}])
+    out = marcar_cuarentena(df, s)
+    assert "en_clean" in out.columns and "motivo_cuarentena" in out.columns
+    assert out.loc[0,"en_clean"]
+    assert out.loc[1,"en_clean"]
