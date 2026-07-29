@@ -85,15 +85,17 @@ Cada módulo tiene una responsabilidad y se testea por separado.
 | `flag_discrepancia_fijo` | BOOL | reconciliación | calidad |
 | `profesion_dinardap` | STRING | DINARDAP | **añadida en Fase 2** (no en la escritura inicial) |
 
-Particionado por `anio_valoracion`, clusterizado por `empresa_ruc` (eficiencia de joins/consultas).
+Las columnas de composición (`comisiones/extras/otros/total/pct_*`) quedan **`NULL` en los estudios sin plantilla disponible** (típicamente años viejos); `sueldo_sbu` usa `total` con respaldo a `remuneracion_promedio`. No se descartan filas por esto: la base es cruda y el clustering decide después qué filas/features usa.
+
+Particionado por `anio_valoracion` (range partitioning, INT), clusterizado por `empresa_ruc`.
 
 ## 7. Flujo de datos (Fase 1)
 
 1. **Adquisición:** leer estudios (persona-estudio) de BigQuery; listar los `(numero_proceso, id_version)` a procesar. **Por defecto se procesa el universo completo** — la tesis usa toda la base. El único costo es descargar la composición: **una llamada por estudio** — son **~48.000 estudios** (~5.900/año desde 2019), no los 4,67 M registros —, estimado en **~1–2 h con 10–20 descargas concurrentes** + reintentos, reanudable. (Los años 2016–2018 rinden poco, ~99% sin cargo.) La opción `--muestra` (estratificada por año y sector) queda solo como **utilidad de desarrollo**, para iterar rápido durante la construcción, no como base de la tesis.
-2. **Composición:** por estudio, descargar la plantilla, parsear la hoja de empleados, extraer cédula + sueldo/comisiones/extras/otros.
+2. **Base por-persona + composición:** leer de estudios BQ los registros persona-estudio (la base: cargo, sexo, edad, `sueldo`, `remuneracion_promedio`, fechas, RUC). Descargar la plantilla de cada estudio, parsear, y **enlazar la composición** (`comisiones/extras/otros` + fijo) a la base por `numero_proceso` + cédula; `NULL` donde no haya plantilla. **No se descartan filas** por falta de composición.
 3. **Validación → cuarentena:** sanity checks (cargo placeholder, jubilado, `sueldo_sbu < 0,5`, edad fuera de rango, total ≤ 0). Filas inválidas se marcan con `motivo_cuarentena`, nunca se borran.
-4. **Anonimización (frontera):** `id_hash = SHA-256(salt + cédula)[:16]`; se eliminan nombres/apellidos; se descartan las cédulas. Aguas abajo nadie ve identificadores.
-5. **Features:** composición (`pct_*`), `sueldo_sbu`, `log_total`, `antiguedad_*`, `tuvo_salidas`.
+4. **Anonimización (frontera):** tras el enlace, `id_hash = SHA-256(salt + cédula)[:16]`; se eliminan nombres/apellidos; se descartan las cédulas. Aguas abajo nadie ve identificadores.
+5. **Features:** `total` (= `sueldo`+`comisiones`+`extras`+`otros` donde haya composición; si no, respaldo a `remuneracion_promedio`/`sueldo`), `pct_*` (`NULL` sin composición), `sueldo_sbu` (`total`/SBU), `log_total`, `antiguedad_*`, `tuvo_salidas`.
 6. **Enriquecimiento SCVS:** join por RUC → tamaño/sector/provincia.
 7. **Escritura:** `nomina_features` a BigQuery — **la única escritura de la base**.
 
