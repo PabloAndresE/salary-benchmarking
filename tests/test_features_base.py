@@ -1,4 +1,4 @@
-import math, datetime as dt
+import math, datetime as dt, warnings
 import pandas as pd
 from benchmarking.config.settings import cargar_settings
 from benchmarking.ingesta.features_base import agregar_features
@@ -30,3 +30,16 @@ def test_features_sin_composicion_usa_respaldo(monkeypatch):
     assert out.loc[0,"tiene_composicion"] == False
     assert pd.isna(out.loc[0,"pct_fijo"])                     # sin composición -> NULL
     assert pd.isna(out.loc[0,"antiguedad_total"])            # sin fecha_ingreso
+
+def test_features_sin_warnings_cuando_total_cero(monkeypatch):
+    # Verifica que no hay RuntimeWarning de 0/0 cuando total=0 pero hay composición
+    monkeypatch.setenv("PIPELINE_SALT","x")
+    s = cargar_settings()
+    df = pd.DataFrame([{"sueldo":0.0,"comisiones":0.0,"extras":float("nan"),
+                        "otros":float("nan"),"remuneracion_promedio":float("nan"),
+                        "anio_valoracion":2024,"fecha_ingreso":None,"fecha_salida":None}])
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")   # any warning becomes an error
+        out = agregar_features(df, s)
+    assert out.loc[0,"total"] == 0.0
+    assert pd.isna(out.loc[0,"pct_fijo"])                     # 0/0 = NaN, pero sin warning

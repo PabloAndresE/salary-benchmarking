@@ -17,9 +17,10 @@ def agregar_features(df: pd.DataFrame, settings) -> pd.DataFrame:
     respaldo = respaldo.fillna(out["sueldo"])
     out["total"] = total_comp.where(tiene, respaldo)
     # pct_*: solo donde hay composición (NaN en el resto)
-    for rubro, pct in [("sueldo","pct_fijo"),("comisiones","pct_comisiones"),
-                       ("extras","pct_extras"),("otros","pct_otros")]:
-        out[pct] = (out[rubro].fillna(0) / out["total"]).where(tiene)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        for rubro, pct in [("sueldo","pct_fijo"),("comisiones","pct_comisiones"),
+                           ("extras","pct_extras"),("otros","pct_otros")]:
+            out[pct] = (out[rubro].fillna(0) / out["total"]).where(tiene)
     sbu = out["anio_valoracion"].map(lambda a: settings.get_sbu(int(a)))
     out["sueldo_sbu"] = out["total"] / sbu
     out["log_total"] = np.log(out["total"].where(out["total"] > 0))
