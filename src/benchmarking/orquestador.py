@@ -47,11 +47,12 @@ def construir_base(runner, base_url, settings, limite=None, descargar=descargar_
     if base.empty:
         return base
     base["identificacion"] = base["identificacion"].astype(str)
+    # tamaño de la nómina del estudio: contexto para juzgar la fiabilidad de la etiqueta de cargo
+    base["n_personas_estudio"] = base.groupby("numero_proceso")["identificacion"].transform("size")
     estudios = base[["numero_proceso", "id_version"]].drop_duplicates()
     comp = _composicion_estudios(estudios, base_url, descargar)
     # enlace por cédula (cruda) ANTES de anonimizar; left join: NaN donde no hubo plantilla
     df = base.merge(comp, how="left", on=["numero_proceso", "identificacion"])
-    df["cargo_orig"] = df["cargo"]
     df["cargo_norm"] = df["cargo"].map(_norm)
     df = anonimizar(df, settings.salt)                 # FRONTERA: elimina cédula (+ nombres si hubiera)
     df = agregar_features(df, settings)                # total/pct NULL-safe, sueldo_sbu, antiguedad...

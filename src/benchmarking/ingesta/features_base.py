@@ -32,5 +32,4 @@ def agregar_features(df: pd.DataFrame, settings) -> pd.DataFrame:
             return None
         return int(anio) - fi.year
     out["antiguedad_total"] = out.apply(_ant, axis=1)
-    out["tuvo_salidas"] = out.get("fecha_salida").notna() if "fecha_salida" in out else False
     return out

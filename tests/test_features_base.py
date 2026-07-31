@@ -17,7 +17,6 @@ def test_features_con_composicion(monkeypatch):
     assert abs(out.loc[0,"pct_fijo"] - 600/920) < 1e-6
     assert abs(out.loc[0,"pct_comisiones"] - 300/920) < 1e-6
     assert out.loc[0,"antiguedad_total"] == 10
-    assert out.loc[0,"tuvo_salidas"] == False
 
 def test_features_sin_composicion_usa_respaldo(monkeypatch):
     monkeypatch.setenv("PIPELINE_SALT","x")
