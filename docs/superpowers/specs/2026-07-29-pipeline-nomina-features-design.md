@@ -37,7 +37,7 @@ src/benchmarking/
     validacion.py            # sanity checks a nivel fila → cuarentena (nunca borrado silencioso)
     anonimizacion.py         # hash SHA-256(salt+cédula)[:16], drop nombres — LA FRONTERA
     composicion.py           # parsea plantilla → sueldo/comisiones/extras/otros + pct_*
-    features_base.py         # sueldo_sbu, log_total, antiguedad_*, tuvo_salidas
+    features_base.py         # sueldo_sbu, log_total, antiguedad_total
     enriquecimiento.py       # join SCVS (segmento/ciiu/n_empleados/provincia)
   escritura/
     bigquery_sink.py         # escribe nomina_features (una sola escritura)
@@ -72,10 +72,10 @@ Cada módulo tiene una responsabilidad y se testea por separado.
 | `pct_fijo`, `pct_comisiones`, `pct_extras`, `pct_otros` | FLOAT64 | derivado | composición (feature clave, E2) |
 | `sueldo_sbu` | FLOAT64 | derivado (`total`/SBU(año)) | nivel normalizado |
 | `log_total` | FLOAT64 | derivado | nivel (uso con cautela; circularidad) |
-| `cargo_orig`, `cargo_norm` | STRING | estudios | cargo (texto / LLM) |
-| `centro_costo` | STRING | estudios | función (señal auxiliar) |
-| `antiguedad_total`, `antiguedad_actual` | FLOAT64 | fechas | trayectoria / control |
-| `tuvo_salidas` | BOOL | fechas | trayectoria |
+| `cargo`, `cargo_norm` | STRING | estudios | cargo (texto crudo / normalizado) |
+| `centro_de_costo` | STRING | estudios | función / departamento (señal auxiliar) |
+| `antiguedad_total` | FLOAT64 | fechas | trayectoria / control |
+| `n_personas_estudio` | INT64 | derivado | tamaño de nómina del estudio (fiabilidad de la etiqueta de cargo) |
 | `sexo` | STRING | estudios | control / fairness (no-modelo) |
 | `edad` | FLOAT64 | estudios | control / fairness (no-modelo) |
 | `segmento`, `ciiu_n1`, `ciiu_n6`, `provincia` | STRING | SCVS/RUC | segmentación |
@@ -95,7 +95,7 @@ Particionado por `anio_valoracion` (range partitioning, INT), clusterizado por `
 2. **Base por-persona + composición:** leer de estudios BQ los registros persona-estudio (la base: cargo, sexo, edad, `sueldo`, `remuneracion_promedio`, fechas, RUC). Descargar la plantilla de cada estudio, parsear, y **enlazar la composición** (`comisiones/extras/otros` + fijo) a la base por `numero_proceso` + cédula; `NULL` donde no haya plantilla. **No se descartan filas** por falta de composición.
 3. **Validación → cuarentena:** sanity checks (cargo placeholder, jubilado, `sueldo_sbu < 0,5`, edad fuera de rango, total ≤ 0). Filas inválidas se marcan con `motivo_cuarentena`, nunca se borran.
 4. **Anonimización (frontera):** tras el enlace, `id_hash = SHA-256(salt + cédula)[:16]`; se eliminan nombres/apellidos; se descartan las cédulas. Aguas abajo nadie ve identificadores.
-5. **Features:** `total` (= `sueldo`+`comisiones`+`extras`+`otros` donde haya composición; si no, respaldo a `remuneracion_promedio`/`sueldo`), `pct_*` (`NULL` sin composición), `sueldo_sbu` (`total`/SBU), `log_total`, `antiguedad_*`, `tuvo_salidas`.
+5. **Features:** `total` (= `sueldo`+`comisiones`+`extras`+`otros` donde haya composición; si no, respaldo a `remuneracion_promedio`/`sueldo`), `pct_*` (`NULL` sin composición), `sueldo_sbu` (`total`/SBU), `log_total`, `antiguedad_total`, `n_personas_estudio`.
 6. **Enriquecimiento SCVS:** join por RUC → tamaño/sector/provincia.
 7. **Escritura:** `nomina_features` a BigQuery — **la única escritura de la base**.
 
