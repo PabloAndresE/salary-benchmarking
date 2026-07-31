@@ -21,6 +21,7 @@ def test_leer_personas_limita_por_estudio():
     sql = runner.query.call_args[0][0]
     assert "DENSE_RANK() OVER (ORDER BY numero_proceso) <= 3" in sql
     assert "identificacion_persona" in sql
+    assert "centro_de_costo" in sql
     assert set(["identificacion","cargo","sueldo","remuneracion_promedio"]).issubset(df.columns)
 
 def test_leer_scvs_deduplica_por_ruc_y_casting():

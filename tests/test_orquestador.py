@@ -22,6 +22,7 @@ def test_construir_base_end_to_end(monkeypatch, plantilla_xlsx_bytes):
                 "anio_valoracion":[2024,2024,2024],
                 "empresa_ruc":["1790011111001","1790011111001","1790011111001"],
                 "cargo":["VENDEDOR","OPERARIO","GERENTE"],
+                "centro_de_costo":["Ventas","Planta","Gerencia"],
                 "sexo":["F","M","M"],
                 "edad":[30,40,50],
                 "sueldo":[600.0,500.0,900.0],
@@ -36,6 +37,11 @@ def test_construir_base_end_to_end(monkeypatch, plantilla_xlsx_bytes):
     assert {"pct_fijo","tiene_composicion","sueldo_sbu","segmento","provincia","en_clean"}.issubset(df.columns)
     # no se pierde ninguna persona (3 en la base, aunque 1 no tenga plantilla)
     assert len(df) == 3
+    # contexto de estudio y centro de costo presentes
+    assert (df["n_personas_estudio"] == 3).all()
+    assert df[df.cargo_norm == "VENDEDOR"].iloc[0].centro_de_costo == "Ventas"
+    # columnas retiradas
+    assert "cargo_orig" not in df.columns and "tuvo_salidas" not in df.columns
     # persona con composición: total = sueldo(600) + comisiones(400) = 1000
     fila_vend = df[df.cargo_norm == "VENDEDOR"].iloc[0]
     assert fila_vend.tiene_composicion == True

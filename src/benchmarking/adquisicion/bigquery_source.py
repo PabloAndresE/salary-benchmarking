@@ -18,6 +18,7 @@ SELECT
   numero_proceso, id_version, anio_valoracion,
   CAST(empresa_identificacion AS STRING) empresa_ruc,
   cargo,
+  centro_de_costo,
   UPPER(sexo_persona) sexo,
   SAFE_CAST(edad AS INT64) edad,
   sueldo,
