@@ -1,0 +1,10 @@
+# Cada clave es el nombre canónico; el valor es la lista de substrings (mayúsculas, sin tildes)
+# que deben aparecer TODOS en el encabezado real para mapearlo.
+identificacion: ["IDENTIFICACION"]   # se prioriza el header que EMPIEZA con esto (no "TIPO DE")
+cargo:          ["CARGO"]            # match exacto == "CARGO"
+centro_costo:   ["CENTRO", "COSTO"]
+sexo:           ["SEXO"]
+sueldo:         ["SUELDO"]
+comisiones:     ["COMISIONES"]
+extras:         ["HORAS", "EXTRAS"]
+otros:          ["OTROS", "MENSUALES"]

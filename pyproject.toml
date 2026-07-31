@@ -1,0 +1,19 @@
+[project]
+name = "benchmarking"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "pandas>=2.0", "google-cloud-bigquery[pandas]>=3.0", "openpyxl>=3.1",
+  "requests>=2.31", "pydantic-settings>=2.0", "pyyaml>=6.0", "db-dtypes>=1.0",
+]
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+[project.scripts]
+benchmarking = "benchmarking.cli:main"
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.pytest.ini_options]
+pythonpath = ["src"]
