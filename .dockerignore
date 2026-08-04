@@ -1,0 +1,19 @@
+# Mantener la imagen chica y sin data/secretos.
+.venv/
+.git/
+.github/
+docs/
+research/
+tests/
+.superpowers/
+notebooks/
+*.xlsx
+*.csv
+*.parquet
+*.json
+!src/benchmarking/config/*.yaml
+data/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
