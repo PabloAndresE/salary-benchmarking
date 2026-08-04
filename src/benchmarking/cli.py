@@ -9,11 +9,12 @@ def main():
     sub = ap.add_subparsers(dest="cmd", required=True)
     cb = sub.add_parser("construir-base")
     cb.add_argument("--muestra", type=int, default=None, help="limitar a N estudios (desarrollo)")
+    cb.add_argument("--concurrencia", type=int, default=None, help="descargas de plantilla en paralelo (default: settings.descargas_concurrentes)")
     cb.add_argument("--dry-run", action="store_true", help="no escribir a BigQuery")
     args = ap.parse_args()
     s = cargar_settings()
     client = bigquery.Client()
-    df = construir_base(client, s.actuafast_base_url, s, limite=args.muestra)
+    df = construir_base(client, s.actuafast_base_url, s, limite=args.muestra, max_workers=args.concurrencia)
     print(f"nomina_features: {len(df)} filas")
     if not args.dry_run and len(df):
         tid = escribir(df, client, s.bq_project, s.bq_dataset)
