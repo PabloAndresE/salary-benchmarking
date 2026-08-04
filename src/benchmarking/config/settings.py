@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     bq_dataset: str = "benchmarking_tesis"
     actuafast_base_url: str = "https://actuafast-api-611856784485.us-east1.run.app"
     sbu: dict[int, int] = _SBU
+    descargas_concurrentes: int = 8              # PIPELINE_DESCARGAS_CONCURRENTES
 
     def get_sbu(self, anio: int) -> int:
         return self.sbu.get(anio, max(self.sbu.values()))
