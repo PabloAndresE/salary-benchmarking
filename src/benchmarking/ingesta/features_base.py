@@ -14,8 +14,10 @@ def agregar_features(df: pd.DataFrame, settings) -> pd.DataFrame:
     # total: con composición = sueldo + rubros; sin ella = respaldo remuneracion_promedio -> sueldo
     total_comp = out["sueldo"].fillna(0) + out[list(_RUBROS)].fillna(0).sum(axis=1)
     respaldo = out["remuneracion_promedio"] if "remuneracion_promedio" in out else pd.Series(np.nan, index=out.index)
-    respaldo = respaldo.fillna(out["sueldo"])
-    out["total"] = total_comp.where(tiene, respaldo)
+    # to_numeric: una columna BQ enteramente NULL llega como dtype "object" (todo None);
+    # sin esto, el fillna/where de abajo deja "total" en object y rompe np.log aguas abajo.
+    respaldo = pd.to_numeric(respaldo, errors="coerce").fillna(out["sueldo"])
+    out["total"] = total_comp.where(tiene, respaldo).astype(float)
     # pct_*: solo donde hay composición (NaN en el resto)
     with np.errstate(invalid="ignore", divide="ignore"):
         for rubro, pct in [("sueldo","pct_fijo"),("comisiones","pct_comisiones"),
