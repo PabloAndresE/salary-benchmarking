@@ -4,6 +4,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from benchmarking.config.settings import cargar_settings
 from benchmarking.orquestador import construir_base
+from benchmarking.orquestador import construir_universo
 
 def test_construir_base_end_to_end(monkeypatch, plantilla_xlsx_bytes):
     monkeypatch.setenv("PIPELINE_SALT","sal")
@@ -168,3 +169,49 @@ def test_construir_base_concurrente_resiliente(monkeypatch, plantilla_xlsx_bytes
     # P2 sin composición; P1/P3 con composición
     assert (~df[df.numero_proceso=="P2"]["tiene_composicion"]).all()
     assert df[df.numero_proceso=="P1"]["tiene_composicion"].all()
+
+def _fake_universo_runner():
+    personas_all = pd.DataFrame([
+        {"identificacion":ced,"numero_proceso":proc,"id_version":"v","anio_valoracion":2024,
+         "empresa_ruc":"1790011111001","cargo":"VENDEDOR","centro_de_costo":"Ventas","sexo":"F",
+         "edad":30,"sueldo":600.0,"remuneracion_promedio":700.0,"fecha_ingreso":dt.date(2014,1,1)}
+        for proc in ("P1","P2","P3") for ced in ("1700000001","1700000002")])
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock(); s = sql.lower()
+        if "scvs" in s or "balances" in s:
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["GRANDE"],"ciiu_n1":["G"],
+                 "ciiu_n6":["G4711"],"n_empleados":[300]})
+        elif "numero_proceso in (" in s:
+            procs = [p for p in ("P1","P2","P3") if f"'{p}'" in sql]
+            m.to_dataframe.return_value = personas_all[personas_all.numero_proceso.isin(procs)].reset_index(drop=True)
+        else:  # listar_estudios
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"numero_proceso":["P1","P2","P3"],"id_version":["v","v","v"],
+                 "anio_valoracion":[2024,2024,2024],"empresa_ruc":["1790011111001"]*3})
+        return m
+    runner.query.side_effect = fake_query
+    return runner
+
+def test_construir_universo_lotea_y_reanuda(monkeypatch, plantilla_xlsx_bytes):
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = _fake_universo_runner()
+    escritos = []
+    total = construir_universo(runner, "http://x", s, escribir_lote=escritos.append,
+                               batch_size=1, max_workers=2,
+                               descargar=lambda *a, **k: plantilla_xlsx_bytes, hechos={"P1"})
+    # P1 ya hecho -> solo P2 y P3, en 2 lotes (batch_size=1)
+    assert len(escritos) == 2
+    procesados = pd.concat(escritos)["numero_proceso"].unique().tolist()
+    assert set(procesados) == {"P2","P3"}
+    assert total == sum(len(d) for d in escritos)
+    # frontera: sin PII, con id_hash y composición armada
+    for d in escritos:
+        assert "identificacion" not in d.columns and "id_hash" in d.columns
+        assert {"pct_fijo","total","segmento","n_personas_estudio"}.issubset(d.columns)
+    # SCVS leído una sola vez
+    scvs_calls = [c for c in runner.query.call_args_list
+                  if "scvs" in c[0][0].lower() or "balances" in c[0][0].lower()]
+    assert len(scvs_calls) == 1
