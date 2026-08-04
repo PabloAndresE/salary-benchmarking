@@ -42,6 +42,12 @@ gcloud run jobs deploy "$JOB" \
   --args "construir-universo,--batch-size=500,--concurrencia=8" \
   --task-timeout=24h --max-retries=3 --memory=2Gi --cpu=2
 
-echo "== 5. Ejecutar =="
-gcloud run jobs execute "$JOB" --region "$REGION" --project "$PROJECT"
-echo "Lanzado. Monitorear: gcloud run jobs executions list --job $JOB --region $REGION --project $PROJECT"
+if [ "${EXECUTE:-0}" = "1" ]; then
+  echo "== 5. Ejecutar =="
+  gcloud run jobs execute "$JOB" --region "$REGION" --project "$PROJECT"
+  echo "Lanzado. Monitorear: gcloud run jobs executions list --job $JOB --region $REGION --project $PROJECT"
+else
+  echo "== job creado (sin ejecutar) =="
+  echo "Para ejecutar cuando el grant cross-project esté listo:"
+  echo "  gcloud run jobs execute $JOB --region $REGION --project $PROJECT"
+fi
