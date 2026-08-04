@@ -1,0 +1,18 @@
+# Imagen para los jobs offline del pipeline (Cloud Run jobs).
+# Entrypoint = CLI `benchmarking`; los args (construir-universo ...) los pone el job.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Deps del sistema mínimas (ninguna extra necesaria: openpyxl/pandas traen wheels).
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Instalar el paquete (src-layout) con sus dependencias declaradas en pyproject.
+COPY pyproject.toml ./
+COPY src ./src
+RUN pip install .
+
+# El salt llega por variable de entorno PIPELINE_SALT (inyectada por --set-secrets).
+# El proyecto/dataset destino usan los defaults de settings (act-cicd-stage-prueba / benchmarking_tesis).
+ENTRYPOINT ["benchmarking"]
