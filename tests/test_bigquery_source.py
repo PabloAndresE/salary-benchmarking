@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 import pandas as pd
-from benchmarking.adquisicion.bigquery_source import listar_estudios, leer_personas, leer_scvs, SQL_ESTUDIOS, SQL_SCVS
+from benchmarking.adquisicion.bigquery_source import listar_estudios, leer_personas, leer_scvs, leer_personas_por_proceso, SQL_ESTUDIOS, SQL_SCVS
 
 def test_listar_estudios_usa_limite_y_devuelve_df():
     runner = MagicMock()
@@ -34,3 +34,22 @@ def test_leer_scvs_deduplica_por_ruc_y_casting():
     assert "ROW_NUMBER()" in sql
     assert "scvs_balances_anuales" in sql
     assert set(["ruc","segmento","ciiu_n1","ciiu_n6","n_empleados"]).issubset(df.columns)
+
+def test_leer_personas_por_proceso_filtra_IN():
+    runner = MagicMock()
+    runner.query.return_value.to_dataframe.return_value = pd.DataFrame(
+        {"identificacion":["1"],"numero_proceso":["140672"],"id_version":["v"],
+         "anio_valoracion":[2024],"empresa_ruc":["17"],"cargo":["X"],"centro_de_costo":["C"],
+         "sexo":["F"],"edad":[30],"sueldo":[500.0],"remuneracion_promedio":[None],"fecha_ingreso":[None]})
+    df = leer_personas_por_proceso(runner, ["140672","140673"])
+    sql = runner.query.call_args[0][0]
+    assert "numero_proceso IN (" in sql
+    assert "'140672'" in sql and "'140673'" in sql
+    assert "identificacion_persona" in sql
+    assert not df.empty
+
+def test_leer_personas_por_proceso_vacio_no_consulta():
+    runner = MagicMock()
+    df = leer_personas_por_proceso(runner, [])
+    assert df.empty
+    runner.query.assert_not_called()
