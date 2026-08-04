@@ -17,8 +17,8 @@ REGION="us-central1"
 REPO="benchmarking"
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT}/${REPO}/pipeline:latest"
 JOB="benchmarking-universo"
-# SA del job. Por defecto la Compute default; idealmente una dedicada con los roles de arriba.
-JOB_SA="${JOB_SA:-$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')-compute@developer.gserviceaccount.com}"
+# SA del job = Compute default de act-cicd-stage-prueba (projectNumber 383942996286).
+JOB_SA="${JOB_SA:-383942996286-compute@developer.gserviceaccount.com}"
 
 echo "== 1. Habilitar APIs =="
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com \
