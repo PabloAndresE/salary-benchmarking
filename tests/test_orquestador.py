@@ -1,6 +1,7 @@
 import datetime as dt
 from unittest.mock import MagicMock
 import pandas as pd
+from pandas.testing import assert_frame_equal
 from benchmarking.config.settings import cargar_settings
 from benchmarking.orquestador import construir_base
 
@@ -119,3 +120,51 @@ def test_construir_base_dedup_composicion_evita_fanout(monkeypatch):
 
     df = construir_base(runner, "http://x", s, limite=1, descargar=lambda *a, **k: b"fake")
     assert len(df) == 2   # sin fan-out: 2 personas en la base -> 2 filas en la salida
+
+def _fake_runner_multi():
+    # 3 estudios, cada uno con las 2 cedulas del fixture de plantilla
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["GRANDE"],"ciiu_n1":["G"],
+                 "ciiu_n6":["G4711"],"n_empleados":[300]})
+        else:
+            filas = []
+            for proc in ("P1","P2","P3"):
+                for ced in ("1700000001","1700000002"):
+                    filas.append({"identificacion":ced,"numero_proceso":proc,"id_version":"v",
+                                  "anio_valoracion":2024,"empresa_ruc":"1790011111001",
+                                  "cargo":"VENDEDOR","centro_de_costo":"Ventas","sexo":"F",
+                                  "edad":30,"sueldo":600.0,"remuneracion_promedio":None,
+                                  "fecha_ingreso":dt.date(2014,1,1)})
+            m.to_dataframe.return_value = pd.DataFrame(filas)
+        return m
+    runner.query.side_effect = fake_query
+    return runner
+
+def test_construir_base_concurrente_equivale_a_secuencial(monkeypatch, plantilla_xlsx_bytes):
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    desc = lambda *a, **k: plantilla_xlsx_bytes
+    df1 = construir_base(_fake_runner_multi(), "http://x", s, descargar=desc, max_workers=1)
+    df4 = construir_base(_fake_runner_multi(), "http://x", s, descargar=desc, max_workers=4)
+    key = ["numero_proceso","id_hash"]
+    assert_frame_equal(df1.sort_values(key).reset_index(drop=True),
+                       df4.sort_values(key).reset_index(drop=True))
+    assert len(df4) == 6   # 3 estudios x 2 personas, sin fan-out
+
+def test_construir_base_concurrente_resiliente(monkeypatch, plantilla_xlsx_bytes):
+    # un estudio falla al descargar; con concurrencia el lote no cae y se conservan sus filas
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    def desc(numero_proceso, id_version, base_url):
+        if numero_proceso == "P2":
+            raise ValueError("XLSX corrupto")
+        return plantilla_xlsx_bytes
+    df = construir_base(_fake_runner_multi(), "http://x", s, descargar=desc, max_workers=4)
+    assert len(df) == 6                                   # nadie se pierde
+    # P2 sin composición; P1/P3 con composición
+    assert (~df[df.numero_proceso=="P2"]["tiene_composicion"]).all()
+    assert df[df.numero_proceso=="P1"]["tiene_composicion"].all()
