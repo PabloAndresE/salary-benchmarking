@@ -1,3 +1,5 @@
+import pandas as pd
+
 _VIEW = "`act-actuafast.actuafastv2.estudios_actuariales`"
 _BAL = "`act-actuafast.actuafastv2.scvs_balances_anuales`"
 
@@ -49,6 +51,14 @@ def leer_personas(runner, limite=None):
     sql = SQL_PERSONAS
     if limite:
         sql += f"\nQUALIFY DENSE_RANK() OVER (ORDER BY numero_proceso) <= {int(limite)}"
+    return runner.query(sql).to_dataframe()
+
+def leer_personas_por_proceso(runner, procesos):
+    lista = [str(p) for p in procesos]
+    if not lista:
+        return pd.DataFrame()
+    en = ", ".join("'" + p.replace("'", "") + "'" for p in lista)   # procesos provienen de BQ
+    sql = SQL_PERSONAS + f"\nAND numero_proceso IN ({en})"
     return runner.query(sql).to_dataframe()
 
 def leer_scvs(runner):
