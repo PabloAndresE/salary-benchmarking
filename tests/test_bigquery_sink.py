@@ -56,6 +56,30 @@ def test_tabla_existe():
     assert tabla_existe(client, "p.d.t") is False
 
 
+def test_escribir_dtypes_canonicos_consistentes_entre_lotes():
+    import numpy as np
+    base = {"id_hash":["a"], "anio_valoracion":[2024], "empresa_ruc":["17"]}
+    dfa = pd.DataFrame({**base, "antiguedad_total":[None], "n_empleados":[np.nan],
+                        "segmento":[np.nan], "remuneracion_promedio":[None],
+                        "tiene_composicion":[None]})
+    dfb = pd.DataFrame({**base, "antiguedad_total":[5], "n_empleados":[300],
+                        "segmento":["GRANDE"], "remuneracion_promedio":[700.0],
+                        "tiene_composicion":[True]})
+    client = MagicMock()
+    escribir(dfa, client, "p", "d", write_disposition="WRITE_APPEND")
+    da = client.load_table_from_dataframe.call_args.args[0]
+    escribir(dfb, client, "p", "d", write_disposition="WRITE_APPEND")
+    db = client.load_table_from_dataframe.call_args.args[0]
+    for col in ["antiguedad_total","n_empleados","segmento","remuneracion_promedio",
+                "tiene_composicion","anio_valoracion"]:
+        assert str(da[col].dtype) == str(db[col].dtype), f"{col}: {da[col].dtype} != {db[col].dtype}"
+    # y son los dtypes canónicos esperados
+    assert str(db["antiguedad_total"].dtype) == "Int64"
+    assert str(db["n_empleados"].dtype) == "Int64"
+    assert str(db["segmento"].dtype) == "string"
+    assert str(db["remuneracion_promedio"].dtype) == "float64"
+
+
 def test_procesos_existentes():
     client = MagicMock()
     # existe -> devuelve set de procesos
