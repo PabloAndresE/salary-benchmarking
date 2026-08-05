@@ -34,12 +34,15 @@ echo "== 3. Build + push (Cloud Build, usa Dockerfile.pipeline) =="
 gcloud builds submit --config infra/cloudbuild.pipeline.yaml \
   --substitutions=_IMAGE="$IMAGE" --project "$PROJECT" .
 
+# NOTA: no se pasa --concurrencia. El valor por defecto vive en settings.py (4), medido
+# contra la API real; pasarlo aquí duplicaría la fuente de verdad y ya rompió una vez
+# (con 8 se perdía ~80% de las plantillas). Para cambiarlo: PIPELINE_DESCARGAS_CONCURRENTES.
 echo "== 4. Crear/actualizar el job de Cloud Run =="
 gcloud run jobs deploy "$JOB" \
   --image "$IMAGE" --region "$REGION" --project "$PROJECT" \
   --service-account "$JOB_SA" \
   --set-secrets "PIPELINE_SALT=benchmarking-pipeline-salt:latest" \
-  --args "construir-universo,--batch-size=500,--concurrencia=8" \
+  --args "construir-universo,--batch-size=500" \
   --task-timeout=24h --max-retries=3 --memory=2Gi --cpu=2
 
 if [ "${EXECUTE:-0}" = "1" ]; then
