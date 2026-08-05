@@ -261,3 +261,137 @@ forma de saber a posteriori cuánto de lo encontrado era el imputador.
 - Audigier, V. & Niang, N. *clusterMI: Cluster Analysis with Missing Values by Multiple Imputation.*
   CRAN. <https://cran.r-project.org/web/packages/clusterMI/vignettes/clusterMI.pdf> — alternativa
   considerada y descartada.
+
+---
+
+## D-004 — Criterio de éxito pre-registrado: A o B
+
+**Fecha:** 2026-08-05
+
+### Contexto
+
+El spec §9 exige pre-registrar qué resultado cuenta como éxito antes de mirar el test, para evitar
+el *garden of forking paths*. La comparación arquetipo vs CARGO admite cuatro desenlaces:
+
+| | Qué pasó |
+|---|---|
+| **A** | A igual cobertura, el arquetipo se equivoca menos que CARGO |
+| **B** | Se equivocan igual, pero CARGO responde por ~60% de la gente y el arquetipo por el 100% |
+| **C** | CARGO es mejor donde tiene etiqueta; el arquetipo rescata al resto (complementarios) |
+| **D** | El arquetipo no gana en ningún lado |
+
+### Decisión
+
+**Éxito = A o B.** El escenario **C se reporta como hallazgo principal si ocurre, sin disfrazarlo de
+victoria**; el escenario D se reporta como resultado negativo.
+
+### Consideración
+
+C es un desenlace plausible y probablemente el más probable: el EDA ya identificó "dos mundos" —
+etiquetas estandarizadas que funcionan bien (guardia CV 0,17; perchador 0,10) frente a etiquetas
+rotas (vendedor 0,79; docente 0,62). Es perfectamente posible que el arquetipo no mejore nada en
+los cargos ya limpios y arrase en los sucios. Dicho con números, eso es un resultado excelente y
+accionable ("para estos cargos use la etiqueta, para estos otros el arquetipo"), pero **no es la
+afirmación que la tesis pre-registra**, y no debe presentarse como si lo fuera.
+
+---
+
+## D-005 — Métrica primaria: error de predicción fuera de muestra, no varianza explicada
+
+**Fecha:** 2026-08-05
+
+### Contexto y evidencia
+
+Para decidir si el arquetipo supera al CARGO hay dos formas de medir:
+
+1. **Dispersión intra-celda** (ω² / CV): ¿la gente del mismo grupo gana parecido?
+2. **Error de predicción fuera de muestra**: tapado el sueldo de una persona, ¿se acierta su nivel
+   salarial usando solo su grupo y personas de *otras* empresas (leave-company-out)?
+
+La forma 1 tiene un sesgo estructural: **más celdas mejoran la métrica aunque las celdas no
+contengan información**. Es el mismo artefacto que el EDA ya documentó con el placebo de bandas
+aleatorias (el colapso bajaba de 2,7% a 2,2% solo por trocear). CARGO tiene **55.920 etiquetas
+distintas en 2025** frente a las ~50 celdas de un arquetipo: la comparación directa es inválida.
+
+La corrección clásica —igualar cardinalidad podando CARGO a sus top-k etiquetas— es inviable con
+estos datos. Medido sobre 2025 (576.862 personas con cargo y sueldo válidos):
+
+| Métrica | Valor |
+|---|---|
+| Etiquetas distintas | 55.920 |
+| Cobertura de las 50 más frecuentes | **25,6%** |
+| Etiquetas con una sola persona | 32.388 (58% de las etiquetas) |
+| Etiquetas con menos de 3 personas | 71,2% |
+
+Podar a 50 celdas dejaría a **429.000 personas (74,4%) en una única celda "otros"**. Eso no es
+CARGO con cardinalidad reducida: es un baseline degradado por construcción, contra el que ganar no
+demuestra nada. Además, las 50 etiquetas más frecuentes no son homogéneas en calidad —incluyen
+tanto las peores (VENDEDOR CV 0,79; DOCENTE 0,62) como las mejores (PERCHADOR 0,10; GUARDIA 0,17)—,
+así que el resultado dependería fuertemente de dónde se corte.
+
+La literatura de comparación de particiones respalda el diagnóstico: las métricas no ajustadas no
+deben usarse para comparar agrupamientos con distinto número de clusters, y aun las medidas
+ajustadas por azar conservan sesgo residual asociado a la cardinalidad.
+
+### Decisión
+
+1. **Métrica primaria:** error de predicción del sueldo de referencia de la celda, **fuera de
+   muestra y leave-company-out**, en log-SBU, con intervalos por **bootstrap de empresas**.
+   CARGO compite **sin podar**, con sus 55.920 etiquetas intactas.
+2. **Co-primaria: la cobertura.** Los dos métodos se abstienen de forma distinta —CARGO no puede
+   responder cuando falta la etiqueta (3,6% en 2025, 22% en 2024) o cuando la etiqueta tiene
+   demasiado pocos donantes; el arquetipo siempre asigna—. Se reporta la **curva error-cobertura**:
+   cada método emite referencia + confianza, se barre el umbral y se grafica error contra fracción
+   de personas cubiertas. Sin esto, los escenarios A y B de D-004 son indistinguibles.
+3. **El ω² intra-empresa del §9 se conserva como métrica confirmatoria**, con la escalera de nulos
+   completa. Se calcula y se reporta; no decide.
+4. **La cardinalidad igualada la aporta el nulo "solo-texto"** del §9 (agrupar por similitud
+   semántica del título en el mismo número de grupos que el arquetipo), que es un rival de
+   cardinalidad igualada bien construido. **No se construye ningún CARGO podado.**
+
+### Criterio
+
+El error fuera de muestra **penaliza la cardinalidad excesiva por sí solo**: una celda con una sola
+persona en train produce una referencia inútil para una persona nueva. No hace falta igualar k
+porque la métrica lo hace sola — y por tanto no hace falta mutilar al baseline.
+
+Además, coincide con la tarea real del producto ("¿cuál es la referencia de mercado para esta
+persona?") y con la práctica de estadística oficial: el programa OEWS del BLS construye estimaciones
+salariales por ocupación con donantes, fijando un objetivo de **≥5 donantes** por celda — la misma
+cifra que el spec §12 fija como supresión de celda mínima, lo que le da respaldo institucional a un
+umbral que de otro modo parecería arbitrario.
+
+### Relación con el panel de tres jueces
+
+No se contradicen sus exigencias: se mantienen la estimación intra-empresa, la validación fuera de
+muestra, la escalera de nulos, el bootstrap por empresa y la exclusión del salario del agrupamiento.
+Los dos cambios son **quitar la poda de CARGO** (un problema de validez de constructo que el panel
+no detectó) y **añadir la cobertura** (que hace visible el escenario B).
+
+### Alternativas descartadas
+
+- **ω² a k igualado como árbitro.** Descartada por el baseline degradado (429.000 personas en
+  "otros") y porque, al no medir cobertura, colapsa los escenarios A y B de D-004 en un aparente
+  empate.
+- **Ambas métricas con ω² al mando.** Obliga igualmente a construir y defender el CARGO podado, y
+  duplica el alcance del sub-proyecto 1 sin resolver el problema de fondo.
+
+### Reversibilidad
+
+Alta. Ambas métricas se calculan y se reportan; la decisión solo fija cuál se pre-registra como
+árbitro. Lo que **no** es reversible es mirar los resultados antes de fijarla, que es justo lo que
+el pre-registro impide.
+
+### Fuentes
+
+- Romano, S., Vinh, N. X., Bailey, J. & Verspoor, K. (2016). *Adjusting for Chance Clustering
+  Comparison Measures.* JMLR 17. <https://jmlr.org/papers/v17/15-627.html>
+- *Comparing clusterings and numbers of clusters.* arXiv:2002.01822.
+  <https://arxiv.org/pdf/2002.01822>
+- scikit-learn. *Adjustment for chance in clustering performance evaluation.*
+  <https://scikit-learn.org/stable/auto_examples/cluster/plot_adjusted_for_chance_measures.html>
+- U.S. Bureau of Labor Statistics. *Occupational Employment and Wage Statistics — Survey Methods and
+  Reliability.* <https://www.bls.gov/oes/methods_24.pdf> — objetivo de ≥5 donantes por celda.
+- U.S. Bureau of Labor Statistics. *Model-based estimates for the Occupational Employment Statistics
+  program.* Monthly Labor Review.
+  <https://www.bls.gov/opub/mlr/2019/article/model-based-estimates-for-the-occupational-employment-statistics-program.htm>
