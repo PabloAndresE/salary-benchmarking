@@ -88,6 +88,12 @@ def construir_universo(runner, base_url, settings, escribir_lote, batch_size=500
                        max_workers=None, descargar=descargar_plantilla, hechos=frozenset()):
     workers = settings.descargas_concurrentes if max_workers is None else max_workers
     estudios = listar_estudios(runner)
+    # Procesar RECIENTES primero: la composición (feature clave) solo existe en estudios
+    # recientes (con plantilla); los viejos rinden filas sin composición. Así cada lote
+    # aporta data útil cuanto antes. No afecta la reanudabilidad (se sigue saltando `hechos`).
+    if "anio_valoracion" in estudios.columns:
+        estudios = estudios.sort_values(
+            ["anio_valoracion", "numero_proceso"], ascending=False, na_position="last")
     pendientes = [p for p in estudios["numero_proceso"].astype(str).tolist() if p not in hechos]
     scvs = leer_scvs(runner)                            # una sola vez para toda la corrida
     total = 0
