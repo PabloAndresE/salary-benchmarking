@@ -1,8 +1,9 @@
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import pandas as pd
 from .adquisicion.bigquery_source import (
     leer_personas, leer_scvs, listar_estudios, leer_personas_por_proceso)
-from .adquisicion.plantilla_client import descargar_plantilla
+from .adquisicion.plantilla_client import descargar_plantilla, DescargaFallida
 from .ingesta.composicion import parsear_plantilla, _norm
 from .ingesta.anonimizacion import anonimizar
 from .ingesta.validacion import marcar_cuarentena
@@ -10,48 +11,70 @@ from .ingesta.features_base import agregar_features
 from .ingesta.enriquecimiento import unir_scvs
 
 def _una_plantilla(e, base_url, descargar):
-    """Descarga+parsea la plantilla de un estudio. Devuelve montos por cédula, o None
-    (con aviso) ante 5xx agotado / XLSX corrupto / columna ausente / plantilla inexistente.
-    Worker aislado y sin estado compartido: seguro para correr en hilos."""
+    """Descarga+parsea la plantilla de un estudio.
+
+    Devuelve `(montos_por_cedula | None, motivo)` con motivo en:
+      ok             - se obtuvo la composición
+      sin_plantilla  - el estudio no tiene plantilla (404): ausencia legítima
+      fallo_descarga - no se pudo bajar tras agotar reintentos: PÉRDIDA de dato existente
+      fallo_parseo   - se bajó pero el XLSX no se pudo leer
+
+    La distinción importa: `sin_plantilla` es esperable en estudios de 2022 o antes,
+    mientras que `fallo_descarga` es un dato que existía y se perdió.
+
+    Worker aislado y sin estado compartido: seguro para correr en hilos.
+    """
     try:
         raw = descargar(e.numero_proceso, e.id_version, base_url)
-        if not raw:
-            return None
-        m = parsear_plantilla(raw)[["identificacion", "comisiones", "extras", "otros"]].copy()
+    except DescargaFallida as exc:
+        print(f"[composicion] estudio {e.numero_proceso} PERDIDO: {exc}")
+        return None, "fallo_descarga"
     except Exception as exc:                              # noqa: BLE001 — omitir estudio, no el lote
         print(f"[composicion] estudio {e.numero_proceso} omitido: {type(exc).__name__}: {exc}")
-        return None
+        return None, "fallo_descarga"
+    if not raw:
+        return None, "sin_plantilla"
+    try:
+        m = parsear_plantilla(raw)[["identificacion", "comisiones", "extras", "otros"]].copy()
+    except Exception as exc:                              # noqa: BLE001 — XLSX corrupto / columna ausente
+        print(f"[composicion] estudio {e.numero_proceso} ilegible: {type(exc).__name__}: {exc}")
+        return None, "fallo_parseo"
     m["identificacion"] = m["identificacion"].astype(str)
     m["numero_proceso"] = e.numero_proceso
-    return m
+    return m, "ok"
 
 def _composicion_estudios(estudios, base_url, descargar, max_workers=8):
-    """Descarga la plantilla de cada estudio y devuelve solo los montos por (numero_proceso, cedula).
+    """Descarga la plantilla de cada estudio y devuelve `(montos, conteo_por_motivo)`.
 
-    Resiliencia de lote: un estudio cuya plantilla no descarga o no parsea
-    (5xx agotados, XLSX corrupto, columna canónica ausente -> KeyError, etc.)
-    se OMITE con un aviso; nunca tumba el lote (~48k estudios). Las personas
-    de ese estudio se conservan en la base con composición NULL.
+    Los montos van por (numero_proceso, cedula). El conteo es un Counter con los
+    motivos de `_una_plantilla`, para que la degradación sea contable.
+
+    Resiliencia de lote: un estudio cuya plantilla no descarga o no parsea se OMITE
+    con un aviso; nunca tumba el lote (~48k estudios). Las personas de ese estudio se
+    conservan en la base con composición NULL.
     """
     filas = list(estudios.itertuples())
-    partes = []
+    partes, conteo = [], Counter()
     if max_workers and max_workers > 1 and len(filas) > 1:
         # I/O de red -> hilos. Cada worker crea su propia requests.Session (no se comparte).
         with ThreadPoolExecutor(max_workers=max_workers) as ex:
             futuros = [ex.submit(_una_plantilla, e, base_url, descargar) for e in filas]
-            for fut in as_completed(futuros):
-                m = fut.result()
+            resultados = (fut.result() for fut in as_completed(futuros))
+            for m, motivo in resultados:
+                conteo[motivo] += 1
                 if m is not None:
                     partes.append(m)
     else:
         for e in filas:
-            m = _una_plantilla(e, base_url, descargar)
+            m, motivo = _una_plantilla(e, base_url, descargar)
+            conteo[motivo] += 1
             if m is not None:
                 partes.append(m)
     if partes:
         comp = pd.concat(partes, ignore_index=True)
         # protege el grano: una plantilla con cedula duplicada no debe inflar el merge
-        return comp.drop_duplicates(subset=["numero_proceso", "identificacion"], keep="first")
+        comp = comp.drop_duplicates(subset=["numero_proceso", "identificacion"], keep="first")
+        return comp, conteo
     # Sin ninguna plantilla en el lote: columnas numéricas explícitas (no "object")
     # para que fillna/sum en agregar_features no degrade el dtype de `total`.
     return pd.DataFrame({
@@ -60,7 +83,7 @@ def _composicion_estudios(estudios, base_url, descargar, max_workers=8):
         "extras": pd.Series(dtype=float),
         "otros": pd.Series(dtype=float),
         "numero_proceso": pd.Series(dtype=str),
-    })
+    }), conteo
 
 def _ensamblar(base, scvs, base_url, settings, descargar, max_workers):
     base = base.copy()
@@ -68,7 +91,10 @@ def _ensamblar(base, scvs, base_url, settings, descargar, max_workers):
     # tamaño de la nómina del estudio: contexto para juzgar la fiabilidad de la etiqueta de cargo
     base["n_personas_estudio"] = base.groupby("numero_proceso")["identificacion"].transform("size")
     estudios = base[["numero_proceso", "id_version"]].drop_duplicates()
-    comp = _composicion_estudios(estudios, base_url, descargar, max_workers=max_workers)
+    comp, conteo = _composicion_estudios(estudios, base_url, descargar, max_workers=max_workers)
+    perdidos = conteo.get("fallo_descarga", 0) + conteo.get("fallo_parseo", 0)
+    aviso = f"  <-- {perdidos} PERDIDOS (dato existente no recuperado)" if perdidos else ""
+    print(f"[composicion] {len(estudios)} estudios: {dict(conteo)}{aviso}")
     # enlace por cédula (cruda) ANTES de anonimizar; left join: NaN donde no hubo plantilla
     df = base.merge(comp, how="left", on=["numero_proceso", "identificacion"])
     df["cargo_norm"] = df["cargo"].map(_norm)

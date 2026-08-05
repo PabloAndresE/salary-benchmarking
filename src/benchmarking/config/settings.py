@@ -13,7 +13,16 @@ class Settings(BaseSettings):
     bq_dataset: str = "benchmarking_tesis"
     actuafast_base_url: str = "https://actuafast-api-611856784485.us-east1.run.app"
     sbu: dict[int, int] = _SBU
-    descargas_concurrentes: int = 8              # PIPELINE_DESCARGAS_CONCURRENTES
+    # Medido contra la API real (20 estudios de 2025 por nivel, cliente con reintentos):
+    #   hilos  ok  perdidos  peticiones  estudios/s
+    #     2    20      0         20         0,54
+    #     4    19      0         20         0,80   <- óptimo
+    #     6    17      3         41         0,28
+    #     8    13      7         67         0,16
+    # A partir de 6 el servidor corta conexiones, los reintentos se disparan y el
+    # rendimiento cae. El antiguo valor 8 perdía ~80% de las plantillas y además era
+    # 5x más lento. No subir sin volver a medir.
+    descargas_concurrentes: int = 4              # PIPELINE_DESCARGAS_CONCURRENTES
 
     def get_sbu(self, anio: int) -> int:
         return self.sbu.get(anio, max(self.sbu.values()))

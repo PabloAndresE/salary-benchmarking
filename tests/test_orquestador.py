@@ -170,6 +170,25 @@ def test_construir_base_concurrente_resiliente(monkeypatch, plantilla_xlsx_bytes
     assert (~df[df.numero_proceso=="P2"]["tiene_composicion"]).all()
     assert df[df.numero_proceso=="P1"]["tiene_composicion"].all()
 
+def test_composicion_cuenta_motivos_por_separado(monkeypatch, plantilla_xlsx_bytes):
+    # Distinguir "el estudio no tiene plantilla" (404, normal en <=2022) de "no pude
+    # bajarla" (red agotada, pérdida de datos real) es lo que hace visible una
+    # degradación silenciosa en vez de que se descubra semanas después.
+    from benchmarking.orquestador import _composicion_estudios
+    from benchmarking.adquisicion.plantilla_client import DescargaFallida
+    estudios = pd.DataFrame({"numero_proceso": ["P1","P2","P3","P4"], "id_version": ["v"]*4})
+
+    def desc(numero_proceso, id_version, base_url):
+        if numero_proceso == "P2": return None                     # 404: no existe
+        if numero_proceso == "P3": raise DescargaFallida("red")    # pérdida real
+        if numero_proceso == "P4": return b"no-es-un-xlsx"         # falla al parsear
+        return plantilla_xlsx_bytes
+
+    comp, conteo = _composicion_estudios(estudios, "http://x", desc, max_workers=2)
+    assert conteo == {"ok": 1, "sin_plantilla": 1, "fallo_descarga": 1, "fallo_parseo": 1}
+    assert comp["numero_proceso"].unique().tolist() == ["P1"]      # solo el bueno aporta montos
+
+
 def _fake_universo_runner():
     personas_all = pd.DataFrame([
         {"identificacion":ced,"numero_proceso":proc,"id_version":"v","anio_valoracion":2024,
