@@ -215,3 +215,33 @@ def test_construir_universo_lotea_y_reanuda(monkeypatch, plantilla_xlsx_bytes):
     scvs_calls = [c for c in runner.query.call_args_list
                   if "scvs" in c[0][0].lower() or "balances" in c[0][0].lower()]
     assert len(scvs_calls) == 1
+
+def test_construir_universo_procesa_recientes_primero(monkeypatch, plantilla_xlsx_bytes):
+    # Los estudios se procesan por anio_valoracion DESC (recientes primero), porque la
+    # composición sólo existe en los recientes.
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    personas = pd.DataFrame([
+        {"identificacion":"1700000001","numero_proceso":proc,"id_version":"v","anio_valoracion":anio,
+         "empresa_ruc":"1790011111001","cargo":"X","centro_de_costo":"C","sexo":"F","edad":30,
+         "sueldo":600.0,"remuneracion_promedio":700.0,"fecha_ingreso":dt.date(2014,1,1)}
+        for proc, anio in [("A",2022),("B",2024),("C",2023)]])
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock(); low = sql.lower()
+        if "scvs" in low or "balances" in low:
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["G"],"ciiu_n1":["G"],"ciiu_n6":["G1"],"n_empleados":[10]})
+        elif "numero_proceso in (" in low:
+            procs = [p for p in ("A","B","C") if f"'{p}'" in sql]
+            m.to_dataframe.return_value = personas[personas.numero_proceso.isin(procs)].reset_index(drop=True)
+        else:
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"numero_proceso":["A","B","C"],"id_version":["v","v","v"],
+                 "anio_valoracion":[2022,2024,2023],"empresa_ruc":["1790011111001"]*3})
+        return m
+    runner.query.side_effect = fake_query
+    orden = []
+    construir_universo(runner, "http://x", s, escribir_lote=lambda d: orden.append(d["numero_proceso"].iloc[0]),
+                       batch_size=1, max_workers=2, descargar=lambda *a, **k: plantilla_xlsx_bytes)
+    assert orden == ["B", "C", "A"]   # 2024, 2023, 2022
