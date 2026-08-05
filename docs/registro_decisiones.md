@@ -234,6 +234,55 @@ persona cae en el mismo arquetipo—. Es evidencia de estabilidad más fuerte qu
 porque la re-medición es real y no simulada. No está contemplado en el spec §9 y se propone
 incorporarlo.
 
+### Enmienda (2026-08-05, misma sesión): la premisa se pone a prueba, no se asume
+
+Al revisar la decisión surgió una objeción de fondo: *si la composición resulta ser sobre todo horas
+extras, y las horas extras dependen de la política de la empresa más que del rol, ¿vale la pena
+sostener toda esta arquitectura? ¿No sería mejor prescindir de la composición y entrenar sobre una
+muestra mucho mayor?*
+
+**Medición sobre las filas con composición disponibles** (41 empresas, 4.325 personas — indicativo,
+no concluyente):
+
+| Componente | Varianza explicada por la empresa | Varía **dentro** de la empresa |
+|---|---|---|
+| Horas extras | 28,1% | 71,9% |
+| Comisiones | 35,4% | 64,6% |
+| *(referencia: log-sueldo, EDA)* | *34%* | *66%* |
+
+La política de empresa pesa, pero **la mayor parte de la variación ocurre entre personas de la misma
+empresa**, que es la señal de rol que se busca. El efecto empresa sobre las horas extras (28%) es
+además *menor* que el efecto empresa sobre el propio sueldo (34%). La residualización del spec §5
+está diseñada para retirar ese 28%.
+
+Queda una duda que este número no resuelve: ese ~72% intra-empresa ¿es sistemático por rol, o es
+circunstancia individual (alguien trabajó más horas ese mes)? Solo el modelo lo dirá.
+
+**La decisión D-003 es robusta a esa incertidumbre**, y conviene dejarlo escrito:
+
+- si la composición resulta **fuerte** → imputarla contamina el eje principal → **no imputar**;
+- si resulta **débil** → imputarla rellena ruido y mantiene el riesgo del cluster artefacto →
+  **no imputar**.
+
+**Enmienda acordada:** el sub-proyecto 1 construye **dos baselines**, no uno, medidos con la misma
+balanza y sobre el mismo held-out:
+
+| | Representación | Universo de ajuste |
+|---|---|---|
+| **Baseline A** | con composición | 2024–2025 (~1,3 M filas) |
+| **Baseline B** | sin composición | todos los años (~3,5 M filas) |
+
+Si B iguala o supera a A, la composición no aporta y media arquitectura del spec (ILR, gate,
+residualización, IPW) se puede retirar **con evidencia**. Si A gana, queda demostrado el aporte de
+la composición. Es el experimento **E1/E2** del spec §10, adelantado de la semana ~12 a la ~4, y
+cuesta poco porque el banco ya está construido.
+
+Argumento adicional que sostiene mantener la composición: **el tamaño de muestra no es el cuello de
+botella**. 1,3 M de filas y ~6.900 empresas sobran para estimar del orden de 50 grupos; pasar a
+3,5 M no mejora la recuperación de clusters. Y como el 88% de las empresas se repiten entre años,
+los años viejos aportan sobre todo repetición del mismo panel, no empresas nuevas. El intercambio
+sería perder la variable principal a cambio de datos que no hacen falta.
+
 ### Reversibilidad
 
 **Asimétrica, y eso inclina la decisión.** Restringir el ajuste es reversible: si el test-retest y
