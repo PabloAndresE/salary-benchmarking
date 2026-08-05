@@ -425,6 +425,49 @@ no detectó) y **añadir la cobertura** (que hace visible el escenario B).
 - **Ambas métricas con ω² al mando.** Obliga igualmente a construir y defender el CARGO podado, y
   duplica el alcance del sub-proyecto 1 sin resolver el problema de fondo.
 
+### Enmienda 1 (2026-08-05, misma sesión): blindaje anti-circularidad explícito
+
+Al revisar la decisión surgió la objeción: *si el árbitro premia acertar el sueldo, ¿no acabamos
+agrupando por sueldo en vez de por cargo?*
+
+La respuesta corta es que la métrica no entra al modelo: los grupos se construyen sin el sueldo, se
+congelan, y el sueldo aparece solo al calificar. Pero **hay una puerta trasera real**: si la métrica
+se usa para *decidir* la granularidad, la familia o los pesos, el ajuste queda indirectamente
+optimizado contra el sueldo, y se llega a bandas salariales disfrazadas de roles.
+
+Nota importante: **este riesgo es idéntico con ω²** — una partición construida a propósito como
+bandas de sueldo maximizaría las dos métricas. Por tanto no es un argumento a favor ni en contra de
+D-005; se gestiona aparte.
+
+**Se añade al pre-registro, de forma explícita:**
+
+1. La perilla de granularidad (k en k-means/GMM, altura de corte en jerárquico, tamaño mínimo de
+   grupo en HDBSCAN) y la familia se eligen **por estabilidad** —reproducibilidad de la partición
+   entre submuestras de empresas, medida con ARI— **nunca por el acierto salarial**.
+2. El **techo supervisado** (partición construida agrupando directamente por sueldo) se reporta
+   siempre: fija la escala para interpretar el resultado propio y actúa como alarma si el arquetipo
+   se le acerca demasiado.
+3. El **test de validez externa** (predecir ISCO-08 desde el arquetipo) es la prueba directa de que
+   los grupos son ocupaciones y no bandas de sueldo: una banda salarial no puede distinguir un
+   soldador de un contador que ganan lo mismo. Requiere construir una referencia ISCO sobre una
+   muestra — etiquetado por experto y/o cargos de texto específico e inequívoco.
+
+### Enmienda 2 (2026-08-05, misma sesión): resuelve también la comparación entre familias
+
+El spec §7 deja anotado un pendiente sobre HDBSCAN: *"k variable complica el 'k-igualado' de §9 (se
+maneja aparte)"*. La métrica de D-005 lo resuelve sin apaños:
+
+- Las cuatro familias terminan con **distinta cardinalidad** (p. ej. k-means 50, GMM 45, jerárquico
+  60, HDBSCAN 73). Bajo ω² esa comparación es inválida por la misma razón que lo es contra CARGO;
+  bajo error fuera de muestra es válida, porque el exceso de celdas se penaliza solo.
+- El **ruido de HDBSCAN** (personas que no caen en ningún grupo) encaja de forma natural como
+  **abstención**, y cuenta contra su cobertura — el mismo trato que recibe CARGO cuando falta la
+  etiqueta. Bajo ω² habría que elegir entre excluir esas personas (regalándole a HDBSCAN los casos
+  fáciles) o asignarlas a una celda artificial (castigándolo de más).
+
+Es decir, la métrica sirve a la vez para el experimento principal (arquetipo vs CARGO) y para el
+**E3** (comparación entre las cuatro familias), sin instrumentos distintos para cada uno.
+
 ### Reversibilidad
 
 Alta. Ambas métricas se calculan y se reportan; la decisión solo fija cuál se pre-registra como
