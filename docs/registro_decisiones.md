@@ -390,6 +390,38 @@ circunstancia individual (alguien trabajó más horas ese mes)? Solo el modelo l
 - si resulta **débil** → imputarla rellena ruido y mantiene el riesgo del cluster artefacto →
   **no imputar**.
 
+> **Corrección (2026-08-06, con 2025 completo).** Las cifras de arriba salían de 4.325 personas en
+> 41 empresas — los estudios que sobrevivieron al bug de descargas, que no eran una muestra
+> representativa. Con el año 2025 íntegro (486.814 filas con composición, 5.269 empresas) los
+> números cambian, y en ambas direcciones:
+>
+> | | Muestra de 41 empresas | **2025 completo** |
+> |---|---|---|
+> | η² empresa — horas extras | 0,281 | **0,498** |
+> | η² empresa — comisiones | 0,354 | 0,388 |
+> | η² empresa — log del total | — | 0,388 |
+> | Personas con comisiones >5% | 4,6% | **17,2%** |
+> | Personas con extras >5% | 64,7% | 40,6% |
+> | Personas con otros >5% | 4,7% | 17,8% |
+> | Variable alto (<70% fijo) | 5,7% | **21,2%** |
+> | Todo fijo (≥99%) | 19,7% | 30,1% |
+>
+> **A favor de la composición:** las comisiones alcanzan al 17,2% de la gente, casi cuatro veces más
+> de lo estimado, y el 21,2% tiene una parte variable sustancial. El eje está mucho más poblado de
+> lo que sugería la muestra pequeña, y no se reduce a horas extras.
+>
+> **En contra:** el efecto empresa sobre las horas extras es del **49,8%, no del 28%** — la mitad de
+> la variación en horas extras es política del empleador, y supera al efecto empresa sobre el propio
+> salario (38,8%). La objeción original que motivó esta enmienda era más certera que la respuesta
+> que se le dio.
+>
+> **Consecuencias:** (a) la **residualización contra la media empleador×sector** (§5 del spec de
+> clustering) pasa de conveniente a **imprescindible** para el bloque de horas extras; (b) las
+> comisiones se comportan mejor que las extras (61,2% de variación intra-empresa) y merecen peso
+> propio, no diluirse en un bloque único de composición; (c) la comparación de los dos baselines
+> gana importancia, porque el margen entre "la composición aporta" y "la composición es política de
+> empresa" es más estrecho de lo que parecía.
+
 **Enmienda acordada:** el sub-proyecto 1 construye **dos baselines**, no uno, medidos con la misma
 balanza y sobre el mismo held-out:
 
