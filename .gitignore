@@ -30,3 +30,6 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# log de la corrida local del universo
+corrida_universo*.log
