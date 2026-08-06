@@ -125,6 +125,70 @@ estudios de 2025 que se habían escrito con composición en sólo 6.194 filas). 
 (355.187 filas) se conservan: esos estudios no tienen plantilla, así que su composición NULL es
 correcta y reprocesarlos no cambiaría nada.
 
+### Segundo hallazgo: el enlace perdía las cédulas con cero inicial (sesgo geográfico)
+
+Con las descargas ya arregladas (99,8% de plantillas obtenidas), el primer lote mostró composición
+en sólo el **49,5% de las filas**. La causa resultó ser un segundo bug, independiente:
+
+```
+cédulas en la base BigQuery : ['1724894736', '0928066398', '0104110309', ...]
+cédulas en la plantilla     : ['926442096',  '1003422241', '1715781884', ...]
+                                ^ falta el cero inicial
+```
+
+La plantilla guarda las cédulas **sin el cero inicial** (en algún punto pasaron por un formato
+numérico); la base sí lo conserva. El enlace era por texto exacto, así que **fallaba toda cédula de
+las provincias 01-09**: Azuay, Bolívar, Cañar, Carchi, Cotopaxi, Chimborazo, El Oro, Esmeraldas y
+Galápagos.
+
+**Verificación sobre 6 estudios reales (1.397 personas):**
+
+| Estudio | Personas | Antes | Después | Techo |
+|---|---|---|---|---|
+| 143255 | 527 | 75,1% | 90,5% | 90,5% |
+| 140179 | 225 | 18,7% | 91,1% | 91,1% |
+| 139370 | 309 | 91,6% | 93,9% | 93,9% |
+| 141103 | 66 | **7,6%** | 93,9% | 93,9% |
+| 140828 | 201 | 30,3% | 87,6% | 87,6% |
+| 142728 | 69 | 55,1% | 66,7% | 66,7% |
+| **Total** | **1.397** | **59,1%** | **89,9%** | **89,9%** |
+
+El arreglo **alcanza el techo exacto en los seis casos**: tras normalizar, se enlazan todas las
+personas que la plantilla contiene. El hueco restante no es un defecto — la plantilla simplemente
+lista menos gente que la base del estudio.
+
+**Lo importante no es el 31% recuperado, sino su forma.** La columna "antes" va de 7,6% a 91,6%
+según cuánta gente de esa empresa tenga cédula de provincia 01-09. Es decir: la composición habría
+faltado **de forma sistemática por provincia**, no al azar. Ajustar los arquetipos con eso habría
+introducido un sesgo geográfico indetectable a posteriori — y habría contaminado justo el eje
+principal del modelo (§5 del spec de clustering).
+
+**Arreglo** (`50b20b8`): `_ced_key()` normaliza para el join (quita el `.0` espurio de las columnas
+leídas como float; rellena con ceros a 10 sólo si el valor es enteramente numérico, dejando intactos
+los RUC de 13 dígitos y los pasaportes). Se usa **exclusivamente como llave de enlace**:
+`identificacion` no se toca, y el `id_hash` sigue calculándose sobre el valor original. Hay un test
+que fija esa invariante — si el hash cambiara, las personas dejarían de ser comparables con las
+filas ya escritas y se rompería el test-retest de §6.5 del spec del banco.
+
+También se separa **`PlantillaRechazada`** (4xx distinto de 404) de `DescargaFallida`: un 400 es
+determinista y no se recupera reintentando, así que contarlo como pérdida llenaba de ruido el
+marcador.
+
+### Efecto combinado de los arreglos
+
+| | Plantillas descargadas | Personas enlazadas | Filas con composición |
+|---|---|---|---|
+| Antes | 4,6% | 59,1% | **~2,7%** |
+| Después | 99,8% | 89,9% | **86,7%** *(medido en el primer lote real)* |
+
+Factor de mejora: **~32×** sobre la variable que el spec de clustering define como eje de
+segmentación.
+
+**Detalle de orden que conviene recordar:** el segundo bug sólo era visible una vez arreglado el
+primero. Mientras el 95% de las plantillas se perdía en la red, no había volumen suficiente para
+notar que además el enlace fallaba. Los defectos en cadena se descubren de uno en uno, y conviene
+volver a medir después de cada arreglo en lugar de dar el problema por cerrado.
+
 ### Lección transversal
 
 Un fallo que se traga en silencio el 80% de la variable principal es peor que un fallo ruidoso. La
