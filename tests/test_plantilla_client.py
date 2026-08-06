@@ -1,7 +1,8 @@
 from unittest.mock import MagicMock
 import pytest
 import requests
-from benchmarking.adquisicion.plantilla_client import descargar_plantilla, DescargaFallida
+from benchmarking.adquisicion.plantilla_client import (
+    descargar_plantilla, DescargaFallida, PlantillaRechazada)
 
 def _resp(status, content=b"xlsxbytes"):
     r = MagicMock(); r.status_code = status; r.content = content
@@ -57,14 +58,13 @@ def test_404_es_ausencia_no_fallo():
     assert out is None
     assert ses.get.call_count == 1
 
-def test_4xx_distinto_de_404_no_se_silencia():
-    # Un 400 indica una petición mal formada: debe verse, no confundirse con "no hay plantilla".
-    r = _resp(400)
-    r.raise_for_status.side_effect = requests.exceptions.HTTPError("400")
-    ses = MagicMock(); ses.get.return_value = r
-    with pytest.raises(requests.exceptions.HTTPError):
+def test_4xx_distinto_de_404_se_marca_como_rechazo_determinista():
+    # Un 400 no es ni "no hay plantilla" ni un dato perdido: el servidor rechaza siempre.
+    # Se distingue para que el contador de perdidas no se infle con casos irrecuperables.
+    ses = MagicMock(); ses.get.return_value = _resp(400)
+    with pytest.raises(PlantillaRechazada):
         descargar_plantilla("1","v","http://x", session=ses, espera=_sin_espera)
-    assert ses.get.call_count == 1
+    assert ses.get.call_count == 1        # no se reintenta un rechazo determinista
 
 def test_espera_progresiva_entre_reintentos():
     esperas = []

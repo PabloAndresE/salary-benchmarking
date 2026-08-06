@@ -170,22 +170,115 @@ def test_construir_base_concurrente_resiliente(monkeypatch, plantilla_xlsx_bytes
     assert (~df[df.numero_proceso=="P2"]["tiene_composicion"]).all()
     assert df[df.numero_proceso=="P1"]["tiene_composicion"].all()
 
+def test_enlace_tolera_cedulas_sin_cero_inicial(monkeypatch):
+    # La plantilla guarda las cedulas sin el cero inicial (pasaron por formato numerico),
+    # la base BQ si lo conserva. El enlace por texto exacto perdia TODA cedula de las
+    # provincias 01-09 -> sesgo geografico en la composicion, no perdida al azar.
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["G"],"ciiu_n1":["G"],"ciiu_n6":["G1"],"n_empleados":[10]})
+        else:
+            m.to_dataframe.return_value = pd.DataFrame({
+                "identificacion":["0928066398","1724894736","0104110309"],  # dos con cero inicial
+                "numero_proceso":["P1"]*3, "id_version":["v"]*3, "anio_valoracion":[2025]*3,
+                "empresa_ruc":["1790011111001"]*3, "cargo":["A","B","C"],
+                "centro_de_costo":["X"]*3, "sexo":["F","M","F"], "edad":[30,40,50],
+                "sueldo":[600.0,700.0,800.0], "remuneracion_promedio":[None,None,None],
+                "fecha_ingreso":[dt.date(2014,1,1)]*3})
+        return m
+    runner.query.side_effect = fake_query
+
+    def plantilla_sin_ceros(raw):
+        return pd.DataFrame({
+            "identificacion": ["928066398", "1724894736", "104110309"],   # ceros perdidos
+            "comisiones": [400.0, 300.0, 200.0],
+            "extras": [0.0, 0.0, 0.0],
+            "otros": [0.0, 0.0, 0.0],
+        })
+    monkeypatch.setattr("benchmarking.orquestador.parsear_plantilla", plantilla_sin_ceros)
+
+    df = construir_base(runner, "http://x", s, descargar=lambda *a, **k: b"fake")
+    assert len(df) == 3
+    assert df["tiene_composicion"].all(), "las cedulas con cero inicial deben enlazar igual"
+    assert abs(df[df.cargo_norm=="A"].iloc[0].total - 1000.0) < 1e-6   # 600 + 400
+
+
+def test_enlace_normaliza_decimal_espurio(monkeypatch):
+    # Si la columna del xlsx llego como float, astype(str) produce "1724894736.0".
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["G"],"ciiu_n1":["G"],"ciiu_n6":["G1"],"n_empleados":[10]})
+        else:
+            m.to_dataframe.return_value = pd.DataFrame({
+                "identificacion":["1724894736"], "numero_proceso":["P1"], "id_version":["v"],
+                "anio_valoracion":[2025], "empresa_ruc":["1790011111001"], "cargo":["A"],
+                "centro_de_costo":["X"], "sexo":["F"], "edad":[30], "sueldo":[600.0],
+                "remuneracion_promedio":[None], "fecha_ingreso":[dt.date(2014,1,1)]})
+        return m
+    runner.query.side_effect = fake_query
+    monkeypatch.setattr("benchmarking.orquestador.parsear_plantilla", lambda raw: pd.DataFrame({
+        "identificacion": ["1724894736.0"], "comisiones": [400.0], "extras": [0.0], "otros": [0.0]}))
+    df = construir_base(runner, "http://x", s, descargar=lambda *a, **k: b"fake")
+    assert df["tiene_composicion"].all()
+
+
+def test_normalizar_cedula_no_altera_el_id_hash(monkeypatch):
+    # La normalizacion es SOLO para el enlace. Si tocara `identificacion`, cambiaria el
+    # id_hash y las personas dejarian de ser comparables con las filas ya escritas.
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    from benchmarking.ingesta.anonimizacion import anonimizar
+    esperado = anonimizar(pd.DataFrame({"identificacion":["0928066398"]}), s.salt)["id_hash"].iloc[0]
+
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["G"],"ciiu_n1":["G"],"ciiu_n6":["G1"],"n_empleados":[10]})
+        else:
+            m.to_dataframe.return_value = pd.DataFrame({
+                "identificacion":["0928066398"], "numero_proceso":["P1"], "id_version":["v"],
+                "anio_valoracion":[2025], "empresa_ruc":["1790011111001"], "cargo":["A"],
+                "centro_de_costo":["X"], "sexo":["F"], "edad":[30], "sueldo":[600.0],
+                "remuneracion_promedio":[None], "fecha_ingreso":[dt.date(2014,1,1)]})
+        return m
+    runner.query.side_effect = fake_query
+    monkeypatch.setattr("benchmarking.orquestador.parsear_plantilla", lambda raw: pd.DataFrame({
+        "identificacion": ["928066398"], "comisiones": [400.0], "extras": [0.0], "otros": [0.0]}))
+    df = construir_base(runner, "http://x", s, descargar=lambda *a, **k: b"fake")
+    assert df["id_hash"].iloc[0] == esperado, "el hash debe salir de la cedula original, no de la normalizada"
+    assert "_ced_key" not in df.columns                      # la llave de enlace no se filtra a la salida
+
+
 def test_composicion_cuenta_motivos_por_separado(monkeypatch, plantilla_xlsx_bytes):
     # Distinguir "el estudio no tiene plantilla" (404, normal en <=2022) de "no pude
     # bajarla" (red agotada, pérdida de datos real) es lo que hace visible una
     # degradación silenciosa en vez de que se descubra semanas después.
     from benchmarking.orquestador import _composicion_estudios
-    from benchmarking.adquisicion.plantilla_client import DescargaFallida
-    estudios = pd.DataFrame({"numero_proceso": ["P1","P2","P3","P4"], "id_version": ["v"]*4})
+    from benchmarking.adquisicion.plantilla_client import DescargaFallida, PlantillaRechazada
+    estudios = pd.DataFrame({"numero_proceso": ["P1","P2","P3","P4","P5"], "id_version": ["v"]*5})
 
     def desc(numero_proceso, id_version, base_url):
-        if numero_proceso == "P2": return None                     # 404: no existe
-        if numero_proceso == "P3": raise DescargaFallida("red")    # pérdida real
-        if numero_proceso == "P4": return b"no-es-un-xlsx"         # falla al parsear
+        if numero_proceso == "P2": return None                       # 404: no existe
+        if numero_proceso == "P3": raise DescargaFallida("red")      # pérdida real
+        if numero_proceso == "P4": return b"no-es-un-xlsx"           # falla al parsear
+        if numero_proceso == "P5": raise PlantillaRechazada("400")   # rechazo determinista
         return plantilla_xlsx_bytes
 
     comp, conteo = _composicion_estudios(estudios, "http://x", desc, max_workers=2)
-    assert conteo == {"ok": 1, "sin_plantilla": 1, "fallo_descarga": 1, "fallo_parseo": 1}
+    assert conteo == {"ok": 1, "sin_plantilla": 1, "fallo_descarga": 1,
+                      "fallo_parseo": 1, "rechazado": 1}
     assert comp["numero_proceso"].unique().tolist() == ["P1"]      # solo el bueno aporta montos
 
 

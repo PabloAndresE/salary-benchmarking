@@ -14,6 +14,15 @@ class DescargaFallida(Exception):
     """
 
 
+class PlantillaRechazada(Exception):
+    """El servidor rechaza la petición de forma determinista (4xx distinto de 404).
+
+    Reintentarlo no cambia nada, así que tampoco es "dato perdido": contarlo junto a los
+    fallos de red inflaría el marcador de pérdidas con estudios que nunca fueron
+    recuperables. Se cuenta aparte.
+    """
+
+
 def descargar_plantilla(numero_proceso, id_version, base_url, session=None,
                         reintentos=3, espera=time.sleep):
     """Descarga la plantilla-modificada de un estudio.
@@ -37,7 +46,9 @@ def descargar_plantilla(numero_proceso, id_version, base_url, session=None,
             if resp.status_code == 404:
                 return None                                   # hecho, no fallo: no se reintenta
             if resp.status_code not in _5XX:
-                resp.raise_for_status()                       # 4xx real: que se vea
+                if 400 <= resp.status_code < 500:
+                    raise PlantillaRechazada(f"{url}: HTTP {resp.status_code}")
+                resp.raise_for_status()
                 return resp.content
             ultimo = f"HTTP {resp.status_code}"
         if intento < reintentos - 1:
