@@ -71,6 +71,68 @@ y por qué motivo, para que la degradación sea visible y no haya que descubrirl
 
 Total. Los datos de origen no se tocan; reprocesar es idempotente.
 
+### Ejecución (2026-08-05)
+
+**Cobertura de plantilla por año, medida contra la API** (sondeo directo, 160 estudios):
+
+| Año | Plantilla disponible |
+|---|---|
+| 2025 | 25/25 (100%) |
+| 2024 | 26/29 (90%) |
+| 2023 | **0/26** |
+| 2022 | 0/33 |
+| 2021 | 0/18 |
+| 2020 | 0/16 |
+| 2019 | 0/13 |
+
+Queda cerrado: **la composición existe sólo en 2024–2025**. El universo de ajuste de D-003 no
+admite ampliación hacia atrás.
+
+**Concurrencia óptima, medida con el cliente ya arreglado** (20 estudios de 2025 por nivel):
+
+| Hilos | ok | perdidos | peticiones HTTP | estudios/s |
+|---|---|---|---|---|
+| 2 | 20 | 0 | 20 | 0,54 |
+| **4** | **19** | **0** | **20** | **0,80** |
+| 6 | 17 | 3 | 41 | 0,28 |
+| 8 | 13 | 7 | 67 | 0,16 |
+
+A partir de 6 hilos el servidor corta conexiones, los reintentos se multiplican y el rendimiento
+se desploma. El valor anterior (8) no sólo perdía datos: **también era 5× más lento**.
+
+**Cambios aplicados** (`e03ff8d`):
+
+1. `descargar_plantilla` reintenta ante `RequestException` (SSL / conexión / timeout) y agota en
+   `DescargaFallida`, distinta de `404 → None`. Espera inyectable para tests rápidos.
+2. `_una_plantilla` devuelve `(montos, motivo)` y `_composicion_estudios` acumula un `Counter`:
+   `ok / sin_plantilla / fallo_descarga / fallo_parseo`, con aviso destacado si hubo pérdidas.
+3. `descargas_concurrentes` 8 → 4, con la tabla de medición documentada en `settings.py`.
+
+**Dos bugs adicionales, descubiertos al desplegar:**
+
+- **`c8efc3f`** — el job de Cloud Run pasaba `--concurrencia=8` por `--args`, lo que habría pisado
+  el valor medido y reintroducido la pérdida. Se retira el flag: la concurrencia tiene una sola
+  fuente de verdad (`settings.py`).
+- **`ad9409a`** — la primera ejecución del job murió al importar, con `FileNotFoundError` sobre
+  `esquema_plantilla.yaml`: `setuptools` no copia archivos no-`.py`, y en local no se nota porque
+  se ejecuta desde `src/`. Bug preexistente que nadie había visto porque el job se creó el 4-ago y
+  nunca se había ejecutado. Se añade `package-data` y un **smoke en el Dockerfile**
+  (`benchmarking --help`) para que un dato de paquete ausente rompa el *build* y no una corrida de
+  ocho horas.
+
+**Reproceso:** `DELETE ... WHERE anio_valoracion >= 2024` → 173.736 filas eliminadas (2.150
+estudios de 2025 que se habían escrito con composición en sólo 6.194 filas). Los años 2016–2018
+(355.187 filas) se conservan: esos estudios no tienen plantilla, así que su composición NULL es
+correcta y reprocesarlos no cambiaría nada.
+
+### Lección transversal
+
+Un fallo que se traga en silencio el 80% de la variable principal es peor que un fallo ruidoso. La
+resiliencia por lote es correcta como política —un estudio malo no debe tumbar una corrida de 48.000—
+pero **exige contabilidad**: sin el conteo por motivo, la degradación sólo se descubre por
+casualidad. Vale como criterio para el resto del proyecto: toda omisión silenciosa se cuenta y se
+reporta.
+
 ---
 
 ## D-002 — Orden de construcción del núcleo: evaluación primero
