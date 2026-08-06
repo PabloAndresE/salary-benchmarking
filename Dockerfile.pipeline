@@ -13,6 +13,10 @@ COPY pyproject.toml ./
 COPY src ./src
 RUN pip install .
 
+# Smoke de empaquetado: importar el CLI ejercita toda la cadena de imports, incluido el
+# yaml del esquema. Si falta un dato del paquete, falla el BUILD y no una corrida de 8h.
+RUN benchmarking --help > /dev/null
+
 # El salt llega por variable de entorno PIPELINE_SALT (inyectada por --set-secrets).
 # El proyecto/dataset destino usan los defaults de settings (act-cicd-stage-prueba / benchmarking_tesis).
 ENTRYPOINT ["benchmarking"]

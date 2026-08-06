@@ -25,3 +25,8 @@ cuarentena/
 # SO
 Thumbs.db
 .DS_Store
+
+# artefactos de build (pip wheel / setuptools)
+build/
+dist/
+*.egg-info/
