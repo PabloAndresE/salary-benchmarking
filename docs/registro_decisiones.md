@@ -645,3 +645,164 @@ el pre-registro impide.
 - U.S. Bureau of Labor Statistics. *Model-based estimates for the Occupational Employment Statistics
   program.* Monthly Labor Review.
   <https://www.bls.gov/opub/mlr/2019/article/model-based-estimates-for-the-occupational-employment-statistics-program.htm>
+
+---
+
+## D-006 — Decisiones de implementación del banco de validación
+
+**Fecha:** 2026-08-07
+
+### Contexto
+
+Al convertir el spec del banco en plan de implementación aparecieron dieciséis decisiones que el
+spec no fijaba. Se revisaron una por una. Tres se apartaban del spec; las demás eran criterio o
+mecánica. Las que se resolvieron midiendo sobre datos reales llevan su cifra.
+
+| # | Decisión | Motivo |
+|---|---|---|
+| 1 | **Mediana** con leave-company-out, eficiente en numpy; curva de **8 umbrales** en vez de 30 | ver abajo |
+| 2 | Nulo solo-texto con **embeddings**, no TF-IDF | ver abajo |
+| 2b | Embeddings de **Vertex AI**, versión fijada en `settings.py` y usada como clave de caché | coherente con el spec §8; los datos no salen del proyecto GCP |
+| 3 | ω² sobre residuo **intra-empresa**, no modelo mixto | ver abajo |
+| 4 | Abstención si hay **<5 donantes o <3 empresas** donantes | 5 donantes de una sola empresa no son mercado; el empleador explica el 39% del salario |
+| 5 | La perilla de la curva es el **número de donantes** | única perilla que `CARGO` y el arquetipo pueden compartir; `CARGO` no emite confianza propia |
+| 6 | **MAE y RMSE**, con MAE como principal | la mediana minimiza el error absoluto: estimador y métrica emparejados |
+| 7 | **Mínimo una empresa por estrato** en el test | rescata 5 de 70 estratos por 0,1 punto de tamaño |
+| 8 | Roles sintéticos separados por **composición**, con sueldos solapados | si se separaran por sueldo, una partición por bandas salariales aprobaría el examen del banco |
+| 14 | k de los baselines **por estabilidad** (ARI entre submuestras), no fijo | elegir k por acierto salarial es la puerta trasera de D-005 |
+| 15 | Reducción del bloque de texto por **varianza explicada al 80%** | criterio que no mira el resultado, en vez de un número convencional |
+
+Las mecánicas 9–13 y 16 se aceptaron sin cambios: dependencias de producción y no de desarrollo
+(fue el bug del YAML que costó dos despliegues), backend `Agg` para correr sin pantalla,
+`pythonpath` con `tests`, marco de evaluación restringido a filas con cargo utilizable, test-retest
+de extremo a extremo, y hash del split dentro del pre-registro.
+
+### Las tres que se apartaban del spec
+
+**Mediana frente a media en espacio logarítmico.** La propuesta inicial era la media de los
+logaritmos —que es la media geométrica en niveles, robusta a la asimetría— porque la mediana con
+leave-company-out obliga a recalcular por cada par (celda, empresa), y `CARGO` tiene 55.920 celdas.
+
+Medido sobre 498.653 personas y 10.270 celdas, la diferencia entre media y mediana por celda es
+**0,0533 en log** (mediana de las diferencias 0,029; p90 0,143; máximo 1,36). Con un error esperado
+del orden de 0,30, es un sexto de la magnitud que se pretende medir: **no es despreciable**.
+
+Y sobre todo **no es neutral entre métodos**: la diferencia aparece justo en las celdas mezcladas,
+donde la media se desplaza hacia la cola y la mediana no. Es decir, **la media castiga más a las
+particiones que mezclan** — y la que mezcla es `CARGO`. Habría sido un sesgo a favor de la hipótesis
+propia.
+
+Se implementa la mediana. La curva baja a 8 umbrales (1, 2, 3, 5, 8, 12, 20, 30), que la dibujan
+igual de bien y dividen el costo por cuatro.
+
+**ω² residualizado frente a modelo mixto.** El spec §9 pedía modelo mixto; la diferencia práctica es
+el encogimiento de las medias de empresas pequeñas hacia la global. Medido sobre 2025:
+
+| Tamaño en la muestra | Empresas | % de personas |
+|---|---|---|
+| menos de 10 | 1.348 | **1,2%** |
+| 10 a 99 | 3.350 | 22,1% |
+| **100 o más** | 1.245 | **76,6%** |
+
+Con el 76,6% de la gente en empresas de 100 o más, el encogimiento apenas mueve nada. Se
+residualiza, se documenta esta tabla como justificación, y el ω² sigue siendo confirmatorio.
+
+**Un nulo solo-texto débil.** Se descartó TF-IDF por la razón contraria a la habitual: no por ser
+peor técnicamente, sino porque **produce un rival más flojo del necesario**. Agrupa por ortografía y
+no por significado: junta VENDEDOR con VENDEDORA, pero no CHOFER con CONDUCTOR. Vencer a un rival
+flojo no demuestra nada.
+
+### Patrón que conviene retener
+
+Tres de estas decisiones —media en vez de mediana, TF-IDF en vez de embeddings, y en su momento la
+poda de `CARGO` (D-005)— apuntaban en la **misma dirección: favorecer la hipótesis propia**. Ninguna
+se eligió con esa intención; todas eran la opción más simple o más barata.
+
+Es un sesgo que aparece solo y hay que buscarlo activamente. Ante dos opciones defendibles,
+**preguntarse cuál favorece al resultado que uno quiere, y desconfiar de esa.**
+
+---
+
+## D-007 — La compuerta de E5 pasa: el semi-supervisado es viable
+
+**Fecha:** 2026-08-07
+
+### Contexto
+
+El spec §10 deja E5 (restricciones semi-supervisadas por *must-links*) como experimento
+**condicional**, con una compuerta pre-registrada: **≥10 grupos-semilla cubriendo ≥15% de los
+empleados**. El diagnóstico disponible era de una sola nómina (40 grupos, 30%), marcado como
+"pendiente ratificación".
+
+### Medición (1,3 M de filas de 2024–2025, `en_clean`)
+
+Grupo-semilla = etiqueta de cargo presente en ≥3 empresas con ≥10 personas:
+
+| Especificidad | Grupos | Cobertura |
+|---|---|---|
+| 1 palabra | 666 | 19,6% |
+| 2 palabras | 1.161 | 17,0% |
+| **3 o más palabras** | **2.511** | **29,0%** |
+
+Restringiendo a las etiquetas más específicas —3 o más palabras, las de menor riesgo de ser cajón de
+sastre— salen **2.511 grupos y 29% de cobertura**, frente a los 10 grupos y 15% exigidos. Pasa por
+dos órdenes de magnitud.
+
+*(Salvedad: el número de palabras es un sustituto tosco de "etiqueta fiable" — "SOLDADOR" es de una
+palabra y es específico; "TRABAJADOR EN GENERAL" son tres y es basura. La definición correcta usa la
+coincidencia entre dos etiquetas independientes, ver D-008. Aun con el sustituto burdo, pasa.)*
+
+### Decisión y consecuencia
+
+E5 deja de ser un experimento condicional del final. Los *must-links* aportan **lo que faltaba: un
+criterio para elegir pesos de bloque y representación que no toca el salario**.
+
+Esto corrige una afirmación anterior de esta misma sesión. Se había argumentado que en un problema
+no supervisado no existe criterio objetivo para seleccionar variables, porque el único natural —qué
+predice el salario— está prohibido por circularidad. Con *must-links* sí existe: **qué
+representación respeta mejor las restricciones**. Es no circular y está anclado en información real.
+
+Se mantiene el diseño del spec: **must-links, no semillas de clase**, para no imponer la granularidad
+(¿soldadores como un grupo, o TIG separado de MIG?), que es justo lo que el clustering debe
+descubrir.
+
+---
+
+## D-008 — Rescatar el cargo de la plantilla y cachear el XLSX crudo
+
+**Fecha:** 2026-08-07
+
+### Contexto
+
+`parsear_plantilla` extrae el cargo de la plantilla, pero `_una_plantilla` solo conserva
+`identificacion`, `comisiones`, `extras` y `otros`: **el cargo escrito por el empleador se
+descarta**.
+
+Es una **segunda etiqueta del mismo puesto, independiente de la del estudio actuarial**. El handoff
+§5 ya describía ese mecanismo, planteándolo con la `profesion` del Registro Civil: *"segunda etiqueta
+ruidosa INDEPENDIENTE de CARGO, su divergencia detecta etiquetas colapsadas"*. La plantilla la ofrece
+gratis y ya se está descargando.
+
+Con dos etiquetas independientes: **coinciden → etiqueta fiable → buen must-link** (D-007);
+**divergen → etiqueta colapsada o mal capturada → descartar**.
+
+### El problema de fondo que revela
+
+El pipeline descarga cada plantilla, extrae cuatro columnas y **tira el archivo**. Cada vez que se
+descubra que hacía falta una columna más son ~10 horas de re-descarga. Ya va a pasar con el cargo;
+sin arreglarlo, volverá a pasar con el sexo o el centro de costo.
+
+### Decisión
+
+1. `_una_plantilla` conserva también el **cargo de la plantilla** (`cargo_plantilla`).
+2. `descargar_plantilla` **cachea el XLSX crudo en GCS**, con clave `(numero_proceso, id_version)`.
+   Las descargas posteriores leen del caché.
+3. Al terminar la corrida actual, borrar 2024–2025 y reprocesar: **la última vez que esto cuesta
+   diez horas**. A partir de ahí, cambiar lo que se extrae cuesta minutos.
+
+### Consideración
+
+El caché no es una optimización de rendimiento: es lo que convierte "qué columnas extraemos" en una
+decisión **reversible**. Mientras la fuente sea una API que hay que volver a golpear, cada omisión se
+paga en horas — y eso empuja a querer decidirlo todo por adelantado, que es justo lo que no se puede
+hacer en investigación.
