@@ -30,6 +30,32 @@ def test_motivo_cuarentena_cargo_nan_placeholder():
     base = dict(cargo_norm="NAN", sueldo=500.0, total=500.0, edad=30)
     assert motivo_cuarentena(base, sbu=460, min_sbu=0.5, edad_min=18, edad_max=80) == "cargo_placeholder"
 
+def test_componente_negativo_va_a_cuarentena():
+    # Una comision/extra/otro en negativo en la plantilla del cliente. Son poquisimas
+    # (57 de 780.000 en la corrida real) pero la transformacion ILR del clustering toma
+    # logaritmos de las partes: un negativo la revienta. Mejor atajarlo en la ingesta.
+    base = dict(cargo_norm="VENDEDOR", sueldo=500.0, total=600.0, edad=30,
+                comisiones=100.0, extras=0.0, otros=0.0)
+    assert motivo_cuarentena(base, 460, 0.5, 18, 80) is None
+    for rubro in ("comisiones", "extras", "otros"):
+        malo = {**base, rubro: -50.0}
+        assert motivo_cuarentena(malo, 460, 0.5, 18, 80) == "composicion_negativa", rubro
+
+
+def test_componente_negativo_no_afecta_a_filas_sin_composicion():
+    # Sin plantilla los rubros llegan NaN: eso no es un negativo, es una ausencia.
+    base = dict(cargo_norm="VENDEDOR", sueldo=500.0, total=500.0, edad=30,
+                comisiones=float("nan"), extras=float("nan"), otros=float("nan"))
+    assert motivo_cuarentena(base, 460, 0.5, 18, 80) is None
+
+
+def test_sueldo_negativo_tambien_se_atrapa():
+    # Un sueldo base negativo con variable que lo compensa dejaria total > 0 y pasaria.
+    base = dict(cargo_norm="VENDEDOR", sueldo=-100.0, total=500.0, edad=30,
+                comisiones=600.0, extras=0.0, otros=0.0)
+    assert motivo_cuarentena(base, 460, 0.5, 18, 80) == "composicion_negativa"
+
+
 def test_marcar_cuarentena_nan_anio(monkeypatch):
     monkeypatch.setenv("PIPELINE_SALT","x")
     s = cargar_settings()

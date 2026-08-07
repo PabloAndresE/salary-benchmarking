@@ -2,6 +2,21 @@ import re
 import pandas as pd
 
 _PLACEHOLDERS = {"0","-","NA","N/A",".","--","S/N","SN","X","","NAN","NONE"}
+_RUBROS = ("sueldo", "comisiones", "extras", "otros")
+
+def _hay_negativo(fila):
+    """¿Algún rubro de remuneración viene en negativo?
+
+    Ocurre cuando la plantilla del cliente trae, por ejemplo, una comisión negativa
+    (un ajuste o una devolución). Son poquísimas —57 de 780.000 en la corrida real—
+    pero la transformación ILR del clustering toma logaritmos de las partes de la
+    composición, y un negativo la invalida. NaN no cuenta: es ausencia, no un negativo.
+    """
+    for r in _RUBROS:
+        v = fila.get(r)
+        if v is not None and not pd.isna(v) and v < 0:
+            return True
+    return False
 
 def motivo_cuarentena(fila, sbu, min_sbu, edad_min, edad_max):
     cargo = str(fila.get("cargo_norm") or "")
@@ -13,6 +28,10 @@ def motivo_cuarentena(fila, sbu, min_sbu, edad_min, edad_max):
         return "cargo_jubilado"
     if total is None or pd.isna(total) or total <= 0:
         return "sueldo_no_positivo"
+    # antes del umbral de SBU: un sueldo negativo compensado por variable dejaría
+    # total > 0 y se colaría como fila limpia.
+    if _hay_negativo(fila):
+        return "composicion_negativa"
     if total < min_sbu * sbu:
         return "sueldo_bajo_sbu"
     if edad is not None and not (edad_min <= edad <= edad_max):
