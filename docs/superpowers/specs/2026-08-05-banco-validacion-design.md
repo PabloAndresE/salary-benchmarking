@@ -1,5 +1,17 @@
 # Sub-proyecto 1 — Banco de validación y baseline — Diseño
 
+> ⚠️ **Correcciones pendientes**, ver [`../../revision_jueces.md`](../../revision_jueces.md) y D-009.
+>
+> | Sección | Qué cambia |
+> |---|---|
+> | **§5** | La referencia está ponderada **por persona**: una empresa con 3.000 personas en una celda define el mercado aunque haya ≥3 empresas. Pasar a **ponderación por empresa**. Bloqueante: cambia todos los números |
+> | **§5** | La media en espacio log se sustituye por **mediana** (medido: 0,0533 de diferencia, y no neutral entre métodos). La curva baja de 30 a 8 umbrales |
+> | **§4** | El nulo solo-texto usa **embeddings de Vertex**, no TF-IDF: el emparejamiento por caracteres invierte la jerarquía (medido) |
+> | **§6.1** | Se reportan **MAE y RMSE**, con MAE como principal |
+> | **§9** | El pre-registro debe cerrar los **tres** elementos de D-005 Enmienda 1 — granularidad, familia **y pesos** |
+> | nuevo | Medir la **ruta de servicio**: acierto de (título, centro, antigüedad) → arquetipo sobre empresas held-out |
+
+
 > Primer sub-proyecto del núcleo de tesis. Construye **el instrumento de medida antes que el
 > modelo** (D-002): un banco que recibe cualquier forma de agrupar personas y dice cómo de bien
 > mide, comparada con el `CARGO` y con una escalera de referencias.

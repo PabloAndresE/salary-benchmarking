@@ -806,3 +806,57 @@ El caché no es una optimización de rendimiento: es lo que convierte "qué colu
 decisión **reversible**. Mientras la fuente sea una API que hay que volver a golpear, cada omisión se
 paga en horas — y eso empuja a querer decidirlo todo por adelantado, que es justo lo que no se puede
 hacer en investigación.
+
+---
+
+## D-009 — Revisión por panel de jueces: siete correcciones aceptadas
+
+**Fecha:** 2026-08-07 · **Informe completo:** [`revision_jueces.md`](revision_jueces.md)
+
+### Contexto
+
+Cuatro revisiones independientes del diseño del núcleo —metodólogo estadístico, aprendizaje de
+representación, práctica de compensaciones, y tribunal de tesis— con el encargo explícito de atacar
+la idea. Ninguno vio el informe de los otros.
+
+### Lo que invalidó
+
+**D-007 queda anulado en su uso previsto.** Dos jueces demuestran, por vías independientes, que los
+must-links definidos como *"la misma etiqueta de cargo"* tienen distancia de texto exactamente 0 y
+por tanto el criterio converge al nulo solo-texto. No pueden arbitrar entre bloques. La compuerta de
+E5 sigue pasando (2.511 grupos, 29%), pero el criterio hay que rehacerlo con must-links entre
+**cadenas distintas** y con cannot-links.
+
+**El §7 del spec de clustering contradice al §3 principio 4.** El principio dice que la selección de
+modelo no usa la métrica salarial; el §7 afina el peso de bloque contra dispersión salarial en
+held-out. Y el pre-registro cubre dos de los tres elementos que D-005 Enmienda 1 enumeró: los pesos
+quedaron fuera.
+
+### Decisión: se aceptan las siete correcciones
+
+| # | Corrección | Dónde |
+|---|---|---|
+| 1 | Ponderar la referencia salarial **por empresa**, no por persona | spec del banco §5 |
+| 2 | **Normalización MFA** (primer valor singular) en vez de peso de bloque afinado | spec de clustering §5, §7 |
+| 3 | Escribir `preregistro.md` cerrando los **tres** elementos, pesos incluido | nuevo |
+| 4 | Rehacer los must-links: entre cadenas distintas, con cannot-links | D-007 |
+| 5 | Escribir el enmarque de novedad frente a Job2Vec, Djumalieva y TWICE | marco teórico |
+| 6 | Medir la ruta de servicio (título → arquetipo) sobre empresas held-out | nuevo |
+| 7 | Sacar `edad` del modelo de nivel y anclarlo a definición externa (NCS del BLS) | spec de clustering §6 |
+
+**Prioridad 1 es bloqueante:** cambia todos los números del banco, así que tiene que estar antes de
+producir el primero. Ninguna de las siete toca el pipeline de ingesta.
+
+### Correcciones de enmarque
+
+- *"El CARGO no sirve"* pasa a *"el CARGO **tal como se captura en los estudios actuariales
+  ecuatorianos** no sirve"*: Torres et al. (2018) miden el título del puesto en ≈1/5 de la varianza
+  del log-salario sobre datos administrativos limpios.
+- El η²_empresa de 0,34–0,39 **probablemente está sobreestimado** por sesgo de movilidad limitada, y
+  es uno de los números que sostiene el leave-company-out. Cuantificarlo o acotarlo.
+
+### El patrón, otra vez
+
+D-006 registró que tres decisiones independientes favorecían la hipótesis propia sin intención.
+**D-007 fue la cuarta**, y dos jueces lo señalaron con esas palabras. El sesgo no se corrige
+detectándolo una vez: hay que buscarlo activamente en cada decisión.

@@ -1,5 +1,17 @@
 # Clustering de arquetipos de puesto (rol-familia × nivel) — Diseño
 
+> ⚠️ **Este documento tiene correcciones pendientes.** Se conserva como registro de lo que aprobó el
+> panel de tres jueces del 4-ago; lo que cambió después está en
+> [`../../revision_jueces.md`](../../revision_jueces.md) y en D-009 del registro de decisiones.
+>
+> | Sección | Qué cambia |
+> |---|---|
+> | **§5** | *"varianza unitaria por bloque"* está ambigua en un factor de 25–200×. Se sustituye por **normalización MFA** (primer valor singular), que además elimina el peso de bloque como hiperparámetro |
+> | **§6** | El modelo de nivel usa `edad`, antigüedad y rank de pago: eso es una **banda de senioridad personal**, no un nivel de puesto. Sacar `edad` y anclar a definición externa (work level del NCS) |
+> | **§7** | *"peso de bloque afinado contra dispersión salarial en held-out"* **contradice al §3 principio 4** y abre el agujero del pre-registro. Se elimina: lo resuelve MFA |
+> | **§10 (E5)** | Los must-links definidos como "la misma etiqueta" son degenerados. Rehacer entre **cadenas distintas**, con cannot-links |
+
+
 > Núcleo de la tesis (MIA-USFQ) y del producto (ActuaLab). Rediseñado tras un panel de 3 jueces (metodólogo, ML, compensaciones). Alcance = **núcleo de tesis**; los endurecimientos de producto quedan como roadmap documentado (§12).
 
 ## 1. Problema y objetivo

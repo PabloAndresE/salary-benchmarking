@@ -1,5 +1,20 @@
 # Banco de validación y baseline — Plan de implementación
 
+> 🛑 **OBSOLETO — NO EJECUTAR.** Escrito antes de dos revisiones que cambiaron sus cimientos.
+> Se conserva como registro; **hay que reescribirlo antes de ejecutar ninguna tarea.**
+>
+> **Cambió por la revisión de las 16 decisiones** (D-006): mediana en vez de media en log, con curva
+> de 8 umbrales; embeddings de Vertex en vez de TF-IDF; MAE **y** RMSE; k de los baselines por
+> estabilidad y no fijo; reducción de dimensiones por varianza explicada al 80%.
+>
+> **Y por la revisión de jueces** (D-009): ponderar la referencia por empresa; normalización MFA en
+> vez de peso de bloque; must-links rehechos; medir la ruta de servicio.
+>
+> Lo que **sí sigue siendo válido**: la estructura de módulos, la prueba de aceptación con data
+> sintética de respuesta conocida (Tarea 8), el split por empresa estratificado, y la regla de
+> donantes (≥5 personas de ≥3 empresas).
+
+
 > **Para trabajadores agénticos:** SUB-SKILL REQUERIDO: usar `superpowers:subagent-driven-development`
 > (recomendado) o `superpowers:executing-plans` para ejecutar este plan tarea por tarea. Los pasos
 > usan casillas (`- [ ]`) para seguimiento.
