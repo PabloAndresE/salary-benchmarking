@@ -700,7 +700,75 @@ no se puede escribir en un pre-registro; por eso se promedia.
 
 ---
 
-## 14. Mediciones pendientes
+## 14. Los embeddings son ciegos a la jerarquía
+
+**Fecha:** 2026-08-11. **Fuente:** `research/experimentos/e0_banco/diagnostico_nivel_embeddings.py`.
+**Modelo:** `text-multilingual-embedding-002`, tarea `CLUSTERING`, 668 etiquetas reales del marco
+2024-2025 (las 4.000 más frecuentes cubren 897.893 personas).
+
+**La pregunta:** el arquetipo es rol-familia × **nivel**. ¿Los embeddings codifican el nivel, o hay
+que dárselo aparte? Ya se había medido que el emparejamiento por caracteres invierte la jerarquía
+(§9), pero eso era TF-IDF. Suponerlo de los embeddings sin medirlo sería repetir D-010.
+
+**El diseño:** pares construidos con etiquetas reales.
+*Par de nivel* = misma área, distinto rango. *Par de área* = mismo rango, distinta área.
+
+### El resultado
+
+| Pares que se diferencian sólo en… | Similitud coseno (media) |
+|---|---|
+| el **rango** — `AUXILIAR DE BODEGA` / `JEFE DE BODEGA` | **0,857** |
+| el **área** — `JEFE DE BODEGA` / `JEFE DE VENTAS` | 0,764 |
+
+**Diferencia: −0,093.** Un gerente y un auxiliar del mismo área se parecen **más** que dos jefes de
+áreas distintas. El embedding está dominado por el tema.
+
+Y el tamaño del salto jerárquico casi no cambia nada:
+
+| Salto | Similitud | n |
+|---|---|---|
+| 1 escalón | 0,861 | 173 |
+| 2 escalones | 0,851 | 130 |
+| 3 escalones | 0,861 | 67 |
+| 4 escalones | 0,843 | 30 |
+
+De `AYUDANTE` a `DIRECTOR` la similitud baja 0,018. **Es indiferencia, no gradiente.**
+
+Peores casos: `GERENTE DE AUDITORIA` ↔ `JEFE DE AUDITORIA` **0,944**;
+`GERENTE DE CONTABILIDAD` ↔ `JEFE DE CONTABILIDAD` 0,939;
+`ASISTENTE DE MANTENIMIENTO ELECTRICO` ↔ `TECNICO MANTENIMIENTO ELECTRICO` 0,936.
+
+### Cobertura del léxico de rango
+
+Palabra de rango explícita en el cargo (`AYUDANTE, AUXILIAR, OPERARIO, OBRERO, ASISTENTE, TECNICO,
+ANALISTA, SUPERVISOR, COORDINADOR, ESPECIALISTA, JEFE, SUBGERENTE, GERENTE, DIRECTOR`):
+
+| | |
+|---|---|
+| Etiquetas distintas que la llevan | 51,1% |
+| **Personas cubiertas** | **38,6%** |
+
+Reparto: `ASISTENTE` 7,8%, `AUXILIAR` 6,6%, `JEFE` 3,6%, `AYUDANTE` 3,5%, `OBRERO` 2,6%,
+`TECNICO` 2,6%, `ANALISTA` 2,5%, `SUPERVISOR` 2,4%, `OPERARIO` 2,4%, `COORDINADOR` 1,9%,
+`GERENTE` 1,7%, resto <1%.
+
+### Consecuencias
+
+1. **Los embeddings sí resuelven los sinónimos** —por eso reconocen el área con cualquier rango—
+   **y no resuelven el nivel.**
+2. **Un normalizador de sinónimos con LLM no arregla lo que falta.** Fusionar
+   `VENDEDOR = ASESOR COMERCIAL` no dice quién manda. Resolvería un problema ya resuelto.
+3. **El modelo de nivel del sub-proyecto 3 deja de ser una suposición y pasa a estar justificado.**
+4. El léxico de rango da un 38,6% gratis, determinista y auditable. Para el resto quedan el
+   catálogo del MDT (niveles A–E oficiales) y, si hace falta, un LLM **de nivel** — validable
+   contra ese 38,6% donde la respuesta se conoce, lo que responde la objeción de caja negra.
+5. **El rival `solo_texto` ya es el "CARGO normalizado".** Agrupa por significado, con los sinónimos
+   fusionados, a cardinalidad igualada. La objeción *"le amarraste una mano a `CARGO` por no
+   limpiarlo"* está contestada por el diseño, sin normalizador aparte.
+
+---
+
+## 15. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
 |---|---|---|

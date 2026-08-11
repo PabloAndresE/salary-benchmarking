@@ -1281,3 +1281,62 @@ nueva** — porque lo es.
 
 Y una segunda, del defecto 5: **una cita que no se puede abrir no sostiene nada.** El valor de citar
 está en que el lector pueda verificarlo; si el autor no pudo, el lector tampoco.
+
+
+---
+
+## D-012 — No hace falta normalizar los cargos antes de agrupar
+
+**Fecha:** 2026-08-11
+**Pregunta:** ¿conviene normalizar las etiquetas de cargo con un LLM antes de clusterizar, o los
+embeddings ya se encargan?
+
+### La medición
+
+`mediciones.md` §14, sobre 668 etiquetas reales con `text-multilingual-embedding-002`:
+
+| Pares que se diferencian sólo en… | Similitud |
+|---|---|
+| el **rango** | **0,857** |
+| el **área** | 0,764 |
+
+Un gerente y un auxiliar del mismo área se parecen más que dos jefes de áreas distintas. Y el
+tamaño del salto jerárquico casi no cambia la similitud: 0,861 con un escalón, 0,843 con cuatro.
+
+### La decisión
+
+**No se añade un normalizador de etiquetas.** El razonamiento tiene tres partes:
+
+1. Los embeddings **sí** resuelven los sinónimos. Es justamente por eso que reconocen el área con
+   cualquier rango.
+2. Lo que no resuelven es el **nivel** — y un normalizador de sinónimos tampoco lo resolvería.
+   Fusionar `VENDEDOR = ASESOR COMERCIAL` no dice quién manda. Sería trabajo, coste y una caja
+   negra en la tesis para un problema que ya está resuelto.
+3. El rival `solo_texto` **ya cumple el papel** de "CARGO normalizado": agrupa por significado, con
+   los sinónimos fusionados, a cardinalidad igualada. Si el arquetipo le gana, limpiar las
+   etiquetas no habría salvado a `CARGO`.
+
+### Lo que sí queda establecido
+
+El **modelo de nivel** (sub-proyecto 3) pasa de suposición a requisito con evidencia. Sus fuentes,
+por orden de preferencia:
+
+- **Léxico de rango**: 38,6% de las personas lo llevan escrito. Determinista, gratis, auditable.
+- **Catálogo sectorial del MDT**: niveles A–E oficiales por contenido de puesto. Citable.
+- **LLM de nivel**, sólo si hace falta para el resto. Aquí sí es defendible, y por una razón que no
+  aplicaba al normalizador: *"¿está `JEFE` por encima de `AUXILIAR`?"* es conocimiento verificable,
+  y **se puede validar contra el 38,6% donde la respuesta se conoce** antes de aplicarlo al resto.
+
+### El control anti-sesgo
+
+Si en algún momento se normalizan las etiquetas para el arquetipo, **`CARGO NORMALIZADO` entra como
+rival**. Normalizar sube mucho la cobertura de `CARGO` —hoy su techo es 66,6% precisamente por tener
+65.081 etiquetas dispersas—, y usar la versión limpia sólo de nuestro lado sería amarrarle una mano
+al rival: el patrón de D-006, séptima aparición evitada.
+
+### Alternativa descartada
+
+**LLM que fusione etiquetas similares.** No es circular —no ve salarios—, pero es una
+transformación irreproducible que el tribunal no puede auditar, y resuelve el problema equivocado.
+El catálogo del MDT ofrece sinónimos **oficiales** entre cadenas distintas para el caso de que
+hicieran falta.
