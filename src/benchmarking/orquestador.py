@@ -63,10 +63,16 @@ def _una_plantilla(e, base_url, descargar):
     if not raw:
         return None, "sin_plantilla"
     try:
-        m = parsear_plantilla(raw)[["identificacion", "comisiones", "extras", "otros"]].copy()
+        p = parsear_plantilla(raw)
+        m = p[["identificacion", "comisiones", "extras", "otros"]].copy()
     except Exception as exc:                              # noqa: BLE001 — XLSX corrupto / columna ausente
         print(f"[composicion] estudio {e.numero_proceso} ilegible: {type(exc).__name__}: {exc}")
         return None, "fallo_parseo"
+    # El cargo que escribio el EMPLEADOR: segunda etiqueta del mismo puesto, independiente
+    # de la del estudio actuarial. Donde coinciden, la etiqueta es fiable; donde divergen,
+    # hay etiqueta colapsada. Opcional: no todas las plantillas traen la columna, y su
+    # ausencia no debe tumbar la composicion del estudio.
+    m["cargo_plantilla"] = p["cargo"].astype("string") if "cargo" in p.columns else pd.NA
     m["identificacion"] = m["identificacion"].astype(str)
     m["_ced_key"] = m["identificacion"].map(_ced_key)
     m["numero_proceso"] = e.numero_proceso
@@ -114,6 +120,7 @@ def _composicion_estudios(estudios, base_url, descargar, max_workers=8):
         "otros": pd.Series(dtype=float),
         "numero_proceso": pd.Series(dtype=str),
         "_ced_key": pd.Series(dtype=str),
+        "cargo_plantilla": pd.Series(dtype="string"),
     }), conteo
 
 def _ensamblar(base, scvs, base_url, settings, descargar, max_workers):

@@ -3,7 +3,24 @@ import sys
 from google.cloud import bigquery
 from .config.settings import cargar_settings
 from .orquestador import construir_base, construir_universo
+from .adquisicion.plantilla_client import descargar_plantilla
 from .escritura.bigquery_sink import escribir, tabla_existe, procesos_existentes
+
+
+def _con_cache(s):
+    """`descargar_plantilla` con el caché de GCS enganchado, si hay bucket configurado.
+
+    Sin bucket la corrida funciona igual; lo único que se pierde es que cada reproceso
+    vuelve a golpear la API (~10 h para los estudios con plantilla).
+    """
+    if not s.gcs_bucket_plantillas:
+        print("[cache] sin bucket configurado: las plantillas no se cachean")
+        return descargar_plantilla
+    from functools import partial
+    from .adquisicion.cache_plantillas import CacheGCS
+    print(f"[cache] plantillas en gs://{s.gcs_bucket_plantillas}/plantillas")
+    return partial(descargar_plantilla, cache=CacheGCS(s.gcs_bucket_plantillas))
+
 
 def main():
     ap = argparse.ArgumentParser(prog="benchmarking")
@@ -23,10 +40,11 @@ def main():
     args = ap.parse_args()
     s = cargar_settings()
     client = bigquery.Client()
+    descargar = _con_cache(s)
 
     if args.cmd == "construir-base":
-        df = construir_base(client, s.actuafast_base_url, s,
-                            limite=args.muestra, max_workers=args.concurrencia)
+        df = construir_base(client, s.actuafast_base_url, s, limite=args.muestra,
+                            descargar=descargar, max_workers=args.concurrencia)
         print(f"nomina_features: {len(df)} filas")
         if not args.dry_run and len(df):
             tid = escribir(df, client, s.bq_project, s.bq_dataset)
@@ -44,7 +62,8 @@ def main():
             estado["creada"] = True
         total = construir_universo(client, s.actuafast_base_url, s,
                                    escribir_lote=escribir_lote, batch_size=args.batch_size,
-                                   max_workers=args.concurrencia, hechos=hechos)
+                                   max_workers=args.concurrencia, descargar=descargar,
+                                   hechos=hechos)
         print(f"universo: {total} filas escritas (reanudó saltando {len(hechos)} estudios)")
 
 if __name__ == "__main__":

@@ -66,6 +66,45 @@ def test_4xx_distinto_de_404_se_marca_como_rechazo_determinista():
         descargar_plantilla("1","v","http://x", session=ses, espera=_sin_espera)
     assert ses.get.call_count == 1        # no se reintenta un rechazo determinista
 
+def test_cache_evita_la_descarga():
+    # El motivo del cache no es velocidad: es que cambiar QUE columnas se extraen de la
+    # plantilla deje de costar 10 horas de re-descarga.
+    from benchmarking.adquisicion.cache_plantillas import CacheMemoria
+    cache = CacheMemoria()
+    cache.guardar("1", "v", b"xlsxguardado")
+    ses = MagicMock()
+    out = descargar_plantilla("1", "v", "http://x", session=ses, cache=cache)
+    assert out == b"xlsxguardado"
+    assert ses.get.call_count == 0, "no debe tocar la red si esta en cache"
+
+
+def test_cache_guarda_lo_descargado():
+    from benchmarking.adquisicion.cache_plantillas import CacheMemoria
+    cache = CacheMemoria()
+    ses = MagicMock(); ses.get.return_value = _resp(200)
+    descargar_plantilla("1", "v", "http://x", session=ses, cache=cache)
+    assert cache.leer("1", "v") == b"xlsxbytes"
+
+
+def test_cache_recuerda_la_ausencia_de_plantilla():
+    # Los ~36.000 estudios de 2023 o antes devuelven 404. Sin cachear la AUSENCIA,
+    # cada reproceso vuelve a preguntarle 36.000 veces lo mismo a la API.
+    from benchmarking.adquisicion.cache_plantillas import CacheMemoria, AUSENTE
+    cache = CacheMemoria()
+    ses = MagicMock(); ses.get.return_value = _resp(404)
+    assert descargar_plantilla("1", "v", "http://x", session=ses, cache=cache) is None
+    assert cache.leer("1", "v") == AUSENTE
+
+    ses2 = MagicMock()
+    assert descargar_plantilla("1", "v", "http://x", session=ses2, cache=cache) is None
+    assert ses2.get.call_count == 0, "la ausencia cacheada tampoco debe tocar la red"
+
+
+def test_sin_cache_funciona_igual():
+    ses = MagicMock(); ses.get.return_value = _resp(200)
+    assert descargar_plantilla("1", "v", "http://x", session=ses) == b"xlsxbytes"
+
+
 def test_espera_progresiva_entre_reintentos():
     esperas = []
     ses = MagicMock()

@@ -1,5 +1,6 @@
 import time
 import requests
+from .cache_plantillas import AUSENTE
 
 _HEADERS = {"User-Agent": "Mozilla/5.0", "Accept": "*/*"}
 _5XX = (500, 502, 503, 504)
@@ -24,7 +25,7 @@ class PlantillaRechazada(Exception):
 
 
 def descargar_plantilla(numero_proceso, id_version, base_url, session=None,
-                        reintentos=3, espera=time.sleep):
+                        reintentos=3, espera=time.sleep, cache=None):
     """Descarga la plantilla-modificada de un estudio.
 
     Devuelve los bytes del XLSX, o `None` si el estudio no tiene plantilla (404).
@@ -33,7 +34,15 @@ def descargar_plantilla(numero_proceso, id_version, base_url, session=None,
     Se reintenta tanto ante 5xx como ante **fallos de conexión** (SSLError, timeouts,
     reset). Esto último es lo que rompía con concurrencia alta: la excepción escapaba
     del bucle sin reintentar y el estudio se descartaba en silencio.
+
+    Con `cache` (ver `cache_plantillas`), se consulta antes de salir a la red y se
+    guarda el resultado — incluida la **ausencia** de plantilla, que es el caso
+    mayoritario en los años antiguos.
     """
+    if cache is not None:
+        guardado = cache.leer(numero_proceso, id_version)
+        if guardado is not None:
+            return guardado or None          # AUSENTE (b"") -> no hay plantilla
     ses = session or requests.Session()
     url = f"{base_url.rstrip('/')}/estudios/{numero_proceso}/version/{id_version}/plantilla-modificada"
     ultimo = None
@@ -43,12 +52,16 @@ def descargar_plantilla(numero_proceso, id_version, base_url, session=None,
         except requests.exceptions.RequestException as exc:   # SSL, conexión, timeout
             ultimo = f"{type(exc).__name__}: {exc}"
         else:
-            if resp.status_code == 404:
-                return None                                   # hecho, no fallo: no se reintenta
+            if resp.status_code == 404:                       # hecho, no fallo: no se reintenta
+                if cache is not None:
+                    cache.guardar(numero_proceso, id_version, AUSENTE)
+                return None
             if resp.status_code not in _5XX:
                 if 400 <= resp.status_code < 500:
                     raise PlantillaRechazada(f"{url}: HTTP {resp.status_code}")
                 resp.raise_for_status()
+                if cache is not None:
+                    cache.guardar(numero_proceso, id_version, resp.content)
                 return resp.content
             ultimo = f"HTTP {resp.status_code}"
         if intento < reintentos - 1:

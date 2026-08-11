@@ -22,7 +22,8 @@ _DTYPES_CANONICOS = {
     "tiene_composicion": "boolean", "en_clean": "boolean",
     # strings nullable (evita que columnas SCVS all-NaN deriven a float/object)
     "numero_proceso": "string", "id_version": "string", "empresa_ruc": "string",
-    "cargo": "string", "cargo_norm": "string", "sexo": "string", "centro_de_costo": "string",
+    "cargo": "string", "cargo_norm": "string", "cargo_plantilla": "string",
+    "sexo": "string", "centro_de_costo": "string",
     "motivo_cuarentena": "string", "segmento": "string", "ciiu_n1": "string",
     "ciiu_n6": "string", "provincia": "string", "id_hash": "string",
     # NOTA: no forzar "fecha_ingreso" -- llega desde BigQuery como DATE (db-dtypes

@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     # rendimiento cae. El antiguo valor 8 perdía ~80% de las plantillas y además era
     # 5x más lento. No subir sin volver a medir.
     descargas_concurrentes: int = 4              # PIPELINE_DESCARGAS_CONCURRENTES
+    # Bucket del cache de plantillas crudas (PIPELINE_GCS_BUCKET_PLANTILLAS).
+    # Vacio = sin cache. Con cache, cambiar que columnas se extraen de la plantilla
+    # cuesta minutos en vez de ~10 horas de re-descarga.
+    gcs_bucket_plantillas: str = ""
 
     def get_sbu(self, anio: int) -> int:
         return self.sbu.get(anio, max(self.sbu.values()))

@@ -21,6 +21,10 @@ if "%PIPELINE_SALT%"=="" (
   exit /b 1
 )
 
+REM Cache de plantillas crudas: sin esto, cambiar que columnas se extraen cuesta ~10 h
+REM de re-descarga. Ver D-008 en docs/registro_decisiones.md.
+set PIPELINE_GCS_BUCKET_PLANTILLAS=act-cicd-stage-prueba-plantillas
+
 set PYTHONPATH=src
 echo [correr_universo] arranque %DATE% %TIME% >> corrida_universo.log
 .venv\Scripts\python.exe -u -m benchmarking.cli construir-universo --batch-size=100 >> corrida_universo.log 2>> corrida_universo.err.log

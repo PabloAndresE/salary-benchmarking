@@ -170,6 +170,64 @@ def test_construir_base_concurrente_resiliente(monkeypatch, plantilla_xlsx_bytes
     assert (~df[df.numero_proceso=="P2"]["tiene_composicion"]).all()
     assert df[df.numero_proceso=="P1"]["tiene_composicion"].all()
 
+def test_conserva_el_cargo_de_la_plantilla(monkeypatch, plantilla_xlsx_bytes):
+    # La plantilla trae el cargo escrito por el EMPLEADOR: una segunda etiqueta del mismo
+    # puesto, independiente de la del estudio actuarial. Donde coinciden, la etiqueta es
+    # fiable (buen must-link); donde divergen, hay etiqueta colapsada. Se tiraba.
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["G"],"ciiu_n1":["G"],"ciiu_n6":["G1"],"n_empleados":[10]})
+        else:
+            m.to_dataframe.return_value = pd.DataFrame({
+                "identificacion":["1700000001","1700000002"],
+                "numero_proceso":["P1","P1"], "id_version":["v","v"],
+                "anio_valoracion":[2025,2025], "empresa_ruc":["1790011111001"]*2,
+                "cargo":["TRABAJADOR EN GENERAL","OPERARIO"],   # etiqueta del estudio
+                "centro_de_costo":["X","X"], "sexo":["F","M"], "edad":[30,40],
+                "sueldo":[600.0,500.0], "remuneracion_promedio":[None,None],
+                "fecha_ingreso":[dt.date(2014,1,1)]*2})
+        return m
+    runner.query.side_effect = fake_query
+    df = construir_base(runner, "http://x", s, descargar=lambda *a, **k: plantilla_xlsx_bytes)
+
+    assert "cargo_plantilla" in df.columns
+    # el fixture trae VENDEDOR y OPERARIO como cargos del empleador
+    fila = df[df.cargo == "TRABAJADOR EN GENERAL"].iloc[0]
+    assert fila.cargo_plantilla == "VENDEDOR", "debe traer la etiqueta del empleador, no la del estudio"
+    assert fila.cargo == "TRABAJADOR EN GENERAL", "la etiqueta original no se toca"
+
+
+def test_plantilla_sin_columna_cargo_no_rompe(monkeypatch):
+    # Regresion: si una plantilla no trae columna de cargo, el estudio debe seguir
+    # aportando composicion en vez de caer entero a fallo_parseo.
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock()
+        if "scvs" in sql.lower() or "balances" in sql.lower():
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["G"],"ciiu_n1":["G"],"ciiu_n6":["G1"],"n_empleados":[10]})
+        else:
+            m.to_dataframe.return_value = pd.DataFrame({
+                "identificacion":["1700000001"], "numero_proceso":["P1"], "id_version":["v"],
+                "anio_valoracion":[2025], "empresa_ruc":["1790011111001"], "cargo":["X"],
+                "centro_de_costo":["C"], "sexo":["F"], "edad":[30], "sueldo":[600.0],
+                "remuneracion_promedio":[None], "fecha_ingreso":[dt.date(2014,1,1)]})
+        return m
+    runner.query.side_effect = fake_query
+    monkeypatch.setattr("benchmarking.orquestador.parsear_plantilla", lambda raw: pd.DataFrame({
+        "identificacion": ["1700000001"], "comisiones": [400.0], "extras": [0.0], "otros": [0.0]}))
+    df = construir_base(runner, "http://x", s, descargar=lambda *a, **k: b"fake")
+    assert df["tiene_composicion"].all()
+    assert df["cargo_plantilla"].isna().all()
+
+
 def test_enlace_tolera_cedulas_sin_cero_inicial(monkeypatch):
     # La plantilla guarda las cedulas sin el cero inicial (pasaron por formato numerico),
     # la base BQ si lo conserva. El enlace por texto exacto perdia TODA cedula de las

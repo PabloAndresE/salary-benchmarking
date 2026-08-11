@@ -42,6 +42,7 @@ gcloud run jobs deploy "$JOB" \
   --image "$IMAGE" --region "$REGION" --project "$PROJECT" \
   --service-account "$JOB_SA" \
   --set-secrets "PIPELINE_SALT=benchmarking-pipeline-salt:latest" \
+  --set-env-vars "PIPELINE_GCS_BUCKET_PLANTILLAS=${PROJECT}-plantillas" \
   --args "construir-universo,--batch-size=500" \
   --task-timeout=24h --max-retries=3 --memory=2Gi --cpu=2
 
