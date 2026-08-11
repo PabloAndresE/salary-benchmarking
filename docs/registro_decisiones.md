@@ -772,6 +772,13 @@ descubrir.
 
 **Fecha:** 2026-08-07
 
+> ❌ **La premisa de la primera mitad de esta decisión resultó FALSA.** Medido el 2026-08-11:
+> `cargo` y `cargo_plantilla` son **la misma cadena en el 100% de los casos** (4.323 personas, cero
+> excepciones). No son dos etiquetas independientes: el estudio actuarial se construye a partir de
+> la plantilla, así que el campo `cargo` es una copia. Ver **D-010**.
+>
+> **El caché en GCS —la segunda mitad— sigue siendo válido y está en producción.**
+
 ### Contexto
 
 `parsear_plantilla` extrae el cargo de la plantilla, pero `_una_plantilla` solo conserva
@@ -860,3 +867,86 @@ producir el primero. Ninguna de las siete toca el pipeline de ingesta.
 D-006 registró que tres decisiones independientes favorecían la hipótesis propia sin intención.
 **D-007 fue la cuarta**, y dos jueces lo señalaron con esas palabras. El sesgo no se corrige
 detectándolo una vez: hay que buscarlo activamente en cada decisión.
+
+---
+
+## D-010 — `cargo` y `cargo_plantilla` son la misma columna: no hay segunda etiqueta
+
+**Fecha:** 2026-08-11
+
+### La medición
+
+Con `cargo_plantilla` ya poblado en el reproceso, sobre 4.323 personas de 100 estudios de 2025 con
+ambas columnas presentes y `en_clean`:
+
+| | |
+|---|---|
+| Cadenas idénticas | **100,0%** |
+| Cadenas distintas | 0,0% |
+| Pares distintos | **0** |
+
+Inspección directa de los valores crudos: `cargo`, `cargo_norm` y `cargo_plantilla` coinciden
+carácter a carácter, incluidas cadenas largas como
+`TRABAJADORES DE PRODUCCION: PESADORES DE CAJAS, ANOTADORES Y ESTIBADORES DE CAJAS PARA CONGELACION,
+TOLVERO, CLASIFICACION`.
+
+### Por qué
+
+**El estudio actuarial se construye a partir de la plantilla que sube el cliente.** El campo `cargo`
+de la base de estudios no es una etiqueta independiente: es una copia de la de la plantilla. Nunca
+hubo dos fuentes.
+
+### Cómo se llegó al error
+
+La premisa de D-008 —*"segunda etiqueta del mismo puesto, independiente de la del estudio
+actuarial"*— venía del handoff §5, que planteaba ese mecanismo con la `profesion` del Registro Civil
+(que **sí** sería independiente) y se trasladó a `cargo_plantilla` **sin verificarlo**.
+
+Se reforzó con una inferencia descuidada: en un smoke test se vio
+`'ASESORA COMERCIAL LINEA ESTETICA'` en una plantilla y se supuso que el estudio diría el genérico
+`'ASESOR COMERCIAL'`. **Nunca se compararon las dos columnas para la misma persona.** La medición
+costaba una consulta y se hizo cuatro días tarde, con tres decisiones ya construidas encima.
+
+### Qué se cae
+
+- **El detector de fiabilidad por coincidencia entre etiquetas.**
+- **La fuente de must-links entre cadenas distintas que iba a rescatar a D-007.** Sigue sin haber
+  criterio no circular para pesos de bloque desde esta vía.
+- **La justificación principal de D-008.**
+- **Parte del análisis de dos jueces.** Ambos calificaron `cargo_plantilla` como "el activo
+  infravalorado del proyecto" y "la única fuente no circular de restricciones informativas y de
+  cannot-links". Partieron de una premisa falsa suministrada en el encargo; el error es propio, no
+  suyo. Anotado en `revision_jueces.md`.
+
+### Qué se salva
+
+- **El caché en GCS.** Vale por sí solo: convierte cualquier cambio futuro sobre qué extraer de la
+  plantilla en minutos en vez de horas. Está lleno y en producción.
+- **Las tablas sectoriales del Ministerio del Trabajo.** Su columna de comentarios es un diccionario
+  de sinónimos **oficial y entre cadenas distintas** (*"AYUDANTE DE TOPÓGRAFO — INCLUYE CADENERO,
+  PERFILERO, NIVELADOR, PRISMERO, MOCHILERO"*). No dependía de la premisa falsa, y ahora es **la
+  única vía viable** para must-links informativos.
+- **La `profesion` del Registro Civil** (handoff §5, flag apagado pendiente de aprobación legal).
+  Esa sí sería una etiqueta genuinamente independiente, porque viene de otra fuente.
+
+### Consecuencia sobre el diseño
+
+La corrección 4 de D-009 —rehacer los must-links— **pierde una de sus dos fuentes**. Queda solo el
+catálogo sectorial, lo que sube la prioridad de parsear el Acuerdo MDT-2019-395 (249 páginas) para
+extraer la estructura ocupacional y los sinónimos.
+
+Y refuerza la opción de resolver el peso de bloque **sin restricciones**, por normalización MFA
+(corrección 2), que no depende de tener must-links de ninguna clase.
+
+### La columna se conserva, por ahora
+
+`cargo_plantilla` se sigue extrayendo. Cuesta una columna y sirve de verificación: la medición es
+sobre 100 estudios de 2025, y conviene reconfirmar el 100% sobre los ~12.000 de 2024–2025 cuando el
+reproceso termine. Si se confirma, se retira en una limpieza posterior.
+
+### Lección
+
+Es D-006 desde otro ángulo. Allí el patrón era *elegir* la opción que favorece la hipótesis; aquí es
+**no verificar una premisa cómoda antes de construir encima**. La regla operativa que se deriva:
+**toda premisa que habilite una decisión se mide antes de tomar la decisión, no después** — sobre
+todo cuando medirla cuesta una consulta.

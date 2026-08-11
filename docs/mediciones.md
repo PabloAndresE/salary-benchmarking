@@ -397,11 +397,39 @@ por qué TF-IDF de caracteres no sirve para este problema.
 
 ---
 
-## 10. Mediciones pendientes
+## 10. `cargo` frente a `cargo_plantilla`: son la misma columna
+
+**Fecha:** 2026-08-11 · **Alcance:** 4.323 personas de 100 estudios de 2025, `en_clean`, con ambas
+columnas presentes
+
+| | |
+|---|---|
+| Cadenas idénticas | **100,0%** |
+| Cadenas distintas | 0,0% |
+| Pares distintos | **0** |
+
+Inspección directa: `cargo`, `cargo_norm` y `cargo_plantilla` coinciden carácter a carácter,
+incluidas cadenas largas de tabla sectorial.
+
+**Lectura.** No hay segunda etiqueta independiente: el estudio actuarial se construye a partir de la
+plantilla del cliente, así que el campo `cargo` es una copia. **Invalida la premisa de D-008** y deja
+al catálogo sectorial como única vía viable para must-links entre cadenas distintas. Ver **D-010**.
+
+**Pendiente:** reconfirmar sobre los ~12.000 estudios de 2024–2025 cuando termine el reproceso. La
+medición es sobre 100.
+
+**Y una observación de paso:** las etiquetas más pobladas son literalmente entradas de tabla
+sectorial — `TRABAJADORES DE PRODUCCION: PESADORES DE CAJAS, ANOTADORES Y ESTIBADORES DE CAJAS PARA
+CONGELACION, TOLVERO, CLASIFICACION`. Confirma que el vocabulario del `CARGO` viene del catálogo del
+IESS, tal como decía el handoff, y refuerza el valor de emparejar contra él.
+
+---
+
+## 11. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
 |---|---|---|
-| **Acuerdo entre `cargo` y `cargo_plantilla`** | Decide si hay must-links informativos (entre cadenas distintas). Es el último input abierto del diseño | 1 consulta, tras el reproceso |
+| Reconfirmar `cargo` = `cargo_plantilla` sobre 2024–25 completo | La medición actual es sobre 100 estudios | 1 consulta |
 | Estructura ocupacional y sinónimos del MDT-2019-395 | Aporta niveles A–E por contenido de puesto y el diccionario oficial de sinónimos | parsear 249 pp. |
 | Cobertura de plantilla en 2023 con muestra mayor | Solo se sondearon 26 estudios, todos 404 | 1 sondeo |
 | Cuantificar el sesgo de movilidad limitada sobre η²_empresa | Es un número que sostiene el leave-company-out y probablemente está inflado | análisis |

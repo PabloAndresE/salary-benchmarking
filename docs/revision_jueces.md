@@ -16,6 +16,17 @@ y dónde se contradicen.
 Documentos que revisaron: los dos specs, `registro_decisiones.md` (D-001 a D-008) y el plan del
 banco.
 
+> ⚠️ **Aviso: una premisa del encargo era falsa.** Los revisores recibieron D-008, que afirmaba que
+> `cargo_plantilla` era *"una segunda etiqueta del mismo puesto, independiente de la del estudio
+> actuarial"*. **Medido después (D-010): son la misma cadena en el 100% de los casos.** El estudio
+> se construye a partir de la plantilla, así que el campo es una copia.
+>
+> Afecta a las conclusiones que apoyaban en esa fuente — dos jueces la calificaron como "el activo
+> infravalorado del proyecto" y "la única fuente no circular de restricciones informativas y de
+> cannot-links". **El error es del encargo, no de los revisores**, y su diagnóstico sobre por qué
+> los must-links actuales son degenerados (§1) sigue siendo válido: lo que cambia es que la salida
+> propuesta ya no existe por esa vía. Queda el catálogo sectorial.
+
 ---
 
 ## 1. La convergencia grave — D-007 está roto

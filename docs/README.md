@@ -83,6 +83,9 @@ Si solo retienes cinco cosas del expediente, que sean estas:
 5. **Ante dos opciones defendibles, sospecha de la que te conviene.** Cuatro decisiones de diseño
    resultaron favorecer la hipótesis propia sin que esa fuera la intención (D-006, y luego D-007).
    Es el sesgo que más ha costado detectar.
+6. **Toda premisa que habilite una decisión se mide antes de tomar la decisión.** D-010: se
+   construyeron tres decisiones sobre la idea de que `cargo_plantilla` era una etiqueta
+   independiente. Eran la misma columna, y comprobarlo costaba una consulta.
 
 ---
 
