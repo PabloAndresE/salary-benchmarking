@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     # cuesta minutos en vez de ~10 horas de re-descarga.
     gcs_bucket_plantillas: str = ""
 
+    # La revision del modelo entra en la clave de cache: si Google la cambia sin avisar,
+    # los resultados dejan de ser reproducibles y hay que enterarse (spec de clustering 11).
+    # LIMITE MEDIDO de este modelo: codifica el area y NO la jerarquia — pares que solo se
+    # diferencian en el rango puntuan 0,857 frente a 0,764 los que se diferencian en el
+    # area. El nivel viene de otra senal, no de aqui (D-012).
+    vertex_embedding_model: str = "text-multilingual-embedding-002"
+    vertex_location: str = "us-central1"
+    gcs_cache_embeddings: str = ""      # gs://bucket/ruta.npz, o vacio para no cachear
+
     def get_sbu(self, anio: int) -> int:
         return self.sbu.get(anio, max(self.sbu.values()))
 
