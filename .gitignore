@@ -33,3 +33,6 @@ dist/
 
 # log de la corrida local del universo
 corrida_universo*.log
+
+# descargas sueltas de investigacion
+*.html
