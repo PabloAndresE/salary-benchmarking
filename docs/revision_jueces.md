@@ -259,3 +259,92 @@ Señalada por el juez de representación:
 > El §7 afina el peso de bloque **contra dispersión salarial en held-out**.
 
 El spec se contradice a sí mismo. La corrección 2 (MFA) lo resuelve.
+
+---
+
+# Segunda ronda — auditoría de métricas, 2026-08-11
+
+Dos jueces de ML y evaluación, encargados sobre **la regla de medición**, no sobre el modelo. El
+disparador: el plan v2 estaba en ejecución y la siguiente tarea era escribir `referencia.py`. Una
+regla de medición torcida no se detecta midiendo.
+
+**Alcance:** spec del banco, plan v2 (tareas 2–6, 9, 11, 12, 14, 15), D-004/005/006/009/010,
+`mediciones.md` y esta misma bitácora.
+
+**Resultado:** la ejecución del plan se detuvo. Todo lo roto estaba **en el plan, no en el código** —
+el único archivo publicado que hubo que tocar fue una línea de `evaluacion/datos.py`. La consolidación
+completa, con la decisión tomada y las fuentes, está en **D-011** del registro de decisiones.
+
+## 10. Lo que aportó cada juez
+
+### El reformulador — "el MAE de la mediana es un caso degenerado"
+
+Su hallazgo central:
+
+> El CRPS de una predicción distribucional **colapsa exactamente al error absoluto cuando el
+> pronóstico es una masa puntual** (Gneiting & Raftery 2007).
+
+Y el corolario que paró el plan:
+
+> La mediana muestral de `m` donantes es un estimador ruidoso cuya varianza va como `1/m`, así que el
+> MAE observado incluye un término de ruido de estimación **decreciente en el tamaño de celda**.
+> Traducido: la métrica primaria actual favorece mecánicamente a las particiones de baja cardinalidad
+> —el arquetipo— por una razón que no tiene nada que ver con la calidad del agrupamiento.
+
+Es el patrón de D-006 otra vez, y esta vez escondido dentro de la propia métrica. Sexta aparición.
+
+### El auditor — el estimando, la curva y el techo
+
+Su veredicto, textual:
+
+> El instrumento está bien concebido y mal instrumentado: el estimador no estima lo que la métrica
+> puntúa, la curva error-cobertura que sostiene el criterio de éxito pre-registrado **no puede
+> dibujarse** con la perilla elegida, el techo que sirve de denominador a la frase-resultado está
+> ajustado sobre el test, y el intervalo que decidiría A o B no se calcula en ningún sitio del código.
+
+Siete defectos, nueve carencias y una propuesta constructiva —el modelo de dos componentes con pesos
+inverso-varianza— de la que caen, por derivación y sin hiperparámetros nuevos: la ponderación, la
+distribución predictiva, la perilla de confianza y la puntuación propia. Todo en D-011.
+
+## 11. El juez se corrige a sí mismo
+
+En una adenda posterior, **retiró su propia recomendación de AURC** al encontrar la demostración de que
+viola monotonicidad (Traub et al., NeurIPS 2024), y la sustituyó por AUGRC. También corrigió dos citas
+que él mismo había dado mal —Zaoui et al. es 2020, no 2023; la identidad CRPS-pinball es Gneiting &
+Ranjan 2011, no G&R 2007— y degradó Hodges-Lehmann de recomendación a chequeo de robustez.
+
+Vale la pena registrarlo: **un juez que se retracta con evidencia es más útil que uno que no se
+equivoca nunca.** Y confirma que las salidas de los jueces son insumo, no veredicto.
+
+## 12. Lo que no se pudo verificar
+
+El defecto 5 —que el "5 donantes" de OEWS es un parámetro de imputación por no respuesta y no un umbral
+de publicación, y que OEWS pondera por empleo y no por establecimiento— viene con cita textual de
+`methods_24.pdf`/`methods_25.pdf`. **No se pudo contrastar contra el documento primario:** `bls.gov`
+devuelve HTTP 403 a todo acceso automatizado desde este entorno, y el presupuesto de búsqueda web de la
+sesión estaba agotado.
+
+La cita se retira igual. Una cita que no se puede abrir no sostiene una decisión de método en una
+tesis, sea correcta o no. **Pendiente: abrir el PDF a mano.**
+
+## 13. Lo que la segunda ronda salva
+
+Coincide en buena parte con lo que salvaron los cuatro primeros, con dos añadidos propios:
+
+- **La arquitectura de la decisión.** Evaluación antes que modelo (D-002), criterio escrito antes de
+  mirar (D-004), interruptor de apagado A vs B con la conclusión redactada de antemano.
+- **No podar `CARGO`** (D-005). *"74,4% en una celda 'otros' no es un rival."* La cardinalidad igualada
+  la aporta el nulo solo-texto, que es la construcción correcta.
+- **Cobertura como co-primaria.** *"El diagnóstico es exacto —comparar solo el error favorece a quien
+  se calla—; lo que falla es el instrumento que la mide, no la idea."*
+- **La data sintética con roles separados por composición y no por sueldo** (D-006 #8), calificada como
+  *"la decisión más inteligente del expediente: sin ella, una partición por bandas salariales aprobaría
+  el examen."*
+- **Mediana en vez de media, por el motivo por el que se eligió.** Lo que D-011 corrige es la
+  ponderación, no la robustez.
+- **La nota final de D-006.** Otra vez. *"Buena parte de este informe es su aplicación a las decisiones
+  tomadas después de escribirla."*
+
+Y una observación menor que conviene anotar en el spec: como train y test no comparten empresas, el
+leave-company-out de `predecir()` **nunca se activa** en la evaluación real. No es un error —es red de
+seguridad—, pero el spec §5 lo presenta como la defensa activa, y la defensa activa es el split.

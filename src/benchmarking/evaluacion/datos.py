@@ -7,12 +7,18 @@ import pandas as pd
 # o similar no describe un puesto.
 _PLACEHOLDERS = {"0", "-", "NA", "N/A", ".", "--", "---", "S/N", "SN", "X", "", "NAN", "NONE"}
 
+# `sexo` se carga SÓLO para auditar la regla de abstención y para el Oaxaca (D-011).
+# Las celdas que no alcanzan donantes no son un subconjunto aleatorio —ocupaciones raras,
+# empresas pequeñas, provincias fuera de Pichincha y Guayas—, y bajar la cobertura puede
+# empeorar el riesgo de un subgrupo aunque el global mejore (Shah et al., ICML 2022). Sin
+# esta columna el banco no puede detectarlo.
+# NUNCA entra en el agrupamiento: es atributo protegido, no feature.
 SQL_MARCO = """
 SELECT id_hash, empresa_ruc, numero_proceso, anio_valoracion,
        cargo_norm, centro_de_costo, sueldo, total,
        pct_fijo, pct_comisiones, pct_extras, pct_otros,
        antiguedad_total, tiene_composicion, en_clean,
-       segmento, ciiu_n1, provincia
+       segmento, ciiu_n1, provincia, sexo
 FROM `{proyecto}.{dataset}.nomina_features`
 WHERE en_clean AND anio_valoracion IN ({anios})
 """

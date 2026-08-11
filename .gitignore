@@ -36,3 +36,4 @@ corrida_universo*.log
 
 # descargas sueltas de investigacion
 *.html
+.gstack/

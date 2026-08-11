@@ -66,3 +66,11 @@ def test_sql_no_pide_identificadores():
     assert "identificacion" not in SQL_MARCO
     assert "id_hash" in SQL_MARCO
     assert "en_clean" in SQL_MARCO
+
+
+def test_sql_carga_los_ejes_de_subgrupo_para_auditar_la_abstencion():
+    # D-011: las celdas que no alcanzan donantes no son un subconjunto aleatorio. Sin
+    # estos ejes el banco puede reportar un MAE excelente mientras la referencia se
+    # degrada para quien mas la necesita, y no enterarse.
+    for eje in ("sexo", "provincia", "segmento", "ciiu_n1"):
+        assert eje in SQL_MARCO, f"falta {eje}: la regla de abstencion queda sin auditar"

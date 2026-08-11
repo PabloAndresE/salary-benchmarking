@@ -955,3 +955,305 @@ Es D-006 desde otro ángulo. Allí el patrón era *elegir* la opción que favore
 **no verificar una premisa cómoda antes de construir encima**. La regla operativa que se deriva:
 **toda premisa que habilite una decisión se mide antes de tomar la decisión, no después** — sobre
 todo cuando medirla cuesta una consulta.
+
+---
+
+## D-011 — El estimador no estimaba lo que la métrica puntuaba
+
+**Fecha:** 2026-08-11
+**Origen:** auditoría de métricas encargada a dos jueces de ML/evaluación sobre el spec del banco,
+el plan v2 (tareas 2–6, 9, 11, 12, 14, 15) y D-004/005/006/009/010.
+**Estado:** decisión tomada; implementación pendiente (reescritura de las tareas 4, 5, 6, 12, 14, 15).
+
+### Por qué se auditó
+
+El plan v2 estaba en ejecución (tareas 1 y 2 commiteadas). Antes de escribir `referencia.py` se pidió
+una revisión adversarial de **la regla de medición**, no del modelo. El razonamiento: una regla torcida
+no se detecta midiendo, se detecta auditando la regla — y nueve semanas de resultados medidos con ella
+son irrecuperables.
+
+El encargo resultó rentable: **todo lo que se rompió estaba en el plan, no en el código**. Lo único
+publicado que hay que tocar es una línea de `evaluacion/datos.py`.
+
+### El defecto central
+
+`predecir()` iba a devolver **la mediana de las medianas de empresa**. Eso estima `median_f(m_f)`: la
+paga del *empleador típico*, un voto por empresa. Pero el MAE se evalúa contra la `y` de **personas**,
+y su minimizador es la mediana ponderada por persona de la mezcla.
+
+Son cantidades distintas siempre que el tamaño de la empresa correlacione con la paga. La justificación
+literal de D-006 #6 —*"la mediana minimiza el error absoluto: estimador y métrica emparejados"*— deja
+de ser cierta. **La corrección 1 de D-009 arregló un sesgo real y creó un desemparejamiento que nadie
+recalculó**, y su magnitud escala con la heterogeneidad de tamaños dentro de celda, que es distinta en
+`CARGO` (celdas pequeñas) y en el arquetipo (celdas enormes). No se sabe a quién favorece.
+
+Agravantes en el propio diseño:
+
+- `min_donantes` cuenta **personas**, pero la varianza del estimador depende del número de **votos**:
+  una celda de 500 personas repartidas en 3 empresas pasa el filtro y publica la mediana de 3 números.
+- El voto de una empresa con 1 persona pesa igual que el de una con 3.000.
+
+### La decisión: un modelo de dos componentes del que todo cae por derivación
+
+Por celda `c`, sobre `y = log(sueldo / SBU)`:
+
+```
+y_fi = mu_c + a_f + e_fi        a_f ~ (0, tau^2)      e_fi ~ (0, sigma^2)
+```
+
+`tau^2` es la varianza entre empresas (el efecto empleador: eta^2 ≈ 0,39 medido, ver `mediciones.md`
+§3) y `sigma^2` la varianza intra-empresa dentro de celda. **Se estiman una sola vez, globalmente**, no
+por celda — el mismo argumento con el que D-006 #3 descartó el modelo mixto para omega^2, y sostenido
+por el 76,6% de personas en empresas de ≥100 en la muestra.
+
+**Peso del voto de la empresa `f`:**
+
+```
+w_f = 1 / (tau^2 + sigma^2 / n_f)
+```
+
+Es el peso inverso-varianza, y es **derivado, no elegido**: cero hiperparámetros, cero puerta trasera
+de las que D-005 Enmienda 1 vigila. Interpola exactamente entre las dos posturas del debate que D-009
+zanjó a martillazos:
+
+| Régimen | `w_f` tiende a | Equivale a |
+|---|---|---|
+| `n_f → ∞` | `1/tau^2`, igual para todas | **una empresa, un voto** (D-009 corrección 1) |
+| `tau^2 → 0` | `n_f/sigma^2` | **una persona, un voto** (lo anterior a D-009) |
+
+Y lo que resuelve el problema real: **el ratio máximo de pesos está acotado por `1 + sigma^2/tau^2`**,
+no por 3.000. La dominancia de una empresa grande desaparece sin tener que descartar el voto de las
+pequeñas.
+
+**Referencia:** cuantil ponderado empírico al 50% sobre los votos `m_f` con pesos `w_f`. Conserva la
+robustez que motivó elegir mediana sobre media (D-006 #6, sesgo medido 0,0533 en log) y es una línea de
+numpy sobre el array que `referencia.py` ya ordena, así que el ahorro de coste que D-009 celebraba
+queda intacto.
+
+### Lo que cae del mismo modelo, sin coste adicional
+
+1. **Distribución predictiva.** Como el split es por empresa, la empresa de test **nunca** está en
+   train: el objetivo es `y = mu_c + a_nueva + e`, luego `y ~ (mu_c, tau^2 + sigma^2_c)`. Da
+   P25/P50/P75 e intervalo — el entregable que el juez de compensaciones pidió y que quedó sin adoptar
+   en `revision_jueces.md` §4.
+2. **La perilla de confianza correcta.** `s(x) = tau^2 + sigma^2_c`, la anchura predictiva, calculada
+   **solo con donantes de train**. Es la varianza condicional que Zaoui, Denis & Hebiri demuestran
+   óptima para abstención en regresión, y tiene resolución continua en todo [0,1] tanto para 55.920
+   celdas de `CARGO` como para 50 arquetipos.
+3. **CRPS como puntuación.** Estrictamente propio, y **generaliza el error absoluto, al que se reduce
+   cuando el pronóstico es una masa puntual**. O sea: no rompe nada de lo pre-registrado — el MAE
+   actual es su caso degenerado. Su descomposición da fiabilidad + resolución, y la resolución es
+   literalmente *"¿esta partición separa mercados?"*.
+4. **AUGRC** en vez de comparación a cobertura igualada (ver siguiente sección).
+
+### La curva error-cobertura era degenerada, y con ella el criterio A
+
+Barrer `min_donantes` en (1,2,3,5,8,12,20,30) **personas** no dibuja ninguna curva para el arquetipo:
+con k≈50 sobre ~1,3 M de filas la celda media tiene ~26.000 donantes, así que ningún umbral hasta 30
+recorta nada. La curva del arquetipo —y las de aleatoria, solo-texto y techo, todas a k igualado— es
+**un punto en cobertura 1,0**. Solo `CARGO` tiene curva, y su techo es 60,5%. **No existe ningún punto
+del eje donde coexistan**, y el pre-registro exige leerlos "a cobertura igualada".
+
+Defecto adicional del mismo barrido: se hace con `min_empresas=3` fijo, y ≥3 empresas implica ≥3
+personas, así que los umbrales 1, 2 y 3 devuelven cobertura idéntica. Quedaban 5 puntos útiles de 8.
+
+**Sustitución — riesgo generalizado.** Se barre `c`, el **coste de no dar respuesta**, no el umbral de
+donantes:
+
+```
+Riesgo(c) = (1/N) * suma_sobre_TODAS [ |y_i - yhat_i| * 1{acepta} + c * 1{abstiene} ]
+```
+
+El denominador es `N` para todos los métodos, así que `CARGO` al 60,5% y el arquetipo al 100% se leen
+en la misma escala sin necesidad de intersecar nada. Y `c` es una cantidad de negocio con significado,
+no una perilla estadística.
+
+Lo mejor: **el `c` donde se cruzan las dos curvas es la frontera entre los escenarios A y B de D-004**.
+Convierte tres desenlaces narrativos en un punto de corte medible.
+
+*(Se descarta AURC, recomendado en una versión previa del mismo informe y retirado por su autor: hay
+demostración de que viola monotonicidad por sobreponderación de los fallos de alta confianza.)*
+
+### La justificación institucional del umbral `m=5` se retira
+
+Se citaba OEWS del BLS como respaldo de "mínimo 5 donantes". El auditor sostiene, con cita textual de
+`methods_24.pdf`/`methods_25.pdf`, que:
+
+- el "5" gobierna la **imputación por no respuesta** (*"prediction will still proceed if at least 5
+  donor units are found"* — establecimientos de los que se copian datos faltantes), **no** la
+  publicación;
+- OEWS es **employment-weighted** —*"summing the hourly wages… for all employees in the estimation
+  cell and dividing by the total employment in the cell"*—, es decir, **la convención opuesta** a "una
+  empresa, un voto";
+- el propio documento cierra la puerta: *"the specific screening criteria are not listed in this
+  publication"*.
+
+**⚠️ NO VERIFICADO POR CUENTA PROPIA.** `bls.gov` devuelve HTTP 403 a todo acceso automatizado desde
+este entorno (probadas `oes-technical-notes.htm`, `2024/may/methods_24.pdf`,
+`current/methods_statement.pdf`, vía navegador headless y vía fetch) y el presupuesto de búsqueda web
+de la sesión está agotado. **Las citas de arriba proceden del informe del juez y no se han contrastado
+contra el PDF primario.**
+
+**Y aun así la consecuencia es la misma: la cita se retira.** Una cita que no se puede abrir no puede
+sostener una decisión de método en una tesis, sea correcta o no. Se elimina de `D-005 §Criterio`,
+`D-006 #4`, `spec §5`, `spec §13` y `docs/preregistro.md`. **Pendiente:** abrir el PDF a mano y cerrar
+este punto en un sentido o en el otro.
+
+### Qué reemplaza al umbral
+
+**El criterio pasa a ser la anchura predictiva, no el conteo.** Un conteo de donantes no dice nada
+sobre la precisión: 500 personas de 3 empresas homogéneas dan una referencia más precisa que 20
+personas de 10 empresas dispares, y la regla anterior prefería la segunda. Con `tau^2 + sigma^2_c` el
+umbral se declara en unidades interpretables —*"no publico si el IC al 80% supera ±X% en dólares"*—,
+que es una decisión de producto, pre-registrable, y que no mira `y_test`.
+
+Los conteos se conservan **degradados a suelos de sanidad**, por razones que no son de precisión:
+
+- **≥3 empresas donantes** — identificabilidad de `tau^2` (con 2 empresas no se separa la varianza
+  entre de la de dentro) y confidencialidad (con 2 donantes, cada uno deduce al otro).
+- **ninguna empresa con más del 80% de las personas donantes** — regla de dominancia. Es
+  estrictamente superior a `e ≥ 3` para lo que D-006 #4 quería resolver: `e ≥ 3` no impide que una
+  empresa con el 95% de la gente domine si hay otras dos con una persona cada una. Con los pesos
+  inverso-varianza es redundante, y se mantiene como red.
+
+Precedente citable para ambos: **QCEW**, no OEWS — suprime la celda con menos de tres establecimientos
+o donde uno supere el 80% del empleo. **Advertencia de uso que debe ir en el texto de la tesis:** es
+una regla de *disclosure*, no de estimación, y la fuente localizada es secundaria (Rachel Justis,
+*"What Do You Mean the Data Are Suppressed?"*, InContext 9(7), Indiana Business Research Center, 2008
+— **▫ tampoco verificada**). Se cita como *"la preocupación por dominancia de un empleador es estándar
+en estadística oficial"*, nunca como *"el BLS respalda ponderar por empresa"*.
+
+### La regla de abstención tiene efecto distributivo no medido
+
+Las celdas que no alcanzan donantes **no son un subconjunto aleatorio**: son ocupaciones raras,
+empresas pequeñas, provincias fuera de Pichincha y Guayas, y probablemente ocupaciones feminizadas de
+baja densidad. Al bajar la cobertura, el riesgo de un subgrupo puede empeorar aunque el riesgo global
+mejore (Shah et al., ICML 2022).
+
+Traducido: **el banco puede reportar un MAE excelente mientras la referencia se degrada justo para
+quien más la necesita.** Y hoy no puede detectarlo — `SQL_MARCO` no cargaba `sexo`, lo que además
+hacía imposible la auditoría Oaxaca que el spec de clustering §9 promete.
+
+**Corregido en el acto:** `sexo` añadido a `SQL_MARCO`. Se reporta error **y** cobertura por subgrupo
+**a lo largo de toda la curva**, no solo el agregado. No es un extra: es verificación obligatoria de la
+regla de abstención.
+
+### Los otros tres defectos
+
+**El techo no era un techo.** `techo_supervisado(df, k)` corría k-means sobre `y` de **todo el df, test
+incluido**. Al definir la celda por la propia `y` de la persona, el MAE colapsa al error de
+cuantización de 50 bins (~0,01–0,03). Dos consecuencias: la frase-resultado *"el arquetipo recorre el
+__% de la distancia entre CARGO y el techo"* tenía un denominador inalcanzable por construcción, y **la
+alarma anti-circularidad moría** —nada puede acercarse a un techo que escapa del efecto empresa usando
+la etiqueta—.
+
+El propio número lo prueba: con eta^2_empresa = 0,388 y el efecto empresa inobservable bajo
+leave-company-out, `Var(error) ≥ 0,388 · Var(y)` para **cualquier** partición; en desviación estándar
+el mejor método posible llega a `raíz(0,388) = 0,623` del MAE aleatorio. **Todo el rango dinámico de la
+métrica primaria es el 37,7% del piso**, y el techo que teníamos estaba en ~3%. Sustitución: LightGBM
+sobre observables legítimos entrenado en train. El k-means sobre `y`, ajustado **solo en train**, se
+renombra *oráculo* y queda como bandera roja, nunca como denominador.
+
+**La inferencia no podía decidir A ni B.** Tres fallos compuestos: (a) `informe.comparar()` emitía dos
+IC independientes, y el pre-registro exige el IC **de la diferencia** — leer solapamiento es el error
+de Schenker & Gentleman, y aquí cuesta especialmente caro porque el error está dominado por `a_f`, que
+es idéntico para los dos métodos y **se cancela en la diferencia pareada**; (b)
+`ic_bootstrap_empresas` llamaba a `predecir()` **fuera** del bucle, tratando `mu_c` como fija cuando en
+la mayoría de celdas de `CARGO` se estima con 3–5 empresas; (c) dos personas de empresas distintas en
+la misma celda comparten `mu_c`, y agrupar solo por empresa de test no lo captura. Sustitución:
+bootstrap de dos etapas con números aleatorios comunes (train → votos → test → MAE de todos los
+métodos con la misma réplica) y diferencia pareada sobre la intersección.
+
+**Los baselines A/B contaminaban el test bloqueado.** La tarea 15 los evaluaba *"sobre el mismo
+held-out"* en la semana ~4, y de ahí se decidía si retirar media arquitectura. Es selección sobre el
+conjunto bloqueado: **exactamente el fallo que `revision_jueces.md` §3 denunció para los pesos de
+bloque y que se aceptó como corrección 3 de D-009 — y reapareció dos secciones más abajo sin que nadie
+lo viera.** A vs B se decide en CV agrupada por empresa dentro del 80% de train; el 20% se toca una
+vez, al final.
+
+### Alternativas descartadas
+
+| Opción | Por qué no |
+|---|---|
+| **Hodges-Lehmann** como estimador robusto | Estima la **pseudomediana** —mediana de (X1+X2)/2—, que iguala a la mediana poblacional **solo bajo simetría**. Asumir simetría en salarios no es defendible, y cambiar el estimando es justo el pecado que este D-011 corrige. Vale como chequeo de robustez, no como estimador. |
+| **AURC** para comparar métodos con cobertura distinta | Viola monotonicidad (Traub et al. 2024). Sustituido por AUGRC. |
+| **Mantener la mediana simple de medianas** | Es el defecto central. |
+| **`min_donantes` como criterio de abstención** | No es una función de confianza: mover `m` mueve la subpoblación, no ordena predicciones por incertidumbre. |
+| **Volver a ponderar por persona** | Reintroduce la dominancia que D-009 corrección 1 eliminó. El peso inverso-varianza da ambos límites sin elegir ninguno. |
+
+### Carencias registradas, no todas adoptadas
+
+Nueve huecos señalados. Se adoptan como parte de las tareas reescritas: sesgo con signo por decil de
+`yhat`; **MAE intra-empresa** (descomponer `e_fi = e_barra_f + (e_fi - e_barra_f)`, porque `e_barra_f`
+es impredecible bajo LOCO e **idéntico para todos los métodos** — ahí vive el ~62% de la sd del error y
+solo diluye la señal); `sexo` y desglose por subgrupo; **masa en el SBU** (con `sueldo_bajo_sbu` en
+cuarentena, `y ≥ 0` está censurada con masa puntual: si supera el 50% en muchas celdas, la mediana de
+casi cualquier celda es 0 —incluida la aleatoria— y el piso de la escalera sube hasta tocar al
+arquetipo); **MDE pre-registrado** (calibrar con `sintetico` reasignando x% al azar y comprobar
+respuesta monótona); **ganador por etiqueta** (D-004 declara C el desenlace más probable y no había
+ninguna métrica que lo operacionalizara: si ocurre C, esto *es* el entregable).
+
+Quedan fuera de la primera pasada, anotadas: **variante anclada a la empresa** (`yhat_fi = mu_c` +
+mediana del residuo de los *otros* empleados de su empresa — no es circular y **es lo que el producto
+hace**, porque el cliente entrega su nómina); **curva de aprendizaje** (el ranking entre clases de
+modelo se cruza con `n`, Perlich et al. 2003, y la debilidad de `CARGO` son celdas escasas);
+**test-retest sobre la entrega y no sobre la etiqueta** (si la referencia se mueve tanto como el error,
+el producto no sirve aunque el MAE sea bueno).
+
+### Límite que hay que declarar en la tesis
+
+No existe referencia canónica para *"bootstrap de dos niveles con train fijo y test clusterizado
+remuestreado"*. Bates, Hastie & Tibshirani muestran precisamente que ese estimando no es lo que
+estiman los métodos estándar. La construcción es defendible; **se describe explícitamente y no se
+presenta como práctica establecida**. Escribirlo así es más fuerte que fingir una cita.
+
+### Fuentes
+
+**⚠️ Estado de verificación:** ninguna de las referencias de abajo se ha contrastado contra el
+documento primario en esta sesión (403 de `bls.gov`, presupuesto de búsqueda web agotado). Proceden del
+informe del juez. **Verificar antes de citar en el texto de la tesis**, con el mismo criterio ✅/▫ de
+`estado_del_arte.md`.
+
+- ▫ Zaoui, Denis & Hebiri (2020). *Regression with reject option and application to kNN*. NeurIPS 33.
+  — la regla óptima de abstención en regresión umbraliza la varianza condicional.
+- ▫ Gneiting & Raftery (2007). *Strictly proper scoring rules, prediction, and estimation*. JASA
+  102(477), 359–378. — CRPS; §4.2 generaliza el error absoluto.
+- ▫ Gneiting & Ranjan (2011). JBES 29(3), 411–422. — la identidad CRPS = 2·integral de pinball es de
+  aquí, **no** de G&R 2007. *(Corrección de una cita que ya estábamos usando mal.)*
+- ▫ Hersbach (2000). *Weather and Forecasting* 15(5), 559–570. — descomposición fiabilidad/resolución.
+- ▫ Traub et al. (2024). NeurIPS, spotlight. — AURC viola monotonicidad; AUGRC.
+- ▫ Shah, Bu, Lee, Das, Panda, Sattigeri & Wornell (2022). *Selective regression under fairness
+  criteria*. ICML, PMLR 162, 19598–19615.
+- ▫ Schenker & Gentleman (2001). *The American Statistician* 55(3), 182–186. — el solapamiento de IC
+  no implica no-significancia.
+- ▫ Nadeau & Bengio (2003). *Machine Learning* 52, 239–281. — subestimación de varianza.
+- ▫ Bates, Hastie & Tibshirani (2024). JASA 119(546), 1434–1445. — sub-cobertura de los IC de CV.
+- ▫ Cameron, Gelbach & Miller (2011). JBES 29(2), 238–249. — clustering en dos direcciones.
+- ▫ Dietterich (1998). *Neural Computation* 10(7), 1895–1923. — diseños pareados.
+- ▫ Hodges & Lehmann (1963). *Ann. Math. Statist.* 34(2), 598–611. — pseudomediana.
+- ▫ Perlich, Provost & Simonoff (2003). JMLR 4, 211–255. — el ranking entre clases de modelo se cruza
+  con el tamaño muestral.
+- ▫ Brown & Medoff (1989). JPE 97(5), 1027–1059. — prima por tamaño de empresa. El propio juez advierte
+  que **no verificó** ninguna fuente que la establezca *dentro de celda ocupacional*, que es el
+  condicionamiento que el argumento necesita.
+- ▫ Card, Cardoso, Heining & Kline (2018). JOLE 36(S1), S13–S70. — referencia para acotar cuánto de
+  nuestro eta^2_empresa = 0,388 es sesgo de movilidad limitada.
+- ▫ Rachel Justis (2008). InContext 9(7), Indiana Business Research Center. — regla de supresión de
+  QCEW. **Fuente secundaria** describiendo práctica del BLS.
+- ⚠️ BLS, OEWS `methods_24.pdf` / `methods_25.pdf` — **inaccesible desde este entorno**. Ver arriba.
+
+### Lección
+
+Es la tercera vez que aparece el mismo patrón, y ahora con una variante nueva.
+
+D-006 lo nombró: *elegir* la opción que favorece la hipótesis. D-010: *no verificar* una premisa
+cómoda antes de construir encima. D-011 añade: **una corrección puede crear un defecto nuevo, y nadie
+vuelve a mirar lo que la corrección tocó.** D-009 corrección 1 arregló la ponderación y desemparejó el
+estimador de la métrica. D-009 corrección 3 prohibió seleccionar sobre el test, y dos secciones más
+abajo la tarea 15 lo volvía a hacer.
+
+La regla operativa que se deriva: **toda corrección aceptada se reaudita como si fuera una decisión
+nueva** — porque lo es.
+
+Y una segunda, del defecto 5: **una cita que no se puede abrir no sostiene nada.** El valor de citar
+está en que el lector pueda verificarlo; si el autor no pudo, el lector tampoco.
