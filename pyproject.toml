@@ -6,6 +6,10 @@ dependencies = [
   "pandas>=2.0", "google-cloud-bigquery[pandas]>=3.0", "openpyxl>=3.1",
   "requests>=2.31", "pydantic-settings>=2.0", "pyyaml>=6.0", "db-dtypes>=1.0",
   "google-cloud-storage>=2.14",
+  # evaluacion: particiones rivales, techo alcanzable, CRPS y graficas
+  "scikit-learn>=1.4", "scipy>=1.11", "matplotlib>=3.8",
+  # descarga rapida del marco: sin esto van por REST y tarda mas de dos minutos
+  "google-cloud-bigquery-storage>=2.24", "pyarrow>=15.0",
 ]
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
