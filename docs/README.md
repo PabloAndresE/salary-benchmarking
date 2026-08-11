@@ -42,8 +42,10 @@ orden**.
 plantillas, une por cédula, anonimiza, deriva features, marca cuarentena, cruza con la
 Superintendencia y escribe a `benchmarking_tesis.nomina_features`. Reanudable por lotes. 61 tests.
 
-**Los datos.** 2024 y 2025 completos con composición — el universo de ajuste. Los años anteriores no
-tienen plantilla y por tanto no tienen composición; sirven para asignación y contexto.
+**Los datos.** El universo de ajuste es **2024–2025**: son los únicos años con plantilla y por tanto
+los únicos con composición (medido: 100% de disponibilidad en 2025, 90% en 2024, 0% en 2023 y
+anteriores). La corrida está acotada a esos dos años; los anteriores solo aportarían cobertura para
+asignación y no hacen falta hasta el sub-proyecto 4.
 
 ### Lo que NO existe todavía
 

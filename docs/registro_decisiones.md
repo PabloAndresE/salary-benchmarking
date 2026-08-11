@@ -938,11 +938,16 @@ extraer la estructura ocupacional y los sinónimos.
 Y refuerza la opción de resolver el peso de bloque **sin restricciones**, por normalización MFA
 (corrección 2), que no depende de tener must-links de ninguna clase.
 
-### La columna se conserva, por ahora
+### Confirmado por el equipo (2026-08-11)
 
-`cargo_plantilla` se sigue extrayendo. Cuesta una columna y sirve de verificación: la medición es
-sobre 100 estudios de 2025, y conviene reconfirmar el 100% sobre los ~12.000 de 2024–2025 cuando el
-reproceso termine. Si se confirma, se retira en una limpieza posterior.
+El equipo de ActuaFast lo ratificó de forma independiente: **ambos campos son exactamente iguales**,
+porque el estudio actuarial se construye a partir de la plantilla. Ya no es "medido sobre 100
+estudios, pendiente de reconfirmar": es un hecho verificado por dos vías —la medición y el
+conocimiento de cómo se construyen los estudios—, y queda **cerrado**.
+
+**Consecuencia:** `cargo_plantilla` se retira del pipeline en la próxima limpieza. No hace falta
+esperar a reconfirmar nada. Cuesta una línea y no corre prisa; se deja hasta que termine el
+reproceso en curso para no mezclar lotes con y sin columna.
 
 ### Lección
 

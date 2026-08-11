@@ -415,8 +415,9 @@ incluidas cadenas largas de tabla sectorial.
 plantilla del cliente, así que el campo `cargo` es una copia. **Invalida la premisa de D-008** y deja
 al catálogo sectorial como única vía viable para must-links entre cadenas distintas. Ver **D-010**.
 
-**Pendiente:** reconfirmar sobre los ~12.000 estudios de 2024–2025 cuando termine el reproceso. La
-medición es sobre 100.
+**Confirmado por el equipo (2026-08-11).** ActuaFast lo ratificó de forma independiente: son el
+mismo campo, porque el estudio se construye a partir de la plantilla. **Cerrado** — no queda
+pendiente reconfirmarlo sobre más estudios.
 
 **Y una observación de paso:** las etiquetas más pobladas son literalmente entradas de tabla
 sectorial — `TRABAJADORES DE PRODUCCION: PESADORES DE CAJAS, ANOTADORES Y ESTIBADORES DE CAJAS PARA
@@ -429,7 +430,6 @@ IESS, tal como decía el handoff, y refuerza el valor de emparejar contra él.
 
 | Qué | Por qué importa | Coste |
 |---|---|---|
-| Reconfirmar `cargo` = `cargo_plantilla` sobre 2024–25 completo | La medición actual es sobre 100 estudios | 1 consulta |
 | Estructura ocupacional y sinónimos del MDT-2019-395 | Aporta niveles A–E por contenido de puesto y el diccionario oficial de sinónimos | parsear 249 pp. |
 | Cobertura de plantilla en 2023 con muestra mayor | Solo se sondearon 26 estudios, todos 404 | 1 sondeo |
 | Cuantificar el sesgo de movilidad limitada sobre η²_empresa | Es un número que sostiene el leave-company-out y probablemente está inflado | análisis |
