@@ -479,6 +479,61 @@ Extrapolado a 1,3 M de filas: del orden de segundos. La clave es que la referenc
 
 ---
 
+### El sigma2 global no era una varianza condicional (hallazgo, 2026-08-11)
+
+Al implementar la Tarea 5 se midió que **`sd_pred` apuntaba al revés**. Marco de prueba con
+dispersión real variando 12× entre celdas:
+
+| | σ² global | σ²_c encogido |
+|---|---|---|
+| Rango de `sd_pred` entre celdas | **1,06×** | **2,38×** |
+| Correlación de `sd_pred` con el error real | **−0,384** | **+0,656** |
+| Correlación de `σ_c` estimado con el real | — | **0,993** |
+
+**Diagnóstico.** Con `tau2` y `sigma2` globales, lo único que hacía variar `sd_pred` entre celdas
+era el conteo de donantes — o sea, la "anchura predictiva" era el conteo de donantes disfrazado,
+que es exactamente lo que D-011 había quitado. La regla óptima de abstención umbraliza la varianza
+**condicional** (Zaoui et al. 2020); una varianza idéntica para todas las celdas no está
+condicionada a nada.
+
+**Corrección.** `sigma2_c` por celda con encogimiento empirical-Bayes sobre `log s²_c`, **sin
+parámetros libres**: la varianza de muestreo de `log s²_c` es `2/df_c`, así que la varianza entre
+celdas sale por momentos y el peso de cada celda es `w_c = V/(V + 2/df_c)`.
+
+`tau2` se deja global: estimar la varianza entre empresas por celda necesita muchas empresas, y en
+`CARGO` la celda típica tiene 3–5. Queda como límite declarado del método.
+
+### Coste del bootstrap: de 19,8 horas a 28 minutos
+
+Medido y proyectado a 1,07 M de filas de train con 7 métodos y 400 réplicas:
+
+| Versión | s/réplica | 400 réplicas |
+|---|---|---|
+| Remuestreo de **filas**, pandas | ~178 | **19,8 h** |
+| Remuestreo de **votos**, pandas | ~91 | 10,2 h |
+| Remuestreo de votos, **numpy compilado** | **4,2** | **28 min** |
+
+Dos ideas, ninguna aproximada:
+
+1. **El bootstrap remuestrea votos, no filas.** Remuestrear una empresa con reemplazo sólo duplica
+   su voto, así que la tabla `(celda, empresa) → voto` se calcula una vez y la réplica es una
+   selección de sus filas.
+2. **Dentro del bucle no se toca pandas.** Celdas a códigos enteros, tabla pre-ordenada por
+   `(celda, voto)`, y el remuestreo ordena **índices** en vez de filas. El cuantil ponderado se
+   calcula para todas las celdas a la vez con `bincount`/`searchsorted`.
+
+De paso, `predecir` pasó de 6,22 s a **0,36 s** sobre 27.000 filas con 1.600 celdas: los `groupby`
+con `lambda` recorrían los grupos en Python. `ssw` sale ahora de `Σy² − (Σy)²/n`, vectorizado.
+
+Hay un test de equivalencia numérica (`rtol=1e-10`) entre el camino rápido y `predecir_desde_votos`.
+Una optimización sin test de equivalencia es una reescritura a ciegas.
+
+**Componentes fijos entre réplicas.** `tau2`, `sigma2` y `sigma2_c` se estiman una vez y no se
+remuestrean: vienen de millones de filas, mientras `mu_c` viene de 3–5 empresas y ésa es la
+incertidumbre que importa. Es una simplificación declarada.
+
+---
+
 ## 12. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |

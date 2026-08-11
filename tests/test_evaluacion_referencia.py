@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from benchmarking.evaluacion.referencia import (
+from benchmarking.evaluacion.referencia import (  # noqa: E501
+    sigma2_por_celda,
     componentes_varianza, pesos_empresa, cuantil_ponderado, predecir, aplicar_abstencion)
 
 
@@ -192,3 +193,53 @@ def test_predecir_no_aplica_abstencion_por_su_cuenta():
     # recalcular predecir. Si predecir filtrara, habria que llamarlo una vez por punto.
     out = predecir(_m([("E2", "c", 1.0), ("E3", "c", 1.0)]), _m([("E1", "c", 1.0)]), "celda")
     assert "y_ref" not in out.columns and not pd.isna(out["y_ref_bruto"].iloc[0])
+
+
+# --- sigma2 por celda ---------------------------------------------------------
+
+def test_sigma2_por_celda_recupera_la_heteroscedasticidad():
+    # Sin esto `sd_pred` no es una varianza CONDICIONAL y degenera en el conteo de
+    # donantes, que es justo lo que D-011 quito. Medido: con sigma2 global la correlacion
+    # de sd_pred con el error real era -0,384; con sigma2 por celda es +0,656.
+    rng = np.random.default_rng(7)
+    filas = []
+    for c in range(24):
+        s_c = 0.05 + 0.55 * (c / 23)
+        for f in range(3 + 2 * c):
+            a = rng.normal(0, .25)
+            filas += [(f"E{c}_{f}", f"c{c}", a + rng.normal(0, s_c)) for _ in range(4)]
+    s2c, _ = sigma2_por_celda(_m(filas), "celda")
+    real = pd.Series({f"c{c}": (0.05 + 0.55 * (c / 23)) ** 2 for c in range(24)})
+    assert np.sqrt(s2c).corr(np.sqrt(real)) > 0.95
+    assert s2c.max() / s2c.min() > 20      # el rango real es 12x en sd, 144x en varianza
+
+
+def test_sigma2_por_celda_encoge_las_celdas_pequenas():
+    # Una celda con 3 empresas y 2 personas cada una no puede sostener su propia
+    # estimacion de varianza: el encogimiento la lleva hacia el global, sin que nadie
+    # elija cuanto. El peso sale de los grados de libertad.
+    rng = np.random.default_rng(3)
+    filas = []
+    for c in range(20):                      # celdas grandes, dan el global
+        for f in range(12):
+            filas += [(f"G{c}_{f}", f"g{c}", float(rng.normal(0, .30))) for _ in range(10)]
+    for f in range(3):                       # una celda diminuta y atipicamente plana
+        filas += [(f"P_{f}", "pequena", float(rng.normal(0, .01))) for _ in range(2)]
+    s2c, s2g = sigma2_por_celda(_m(filas), "celda")
+    cruda = 0.01 ** 2
+    assert cruda < s2c["pequena"] < s2g, "debe quedar entre su estimacion cruda y el global"
+
+
+def test_predecir_usa_el_sigma2_de_la_celda():
+    # Hacen falta >=3 celdas: con dos no se puede estimar la varianza ENTRE varianzas, y
+    # `sigma2_por_celda` se repliega al global a proposito. Con 2 celdas este test pasaba
+    # trivialmente (los dos sd_pred identicos) sin detectar nada.
+    rng = np.random.default_rng(9)
+    filas = []
+    for k, s in enumerate([0.05] * 6 + [0.60] * 6):
+        for f in range(10):
+            filas += [(f"E{k}_{f}", f"c{k}", float(rng.normal(0, s))) for _ in range(8)]
+    tr = _m(filas)
+    t = _m([("EX", "c0", 0.0), ("EX", "c11", 0.0)])
+    sd = predecir(tr, t, "celda")["sd_pred"]
+    assert sd.iloc[1] > 2 * sd.iloc[0], f"sd_pred no distingue celdas: {sd.tolist()}"

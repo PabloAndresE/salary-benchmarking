@@ -1242,6 +1242,30 @@ informe del juez. **Verificar antes de citar en el texto de la tesis**, con el m
   QCEW. **Fuente secundaria** describiendo práctica del BLS.
 - ⚠️ BLS, OEWS `methods_24.pdf` / `methods_25.pdf` — **inaccesible desde este entorno**. Ver arriba.
 
+### Enmienda 1 — `sigma2` por celda (2026-08-11, al implementar)
+
+La versión original de D-011 estimaba `tau2` y `sigma2` **globales**. Al implementar la Tarea 5 se
+midió que eso rompe la propia lógica de la decisión: con `sigma2` global, lo único que hace variar
+`sd_pred` entre celdas es el conteo de donantes, así que **la anchura predictiva era el conteo de
+donantes disfrazado** — justo lo que este D-011 quitaba.
+
+Medido sobre un marco con dispersión real variando 12× entre celdas: `sd_pred` variaba 1,06× y su
+correlación con el error real era **−0,384**. La perilla de confianza apuntaba al revés.
+
+**Corrección:** `sigma2_c` por celda, con encogimiento empirical-Bayes sobre `log s²_c`. Sigue sin
+parámetros libres —la varianza de muestreo de `log s²_c` es `2/df_c`, la varianza entre celdas sale
+por momentos y el peso es `w_c = V/(V + 2/df_c)`—, y las celdas con pocos grados de libertad se van
+al global solas. Con ello: rango de `sd_pred` 2,38×, correlación con el error real **+0,656**,
+y `σ_c` estimado correlaciona 0,993 con el real.
+
+`tau2` se queda global, y es un **límite declarado**: estimar la varianza entre empresas por celda
+necesita muchas empresas, y en `CARGO` la celda típica tiene 3–5. Con ese `df` el encogimiento la
+devolvería al global de todos modos.
+
+Detalle relevante para la tesis: Zaoui et al. hablan de la varianza **condicional**. Implementarla
+como una constante global es una lectura literal que vacía el criterio. Es un caso de *"la cita era
+correcta y la implementación no"*, y encaja con la lección de abajo.
+
 ### Lección
 
 Es la tercera vez que aparece el mismo patrón, y ahora con una variante nueva.
