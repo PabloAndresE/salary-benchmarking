@@ -45,6 +45,13 @@ def escribir(df, client, project, dataset, tabla="nomina_features", location="us
     job_config = bigquery.LoadJobConfig(
         write_disposition=write_disposition,
         clustering_fields=["empresa_ruc"] if "empresa_ruc" in df.columns else None,
+        # Sin esto, anadir una columna al pipeline (p.ej. cargo_plantilla) hace que
+        # BigQuery rechace TODOS los lotes contra una tabla ya existente con
+        # "Cannot add fields", y la corrida muere sin escribir nada. WRITE_TRUNCATE no
+        # lo necesita: reemplaza el esquema por definicion.
+        schema_update_options=(
+            [bigquery.SchemaUpdateOption.ALLOW_FIELD_ADDITION]
+            if write_disposition == "WRITE_APPEND" else None),
     )
     if "anio_valoracion" in df.columns:
         job_config.range_partitioning = bigquery.RangePartitioning(

@@ -48,6 +48,27 @@ def test_escribir_respeta_write_disposition():
     assert jc.write_disposition == "WRITE_APPEND"
 
 
+def test_append_permite_anadir_columnas_nuevas():
+    # Sin esto, anadir una columna al pipeline (cargo_plantilla) hace que BigQuery
+    # rechace TODOS los lotes de un WRITE_APPEND contra una tabla ya existente:
+    # "Cannot add fields". La corrida muere sin escribir nada.
+    df = pd.DataFrame({"id_hash":["a"], "anio_valoracion":[2024], "empresa_ruc":["17"]})
+    client = MagicMock()
+    escribir(df, client, "p", "d", write_disposition="WRITE_APPEND")
+    jc = client.load_table_from_dataframe.call_args.kwargs["job_config"]
+    assert jc.schema_update_options == ["ALLOW_FIELD_ADDITION"]
+
+
+def test_truncate_no_pide_actualizacion_de_esquema():
+    # WRITE_TRUNCATE reemplaza el esquema por definicion; pedir ALLOW_FIELD_ADDITION
+    # ahi es innecesario y BigQuery lo rechaza en algunas combinaciones.
+    df = pd.DataFrame({"id_hash":["a"], "anio_valoracion":[2024], "empresa_ruc":["17"]})
+    client = MagicMock()
+    escribir(df, client, "p", "d", write_disposition="WRITE_TRUNCATE")
+    jc = client.load_table_from_dataframe.call_args.kwargs["job_config"]
+    assert not jc.schema_update_options
+
+
 def test_tabla_existe():
     client = MagicMock()
     client.get_table.return_value = object()
