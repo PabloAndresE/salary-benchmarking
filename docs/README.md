@@ -28,7 +28,9 @@ orden**.
 | [`superpowers/specs/2026-08-04-clustering-arquetipos-design.md`](superpowers/specs/2026-08-04-clustering-arquetipos-design.md) | El núcleo de la tesis. **§5, §6 y §7 tienen correcciones pendientes** — ver `revision_jueces.md` §6 |
 | [`superpowers/specs/2026-08-05-banco-validacion-design.md`](superpowers/specs/2026-08-05-banco-validacion-design.md) | El banco de validación. **§5 tiene una corrección pendiente** (ponderar por empresa) |
 | [`superpowers/specs/2026-07-29-pipeline-nomina-features-design.md`](superpowers/specs/2026-07-29-pipeline-nomina-features-design.md) | El pipeline de ingesta. Implementado |
-| [`superpowers/plans/2026-08-07-banco-validacion-plan.md`](superpowers/plans/2026-08-07-banco-validacion-plan.md) | ⚠️ **OBSOLETO.** Anterior a la revisión de las 16 decisiones y a los jueces. Hay que reescribirlo antes de ejecutarlo |
+| [`superpowers/plans/2026-08-11-banco-validacion-plan.md`](superpowers/plans/2026-08-11-banco-validacion-plan.md) | ✅ **VIGENTE.** 17 tareas, listo para ejecutar |
+| [`superpowers/plans/2026-08-07-banco-validacion-plan.md`](superpowers/plans/2026-08-07-banco-validacion-plan.md) | 🛑 Obsoleto, se conserva como registro |
+| [`preregistro.md`](preregistro.md) | Se crea en la Tarea 14 del plan vigente. Congela el método antes de tocar el test |
 
 ---
 
