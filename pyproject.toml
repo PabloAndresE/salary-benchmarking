@@ -23,4 +23,5 @@ where = ["src"]
 [tool.setuptools.package-data]
 benchmarking = ["config/*.yaml"]
 [tool.pytest.ini_options]
-pythonpath = ["src"]
+# "tests" tambien, para que los tests puedan importar el generador `sintetico`
+pythonpath = ["src", "tests"]
