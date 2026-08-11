@@ -426,7 +426,60 @@ IESS, tal como decía el handoff, y refuerza el valor de emparejar contra él.
 
 ---
 
-## 11. Mediciones pendientes
+## 11. El estimador de la referencia (D-011), sobre data sintética
+
+**Fecha:** 2026-08-11. **Alcance:** `tests/sintetico.py`, 400 empresas, 72.000 filas, 4 roles,
+tamaños de empresa desiguales. Split por empresa al 25%.
+
+Validación del estimador de la Tarea 4 antes de tocar datos reales. El generador construye el
+efecto empresa con `sd = 0,24` y el ruido individual con `sd = 0,18`; el estimador de momentos
+no los conoce.
+
+| Cantidad | Valor verdadero | Estimado |
+|---|---|---|
+| `tau` (entre empresas, dentro de celda) | 0,24 | **0,2432** |
+| `sigma` (intra empresa, dentro de celda) | 0,18 | **0,1806** |
+
+**Recupera los dos parámetros.** Es la comprobación que faltaba: los pesos inverso-varianza son
+correctos sólo si `tau2` y `sigma2` lo son, y su efecto vive en el tercer decimal del resultado
+final, donde no se detectaría por inspección.
+
+### La cota de pesos funciona
+
+| | |
+|---|---|
+| Tamaños de grupo (celda × empresa) | min 5, max 85 — **ratio crudo 17×** |
+| Ratio de pesos efectivo | **1,103** |
+| Cota teórica `1 + sigma2/tau2` | 1,551 |
+
+**17× de diferencia en tamaño se convierte en 1,10× de diferencia en voz.** Ése es el arreglo de
+D-011: se elimina la dominancia del empleador grande sin descartar el voto de las empresas
+pequeñas, y sin elegir ningún hiperparámetro.
+
+### Coste
+
+| Operación | Tiempo | Escala |
+|---|---|---|
+| `componentes_varianza` | 0,07 s | 54.960 filas |
+| `predecir` | 0,09 s | 17.040 filas de test |
+
+Extrapolado a 1,3 M de filas: del orden de segundos. La clave es que la referencia se calcula
+**una vez por par (celda, empresa)**, no una vez por persona.
+
+### Dos hallazgos de la implementación
+
+1. **Caso degenerado con varianza cero.** Si todos los donantes valen lo mismo, `tau2 = sigma2 = 0`,
+   el peso inverso-varianza es `1/0` y `predecir` devolvía NaN **en silencio** — indistinguible de
+   una abstención. Imposible en datos reales, trivial de provocar en tests. Corregido con pesos
+   uniformes y predictiva de masa puntual.
+2. **El suelo de dominancia se activa antes que la ponderación.** Con una empresa aportando 100 de
+   106 personas (94%), el método se abstiene y la ponderación nunca entra en juego. No es un
+   conflicto —hacen cosas distintas— pero significa que los dos mecanismos hay que probarlos por
+   separado, y que en producción la dominancia se resuelve por abstención, no por peso.
+
+---
+
+## 12. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
 |---|---|---|
