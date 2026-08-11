@@ -74,3 +74,21 @@ def test_sql_carga_los_ejes_de_subgrupo_para_auditar_la_abstencion():
     # degrada para quien mas la necesita, y no enterarse.
     for eje in ("sexo", "provincia", "segmento", "ciiu_n1"):
         assert eje in SQL_MARCO, f"falta {eje}: la regla de abstencion queda sin auditar"
+
+
+def test_descarta_los_sueldos_base_bajo_el_sbu(s):
+    # La cuarentena del pipeline filtra por `total` (sueldo + comisiones + extras) y el
+    # objetivo se calcula sobre `sueldo`: alguien con sueldo base de 4 dolares y total de
+    # 500 pasaba el filtro. Medido: 78.460 filas, el 7,31% de 2024-2025.
+    df = pd.DataFrame({"sueldo": [4.0, 470.0, 940.0], "total": [500.0, 470.0, 940.0],
+                       "anio_valoracion": [2025] * 3,
+                       "cargo_norm": ["VENDEDOR"] * 3})
+    out = marco_evaluable(agregar_objetivo(df, s))
+    assert out["sueldo"].tolist() == [470.0, 940.0]
+
+
+def test_el_filtro_del_sbu_es_reversible(s):
+    # Se puede apagar: es una decision de universo, y el pre-registro la declara.
+    df = pd.DataFrame({"sueldo": [4.0, 940.0], "total": [500.0, 940.0],
+                       "anio_valoracion": [2025] * 2, "cargo_norm": ["VENDEDOR"] * 2})
+    assert len(marco_evaluable(agregar_objetivo(df, s), exigir_sbu=False)) == 2

@@ -534,11 +534,132 @@ incertidumbre que importa. Es una simplificación declarada.
 
 ---
 
-## 12. Mediciones pendientes
+## 12. El marco evaluable, tras cerrar la corrida 2024-2025
+
+**Fecha:** 2026-08-11. **Alcance:** `nomina_features` completa, años 2024 y 2025.
+**Fuente:** `research/experimentos/e0_banco/diagnostico_objetivo.py` (Tarea 2b del plan v3).
+
+### La tabla, al cierre de la corrida
+
+| Año | Filas | Estudios | Empresas | Composición | `en_clean` |
+|---|---|---|---|---|---|
+| 2024 | 722.976 | 6.167 | 6.137 | 62,9% | 76,6% |
+| 2025 | 617.557 | 5.985 | 5.985 | 80,8% | 94,4% |
+
+La corrida cerró con código 0 a las 15:20 del 2026-08-11. Quedan además restos de años
+anteriores en la tabla (2016–2018 y 2023), sin composición y fuera del marco de evaluación.
+
+### La brecha de composición de 2024 es estructural, no un residuo de los bugs
+
+Se sospechó que la corrida, al reanudar saltando estudios ya escritos, hubiera conservado
+lotes anteriores a los arreglos de D-001. **No es el caso:**
+
+| | 2024 | 2025 |
+|---|---|---|
+| Enlace donde **sí** hay plantilla | **83,8%** | **85,2%** |
+| Filas en estudios **sin** plantilla | **25,0%** | 5,2% |
+
+La tasa de enlace es prácticamente idéntica: el arreglo de la cédula funciona igual en los dos
+años. Toda la brecha es disponibilidad de plantilla.
+
+### 263 estudios de 2024 llegaron sin plantilla y sin cargo
+
+| Grupo | Estudios | Filas | Tamaño medio |
+|---|---|---|---|
+| Normal | 5.767 | 540.450 | 94 |
+| Sin plantilla, con cargo | 107 | 43.894 | 410 |
+| Con plantilla, sin cargo | 30 | 1.645 | 55 |
+| **Sin plantilla y sin cargo** | **263** | **136.987** | **521** |
+
+No son dos problemas independientes: es la misma población, y son **los estudios más grandes**
+—5,5× la mediana—. `cargo` viene NULL en origen, no es un fallo del pipeline.
+
+**Consecuencia metodológica, y es la que pesa:** la composición no falta al azar, falta donde
+están los empleadores grandes. Es el escenario de falta sistemática de D-003 y refuerza la
+necesidad del IPW del sub-proyecto 2. Un modelo entrenado sobre el universo con composición está
+entrenado sobre empresas pequeñas.
+
+**Pendiente operativo:** preguntar al equipo de ActuaFast si esos 263 estudios son recuperables
+en origen. Son 137.000 filas de las empresas más grandes.
+
+### La censura en el SBU NO invalida el piso de la escalera
+
+Era la pregunta que bloqueaba la Tarea 2b. El umbral de alarma del plan era 30%.
+
+| | |
+|---|---|
+| `y == 0` exacto | **5,9%** |
+| Celdas de ≥5 personas con >50% de su gente en el SBU | **2,4%** |
+| ...con >90% | 1,3% |
+
+**La escalera sobrevive.** La partición aleatoria no gana por censura y no hace falta tratamiento
+especial. Se declara así en el pre-registro.
+
+### Pero la distribución está muy comprimida
+
+`y ≤ 0,05` cubre el **40,4%** de la gente: dos de cada cinco personas ganan a menos de un 5% del
+salario mínimo. Mediana 1,16 SBU, p75 1,81 SBU.
+
+No invalida nada, pero **acota lo que se puede demostrar**: en la mitad inferior de la
+distribución apenas hay variación que un benchmark pueda diferenciar. Debe decirse en la tesis.
+
+### `CARGO` sobre el marco real
+
+| | |
+|---|---|
+| Etiquetas distintas | 65.081 |
+| Tamaño de celda, mediana | **2 personas** |
+| Empresas por celda, mediana | **1** |
+| Celdas con ≥3 empresas | 9,24% |
+| **Personas que esas celdas cubren** | **66,6%** |
+| Etiquetas de una sola persona | 20.038 (30,8%) |
+
+El techo de cobertura de `CARGO` es **66,6%**, consistente con el 60,5% medido antes sobre 2025
+solo. Confirma D-005: podar `CARGO` a sus etiquetas grandes no produce un rival, produce una celda
+"otros" con la mayoría de la gente.
+
+### La trampa `sueldo` / `total`, tercera aparición
+
+**78.460 filas (7,31%) tenían sueldo base por debajo del SBU pese a pasar la cuarentena.** El
+mínimo era `y = -4,76`: un sueldo del **0,9% del SBU**, unos 4 dólares.
+
+Causa: `ingesta/validacion.py:35` filtra por `total < min_sbu * sbu` —sueldo más comisiones más
+extras— mientras el objetivo se calcula sobre `sueldo`. Alguien con sueldo base de 4 dólares y
+total de 500 pasaba.
+
+Es la misma familia que las otras dos apariciones: `sueldo_sbu` de la tabla vale `total/SBU`
+(`features_base.py:28`), y D-011 corrigió el desemparejamiento entre estimador y métrica. **Tres
+veces el mismo par de columnas.**
+
+**Hipótesis descartada por medición.** Se supuso que serían personas con muchas comisiones —sueldo
+base bajo, total alto—. **Falso:** su perfil de composición es indistinguible del resto
+(comisiones 3,8% frente a 4,8%, si acaso menos). Lo que sí las distingue es que **sólo el 36,9%
+tiene composición**, frente al 90,8% del resto.
+
+**Decisión:** se filtran en `evaluacion.datos.marco_evaluable` (`exigir_sbu=True`, reversible), no
+en el pipeline. El objetivo se define en ese módulo, así que su criterio de validez pertenece ahí;
+alinear `ingesta.validacion` exige reprocesar 1,9 M de filas y va en el próximo reproceso.
+
+### El marco evaluable definitivo
+
+| | Antes del filtro | **Después** |
+|---|---|---|
+| Filas | 1.072.808 | **994.348** |
+| Empresas | 6.717 | **6.710** |
+| `y` mínimo | −4,76 | **0,00** |
+
+Sólo 7 empresas quedan sin ninguna persona. **994.348 filas y 6.710 empresas** es el universo sobre
+el que corre el banco.
+
+---
+
+## 13. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
 |---|---|---|
 | Estructura ocupacional y sinónimos del MDT-2019-395 | Aporta niveles A–E por contenido de puesto y el diccionario oficial de sinónimos | parsear 249 pp. |
+| Recuperar en origen los 263 estudios de 2024 sin plantilla ni cargo | 137.000 filas de las empresas mas grandes | preguntar al equipo |
+| Alinear la cuarentena `sueldo_bajo_sbu` con `sueldo` en vez de `total` | Hoy se parchea en `marco_evaluable`; el pipeline sigue midiendo otra cosa | proximo reproceso |
 | Cobertura de plantilla en 2023 con muestra mayor | Solo se sondearon 26 estudios, todos 404 | 1 sondeo |
 | Cuantificar el sesgo de movilidad limitada sobre η²_empresa | Es un número que sostiene el leave-company-out y probablemente está inflado | análisis |
 | Ruta de servicio: acierto de (título, centro, antigüedad) → arquetipo | Decide si el producto del §12 se puede servir | 1 día, tras el banco |

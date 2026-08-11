@@ -54,11 +54,26 @@ def _cargo_utilizable(c):
     return s not in _PLACEHOLDERS and not re.fullmatch(r"[0-9]+", s)
 
 
-def marco_evaluable(df):
+def marco_evaluable(df, exigir_sbu=True):
     """Filas donde la comparación contra `CARGO` es posible: con objetivo y con etiqueta.
 
     Las filas sin cargo **no se descartan del proyecto**: se reportan aparte como
     cobertura exclusiva del arquetipo (§6.3 del spec del banco). Simplemente no entran en
     una comparación donde el rival no puede jugar.
+
+    `exigir_sbu` descarta los sueldos base por debajo del SBU (`y < 0`). Hace falta porque
+    la cuarentena del pipeline filtra por `total` —sueldo + comisiones + extras— mientras
+    el objetivo se calcula sobre `sueldo`: alguien con sueldo base de 4 dólares y total de
+    500 pasaba el filtro. Medido sobre 2024-2025: **78.460 filas, el 7,31%**, con un mínimo
+    de `y = -4,76` (el 0,9% del SBU).
+
+    No son observaciones válidas de *"lo que paga este puesto"* —son jornada parcial, mes
+    incompleto o error—, y sólo el 36,9% de ellas tiene composición, frente al 90,8% del
+    resto. Se filtran aquí y no en el pipeline porque el objetivo se define en este módulo,
+    así que su criterio de validez pertenece aquí; alinear la regla de `ingesta.validacion`
+    exige reprocesar 1,9 M de filas y va en el próximo reproceso.
     """
-    return df[df["y"].notna() & df["cargo_norm"].map(_cargo_utilizable)].copy()
+    ok = df["y"].notna() & df["cargo_norm"].map(_cargo_utilizable)
+    if exigir_sbu:
+        ok &= df["y"] >= -1e-9
+    return df[ok].copy()
