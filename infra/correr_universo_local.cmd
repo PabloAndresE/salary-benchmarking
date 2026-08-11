@@ -27,5 +27,8 @@ set PIPELINE_GCS_BUCKET_PLANTILLAS=act-cicd-stage-prueba-plantillas
 
 set PYTHONPATH=src
 echo [correr_universo] arranque %DATE% %TIME% >> corrida_universo.log
-.venv\Scripts\python.exe -u -m benchmarking.cli construir-universo --batch-size=100 >> corrida_universo.log 2>> corrida_universo.err.log
+REM Acotado a 2024-2025: son los unicos anios con plantilla, y por tanto los unicos que
+REM aportan composicion. Los ~30.000 estudios anteriores devuelven 404 y solo darian
+REM cobertura para asignacion, que no hace falta hasta el sub-proyecto 4.
+.venv\Scripts\python.exe -u -m benchmarking.cli construir-universo --batch-size=100 --anios=2024,2025 >> corrida_universo.log 2>> corrida_universo.err.log
 echo [correr_universo] fin %DATE% %TIME% (codigo %ERRORLEVEL%) >> corrida_universo.log

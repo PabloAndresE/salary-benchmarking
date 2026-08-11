@@ -36,6 +36,8 @@ def main():
     cu.add_argument("--batch-size", type=int, default=500, help="estudios por lote")
     cu.add_argument("--concurrencia", type=int, default=None, help="descargas en paralelo por lote")
     cu.add_argument("--reset", action="store_true", help="borrar y recrear la tabla destino")
+    cu.add_argument("--anios", default=None,
+                    help="acotar a estos anios, p.ej. 2024,2025 (default: todos)")
 
     args = ap.parse_args()
     s = cargar_settings()
@@ -63,7 +65,9 @@ def main():
         total = construir_universo(client, s.actuafast_base_url, s,
                                    escribir_lote=escribir_lote, batch_size=args.batch_size,
                                    max_workers=args.concurrencia, descargar=descargar,
-                                   hechos=hechos)
+                                   hechos=hechos,
+                                   anios=(tuple(int(a) for a in args.anios.split(","))
+                                          if args.anios else None))
         print(f"universo: {total} filas escritas (reanudó saltando {len(hechos)} estudios)")
 
 if __name__ == "__main__":

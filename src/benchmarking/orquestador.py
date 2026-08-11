@@ -154,9 +154,20 @@ def construir_base(runner, base_url, settings, limite=None, descargar=descargar_
     return _ensamblar(base, leer_scvs(runner), base_url, settings, descargar, workers)
 
 def construir_universo(runner, base_url, settings, escribir_lote, batch_size=500,
-                       max_workers=None, descargar=descargar_plantilla, hechos=frozenset()):
+                       max_workers=None, descargar=descargar_plantilla, hechos=frozenset(),
+                       anios=None):
+    """Recorre el universo por lotes, reanudable (el estado es la tabla destino).
+
+    `anios` acota qué estudios se procesan. Sirve para no gastar horas en los años que
+    no traen plantilla: la composición sólo existe en 2024-2025, y los ~30.000 estudios
+    anteriores devuelven 404 sin aportar composición. `None` procesa todo.
+    """
     workers = settings.descargas_concurrentes if max_workers is None else max_workers
     estudios = listar_estudios(runner)
+    if anios:
+        quiero = {int(a) for a in anios}
+        estudios = estudios[estudios["anio_valoracion"].isin(quiero)]
+        print(f"[universo] acotado a {sorted(quiero)}: {len(estudios)} estudios")
     # Procesar RECIENTES primero: la composición (feature clave) solo existe en estudios
     # recientes (con plantilla); los viejos rinden filas sin composición. Así cada lote
     # aporta data útil cuanto antes. No afecta la reanudabilidad (se sigue saltando `hechos`).

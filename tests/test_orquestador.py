@@ -386,6 +386,50 @@ def test_construir_universo_lotea_y_reanuda(monkeypatch, plantilla_xlsx_bytes):
                   if "scvs" in c[0][0].lower() or "balances" in c[0][0].lower()]
     assert len(scvs_calls) == 1
 
+def test_construir_universo_acota_por_anio(monkeypatch, plantilla_xlsx_bytes):
+    # Solo 2024-2025 traen plantilla: los anios anteriores son horas de descargas que
+    # devuelven 404 y no aportan composicion. Poder acotar evita gastarlas.
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    personas = pd.DataFrame([
+        {"identificacion":"1700000001","numero_proceso":proc,"id_version":"v","anio_valoracion":anio,
+         "empresa_ruc":"1790011111001","cargo":"X","centro_de_costo":"C","sexo":"F","edad":30,
+         "sueldo":600.0,"remuneracion_promedio":700.0,"fecha_ingreso":dt.date(2014,1,1)}
+        for proc, anio in [("VIEJO",2022),("NUEVO",2025),("MEDIO",2024)]])
+    runner = MagicMock()
+    def fake_query(sql):
+        m = MagicMock(); low = sql.lower()
+        if "scvs" in low or "balances" in low:
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"ruc":["1790011111001"],"segmento":["G"],"ciiu_n1":["G"],"ciiu_n6":["G1"],"n_empleados":[10]})
+        elif "numero_proceso in (" in low:
+            procs = [p for p in ("VIEJO","NUEVO","MEDIO") if f"'{p}'" in sql]
+            m.to_dataframe.return_value = personas[personas.numero_proceso.isin(procs)].reset_index(drop=True)
+        else:
+            m.to_dataframe.return_value = pd.DataFrame(
+                {"numero_proceso":["VIEJO","NUEVO","MEDIO"],"id_version":["v"]*3,
+                 "anio_valoracion":[2022,2025,2024],"empresa_ruc":["1790011111001"]*3})
+        return m
+    runner.query.side_effect = fake_query
+
+    procesados = []
+    construir_universo(runner, "http://x", s,
+                       escribir_lote=lambda d: procesados.append(d["numero_proceso"].iloc[0]),
+                       batch_size=1, max_workers=1, anios=(2024, 2025),
+                       descargar=lambda *a, **k: plantilla_xlsx_bytes)
+    assert procesados == ["NUEVO", "MEDIO"], "solo los anios pedidos, y recientes primero"
+
+
+def test_construir_universo_sin_acotar_procesa_todo(monkeypatch, plantilla_xlsx_bytes):
+    monkeypatch.setenv("PIPELINE_SALT","sal")
+    s = cargar_settings()
+    runner = _fake_universo_runner()
+    escritos = []
+    construir_universo(runner, "http://x", s, escribir_lote=escritos.append, batch_size=1,
+                       max_workers=1, descargar=lambda *a, **k: plantilla_xlsx_bytes)
+    assert len(escritos) == 3          # anios=None -> sin filtro
+
+
 def test_construir_universo_procesa_recientes_primero(monkeypatch, plantilla_xlsx_bytes):
     # Los estudios se procesan por anio_valoracion DESC (recientes primero), porque la
     # composición sólo existe en los recientes.

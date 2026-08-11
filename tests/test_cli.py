@@ -24,22 +24,24 @@ def test_cli_universo_wire(monkeypatch):
     monkeypatch.setenv("PIPELINE_SALT","x")
     cap = {}
     def fake_universo(runner, base_url, s, escribir_lote=None, batch_size=None,
-                      max_workers=None, descargar=None, hechos=None):
+                      max_workers=None, descargar=None, hechos=None, anios=None):
         cap["batch_size"] = batch_size; cap["max_workers"] = max_workers
-        cap["hechos"] = hechos; cap["descargar"] = descargar
+        cap["hechos"] = hechos; cap["descargar"] = descargar; cap["anios"] = anios
         return 0
     monkeypatch.setattr("benchmarking.cli.construir_universo", fake_universo)
     monkeypatch.setattr("benchmarking.cli.bigquery.Client", lambda *a, **k: MagicMock())
     monkeypatch.setattr("benchmarking.cli.tabla_existe", lambda *a, **k: True)
     monkeypatch.setattr("benchmarking.cli.procesos_existentes", lambda *a, **k: {"P9"})
     monkeypatch.setattr(sys, "argv",
-                        ["benchmarking","construir-universo","--batch-size","250","--concurrencia","6"])
+                        ["benchmarking","construir-universo","--batch-size","250",
+                         "--concurrencia","6","--anios","2024,2025"])
     from benchmarking.cli import main
     main()
     assert cap["batch_size"] == 250
     assert cap["max_workers"] == 6
     assert cap["hechos"] == {"P9"}
     assert cap["descargar"] is not None
+    assert cap["anios"] == (2024, 2025)
 
 
 def test_cli_engancha_el_cache_si_hay_bucket(monkeypatch):
