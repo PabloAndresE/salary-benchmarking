@@ -653,7 +653,54 @@ el que corre el banco.
 
 ---
 
-## 13. Mediciones pendientes
+## 13. El banco pasa su prueba de aceptación
+
+**Fecha:** 2026-08-11. **Fuente:** `tests/test_evaluacion_banco.py` (Tarea 10 del plan v3).
+Data sintética, 60 empresas × 20 personas, 3 roles separados por composición.
+
+### La escalera queda en el orden esperado
+
+| Partición | MAE |
+|---|---|
+| aleatoria (k igualado) | 0,2699 |
+| **verdadera** | **0,2058** |
+| oráculo (k-means sobre `y`, ajustado en train) | 0,1195 |
+
+**El oráculo gana, y es correcto.** Agrupa por la propia `y` de la persona, y nada puede ganarle
+a una partición construida desde el objetivo. Por eso es bandera roja y no rival: si el arquetipo
+se le acerca sobre datos reales, derivó a bandas salariales.
+
+### La cota teórica separa lo legítimo de la trampa
+
+Con el efecto empresa inobservable bajo leave-company-out, ningún método legítimo baja de
+`√η²_empresa × MAE_aleatorio`. Aquí: `√0,373 × 0,2699 = 0,165`.
+
+- verdadera **0,206 > 0,165** → legítima ✅
+- oráculo **0,120 < 0,165** → **rompe la cota, prueba formal de que ve lo que no debe** ✅
+
+Es un chequeo barato y sirve sobre datos reales: cualquier método que baje de la cota tiene fuga.
+
+### Magnitud mínima detectable
+
+Se degrada la partición verdadera reasignando al azar un x% de las etiquetas, promediando sobre
+tres semillas de degradación:
+
+| Degradación | Diferencia media | Detectada (IC pareado sin cruzar 0) |
+|---|---|---|
+| 0% | +0,0000 | **0/3** — sin falso positivo |
+| 10% | −0,0144 | 3/3 |
+| 25% | −0,0294 | 3/3 |
+| 50% | −0,0415 | 3/3 |
+
+**MDE ≤ 10%.** Va al pre-registro. Monótona y sin falsos positivos en el control.
+
+Nota de método: con **una sola** semilla de degradación el resultado salía no monótono —5% no,
+10% sí, 20% no—, porque la degradación realizada es muy variable con 3 celdas. Un MDE no monótono
+no se puede escribir en un pre-registro; por eso se promedia.
+
+---
+
+## 14. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
 |---|---|---|
