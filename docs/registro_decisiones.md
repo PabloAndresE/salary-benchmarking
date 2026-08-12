@@ -1340,3 +1340,116 @@ al rival: el patrón de D-006, séptima aparición evitada.
 transformación irreproducible que el tribunal no puede auditar, y resuelve el problema equivocado.
 El catálogo del MDT ofrece sinónimos **oficiales** entre cadenas distintas para el caso de que
 hicieran falta.
+
+---
+
+## D-013 — La premisa central era falsa, y el eje que sí paga es el nivel
+
+**Fecha:** 2026-08-12
+**Origen:** una pregunta del director del proyecto — *"sacamos la composición pero en el EDA nunca
+analizamos nada de eso para ver si efectivamente es relevante"*. No lo habíamos medido.
+**Evidencia:** `mediciones.md` §15, scripts en `research/experimentos/e1_premisa/`.
+**Estado:** decisión tomada. Reformula el alcance del proyecto y el enunciado de la tesis.
+
+### El hueco
+
+El EDA se hizo con la composición del pago disponible en el **2,7%** de las filas: no había con
+qué analizarla. Se adoptó como hipótesis central **por eliminación** —se descartaron sector,
+tamaño y antigüedad, y quedó ella— y como no estaba en los datos, era **infalsable en ese
+momento**. Se recuperó al 80% (D-001, D-008), se midió que es un rasgo estable entre años y cuánto
+de ella explica el empleador… y nunca se midió lo único que sostenía la tesis.
+
+Es el patrón de D-010 a escala de proyecto: **una premisa que no se podía comprobar se volvió el
+cimiento.**
+
+### Lo medido
+
+| | R² fuera de muestra | Reduce la sd |
+|---|---|---|
+| Placebo | −0,0002 | — |
+| **Composición** | **+0,0042** | **0,21%** |
+| Antigüedad | +0,0114 | 0,57% |
+| **Rango jerárquico** (ω², dentro de área) | **+0,2462** | **13,2%** |
+
+Y la descomposición del error de `CARGO`: τ = 0,2917 entre empresas, σ = 0,1423 intra empresa,
+ruido irreducible sd 0,3246 frente a 0,3651 real → **techo de mejora por agrupar mejor: 10,9%**
+(12,1% sobre train completo, 14,4% fuera de la zona pegada al SBU). Concentrado en el 34% de gente
+que está en celdas de 1–2 empresas, donde el 44,6% del error es error de estimación.
+
+### La decisión
+
+**1. La composición sale del centro y se reporta como resultado negativo**, con su placebo y su
+pre-registro. La afirmación se enuncia **estrecha**: *la composición no aporta información
+intra-empresa e intra-etiqueta sobre el sueldo base.* No "la composición no importa" — sobre
+compensación total es mecánicamente casi todo, y el diseño residualiza contra la empresa, que
+determina entre el 39% y el 50% de la propia composición.
+
+**2. El eje de nivel pasa a ser la pieza central.** ω² de 0,246 frente a 0,004, escalera monótona
+de cinco escalones y un recorrido de 2,11× en salario entre el nivel 1 y el 5. Fuentes por orden:
+léxico de rango (34,5% de las personas, gratis y auditable), catálogo MDT-2019-395 (niveles A–E
+oficiales **por contenido de puesto**, no por sueldo) y un clasificador para el resto, **validado
+contra el 34,5% donde la verdad se conoce**.
+
+**3. El diagnóstico de `CARGO` cambia de naturaleza.** No está semánticamente roto: está
+**estadísticamente delgado**. Mediana de 2 personas y 1 empresa por etiqueta, techo de cobertura
+66,6%. Mejorar el benchmarking es un problema de **estimación en áreas pequeñas** —tomar fuerza
+prestada de un vecindario ocupacional— y no de encontrar la variable que faltaba.
+
+Eso ancla el estimador de D-011 en una literatura establecida en vez de dejarlo como invención
+casera: Fay & Herriot (1979, *JASA*) y Rao & Molina, *Small Area Estimation* (Wiley, 2.ª ed. 2015).
+▫ verificar paginación antes de citar.
+
+**4. El enunciado de la tesis se reformula:**
+
+> ¿Cuánto error de un benchmark salarial es reducible por elegir mejor el grupo de comparación, y
+> qué precisión cuesta la taxonomía dura que vende la industria?
+
+Con ese enunciado, cada objeción se invierte. La ganancia modesta deja de ser el resultado y pasa a
+ser una medición dentro de un presupuesto que nosotros cuantificamos —3–5% sobre un techo de 12,1%
+es entre el 25% y el 41% de todo lo disponible—. Y **un modelo simple pasa a ser una virtud
+metodológica**: uno complicado confundiría el techo con la capacidad del método.
+
+### Arquitectura descartada por medición
+
+Pierden su objeto, y se reportan como capítulo de arquitectura descartada (tres páginas cuestan
+1/50 de lo que cuesta construirla):
+
+- Transformación ILR y todo el aparato CoDa sobre la composición.
+- Compuerta de masa fija.
+- IPW por falta sistemática de composición (D-003).
+- Restricciones semi-supervisadas y RCA (D-007).
+- Los **pesos de bloque**, y con ellos la razón de ser de la normalización MFA (D-009 corrección 2,
+  Tarea 8 del plan). El módulo queda construido y probado; deja de ser central.
+
+### Alternativas descartadas
+
+| Opción | Por qué no |
+|---|---|
+| **Mantener la composición como eje** y esperar que el banco la rescate | 0,21% fuera de muestra con placebo en cero. No hay nada que rescatar, y construir para exprimirla cuesta semanas |
+| **Declarar la tesis fracasada** | El instrumento, la descomposición del error y la ceguera jerárquica de los embeddings son contribuciones reales. Lo que falló es una hipótesis, y falló *medida* |
+| **Normalizar cargos y agrupar por texto** (la alternativa simple) | Captura el eje de área y **pierde el de nivel**, que vale 13,2%. Medido: los embeddings dan 0,857 entre rangos frente a 0,764 entre áreas, así que fusionan puestos que difieren 2,11× en pago |
+| **Mapear al catálogo MDT en vez de inducir** | No se descarta: **se incorpora**. El MDT pasa a ser fuente del eje de nivel y rival medido en la escalera. Era la objeción más peligrosa y se convierte en insumo |
+
+### Consecuencia de proceso, y es la que más urge
+
+Los tres hallazgos de esta entrada **se midieron en scripts temporales y no estaban en el
+repositorio**. Un evaluador externo lo detectó grepeando los números: cero coincidencias. Estaba
+documentada con detalle la arquitectura que se descartó y no lo que se va a defender.
+
+Regla que se deriva: **un número que no se puede reproducir no se defiende.** Toda medición que
+sostenga una afirmación de la tesis vive en `research/experimentos/` con su script y su salida
+commiteados, el mismo día en que se mide.
+
+### Lección
+
+D-006 fue *elegir* la opción que favorece la hipótesis. D-010, *no verificar* una premisa cómoda.
+D-011, *no reauditar* lo que una corrección tocó. D-013 añade la más incómoda de las cuatro:
+
+**una hipótesis que no se puede falsar con los datos que hay no es un cimiento, es una apuesta** —
+y trece semanas de arquitectura se construyeron sobre ella antes de que alguien preguntara si era
+cierta.
+
+El correctivo no es desconfiar más: es **ordenar el trabajo para que la premisa se mida primero**,
+aunque medirla exija arreglar el pipeline antes. En este proyecto eso habría significado hacer D-001
+y D-008 —recuperar la composición— y **medir §15.1 inmediatamente después**, antes de escribir una
+línea de spec de clustering.

@@ -1,0 +1,30 @@
+======================================================================
+3. .PAGA EL NIVEL JERARQUICO, DENTRO DEL AREA Y DENTRO DE LA EMPRESA?
+======================================================================
+personas con palabra de rango: 292,158 (34.5%)
+areas distintas: 18,681
+personas en areas con >=2 rangos: 228,212  areas: 3,357
+
+var tras quitar empresa        = 0.2435
+var tras quitar empresa + AREA = 0.1828  (sd=0.428)
+
+omega2 sobre ese residuo:
+  RANGO (14 categorias)      +0.2462   -> reduce la sd un 13.18%
+  NIVEL (5 escalones)        +0.2388   -> reduce la sd un 12.75%
+  PLACEBO rango permutado    +0.0000   -> reduce la sd un 0.00%
+
+diferencia media de y por escalon (dentro de empresa y area):
+  nivel 1: -0.1202  (n=131,314)
+  nivel 2: -0.0860  (n=27,715)
+  nivel 3: +0.0542  (n=29,336)
+  nivel 4: +0.3109  (n=26,611)
+  nivel 5: +0.6270  (n=13,236)
+  -> recorrido de nivel 1 a 5: +0.7471 en log
+
+======================================================================
+4. EL TECHO DEL 10,9% FUERA DE LA ZONA COMPRIMIDA POR EL SBU
+======================================================================
+TODO (referencia)    n= 847,046  sd actual=0.3700  sd ideal=0.3253  TECHO=12.1%
+y > 0,05             n= 507,279  sd actual=0.4322  sd ideal=0.3750  TECHO=13.2%
+y > 0,20             n= 392,667  sd actual=0.4335  sd ideal=0.3741  TECHO=13.7%
+y > 0,40             n= 294,618  sd actual=0.4328  sd ideal=0.3704  TECHO=14.4%

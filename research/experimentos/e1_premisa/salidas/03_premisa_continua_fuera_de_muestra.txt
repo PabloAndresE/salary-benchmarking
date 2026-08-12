@@ -1,0 +1,13 @@
+filas 585,194  etiquetas 2,924  var(r2)=0.0603  sd=0.246
+
+=== RELACION CONTINUA con r2 (lo que ni empresa ni CARGO explican) ===
+  PLACEBO (ruido puro)               R2 fuera de muestra = -0.0002   -> reduce la sd un -0.01%
+  composicion (4 proporciones)       R2 fuera de muestra = +0.0042   -> reduce la sd un 0.21%
+  antiguedad                         R2 fuera de muestra = +0.0114   -> reduce la sd un 0.57%
+  composicion + antiguedad           R2 fuera de muestra = +0.0180   -> reduce la sd un 0.91%
+
+=== SOLO EN LAS 50 ETIQUETAS MAS DISPERSAS ===
+filas 8,837  var(r2)=0.5189
+  PLACEBO                            R2 fuera de muestra = -0.0287   -> reduce la sd un -1.42%
+  composicion                        R2 fuera de muestra = +0.0118   -> reduce la sd un 0.59%
+  antiguedad                         R2 fuera de muestra = +0.0032   -> reduce la sd un 0.16%

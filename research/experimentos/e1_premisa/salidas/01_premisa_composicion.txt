@@ -1,0 +1,33 @@
+marco evaluable      : 994,348 filas
+train                : 847,046 filas, 5,758 empresas
+train CON composicion: 768,927 filas, 5,729 empresas
+(el 20% de test NO se toca en este analisis)
+
+=== CUANTA DISPERSION QUEDA POR EXPLICAR ===
+var(y)                        = 0.2972   sd = 0.5452
+var tras quitar EMPRESA       = 0.1861   queda 62.6%
+var tras quitar EMPRESA+CARGO = 0.0554   queda 18.6%
+-> la etiqueta explica 70.2% de lo que sobra tras la empresa
+
+=== omega2 SOBRE r2 (lo que ni empresa ni CARGO explican), k=25 ===
+  composicion (4 proporciones)   +0.0056
+  solo comisiones                +0.0026
+  antiguedad                     +0.0107
+  PLACEBO aleatorio              -0.0000
+
+=== LECTURA ===
+  composicion (4 proporciones)   +0.0056 sobre el placebo   (-1972x)
+  solo comisiones                +0.0026 sobre el placebo   (-912x)
+  antiguedad                     +0.0107 sobre el placebo   (-3768x)
+
+  La composicion explica un 0.6% de la dispersion residual, frente
+  al -0.0% del placebo. La premisa se sostiene; cuanto vale eso en
+  error de prediccion lo contesta el banco (E0).
+
+=== SOLO EN LAS ETIQUETAS MAS DISPERSAS ===
+50 etiquetas con >=50 personas y mas dispersion: 8,837 filas
+  omega2 composicion  = +0.0483
+  omega2 PLACEBO      = -0.0004
+
+  Si aqui la composicion separa mas que en el agregado, la tesis funciona
+  precisamente donde promete: en las etiquetas que estan rotas.

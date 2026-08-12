@@ -768,7 +768,157 @@ Reparto: `ASISTENTE` 7,8%, `AUXILIAR` 6,6%, `JEFE` 3,6%, `AYUDANTE` 3,5%, `OBRER
 
 ---
 
-## 15. Mediciones pendientes
+## 15. La premisa central, medida — y el eje que sí paga
+
+**Fecha:** 2026-08-12. **Alcance:** el 80% de train (847.046 filas, 5.758 empresas). El 20% de
+test **no se tocó**. **Scripts:** `research/experimentos/e1_premisa/01…05`, con las salidas en
+`salidas/`.
+
+Contexto: el EDA se hizo con la composición al 2,7% y nunca pudo comprobar la hipótesis central.
+Se recuperó al 80% y aquí se mide por fin. **El resultado obliga a reformular la tesis** (D-013).
+
+### 15.1 La composición del pago casi no explica el salario
+
+Diseño: se residualiza `y` contra la empresa (quita el efecto empleador), luego contra
+`cargo_norm`. Sobre ese residuo se mide **R² fuera de muestra** (GBM, `GroupKFold` por empresa),
+restringido a etiquetas con ≥30 personas (585.194 filas, 2.924 etiquetas).
+
+| Predictor | R² fuera de muestra | Reduce la sd del error |
+|---|---|---|
+| **Placebo** (ruido gaussiano) | −0,0002 | — |
+| **Composición** (4 proporciones) | **+0,0042** | **0,21%** |
+| Antigüedad | +0,0114 | 0,57% |
+| Las dos juntas | +0,0180 | 0,91% |
+
+Con ω² sobre partición de 25 celdas, estable en todas las especificaciones: 0,0055 (todas las
+etiquetas) / 0,0058 (≥30 personas) / 0,0052 (≥100). **No es un artefacto de discretización ni de
+celdas mal estimadas.**
+
+En las **50 etiquetas más dispersas** el orden se invierte: composición +0,0118 (0,59%),
+antigüedad +0,0032 (0,16%). Es la variable correcta para el problema correcto; ese problema
+afecta a pocas etiquetas.
+
+**⚠️ Alcance exacto de la afirmación, y hay que respetarlo.** El diseño residualiza contra la
+empresa *antes* de medir, y la composición está determinada por la empresa entre un 39% y un 50%
+(η²_empresa: comisiones 0,388, extras 0,498). El diseño elimina por construcción la parte de la
+composición que podría predecir. La afirmación defendible es la estrecha: **la composición no
+aporta información intra-empresa e intra-etiqueta sobre el sueldo base.** No es "la composición no
+importa" — sobre compensación *total* es, mecánicamente, casi todo.
+
+### 15.2 De dónde viene el error de `CARGO`
+
+Componentes de varianza sobre celdas de `CARGO` (`y_fi = μ_c + a_f + e_fi`), train completo:
+
+| | |
+|---|---|
+| τ (sd entre empresas dentro de celda) | **0,2917** |
+| σ (sd intra empresa dentro de celda) | **0,1423** |
+| Ruido irreducible bajo leave-company-out | sd **0,3246** |
+| sd predictiva real de `CARGO` | **0,3651** |
+| **Techo de mejora por agrupar mejor** | **10,9%** (12,1% sobre train completo) |
+
+El empleador pesa el doble que todo lo demás junto, y bajo leave-company-out es inobservable.
+
+**Desglose por espesor de celda** (ponderado por personas):
+
+| Empresas donantes | Celdas | % de personas | sd predictiva | % del error que es ESTIMACIÓN |
+|---|---|---|---|---|
+| **1–2** | 52.264 | **34,0%** | 0,4225 | **44,6%** |
+| 3–5 | 2.810 | 8,3% | 0,3578 | 20,0% |
+| 6–20 | 1.680 | 12,8% | 0,3361 | 8,3% |
+| 21–100 | 538 | 18,8% | 0,3249 | 2,4% |
+| 101+ | 140 | 26,0% | 0,3359 | 0,4% |
+
+**Dos mundos.** 140 celdas cubren al 26% de la gente y ahí `CARGO` está a 0,4% del óptimo. 52.264
+celdas cubren al 34% y ahí casi la mitad del error es ruido de estimación — una "referencia de
+mercado" calculada con dos personas de una empresa.
+
+**Diagnóstico:** `CARGO` no está semánticamente roto, está **estadísticamente delgado**.
+
+**Consecuencia para el pre-registro:** el resultado primario debe declararse **estratificado por
+espesor de celda**, con el global como secundario. El 12,1% está diluido por el 26% de gente donde
+nada puede ayudar.
+
+### 15.3 El techo fuera de la zona comprimida por el SBU
+
+El 40,4% de la gente gana a menos de un 5% del mínimo; ahí la respuesta correcta es "el mínimo".
+
+| Subconjunto | n | sd actual | sd ideal | Techo |
+|---|---|---|---|---|
+| Todo | 847.046 | 0,3700 | 0,3253 | 12,1% |
+| `y > 0,05` | 507.279 | 0,4322 | 0,3750 | 13,2% |
+| `y > 0,20` | 392.667 | 0,4335 | 0,3741 | 13,7% |
+| `y > 0,40` | 294.618 | 0,4328 | 0,3704 | **14,4%** |
+
+Sube, pero moderadamente: 12,1% → 14,4%. No duplica el margen.
+
+### 15.4 El nivel jerárquico SÍ paga, y es el hallazgo más grande del proyecto
+
+Sobre las personas cuyo cargo empieza con palabra de rango, en áreas donde coexisten ≥2 rangos
+distintos (228.212 filas, 3.357 áreas). Se descuenta la empresa y **el área** — es decir, se deja
+el rango dentro del residuo y se pregunta si explica.
+
+| | var |
+|---|---|
+| tras quitar empresa | 0,2435 |
+| tras quitar empresa + área | 0,1828 (sd 0,428) |
+
+| Partición sobre ese residuo | ω² | Reduce la sd |
+|---|---|---|
+| **Rango** (14 categorías) | **+0,2462** | **13,2%** |
+| Nivel (5 escalones) | +0,2388 | 12,7% |
+| **Placebo** (rango permutado) | **+0,0000** | 0,00% |
+
+**Escalera monótona, dentro de empresa y área:**
+
+| Nivel | Efecto sobre `y` | n |
+|---|---|---|
+| 1 · ayudante, auxiliar, operario, obrero, asistente | −0,1202 | 131.314 |
+| 2 · técnico, analista | −0,0860 | 27.715 |
+| 3 · supervisor, coordinador, especialista | +0,0542 | 29.336 |
+| 4 · jefe, subgerente | +0,3109 | 26.611 |
+| 5 · gerente, director | +0,6270 | 13.236 |
+
+**Recorrido de nivel 1 a 5: +0,7471 en log = factor 2,11× en salario.**
+
+**59 veces más que la composición** (0,2462 frente a 0,0042). Y con los embeddings ciegos a este
+eje (§14: 0,857 entre rangos frente a 0,764 entre áreas), **un pipeline que agrupe por similitud
+de texto fusiona en la misma celda a personas que cobran el doble.**
+
+### 15.5 Cobertura del léxico de rango — dos cifras, dos definiciones
+
+Se han medido dos cosas distintas y hay que citarlas por separado para no contradecirse:
+
+| Definición | Cobertura |
+|---|---|
+| Palabra de rango **en cualquier posición** de la etiqueta (§14) | **38,6%** de las personas |
+| Palabra de rango **al inicio, seguida de un área** (`^RANGO (DE )?RESTO`) | **34,5%** de las personas |
+
+La segunda es la usable para descomponer en (rango, área), y es la que sostiene §15.4. La primera
+es el techo de detección del rango. **Al escribir, usar 34,5% cuando se hable de descomponer y
+38,6% cuando se hable de detectar.**
+
+### 15.6 Lo que se cae y lo que entra
+
+**Se cae:** la composición como eje central, y con ella su maquinaria — transformación ILR, CoDa,
+compuerta de masa fija, IPW por falta sistemática, restricciones semi-supervisadas y los pesos de
+bloque que motivaron la normalización MFA. Se reporta como *arquitectura descartada por medición*.
+
+**Entra:** el **eje de nivel** como pieza central, con ω² de 0,246 frente a 0,004. Sus fuentes por
+orden: léxico de rango (34,5% gratis y auditable), catálogo MDT-2019-395 (niveles A–E oficiales
+por contenido de puesto) y, para el resto, un clasificador **validado contra el 34,5% donde la
+verdad se conoce**.
+
+### 15.7 Medición pendiente que sostiene todo esto
+
+**Acotar el sesgo de movilidad limitada sobre τ.** Todo el techo cuelga de τ = 0,2917, y η²_empresa
+está probablemente sobreestimado (pendiente desde el 2026-08-07). Buena noticia: si τ está
+inflado, el ruido irreducible está inflado y **el techo está subestimado**. Pero hay que medirlo y
+reportar el techo como intervalo, o un economista laboral desarma el capítulo central.
+
+---
+
+## 16. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
 |---|---|---|

@@ -1,0 +1,24 @@
+
+=== etiquetas con >= 1 personas ===
+filas 768,927  etiquetas 55,377  personas/etiqueta mediana 2
+var(y)=0.2972  tras empresa=0.1861  tras empresa+CARGO=0.0554 (sd=0.235)
+CARGO explica 70.2% del residuo tras empresa
+  omega2 composicion  = +0.0055   -> reduce la sd un 0.27%
+  omega2 antiguedad   = +0.0107   -> reduce la sd un 0.54%
+  omega2 PLACEBO      = -0.0000   -> reduce la sd un -0.00%
+
+=== etiquetas con >= 30 personas ===
+filas 585,194  etiquetas 2,924  personas/etiqueta mediana 64
+var(y)=0.2171  tras empresa=0.1348  tras empresa+CARGO=0.0603 (sd=0.246)
+CARGO explica 55.3% del residuo tras empresa
+  omega2 composicion  = +0.0058   -> reduce la sd un 0.29%
+  omega2 antiguedad   = +0.0123   -> reduce la sd un 0.62%
+  omega2 PLACEBO      = -0.0000   -> reduce la sd un -0.00%
+
+=== etiquetas con >= 100 personas ===
+filas 481,292  etiquetas 940  personas/etiqueta mediana 210
+var(y)=0.1935  tras empresa=0.1173  tras empresa+CARGO=0.0589 (sd=0.243)
+CARGO explica 49.8% del residuo tras empresa
+  omega2 composicion  = +0.0052   -> reduce la sd un 0.26%
+  omega2 antiguedad   = +0.0126   -> reduce la sd un 0.63%
+  omega2 PLACEBO      = -0.0000   -> reduce la sd un -0.00%
