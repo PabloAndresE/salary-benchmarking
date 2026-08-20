@@ -1,0 +1,46 @@
+muestra 149,998 personas / 1,103 empresas
+
+============================================================================
+A. PODER MARGINAL DE CADA VISTA — cada bloque por separado
+============================================================================
+  PLACEBO                                          R2 = -0.0004   sd --0.0%
+  cargo (texto)                                    R2 = +0.3671   sd -20.4%
+  centro de costo (texto), BLOQUE APARTE           R2 = -0.1301   sd --6.3%
+  sin texto (composicion + antiguedad)             R2 = +0.0827   sd -4.2%
+  cargo + centro, bloques separados                R2 = +0.3534   sd -19.6%
+  TODAS LAS VISTAS                                 R2 = +0.4015   sd -22.6%
+
+  la vista sin texto alcanza el 23% del cargo
+  el centro de costo solo alcanza el -35% del cargo
+  las vistas sin cargo (centro + sin texto) frente al cargo:
+    TODO MENOS EL CARGO                            R2 = +0.0593   sd -3.0%
+
+  lo que TODO anade sobre el cargo solo: +0.0345
+  redundancia de la vista sin texto: 42% ya esta en el texto
+
+============================================================================
+B. .DETECTA LA VISTA SIN TEXTO QUE UNA ETIQUETA ESTA MAL?
+============================================================================
+etiquetas con >=100 personas: 204  (74,485 personas)
+marcados como DESACUERDO: 65,896 (88.5%)
+
+         grupo   personas   |y - su etiqueta|  |y - etiqueta vecina|       gana
+      marcados     65,896              0.1203                 0.2727    la suya
+       control      8,589              0.0744                 0.3141    la suya
+
+  Si en los MARCADOS gana la etiqueta vecina y en el CONTROL gana la suya,
+  la vista sin texto esta detectando etiquetas equivocadas sin mirar el sueldo.
+
+=== 12 desacuerdos mas frecuentes (etiqueta -> perfil al que se parece) ===
+   982  DOCENTE                                -> OBRERO AGRICOLA
+   819  TRABAJADOR AGRICOLA                    -> AUXILIAR 2 DE LABORATORIO
+   669  TRABAJADOR AGRICOLA                    -> EMPLEADO AGRICOLA
+   635  TRABAJADOR AGRICOLA                    -> PERSONAL ACADEMICO TITULAR AUXILIAR
+   603  PERCHADOR (A)                          -> OPERARIO DE CLASIFICACION LAITRAN
+   589  VENDEDOR                               -> VENDEDOR (A)
+   538  TRABAJADOR AGRICOLA                    -> OBRERO AGRICOLA
+   440  TRABAJADOR AGRICOLA                    -> DOCENTES
+   389  VENDEDOR                               -> JEFE DE TIENDA
+   359  PERCHADOR (A)                          -> OPERARIO DE CLASIFICACION
+   349  OBRERO                                 -> EMPLEADO AGRICOLA
+   343  DOCENTE                                -> GERENTE GENERAL

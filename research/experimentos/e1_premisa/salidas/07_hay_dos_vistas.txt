@@ -1,0 +1,30 @@
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+muestra: 119,907 personas de 878 empresas
+objetivo: y dentro de empresa, var = 0.2006 (sd 0.4479)
+
+embebiendo 12,136 cargos unicos...
+embebiendo 28,036 combinaciones cargo+centro...
+
+==========================================================================
+PODER PREDICTIVO MARGINAL DE CADA VISTA (dentro de empresa, fuera de muestra)
+==========================================================================
+  PLACEBO (ruido puro)                         R2 = -0.0005   reduce la sd un -0.0%
+  composicion sola (4 proporciones)            R2 = +0.0481   reduce la sd un 2.4%
+  antiguedad sola                              R2 = +0.0327   reduce la sd un 1.7%
+  VISTA SIN TEXTO (composicion+antig.)         R2 = +0.0908   reduce la sd un 4.6%
+  VISTA TEXTO (embedding del cargo)            R2 = +0.3466   reduce la sd un 19.2%
+  texto: cargo + centro de costo               R2 = +0.3112   reduce la sd un 17.0%
+  LAS DOS VISTAS                               R2 = +0.3612   reduce la sd un 20.1%
+
+==========================================================================
+LECTURA
+==========================================================================
+  la vista sin texto alcanza el 26% de lo que alcanza el texto
+  juntas suman +0.3612; por separado +0.3466 y +0.0908
+  lo que la vista sin texto ANADE sobre el texto: +0.0146
+  redundancia: 84% de la vista sin texto ya esta en el texto
+
+  Si la vista sin texto alcanza una fraccion apreciable del texto POR SI SOLA,
+  hay dos vistas de la ocupacion y el modelo latente tiene material.
+  Si da casi cero sola, solo hay una vista y hay que replantear.

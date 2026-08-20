@@ -87,3 +87,21 @@ def test_el_cache_en_archivo_no_escribe_si_no_hay_nada_nuevo(tmp_path):
     cache = CacheArchivo(ruta)
     cache.volcar()
     assert not ruta.exists(), "un cache vacio no debe crear el archivo"
+
+
+def test_no_envia_cadenas_vacias_a_la_api():
+    # Vertex responde `400 The text content is empty` y tumba el LOTE ENTERO. Y como
+    # sorted() pone la cadena vacia primero, basta una sola para que muera la primera
+    # peticion. Costo una corrida completa sobre 6.625 centros de costo.
+    cl = _cliente_falso()
+    X = embeber(["CONTADOR", "", "   ", "VENDEDOR"], cl, "m")
+    assert _enviados(cl) == ["CONTADOR", "VENDEDOR"]
+    assert X.shape == (4, 4)
+    assert not X[1].any() and not X[2].any(), "las vacias reciben el vector cero"
+    assert X[0].any() and X[3].any()
+
+
+def test_todo_vacio_no_revienta():
+    cl = _cliente_falso()
+    X = embeber(["", "  "], cl, "m")
+    assert cl.get_embeddings.call_count == 0 and not X.any()

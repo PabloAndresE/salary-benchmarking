@@ -37,3 +37,6 @@ corrida_universo*.log
 # descargas sueltas de investigacion
 *.html
 .gstack/
+
+# caches de embeddings: 150 MB de vectores derivados, se regeneran solos
+*.npz

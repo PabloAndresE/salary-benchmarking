@@ -1,0 +1,26 @@
+muestra 149,998 personas / 1,103 empresas
+centros de costo unicos: 6,625   vacios: 0.0%
+
+embebiendo centros de costo...
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+  unicos: 6,624   ya en cache: 6,624   por embeber: 0
+
+==============================================================================
+TRANSFIERE EL CENTRO DE COSTO ENTRE EMPRESAS?
+==============================================================================
+  cargo (TF-IDF), referencia                           R2 = +0.3676
+  CENTRO DE COSTO por SIGNIFICADO (embeddings)         R2 = -0.0592
+  centro de costo por CARACTERES (medido en 08)          R2 = -0.1232
+  sin texto (composicion + antiguedad)                 R2 = +0.0855
+  TODO MENOS EL CARGO (centro + sin texto)             R2 = +0.0745
+  TODAS LAS VISTAS                                     R2 = +0.4132
+
+==============================================================================
+LECTURA
+==============================================================================
+  El centro de costo NO transfiere ni leido por significado (-0.0592).
+  -> no es vocabulario mal representado: es informacion privada de cada
+     empresa. Se cierra la linea de la ocupacion latente con estos datos.
+
+  lo que TODO anade sobre el cargo solo: +0.0456

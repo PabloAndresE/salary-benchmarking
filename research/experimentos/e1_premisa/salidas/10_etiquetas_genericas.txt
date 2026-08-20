@@ -1,0 +1,69 @@
+train: 847,046 filas, 57,432 etiquetas
+var dentro de empresa: 0.1891 (sd 0.4349)
+
+====================================================================================
+1. LAS 381 ETIQUETAS CON >= 300 PERSONAS
+====================================================================================
+  cubren el 50.4% de la gente (426,506 personas)
+
+etiqueta                                  personas  sd intra  w2 sector  w2 ciiu+tam
+------------------------------------------------------------------------------------
+TRABAJADOR AGRICOLA                         27,044    0.1424     0.0205       0.0477
+DOCENTE                                     19,225    0.3144     0.0521       0.0974
+VENDEDOR                                    10,707    0.2930     0.2675       0.2997
+TRABAJADOR EN GENERAL                        9,303    0.2261     0.0530       0.0769
+CHOFER                                       6,757    0.2254     0.0625       0.1159
+ASESOR COMERCIAL                             6,560    0.2467     0.1469       0.1874
+ASISTENTE DE ALMACEN                         6,357    0.0366     0.1964       0.1969
+GUARDIA                                      6,162    0.1369     0.2837       0.3544
+PERCHADOR (A)                                5,775    0.0582     0.2762       0.2797
+OPERARIO                                     5,328    0.1458     0.1231       0.1358
+TRABAJADOR DE PRODUCCION                     5,179    0.0773     0.0282       0.0656
+TRABAJADOR ACUICOLA                          5,168    0.1648     0.0110       0.0366
+AGENTE DE SEGURIDAD                          5,097    0.1781     0.0404       0.3392
+AUXILIAR DE BODEGA                           4,878    0.1801     0.0781       0.1163
+ASISTENTE CONTABLE                           4,670    0.3138     0.1075       0.1182
+OBRERO                                       4,546    0.2450     0.4285       0.4398
+EJECUTIVO DE VENTAS                          4,291    0.2845     0.3137       0.3446
+ASISTENTE ADMINISTRATIVO                     3,776    0.3495     0.0928       0.1247
+AUXILIAR DE SERVICIOS GENERALES              3,695    0.2411     0.3171       0.4136
+TRABAJADOR DEL AGRO                          3,572    0.0400     0.0538       0.0983
+OPERADOR                                     3,144    0.2039     0.1713       0.1909
+AUXILIAR DE ENFERMERIA                       2,970    0.1973     0.1676       0.2406
+AUXILIAR DE LIMPIEZA                         2,751    0.2393     0.3962       0.4881
+------------------------------------------------------------------------------------
+
+  sd intra media (ponderada por personas): 0.2010   frente a 0.4349 global
+  omega2 medio de sector           : +0.1273
+  omega2 medio de sector x tamano  : +0.1704
+
+====================================================================================
+2. .PARTE EL SECTOR LAS GENERICAS? (placebo al lado)
+====================================================================================
+  varianza residual tras la etiqueta sola: 0.05942
+  + etiqueta x sector            -> 0.04476   var -24.68%   sd -13.21%
+  + etiqueta x sector x tamano   -> 0.04006   var -32.57%   sd -17.89%
+  + etiqueta x PLACEBO           -> 0.05840   var - 1.72%   sd -0.86%
+
+  .a cuanta gente le aplica? (reduccion dentro de su etiqueta)
+    el sector recorta >10% de su varianza en 205 de 298 etiquetas  (71.3% de la gente)
+    el sector recorta >20% de su varianza en 140 de 298 etiquetas  (49.6% de la gente)
+    el sector recorta >30% de su varianza en  92 de 298 etiquetas  (36.0% de la gente)
+
+====================================================================================
+3. EL REPARTO DEL ERROR: fragmentadas frente a genericas
+====================================================================================
+grupo                          personas   % gente  sd intra  % de la var
+------------------------------------------------------------------------
+genericas (>=300 pers.)         426,506    50.4%    0.3380       30.4%
+medianas                        174,149    20.6%    0.5259       30.1%
+fragmentadas (<3 empresas)      288,184    34.0%    0.4581       37.8%
+
+LECTURA: el sector SI parte las genericas —13,2% de sd frente a 0,9%
+del placebo—, y es el mismo orden que el eje de nivel. Es un SEGUNDO EJE,
+no un control: la referencia debe condicionar por sector dentro de las
+etiquetas anchas.
+
+CUIDADO: esto es descomposicion de varianza, no R2 fuera de muestra. El
+placebo descuenta el artefacto de grados de libertad, pero no sustituye a
+una validacion held-out como la de `03`.

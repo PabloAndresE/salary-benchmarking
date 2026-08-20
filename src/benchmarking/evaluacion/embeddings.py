@@ -103,10 +103,18 @@ def embeber(textos, cliente, modelo, cache=None, lote=LOTE, tarea=TAREA):
     """Matriz (len(textos) x d) alineada fila a fila con `textos`.
 
     Las filas repetidas comparten vector: se resuelve por diccionario, no por llamada.
+
+    Las cadenas VACIAS no se envian: Vertex responde `400 The text content is empty` y
+    tumba el lote entero. Como `sorted()` las pone primero, basta una sola para que muera
+    la primera peticion. Reciben el vector cero, que en un espacio centrado significa
+    "sin informacion" — que es exactamente lo que un centro de costo en blanco aporta.
     """
     unicos = sorted({str(t) for t in textos})
+    vacios = [t for t in unicos if not t.strip()]
     vectores, pendientes = {}, []
     for t in unicos:
+        if not t.strip():
+            continue
         v = cache.leer((modelo, tarea, t)) if cache is not None else None
         if v is None:
             pendientes.append(t)
@@ -120,6 +128,11 @@ def embeber(textos, cliente, modelo, cache=None, lote=LOTE, tarea=TAREA):
             vectores[t] = v
             if cache is not None:
                 cache.guardar((modelo, tarea, t), v)
+
+    if vacios:
+        dim = len(next(iter(vectores.values()))) if vectores else 1
+        for t in vacios:
+            vectores[t] = np.zeros(dim, dtype=float)
 
     return np.vstack([vectores[str(t)] for t in textos])
 

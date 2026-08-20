@@ -1,0 +1,30 @@
+train 847,046 filas / 5,758 empresas
+test  147,302 filas / 952 empresas
+
+tau2 = 0.0851 (sd 0.2917)   sigma2 = 0.0203 (sd 0.1423)
+el efecto empresa es el 81% del ruido irreducible
+
+cobertura de la referencia de mercado: 57.2% (84,312 personas)
+
+================================================================
+RESULTADO (sobre las 84,312 personas con referencia)
+================================================================
+  MAE solo mercado                 = 0.2056
+  MAE mercado + ancla de su empresa= 0.1792
+  -> MEJORA = 12.8%
+
+  (para comparar: el techo por agrupar mejor era 10,9%)
+
+=== POR NUMERO DE COMPANEROS CON REFERENCIA ===
+    companeros   personas  MAE mercado  MAE anclado   mejora
+          5-19      3,017       0.2999       0.2755    8.1%
+         20-99     17,964       0.2415       0.2200    8.9%
+          100+     62,969       0.1895       0.1618   14.6%
+
+=== SANIDAD ===
+  ancla estimada: media=+0.0340  sd=0.1870
+  sd del efecto empresa real (tau) = 0.2917
+  -> si la sd del ancla se acerca a tau, el anclaje esta capturando el efecto
+
+Recordatorio: esto NO mejora la cobertura, solo la precision de quien ya
+tenia referencia. Y es OTRA TAREA — equidad interna, no nivel de mercado.
