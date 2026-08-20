@@ -1453,3 +1453,124 @@ El correctivo no es desconfiar más: es **ordenar el trabajo para que la premisa
 aunque medirla exija arreglar el pipeline antes. En este proyecto eso habría significado hacer D-001
 y D-008 —recuperar la composición— y **medir §15.1 inmediatamente después**, antes de escribir una
 línea de spec de clustering.
+
+---
+
+## D-014 — La ocupación latente tampoco tiene material, y el eje que faltaba es el sector
+
+**Fecha:** 2026-08-20
+**Origen:** tras D-013, la pregunta abierta era **qué sustituye a la composición**. La dirección
+propuesta era inferir la ocupación real desde varias señales ruidosas, porque el título del cargo
+miente. Cinco mediciones para comprobarlo.
+**Evidencia:** `research/experimentos/e1_premisa/` scripts `06`–`10`, con salidas commiteadas.
+**Estado:** decisión tomada. Añade un eje al arquetipo y cierra una dirección de investigación.
+
+### Lo medido
+
+**La ocupación latente con varias vistas no tiene de dónde salir.**
+
+| Vista, dentro de empresa y fuera de muestra | R² |
+|---|---|
+| Cargo (texto) | **+0,367** |
+| Composición + antigüedad | +0,083 |
+| Centro de costo, por caracteres | **−0,130** |
+| Centro de costo, por significado (embeddings) | **−0,059** |
+| **Todo menos el cargo** | **+0,059** |
+
+El centro de costo es **peor que no predecir nada**, y no era un artefacto de TF-IDF: `09` se
+escribió para rescatarlo leyéndolo por significado y sólo pasó de −0,123 a −0,059. Es vocabulario
+privado de cada empresa —`CC-402`, `BODEGA 3`— que no transfiere entre empleadores.
+
+La vista sin texto es **84% redundante** con el texto: sobre el cargo añade +0,015.
+
+**Y el detector de etiquetas mal puestas falla su propio criterio.** `08` marcó el **88,5%** de la
+gente como "desacuerdo" —eso no es un detector, es ruido— y en los marcados **gana la etiqueta
+original** (0,1203 frente a 0,2727), que es exactamente lo contrario de lo que el test exigía.
+Ejemplos: `DOCENTE → OBRERO AGRICOLA`, `DOCENTE → GERENTE GENERAL`.
+
+**El sector sí parte las etiquetas anchas.**
+
+| Sobre las 381 etiquetas de ≥300 personas | Reduce la varianza | Reduce la sd |
+|---|---|---|
+| etiqueta × **sector** | 24,7% | **13,2%** |
+| etiqueta × sector × tamaño | 32,6% | 17,9% |
+| etiqueta × **placebo** | 1,7% | 0,9% |
+
+Aplica al **71,3%** de esa gente (205 de 298 etiquetas con más del 10% de su varianza recortada).
+
+**Y hay un tercer modo de fallo de la etiqueta que no estábamos atacando.** El reparto del error:
+
+| Grupo | Gente | % de la varianza |
+|---|---|---|
+| Genéricas (≥300 personas) | 50,4% | 30,4% |
+| Medianas | 20,6% | 30,1% |
+| Fragmentadas (<3 empresas) | 34,0% | 37,8% |
+
+Sabíamos que la etiqueta **se fragmenta** y se arregla fusionando. También **se agrega de más**, y
+eso se arregla al revés: **partiendo**.
+
+### Las decisiones
+
+**1. La ocupación latente con múltiples vistas se cierra como resultado negativo**, con su placebo
+y sus scripts. Enunciado estrecho: *en estos datos no existe una segunda vista de la ocupación
+independiente del título del cargo.* No "el título del cargo no miente" — miente, y `10` lo
+cuantifica por otra vía; lo que no hay es **otra señal con la que corregirlo**.
+
+**2. El sector entra como segundo eje del arquetipo**, no como control. Pasa de
+`rol-familia × nivel` a `rol-familia × nivel × sector`, al menos dentro de las etiquetas anchas.
+Y entra en la escalera de rivales: **`CARGO × sector`** es un baseline obvio, barato y honesto que
+hay que batir.
+
+**3. El anclaje a la empresa del cliente se separa como línea propia.** `06` mide −12,8% de MAE
+—más que el 10,9% que da agrupar mejor— y sube a −14,6% en empresas con más de 100 compañeros con
+referencia. Pero **no mejora la cobertura** y **responde otra pregunta**: equidad interna, no nivel
+de mercado. Va a capítulo aparte o se descarta explícitamente; lo que no puede es quedar como nota
+al pie, porque es el número más grande del expediente.
+
+### El aviso de lectura que hay que arrastrar al texto
+
+**`07` mide la composición en 2,4% y D-013 en 0,21%. No se contradicen:** `07` residualiza sólo
+contra la empresa, `03` contra empresa **y** cargo. Esa diferencia *es* el hallazgo — la
+composición parecía informativa porque hacía de proxy de la ocupación. Sin esa frase explícita, en
+la tesis es una contradicción que se encuentra en cinco minutos.
+
+### El error de estadístico, y por qué se registra
+
+La versión original de `10` §2 calculaba el ω² del sector **agrupando las 381 etiquetas**. Eso mide
+*"¿hay un efecto de sector igual para todas?"* y da **0,019**: casi nada. Su lectura impresa
+concluía que el sector no parte las genéricas y que ése era *"el límite mayor de la tesis"*.
+
+La pregunta útil es otra: *"cuando comparo un `VENDEDOR`, ¿ayuda saber su sector?"*. Eso es una
+**interacción**, y medida así da **13,2% de sd**. Un `OBRERO` es otra cosa según el sector
+(ω² 0,43) y un `TRABAJADOR AGRICOLA` es el mismo en todas partes (0,02): promediar ese efecto entre
+etiquetas lo borra.
+
+Se corrigió **en el script**, no sólo en la conversación, y se volvió a correr. Es la regla de
+D-013: un número que no se puede reproducir no se defiende — y una lectura equivocada guardada
+junto al número correcto es igual de peligrosa.
+
+### Límite declarado
+
+Lo de `10` es **descomposición de varianza, no R² fuera de muestra**. El placebo descuenta el
+artefacto de grados de libertad —0,9% frente a 13,2%, así que la señal es real— pero **falta la
+validación held-out** que sí tiene `03`. Antes de que el sector entre al spec como eje, hay que
+medirlo fuera de muestra. Anotado en pendientes.
+
+### Y una advertencia sobre sumar los números
+
+`13,2%` del nivel, `13,2%` del sector y `10,9%` del techo **no se suman ni se comparan
+directamente**: tienen denominadores distintos. El techo de `04` es sobre el error de predicción
+fuera de muestra que queda **después** de `CARGO`; los otros dos son descomposiciones de varianza
+de la señal, y parte de esa señal `CARGO` ya la captura (sus cadenas suelen llevar el rango dentro).
+Reconciliarlos en una sola contabilidad es tarea pendiente, y hacerlo mal sería el error más caro
+que queda por cometer.
+
+### Lección
+
+D-013 dijo que una hipótesis infalsable no es un cimiento. D-014 añade el corolario barato:
+**la segunda hipótesis también se mide antes de construir**, y esta vez se hizo — cinco scripts y
+cuatro días, frente a las trece semanas que costó la primera.
+
+Lo que no cambió es el otro patrón: los cinco scripts se midieron y **no estaban versionados**, seis
+días después de escribir la regla que lo prohíbe. La regla no falla por desconocimiento, falla por
+no estar en el flujo. Corregido: los scripts, sus salidas y el README van en el mismo commit.
