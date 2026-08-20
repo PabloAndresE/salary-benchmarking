@@ -1,0 +1,51 @@
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+train 138,355 filas / 900 empresas
+eval  51,132 filas / 300 empresas
+etiquetas de CARGO en train: 12,057
+embebiendo 15,495 etiquetas unicas...
+
+==============================================================================
+BARRIDO DE GRANULARIDAD
+==============================================================================
+metodo                       celdas cobertura       MAE     AUGRC
+------------------------------------------------------------------------------
+CARGO crudo (baseline)       12,057     53.8%    0.2409    0.0554
+texto agrupado k=50              50    100.0%    0.3763    0.1469
+texto agrupado k=200            200     84.7%    0.2991    0.0970
+texto agrupado k=1000         1,000     92.7%    0.2672    0.0941
+texto agrupado k=5000         5,000     74.2%    0.2640    0.0884
+
+==============================================================================
+FRENTE AL BASELINE `CARGO CRUDO`
+==============================================================================
+  texto agrupado k=50      MAE  +56.2%   cobertura +46.2% pts
+  texto agrupado k=200     MAE  +24.2%   cobertura +30.9% pts
+  texto agrupado k=1000    MAE  +10.9%   cobertura +38.9% pts
+  texto agrupado k=5000    MAE   +9.6%   cobertura +20.4% pts
+
+==============================================================================
+LA FRONTERA: a partir de que coste de NO RESPONDER gana engrosar?
+==============================================================================
+  Riesgo(c) = MAE*cobertura + c*(1-cobertura), denominador N para todos.
+  El c del cruce se lee en dolares: exp(c)-1 es el desvio equivalente de
+  la respuesta que se acepta a cambio de no callarse.
+
+  metodo                    c* del cruce   en dolares
+  ----------------------------------------------------
+  texto agrupado k=50             0.5339       70.6%
+  texto agrupado k=200            0.4005       49.3%
+  texto agrupado k=1000           0.3035       35.5%
+  texto agrupado k=5000           0.3250       38.4%
+
+COMO SE LEE
+  1. Engrosar NO mejora la precision: el MAE sube en todos los puntos.
+     Mas gente por celda estima mejor la mediana, pero la celda gruesa
+     mezcla puestos que pagan distinto, y gana el segundo efecto.
+  2. Lo que compra engrosar es COBERTURA, y tiene un precio exacto: c*.
+  3. El MAE a secas no decide, porque quien se calla mas acierta mas
+     entre los que responde. Y MAE*cobertura tampoco: premia callarse.
+
+AVISO DE MUESTRA: con 1.200 empresas CARGO cubre menos que sobre el
+train completo (53,8% aqui frente a 66,6% real), asi que este barrido
+FAVORECE a los metodos gruesos. Aun asi pierden en precision.

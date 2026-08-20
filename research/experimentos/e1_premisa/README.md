@@ -1,6 +1,6 @@
 # E1 — La premisa central, medida
 
-Diez mediciones que reformularon el alcance de la tesis (**D-013**, `mediciones.md` §15).
+Once mediciones que reformularon el alcance de la tesis (**D-013**, `mediciones.md` §15).
 
 Origen: el EDA se hizo con la composición del pago al 2,7% y adoptó como hipótesis central —por
 eliminación— que esa composición explicaría la dispersión que `CARGO` no explica. Nunca se
@@ -30,6 +30,46 @@ título del cargo miente. Medido, esa dirección no tiene material — y aparece
 | `08_vistas_y_desacuerdo.py` | Con las vistas en bloques separados, ¿y detecta etiquetas mal puestas? | Cargo +0,367; **todo menos el cargo, +0,059**. El detector marca el **88,5%** y en los marcados gana la etiqueta original: **falla su propio criterio** |
 | `09_centro_de_costo_con_embeddings.py` | ¿Sobrevive el centro de costo leído por significado y no por caracteres? | **No.** R² −0,059 por significado frente a −0,123 por caracteres. Sigue siendo peor que no predecir |
 | `10_etiquetas_genericas.py` | El otro fallo de la etiqueta: demasiado anchas. ¿Las parte el sector? | **Sí: −13,2% de sd** (placebo 0,9%), −17,9% con tamaño. Aplica al 71,3% de esa gente |
+
+## `11` — el barrido de granularidad, y el precio de la cobertura
+
+Contesta la pregunta del director en su forma mas simple: si `CARGO` tiene celdas de 2 personas,
+.cuanto se gana engrosandolas?
+
+| Agrupamiento | Celdas | Cobertura | MAE | c* del cruce | En dolares |
+|---|---|---|---|---|---|
+| **`CARGO` crudo** | 12.057 | 53,8% | **0,2409** | — | — |
+| texto k=5000 | 5.000 | 74,2% | 0,2640 | 0,325 | 38,4% |
+| **texto k=1000** | 1.000 | **92,7%** | 0,2672 | **0,304** | **35,5%** |
+| texto k=200 | 200 | 84,7% | 0,2991 | 0,400 | 49,3% |
+| texto k=50 | 50 | 100% | 0,3763 | 0,534 | 70,6% |
+
+**Engrosar NO mejora la precision.** El mecanismo que se esperaba —mas gente por celda, mediana
+mejor estimada— existe, pero lo cancela el contrario: la celda gruesa mezcla puestos que pagan
+distinto. El MAE sube en todos los puntos.
+
+**Lo que compra engrosar es cobertura, y tiene un precio exacto.** Pasar del 53,8% al 92,7% cuesta
+`c* = 0,304`, o sea aceptar una respuesta con un ~35% de desvio a cambio de no callarse. Es la
+frontera A/B de D-004 medida sobre datos reales, y **es una decision de negocio, no de
+estadistica**: hay que preguntarle a ActuaLab cuanto le cuesta al cliente no tener respuesta, y
+fijarlo en el pre-registro antes de tocar el test.
+
+**Que este experimento NO prueba.** Agrupa por TEXTO, y los embeddings son ciegos a la jerarquia
+(D-012): mezclan `GERENTE DE AUDITORIA` con `JEFE DE AUDITORIA` a 0,944. Es el rival que se
+esperaba que perdiera, no el arquetipo. El arquetipo anade nivel y sector, que es engrosar **y**
+partir a la vez, y eso este barrido no lo mide.
+
+**Dos trampas metodologicas que costaron una version del script:**
+
+- `MAE * cobertura` es el riesgo generalizado con **coste cero por callarse**, asi que premia
+  abstenerse: con esa cuenta `CARGO` "gana" por el mero hecho de no responder al 46% de la gente.
+  El unico numero comparable es el riesgo a un `c > 0`, y el que decide es el `c` del cruce.
+- El `AUGRC` de la tabla **no es comparable entre metodos con techos de cobertura distintos**: se
+  normaliza sobre el rango que cada uno alcanza. Sirve para ordenar la confianza dentro de un
+  metodo, no para compararlos entre si. Para eso esta `c*`.
+
+**Aviso de muestra:** con 1.200 empresas `CARGO` cubre el 53,8% frente al 66,6% del train completo,
+asi que el barrido **favorece** a los metodos gruesos. Aun asi pierden en precision.
 
 ### Dos avisos de lectura
 
