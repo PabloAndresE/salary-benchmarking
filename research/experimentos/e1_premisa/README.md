@@ -1,6 +1,6 @@
 # E1 — La premisa central, medida
 
-Once mediciones que reformularon el alcance de la tesis (**D-013**, `mediciones.md` §15).
+Doce mediciones que reformularon el alcance de la tesis (**D-013**, `mediciones.md` §15).
 
 Origen: el EDA se hizo con la composición del pago al 2,7% y adoptó como hipótesis central —por
 eliminación— que esa composición explicaría la dispersión que `CARGO` no explica. Nunca se
@@ -70,6 +70,45 @@ partir a la vez, y eso este barrido no lo mide.
 
 **Aviso de muestra:** con 1.200 empresas `CARGO` cubre el 53,8% frente al 66,6% del train completo,
 asi que el barrido **favorece** a los metodos gruesos. Aun asi pierden en precision.
+
+## `12` — prestar fuerza al vecindario en vez de fusionar
+
+`11` mostro que engrosar pierde precision porque FUSIONA celdas. Aqui se prueba la otra via:
+cada celda se queda donde esta y toma prestada informacion de las que se le parecen, con
+Fay-Herriot (1979) — `gamma_c = sigma_u^2 / (sigma_u^2 + v_c)`, donde `v_c` es la varianza de
+muestreo que el banco ya calcula. **Sin parametros libres:** `sigma_u^2` sale por momentos.
+
+El vecindario se define con el TEXTO del cargo. El salario nunca entra en decidir quien se
+parece a quien; solo el prestamo usa salarios de otras celdas, que es lo que hace cualquier
+estimador de area pequena y lo que el BLS hace con sus donantes.
+
+### Dos regimenes
+
+**Donde `CARGO` ya responde (53,8%):** k=25 −0,12%, **k=50 −1,63%**, k=100 −1,50%. Hay optimo
+cerca de k=50. **Es la primera vez que algo baja el error a cobertura constante** — misma gente
+atendida, solo mejor estimada. Engrosar no lo logro en ningun punto.
+
+**Donde no responde:** el **35,9%** de la gente de eval tiene un cargo que no aparece en train
+(3.438 etiquetas). Una etiqueta nueva no tiene donantes propios pero si vecindario: se embebe y
+se coloca. **Cobertura 53,8% -> 89,7%**, con MAE 0,336 en esa poblacion nueva, frente a los 0,376
+que costaba cubrir al 100% engrosando (`11`).
+
+### Frente a engrosar
+
+| Ruta | Cobertura | MAE | c* |
+|---|---|---|---|
+| Engrosar (`11`, k=1000) | 92,7% | 0,2672 | **0,304** |
+| Prestar fuerza (`12`, k=50) | 89,7% | 0,2767 | 0,330 |
+
+Para comprar cobertura pura engrosar sale **marginalmente mas barato**. La diferencia que el `c*`
+no captura: **engrosar empeora al 53,8% que ya estaba atendido y prestar fuerza lo mejora.** Una
+ruta destruye lo que funcionaba; la otra lo conserva y anade encima.
+
+### Limites
+
+- **Un solo split.** El −1,63% necesita el bootstrap pareado antes de afirmarse.
+- **`k` no se elige por el MAE de aqui** (D-005 Enmienda 1). Este barrido mide sensibilidad.
+- El 1,63% captura ~15% del presupuesto de error de estimacion medido en `04` (10,9%).
 
 ### Dos avisos de lectura
 

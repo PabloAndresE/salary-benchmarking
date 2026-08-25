@@ -1,0 +1,49 @@
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+train 138,355 filas / 900 empresas
+eval  51,132 filas / 300 empresas
+celdas con estimacion directa: 12,057
+  de 1-2 empresas: 11,039 (51.3% de la gente)
+embebiendo 15,495 etiquetas...
+
+============================================================================
+PRESTAR FUERZA AL VECINDARIO (Fay-Herriot sobre las celdas de CARGO)
+============================================================================
+metodo                             cobertura       MAE  MAE intra
+----------------------------------------------------------------------------
+CARGO crudo (baseline)                 53.8%    0.2409     0.1613
+etiquetas de eval NO vistas en train: 3,438 (35.9% de las personas de eval)
+  [k=25] sigma_u = 0.3959   gamma medio en celdas de 1-2 empresas = 0.656
+CARGO + vecindario k=25                53.8%    0.2406     0.1589
+  ...suelo relajado (e>=1)             55.7%    0.2408     0.1625
+  ...+ etiquetas nuevas k=25            89.7%    0.2809     0.1975
+  [k=50] sigma_u = 0.4131   gamma medio en celdas de 1-2 empresas = 0.674
+CARGO + vecindario k=50                53.8%    0.2369     0.1575
+  ...suelo relajado (e>=1)             55.7%    0.2375     0.1611
+  ...+ etiquetas nuevas k=50            89.7%    0.2767     0.1949
+  [k=100] sigma_u = 0.4315   gamma medio en celdas de 1-2 empresas = 0.693
+CARGO + vecindario k=100               53.8%    0.2372     0.1578
+  ...suelo relajado (e>=1)             55.7%    0.2380     0.1614
+  ...+ etiquetas nuevas k=100           89.7%    0.2822     0.1972
+
+============================================================================
+FRENTE AL BASELINE
+============================================================================
+  CARGO + vecindario k=25          MAE  -0.12%   cobertura  +0.0% pts
+    ...suelo relajado (e>=1)       MAE  -0.02%   cobertura  +1.9% pts   c* = 0.2397 (+27.1%)
+    ...+ etiquetas nuevas k=25     MAE +16.62%   cobertura +35.9% pts   c* = 0.3408 (+40.6%)
+  CARGO + vecindario k=50          MAE  -1.63%   cobertura  +0.0% pts
+    ...suelo relajado (e>=1)       MAE  -1.41%   cobertura  +1.9% pts   c* = 0.1408 (+15.1%)
+    ...+ etiquetas nuevas k=50     MAE +14.87%   cobertura +35.9% pts   c* = 0.3303 (+39.1%)
+  CARGO + vecindario k=100         MAE  -1.50%   cobertura  +0.0% pts
+    ...suelo relajado (e>=1)       MAE  -1.19%   cobertura  +1.9% pts   c* = 0.1566 (+17.0%)
+    ...+ etiquetas nuevas k=100    MAE +17.15%   cobertura +35.9% pts   c* = 0.3441 (+41.1%)
+
+COMO SE LEE
+  A cobertura IGUAL, cualquier bajada de MAE es ganancia limpia: mismas
+  celdas, mismas personas atendidas, solo mejor estimadas. Es lo que `11`
+  no pudo conseguir engrosando.
+  Con el suelo relajado se anade cobertura, y ahi vuelve a aplicar el c*.
+
+AVISO: k se elige por ESTABILIDAD, no por el MAE que salga aqui (D-005
+Enmienda 1). Este barrido mide sensibilidad, no selecciona.
