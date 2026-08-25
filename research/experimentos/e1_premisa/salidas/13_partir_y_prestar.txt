@@ -1,0 +1,34 @@
+train 138,355 filas / 900 empresas
+eval  51,132 filas / 300 empresas
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 15,495 etiquetas...
+preparando vecindarios (una sola vez)...
+  cargo: 15,495 celdas
+  sector: 20,032 celdas
+
+==========================================================================
+PUNTO ESTIMADO
+==========================================================================
+metodo                          cobertura        MAE
+--------------------------------------------------------------------------
+CARGO crudo                         54.7%     0.2409
+CARGO + vecindario                  90.6%     0.2765
+CARGO x sector                      23.7%     0.2135
+CARGO x sector + vecindario         72.5%     0.2945
+
+==========================================================================
+CONTRASTE PAREADO (150 replicas, dos etapas, numeros comunes)
+==========================================================================
+  replicas: 150   cada contraste sobre SU interseccion
+
+  contraste                                            dif               IC 95%
+  ----------------------------------------------------------------------
+  CARGO + vecindario - CARGO crudo              +0.0009 [-0.0085, +0.0088] no   n=45%
+  CARGO x sector - CARGO crudo                  +0.0062 [-0.0062, +0.0193] no   n=23%
+  CARGO x sector + vecindario - CARGO crudo     +0.0178 [-0.0086, +0.0644] no   n=33%
+  CARGO x sector + vecindario - CARGO + vecindario  +0.0126 [-0.0016, +0.0358] no   n=73%
+
+SI = el IC de la diferencia no cruza el cero y es negativo: mejora real.
+El contraste es PAREADO sobre la misma replica, asi que el efecto empresa
+—que domina el error y es identico para los cuatro— se cancela.

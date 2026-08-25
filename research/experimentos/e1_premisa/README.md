@@ -1,6 +1,6 @@
 # E1 — La premisa central, medida
 
-Doce mediciones que reformularon el alcance de la tesis (**D-013**, `mediciones.md` §15).
+Trece mediciones que reformularon el alcance de la tesis (**D-013**, `mediciones.md` §15).
 
 Origen: el EDA se hizo con la composición del pago al 2,7% y adoptó como hipótesis central —por
 eliminación— que esa composición explicaría la dispersión que `CARGO` no explica. Nunca se
@@ -109,6 +109,50 @@ ruta destruye lo que funcionaba; la otra lo conserva y anade encima.
 - **Un solo split.** El −1,63% necesita el bootstrap pareado antes de afirmarse.
 - **`k` no se elige por el MAE de aqui** (D-005 Enmienda 1). Este barrido mide sensibilidad.
 - El 1,63% captura ~15% del presupuesto de error de estimacion medido en `04` (10,9%).
+
+## `13` — partir y prestar, con contraste pareado: nada gana
+
+La hipotesis era una sinergia: **partir** por sector arregla las etiquetas anchas (D-014) pero
+adelgaza las celdas; **prestar fuerza** arregla las celdas delgadas (`12`). Deberian habilitarse
+mutuamente — se puede partir fino PRECISAMENTE porque se presta.
+
+Cuatro metodos, mismo estimador, mismo split, y contraste pareado de dos etapas con 150 replicas.
+**Cada contraste sobre SU PROPIA interseccion de dos**: agregando sobre la interseccion de los
+cuatro se comparaba solo el 23% mejor poblado, que es justo donde prestar fuerza no hace falta.
+
+| Metodo | Cobertura | MAE |
+|---|---|---|
+| `CARGO` crudo | 54,7% | 0,2409 |
+| `CARGO` + vecindario | 90,6% | 0,2765 |
+| `CARGO` x sector | 23,7% | 0,2135 |
+| `CARGO` x sector + vecindario | 72,5% | 0,2945 |
+
+| Contraste | Diferencia | IC 95% | n |
+|---|---|---|---|
+| vecindario − crudo | +0,0009 | [−0,0085, +0,0088] | 45% |
+| sector − crudo | +0,0062 | [−0,0062, +0,0193] | 23% |
+| sector+vecindario − crudo | +0,0178 | [−0,0086, +0,0644] | 33% |
+| sector+vecindario − vecindario | +0,0126 | [−0,0016, +0,0358] | 73% |
+
+**Ninguno gana.** Los cuatro IC cruzan el cero y los cuatro puntos estimados son positivos, es
+decir peores. El ultimo roza la significacion **en la direccion contraria**: anadir el sector al
+vecindario empeora.
+
+**El −1,63% de `12` era ruido de un solo split.** Sobre su interseccion correcta (45%) queda en
++0,0009. Retirado.
+
+**El MAE de 0,2135 de `CARGO x sector` es un artefacto de seleccion**, no una mejora: solo responde
+para el 23% mas facil. Con el contraste pareado sobre esa misma poblacion, +0,0062 y no
+significativo.
+
+### Dos errores de proceso que costaron cuatro corridas
+
+- Un bucle de Python por celda dentro del bootstrap: 15.495 celdas x 4 metodos x 150 replicas =
+  9,3 millones de iteraciones, dos horas largas. **El paquete ya tenia `_cuantil_por_grupo`
+  vectorizado**, escrito precisamente porque el bootstrap costaba 20 horas — y el script de
+  investigacion no lo reutilizo.
+- Una edicion rota dejo el fichero ejecutando la ruta vieja, y la salida salio **identica** a la
+  anterior. Esa identidad era la senal, y se reporto el resultado antes de verla.
 
 ### Dos avisos de lectura
 
