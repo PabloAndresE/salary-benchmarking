@@ -39,6 +39,16 @@ def main():
     cu.add_argument("--anios", default=None,
                     help="acotar a estos anios, p.ej. 2024,2025 (default: todos)")
 
+    rf = sub.add_parser("referenciar", help="nomina de un cliente -> Excel con referencias")
+    rf.add_argument("--nomina", required=True, help="Excel o CSV del cliente")
+    rf.add_argument("--salida", default="referencias.xlsx")
+    rf.add_argument("--columna", default=None, help="columna de cargo (se autodetecta)")
+    rf.add_argument("--columna-sueldo", default=None, help="columna de sueldo (se autodetecta)")
+    rf.add_argument("--anio", type=int, default=2025, help="anio del SBU para los dolares")
+    rf.add_argument("--cache-embeddings", default=None)
+    rf.add_argument("--base", default="base_referencia.npz", help="base serializada")
+    rf.add_argument("--rehacer-base", action="store_true")
+
     args = ap.parse_args()
     s = cargar_settings()
     client = bigquery.Client()
@@ -69,6 +79,15 @@ def main():
                                    anios=(tuple(int(a) for a in args.anios.split(","))
                                           if args.anios else None))
         print(f"universo: {total} filas escritas (reanudó saltando {len(hechos)} estudios)")
+
+    elif args.cmd == "referenciar":
+        from .producto.referenciar_nomina import referenciar_archivo
+        referenciar_archivo(args.nomina, args.salida, client, s,
+                            col_cargo=args.columna, col_sueldo=args.columna_sueldo,
+                            anio=args.anio,
+                            cache_emb=args.cache_embeddings, ruta_base=args.base,
+                            rehacer=args.rehacer_base)
+
 
 if __name__ == "__main__":
     main()
