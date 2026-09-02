@@ -1,0 +1,40 @@
+train 847,046 filas, 57,432 etiquetas, 52.1% con rango
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+titulos enmascarados distintos: 49,501 (de 57,432 originales)
+embebiendo crudos...
+embebiendo enmascarados...
+
+==========================================================================
+LA ESCALERA SALARIAL SOBRE TITULOS SIN RANGO
+(27,487 etiquetas, y el modelo nunca vio un salario)
+==========================================================================
+
+A. entrenado sobre el titulo COMPLETO (la version de `01`)
+    nivel 1   mediana   0.026   294,420 personas (57.7%)  <-- se acumula aqui
+    nivel 2   mediana   0.398    35,663 personas ( 7.0%)
+    nivel 3   mediana   0.398    78,028 personas (15.3%)
+    nivel 4   mediana   0.266    33,086 personas ( 6.5%)
+    nivel 5   mediana   0.420    69,067 personas (13.5%)
+    recorrido 1.48x   no monotona
+
+B. entrenado sobre el titulo ENMASCARADO
+    nivel 1   mediana   0.043   281,485 personas (55.2%)  <-- se acumula aqui
+    nivel 2   mediana   0.179   150,156 personas (29.4%)
+    nivel 3   mediana   0.053    16,939 personas ( 3.3%)
+    nivel 4   mediana   0.062    12,089 personas ( 2.4%)
+    nivel 5   mediana   0.398    49,595 personas ( 9.7%)
+    recorrido 1.43x   no monotona
+
+C. PLACEBO   recorrido 1.01x   monotona
+D. REFERENCIA (etiquetas que SI llevan rango)   5.96x   monotona
+
+==========================================================================
+LECTURA
+==========================================================================
+  completo   1.48x  NO monotona
+  enmascarado  1.43x  NO monotona
+  placebo    1.01x
+
+  No mejora. El nivel no es recuperable de los titulos que no lo declaran,
+  al menos no con esta supervision y esta representacion.

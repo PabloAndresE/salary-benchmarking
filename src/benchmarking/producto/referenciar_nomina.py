@@ -17,6 +17,7 @@ import pandas as pd
 from ..evaluacion import datos, embeddings
 from .base_referencia import BaseReferencia
 from .comparacion import comparar, texto_resumen
+from .nivel import enmascarar
 
 _POSIBLES = ("cargo", "cargo_norm", "puesto", "denominacion", "descripcion_cargo",
              "nombre_cargo", "titulo")
@@ -73,8 +74,14 @@ def construir_base(cliente_bq, settings, anios=(2024, 2025), cache_emb=None,
         datos.cargar_marco(cliente_bq, settings.bq_project, settings.bq_dataset,
                            anios=anios), settings))
     etiquetas = sorted(set(marco["cargo_norm"].astype(str)))
-    print(f"construyendo la base: {len(marco):,} filas, {len(etiquetas):,} titulos")
-    X = embeddings.embeber(etiquetas, cli, settings.vertex_embedding_model, cache=cache)
+    # Se embebe el titulo ENMASCARADO, no el crudo: el area sin contaminacion de rango.
+    # `AUXILIAR DE CAJA` y `SUPERVISOR DE CAJA` caen en el mismo punto y es el lexico
+    # quien los separa despues, con el efecto de escalon ya medido. Con el titulo crudo
+    # el embedding los daba a 0,944 de similitud y los promediaba (D-012).
+    areas = [enmascarar(e) for e in etiquetas]
+    print(f"construyendo la base: {len(marco):,} filas, {len(etiquetas):,} titulos "
+          f"({len(set(areas)):,} areas tras enmascarar el rango)")
+    X = embeddings.embeber(areas, cli, settings.vertex_embedding_model, cache=cache)
     cache.volcar()
     emb = dict(zip(etiquetas, X))
     base = BaseReferencia.construir(marco, emb, settings.get_sbu)
@@ -112,7 +119,8 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
     print(f"puestos distintos en la nomina: {titulos.nunique():,}   "
           f"sin datos directos: {len(nuevos):,}")
     if nuevos:
-        X = embeddings.embeber(nuevos, cli, settings.vertex_embedding_model, cache=cache)
+        X = embeddings.embeber([enmascarar(n) for n in nuevos], cli,
+                               settings.vertex_embedding_model, cache=cache)
         cache.volcar()
         emb.update(dict(zip(nuevos, X)))
 

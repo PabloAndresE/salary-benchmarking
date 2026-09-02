@@ -1,0 +1,79 @@
+train 847,046 filas   areas enmascaradas 49,501
+con nivel lexico: 39.8% de las personas
+
+areas con 2+ niveles distintos: 3,317  (240,066 personas, 10,865 etiquetas)
+
+==========================================================================
+A. DENTRO DE LA MISMA AREA ENMASCARADA, .ORDENA EL NIVEL EL PAGO?
+==========================================================================
+  nivel        media   mediana   personas
+  1          -0.1519   -0.0985    133,801
+  2          -0.0907   -0.0849     32,523
+  3          +0.0949   +0.0723     32,281
+  4          +0.3636   +0.3084     26,658
+  5          +0.7101   +0.6621     14,803
+
+  monotona: True    recorrido nivel 1 -> 5: 2.37x
+
+==========================================================================
+B. CUANTA VARIANZA INTRA-AREA EXPLICA EL NIVEL (con placebo)
+==========================================================================
+  nivel lexico   omega2 = +0.2878   reduce la sd un 15.6%
+  PLACEBO        omega2 = -0.0000
+
+==========================================================================
+C. LOS DOS EJES, LADO A LADO (sobre las areas mixtas)
+==========================================================================
+  area sola            omega2 = +0.2670
+  nivel solo           omega2 = +0.5204
+  area x nivel         omega2 = +0.6459
+  etiqueta original    omega2 = +0.6632
+
+  (si `area x nivel` se acerca a `etiqueta original` con muchas menos celdas,
+   la descomposicion recupera lo que la etiqueta sabe, y de forma reutilizable)
+
+==========================================================================
+D. EJEMPLOS: la misma area con dos rangos
+==========================================================================
+
+  PUESTO
+    nivel 1  mediana  0.040  14,643 pers.  ej: OPERARIO
+    nivel 2  mediana  0.398   3,256 pers.  ej: TECNICO
+    nivel 3  mediana  0.465   2,957 pers.  ej: SUPERVISOR
+    nivel 4  mediana  1.483     426 pers.  ej: JEFE
+    nivel 5  mediana  1.676   1,359 pers.  ej: GERENTE
+
+  PUESTO DE BODEGA
+    nivel 1  mediana  0.021   9,549 pers.  ej: AUXILIAR DE BODEGA
+    nivel 2  mediana  0.435      56 pers.  ej: ANALISTA DE BODEGA
+    nivel 3  mediana  0.398     650 pers.  ej: SUPERVISOR DE BODEGA
+    nivel 4  mediana  0.643     824 pers.  ej: JEFE DE BODEGA
+    nivel 5  mediana  1.721       2 pers.  ej: GERENTE DE BODEGA
+
+  PUESTO DE ALMACEN
+    nivel 1  mediana  0.025   6,648 pers.  ej: ASISTENTE DE ALMACEN
+    nivel 2  mediana  0.574      11 pers.  ej: ANALISTA DE ALMACEN
+    nivel 3  mediana  0.420     132 pers.  ej: SUPERVISOR DE ALMACEN
+    nivel 4  mediana  0.061     392 pers.  ej: JEFE DE ALMACEN
+    nivel 5  mediana  0.553      10 pers.  ej: GERENTE DE ALMACEN
+
+  PUESTO DE PRODUCCION
+    nivel 1  mediana  0.024   5,254 pers.  ej: OPERARIO DE PRODUCCION
+    nivel 2  mediana  0.504      88 pers.  ej: TECNICO DE PRODUCCION
+    nivel 3  mediana  0.671   1,096 pers.  ej: SUPERVISOR DE PRODUCCION
+    nivel 4  mediana  1.182     516 pers.  ej: JEFE DE PRODUCCION
+    nivel 5  mediana  1.970     226 pers.  ej: GERENTE DE PRODUCCION
+
+  PUESTO CONTABLE
+    nivel 1  mediana  0.293   5,830 pers.  ej: ASISTENTE CONTABLE
+    nivel 2  mediana  0.627     907 pers.  ej: ANALISTA CONTABLE
+    nivel 3  mediana  0.838      89 pers.  ej: COORDINADOR CONTABLE
+    nivel 4  mediana  1.623      50 pers.  ej: JEFE CONTABLE
+    nivel 5  mediana  1.872      12 pers.  ej: GERENTE CONTABLE
+
+  PUESTO ADMINISTRATIVO
+    nivel 1  mediana  0.206   5,358 pers.  ej: ASISTENTE ADMINISTRATIVO
+    nivel 2  mediana  0.532     113 pers.  ej: ANALISTA ADMINISTRATIVO
+    nivel 3  mediana  0.937     299 pers.  ej: COORDINADOR ADMINISTRATIVO
+    nivel 4  mediana  1.235     440 pers.  ej: JEFE ADMINISTRATIVO
+    nivel 5  mediana  1.671     343 pers.  ej: GERENTE ADMINISTRATIVO

@@ -53,6 +53,7 @@ import pandas as pd
 
 from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
                                      sigma2_por_celda, tabla_votos)
+from .nivel import efecto_nivel, nivel_lexico
 
 VECINOS = 25
 MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
@@ -107,12 +108,23 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
 class BaseReferencia:
     """Construida una vez sobre el universo; se consulta por titulo."""
 
-    def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu):
+    def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
+                 nivel=None, efecto=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         self.m, self.W, self.emp = m, W, emp
-        self.Z = Z                      # embeddings normalizados de cada celda
+        # `Z` son los embeddings del titulo ENMASCARADO: el area sin contaminacion de
+        # rango. `AUXILIAR DE CAJA` y `SUPERVISOR DE CAJA` caen en el mismo punto, y
+        # es `nivel` quien los separa despues.
+        self.Z = Z
         self.tau2, self.sigma2, self.lam, self.sbu = tau2, sigma2, lam, sbu
+        self.nivel = (np.full(len(self.celdas), np.nan) if nivel is None
+                      else np.asarray(nivel, dtype=float))
+        self.efecto = dict(efecto or {})
+        # dispersion del efecto entre escalones: es la incertidumbre que queda cuando
+        # NO se sabe el nivel del puesto que se pregunta
+        v = list(self.efecto.values())
+        self.var_nivel = float(np.var(v)) if len(v) > 1 else 0.0
 
     # -- construccion ----------------------------------------------------------
 
@@ -149,7 +161,10 @@ class BaseReferencia:
         muestra = (rng.choice(n, 3000, replace=False) if n > 3000 else np.arange(n))
         vec_s, sim_s = _vecinos(Z[muestra], Z, VECINOS, excluir_propio=False)
         lam = _lambda_semantica(m[muestra], W[muestra], vec_s, sim_s, m_todos=m, W_todos=W)
-        return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu)
+        niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan
+                        for c in celdas], dtype=float)
+        ef = efecto_nivel(marco, col=col)
+        return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -159,15 +174,19 @@ class BaseReferencia:
         de un cliente rehace todo el trabajo."""
         np.savez_compressed(
             ruta, celdas=np.array(self.celdas, dtype=object), m=self.m, W=self.W,
-            emp=self.emp, Z=self.Z.astype(np.float32),
+            emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
+            ef_k=np.array(sorted(self.efecto), dtype=float),
+            ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
 
     @classmethod
     def cargar(cls, ruta, sbu):
         with np.load(ruta, allow_pickle=True) as z:
             tau2, sigma2, lam = z["escalares"]
+            ef = {int(k): float(v) for k, v in zip(z["ef_k"], z["ef_v"])}
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
-                       z["Z"].astype(float), float(tau2), float(sigma2), float(lam), sbu)
+                       z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
+                       sbu, z["nivel"], ef)
 
     # -- consulta --------------------------------------------------------------
 
@@ -197,7 +216,25 @@ class BaseReferencia:
                 var_j = 1.0 / self.W[j] + dist
                 peso = 1.0 / var_j
                 peso /= peso.sum()
-                mu = float((peso * self.m[j]).sum())
+
+                # AJUSTE POR NIVEL. Los vecinos vienen del area ENMASCARADA, asi que un
+                # `JEFE DE BODEGA` es vecino de un `AUXILIAR DE BODEGA` — misma area,
+                # distinto escalon, y entre el 1 y el 5 hay 2,37x de pago. No hay que
+                # descartarlo: el efecto de cada escalon esta MEDIDO, asi que se le resta
+                # al vecino su escalon y se le suma el del puesto que se pregunta.
+                #
+                # Si no se sabe el nivel del puesto preguntado no se puede ajustar, y esa
+                # ignorancia se paga en el intervalo (`var_nivel`), no fingiendo certeza.
+                aj = np.zeros(len(j))
+                mi = self.nivel[propio] if propio is not None else nivel_lexico(t)
+                if mi is not None and np.isfinite(mi) and self.efecto:
+                    ei = self.efecto.get(int(mi), 0.0)
+                    aj = np.array([ei - self.efecto.get(int(nj), ei)
+                                   if np.isfinite(nj) else 0.0 for nj in self.nivel[j]])
+                    penal_nivel = 0.0
+                else:
+                    penal_nivel = self.var_nivel
+                mu = float((peso * (self.m[j] + aj)).sum())
                 # Las dos partes NO se promedian igual. El error de medicion de cada
                 # vecino es independiente y se cancela al promediar (suma de peso^2). La
                 # distancia semantica es un SESGO compartido: si los 25 vecinos estan
@@ -206,7 +243,8 @@ class BaseReferencia:
                 # estrecho por el mero hecho de promediar mucha gente equivocada.
                 var = (self.tau2 + self.sigma2
                        + float((peso ** 2 / self.W[j]).sum())
-                       + float((peso * dist).sum()))
+                       + float((peso * dist).sum())
+                       + penal_nivel)
                 base = "por analogia"
                 n_emp = int(self.emp[j].sum())
                 mejor, directo_ok = float(s.max()), False

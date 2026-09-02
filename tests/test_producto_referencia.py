@@ -149,3 +149,63 @@ def test_la_base_se_guarda_y_se_carga_igual(tmp_path, caso):
     a = b.referenciar(["BODEGA 0", "VENTAS 1"], emb)
     c = b2.referenciar(["BODEGA 0", "VENTAS 1"], emb)
     pd.testing.assert_frame_equal(a, c)
+
+
+def _caso_jerarquico(sin=()):
+    """Tres areas con cinco escalones cada una, y el embedding del area ENMASCARADA.
+
+    Reproduce el caso diagnosticado: `SUPERVISOR DE CAJA` se promediaba con `AUXILIAR
+    DE CAJA` porque el embedding es ciego a la jerarquia. Aqui todos los rangos de un
+    area comparten vector y solo el lexico los distingue.
+
+    Cada empresa tiene gente de VARIOS escalones a proposito: `efecto_nivel` centra
+    dentro de empresa —el empleador es el 81% del ruido—, asi que con una persona por
+    empresa el residuo es cero y el efecto no se puede estimar.
+    """
+    paga = {"AUXILIAR": 0.0, "TECNICO": 0.3, "SUPERVISOR": 0.6, "JEFE": 1.0,
+            "GERENTE": 1.5}
+    areas = {"CAJA": (0.0, [0.11, 1.0, 0.0]), "BODEGA": (0.2, [0.55, 1.0, 0.0]),
+             "PLANTA": (0.4, [0.90, 1.0, 0.0])}
+    filas, emb = [], {}
+    for area, (base, vec) in areas.items():
+        for rango, extra in paga.items():
+            etq = f"{rango} DE {area}"
+            emb[etq] = np.array(vec, dtype=float)
+            if etq in sin:
+                continue
+            for e in range(8):
+                # la misma empresa emplea a todos los escalones de esa area
+                filas.append((f"E{area}{e}", etq, base + extra))
+    return filas, emb
+
+
+def test_el_nivel_separa_lo_que_el_embedding_confunde():
+    # EL caso del README: mismo area, embeddings identicos, y aun asi las referencias
+    # deben ordenarse por escalon. Sin el ajuste por nivel todos saldrian iguales.
+    filas, emb = _caso_jerarquico()
+    b = _base(filas, emb)
+    r = b.referenciar(["AUXILIAR DE CAJA", "SUPERVISOR DE CAJA", "GERENTE DE CAJA"], emb)
+    v = r.set_index("cargo")["referencia_log"]
+    assert v["AUXILIAR DE CAJA"] < v["SUPERVISOR DE CAJA"] < v["GERENTE DE CAJA"]
+
+
+def test_un_titulo_nuevo_hereda_el_nivel_de_su_palabra_de_rango():
+    # `JEFE DE CAJA` no existe en la base, pero `JEFE` si es una palabra de rango: debe
+    # colocarse por encima de los auxiliares de su area, no en el promedio.
+    filas, emb = _caso_jerarquico()
+    filas, emb = _caso_jerarquico(sin=("JEFE DE CAJA",))
+    b = _base(filas, emb)
+    r = b.referenciar(["JEFE DE CAJA", "AUXILIAR DE CAJA"], emb).set_index("cargo")
+    assert r.loc["JEFE DE CAJA", "referencia_log"] > r.loc["AUXILIAR DE CAJA", "referencia_log"]
+
+
+def test_sin_palabra_de_rango_el_intervalo_paga_la_ignorancia():
+    # Un titulo sin rango no se puede ajustar por nivel, y eso NO se disimula: se cobra
+    # en el intervalo. Es la diferencia entre "no lo se" y fingir que si.
+    filas, emb = _caso_jerarquico()
+    emb = dict(emb)
+    emb["ENCARGADO DE CAJA"] = emb["AUXILIAR DE CAJA"]
+    b = _base(filas, emb)
+    r = b.referenciar(["ENCARGADO DE CAJA", "AUXILIAR DE CAJA"], emb).set_index("cargo")
+    assert b.var_nivel > 0
+    assert r.loc["ENCARGADO DE CAJA", "sd"] > r.loc["AUXILIAR DE CAJA", "sd"]
