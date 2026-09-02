@@ -17,7 +17,6 @@ import pandas as pd
 from ..evaluacion import datos, embeddings
 from .base_referencia import BaseReferencia
 from .comparacion import comparar, texto_resumen
-from .nivel import enmascarar
 
 _POSIBLES = ("cargo", "cargo_norm", "puesto", "denominacion", "descripcion_cargo",
              "nombre_cargo", "titulo")
@@ -74,14 +73,19 @@ def construir_base(cliente_bq, settings, anios=(2024, 2025), cache_emb=None,
         datos.cargar_marco(cliente_bq, settings.bq_project, settings.bq_dataset,
                            anios=anios), settings))
     etiquetas = sorted(set(marco["cargo_norm"].astype(str)))
-    # Se embebe el titulo ENMASCARADO, no el crudo: el area sin contaminacion de rango.
-    # `AUXILIAR DE CAJA` y `SUPERVISOR DE CAJA` caen en el mismo punto y es el lexico
-    # quien los separa despues, con el efecto de escalon ya medido. Con el titulo crudo
-    # el embedding los daba a 0,944 de similitud y los promediaba (D-012).
-    areas = [enmascarar(e) for e in etiquetas]
-    print(f"construyendo la base: {len(marco):,} filas, {len(etiquetas):,} titulos "
-          f"({len(set(areas)):,} areas tras enmascarar el rango)")
-    X = embeddings.embeber(areas, cli, settings.vertex_embedding_model, cache=cache)
+    # Se embebe el titulo COMPLETO. Enmascarar el rango parecia buena idea —dejaba el
+    # area limpia y el lexico separaba los escalones— y esta MEDIDO que empeora: +6,0% de
+    # error, IC [+0,038, +0,080]. La palabra de rango no dice solo el rango; `OPERARIO DE
+    # PRODUCCION` y `ANALISTA DE PRODUCCION` quedan identicos al taparla y son trabajos
+    # distintos. `lambda` lo delataba antes de medirlo: 1,90 en crudo contra 2,71
+    # enmascarado, o sea peor representacion del area.
+    #
+    # La jerarquia entra por el AJUSTE, no por la representacion: al vecino de otro
+    # escalon se le resta el suyo y se le suma el del puesto preguntado. Medido: -0,0130,
+    # IC [-0,0202, -0,0002]. Y corregir gana a filtrar (-0,0102, IC [-0,021, -0,002]):
+    # descartar a los de otro escalon tira informacion util.
+    print(f"construyendo la base: {len(marco):,} filas, {len(etiquetas):,} titulos")
+    X = embeddings.embeber(etiquetas, cli, settings.vertex_embedding_model, cache=cache)
     cache.volcar()
     emb = dict(zip(etiquetas, X))
     base = BaseReferencia.construir(marco, emb, settings.get_sbu)
@@ -119,7 +123,7 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
     print(f"puestos distintos en la nomina: {titulos.nunique():,}   "
           f"sin datos directos: {len(nuevos):,}")
     if nuevos:
-        X = embeddings.embeber([enmascarar(n) for n in nuevos], cli,
+        X = embeddings.embeber(nuevos, cli,
                                settings.vertex_embedding_model, cache=cache)
         cache.volcar()
         emb.update(dict(zip(nuevos, X)))

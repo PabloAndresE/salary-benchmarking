@@ -1,0 +1,39 @@
+train 639,818 filas / 4319 empresas
+eval  207,228 filas / 1439 empresas
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+compilando A (titulo crudo, sin nivel)...
+compilando B (area enmascarada, con nivel)...
+compilando A100/B100 (mismos espacios, mas candidatos para el filtro)...
+compilando C (titulo crudo, con nivel)...
+efecto de nivel: {1: -0.342, 2: -0.279, 3: -0.09, 4: 0.176, 5: 0.535}
+lambda  A=1.900   B=2.710
+
+de los titulos de eval, con palabra de rango: 37.3% de las personas   (donde filtro y ajuste se diferencian)
+
+TODA la nomina:  cobertura comun 100.0%   MAE  A=0.2405  B=0.2517   (+4.64%)
+
+SOLO por analogia:  cobertura comun 42.3%   MAE  A=0.2957  B=0.3221   (+8.93%)
+
+========================================================================
+CONTRASTE PAREADO (200 replicas)
+solo titulos POR ANALOGIA y CON palabra de rango
+========================================================================
+  B - A  = +0.0600  IC 95% [+0.0376, +0.0800]  EMPEORA     enmascarado + ajuste
+  C - A  = -0.0130  IC 95% [-0.0202, -0.0002]  MEJORA      crudo + ajuste
+  D - A  = -0.0081  IC 95% [-0.0303, +0.0301]  sin efecto  enmascarado + FILTRO
+  E - A  = -0.0027  IC 95% [-0.0148, +0.0145]  sin efecto  crudo + FILTRO
+
+  ENTRE VARIANTES (todas sobre la misma replica):
+    B - C  = +0.0730  [+0.0542, +0.0931]  gana C
+    B - D  = +0.0681  [+0.0415, +0.0928]  gana D
+    B - E  = +0.0627  [+0.0443, +0.0822]  gana E
+    C - D  = -0.0049  [-0.0321, +0.0119]  indistinguibles
+    C - E  = -0.0102  [-0.0208, -0.0024]  gana C
+    D - E  = -0.0053  [-0.0216, +0.0201]  indistinguibles
+
+  ESTABILIDAD (desviacion del MAE entre replicas; menos es mas fiable):
+    B  sd = 0.0110   enmascarado + ajuste
+    C  sd = 0.0048   crudo + ajuste
+    D  sd = 0.0148   enmascarado + FILTRO
+    E  sd = 0.0074   crudo + FILTRO
