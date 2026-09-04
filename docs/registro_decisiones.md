@@ -1574,3 +1574,305 @@ cuatro días, frente a las trece semanas que costó la primera.
 Lo que no cambió es el otro patrón: los cinco scripts se midieron y **no estaban versionados**, seis
 días después de escribir la regla que lo prohíbe. La regla no falla por desconocimiento, falla por
 no estar en el flujo. Corregido: los scripts, sus salidas y el README van en el mismo commit.
+
+---
+
+## D-015 — Las grafías del mismo puesto se juntan, y el enlace decide el resultado
+
+**Fecha:** 2026-09-04
+**Origen:** `ANALISTA DE RIESGO CREDITICIO` competía en la base contra seis grafías del mismo
+puesto, cada una con una o dos empresas, y se contestaba por analogía pagando castigo de distancia
+semántica contra sus propias hermanas.
+**Evidencia:** `research/experimentos/e2_nivel/` scripts `05`–`07`, con salidas commiteadas.
+**Estado:** decisión tomada y montada en `producto/base_referencia.py`.
+
+### Lo medido
+
+**Primera medición: fusionar EMPEORA.**
+
+| Umbral | Efecto | IC 95% | Cobertura directa |
+|---|---|---|---|
+| >0,99 | −0,0007 | [−0,0038, +0,0024] | 58,6% |
+| >0,97 | −0,0034 | [−0,0088, +0,0001] | 62,3% |
+| **>0,95** | **+0,0154** | [+0,0095, +0,0206] | 67,4% |
+
+Con eso bastaba para descartar la idea. **Y habría sido el resultado equivocado.**
+
+**La inspección cambió el sujeto de la frase.** `06` miró los grupos concretos y el problema no era
+fusionar sino **cómo**: union-find encadena `A~B~C~D` y produjo un grupo de **1.758 títulos** con
+`ASISTENTE CONTABLE` y `AUXILIAR DE LIMPIEZA` dentro. El candado de escalón no lo frenaba porque
+sólo actuaba con **ambos** títulos con palabra de rango, y `GESTOR DE TALENTO HUMANO` —sin nivel
+léxico— hacía de puente entre `JEFE`(4) y `GERENTE`(5).
+
+**Con enlace completo el efecto se da vuelta.** Un grupo vale sólo si **todos** sus pares superan
+el umbral:
+
+| | Efecto | IC 95% | Grupo mayor | Cobertura directa |
+|---|---|---|---|---|
+| simple >0,95 | **+0,0154** | [+0,0095, +0,0206] | 1.758 | 67,4% |
+| **completo >0,95** | **−0,0030** | [−0,0075, −0,0000] | **27** | **64,1%** |
+| completo >0,97 | −0,0017 | [−0,0063, +0,0016] | 22 | 59,9% |
+| completo >0,93 | −0,0005 | [−0,0056, +0,0052] | 33 | 66,1% |
+
+Sólo **18 uniones de 15.870** las rechazó el candado de escalón: el daño nunca vino de pares malos
+sino de la cadena que los conectaba.
+
+### Las decisiones
+
+**1. Fusión por enlace completo a 0,95.** A 0,93 la cobertura sube pero el efecto vuelve a cero.
+
+**2. La ganancia se reporta como COBERTURA, no como precisión.** El −0,0030 roza el cero y así hay
+que leerlo: neutro, quizá un pelo mejor. Lo que se compra son **6,4 puntos** de gente contestada
+con datos de su propio puesto en vez de por analogía.
+
+**3. Al consultar se descarta el GRUPO propio entero, no sólo la etiqueta exacta.** Si la celda no
+llega a `MIN_EMPRESAS`, sus hermanas comparten estadísticos y entrarían como "vecinas a distancia
+cero", colando por la puerta de atrás la celda que el suelo de confidencialidad acaba de rechazar.
+
+### Lo que esto enseña sobre el método
+
+`05` solo, sin `06`, habría cerrado el tema con *"fusionar empeora, descartado"*. Ese resultado era
+publicable, reproducible y **falso en su conclusión**: lo malo era el algoritmo, no la idea. La
+regla que sale de aquí es que **un resultado negativo sobre una implementación no es un resultado
+negativo sobre la hipótesis** — hay que mirar los objetos concretos antes de cerrar.
+
+---
+
+## D-016 — La banda habla de EMPRESAS, con `tau` por celda y cuantiles empíricos
+
+**Fecha:** 2026-09-04
+**Origen:** una objeción en voz alta durante la revisión: *"`tau` y `sigma` representan la variación
+de un cargo específico, ¿y usan el mismo par para los 65.081?"*. La respuesta era que sí.
+**Evidencia:** `research/experimentos/e3_varianza/` scripts `01`–`05`, con salidas commiteadas.
+**Estado:** decisión tomada y montada. **Es el defecto más grave encontrado en el producto.**
+
+### Lo medido
+
+**`tau` varía 8,3× entre cargos, y no es ruido.** Sobre las 704 celdas con 20+ empresas (45,2% de
+la gente):
+
+```
+tau por celda   p05=0,080  p50=0,322  p95=0,663          global = 0,2917
+```
+
+Test-retest partiendo las empresas de cada cargo en dos mitades al azar: las dos mitades
+**correlacionan a 0,78** (Spearman 0,77). Corregida la atenuación, la fiabilidad de `tau_c` es
+**~0,88**. El patrón sigue al escalón jerárquico y tiene causa mecánica —el salario mínimo comprime
+desde abajo—: `AUXILIAR DE LIMPIEZA` 0,073 contra `GERENTE GENERAL` 0,951.
+
+**Esto añade algo a D-013:** el nivel no sólo mueve la media 2,37× — **escala la varianza 13×**.
+
+**La banda que se entregaba no contenía al 50%. Contenía entre el 18% y el 98%.**
+
+| Cargo | Debería contener | Contenía |
+|---|---|---|
+| `GERENTE GENERAL` | 50% | **18,3%** |
+| `CONTADOR` | 50% | 34,7% |
+| `AUXILIAR DE LIMPIEZA` | 50% | 92,4% |
+| `TRABAJADOR AGRICOLA` | 50% | **98,0%** |
+
+En dólares: el mercado de gerentes generales va de $500 (p05) a $13.712 (p95) y se entregaba una
+banda de **$2.436 – $3.775**. De 20 personas, 4 caían dentro.
+
+**Son dos defectos, no uno.** `tau_c` arregla la deformación **entre cargos** (recorrido entre
+quintiles 54,7 → 23,4 puntos, CRPS −8,6%) y deja intacto un sesgo global: todo sale demasiado
+ancho. La causa es que el centro se estima de forma **robusta** (mediana de votos) y la dispersión
+**no** (raíz de una varianza). Y como la forma cambia por cargo, recalibrar el multiplicador
+`0,6745` no puede arreglarlo: un solo número no describe a la vez un pico y una cola larga.
+
+```
+AUXILIAR DE LIMPIEZA   p25=$475  p50=$475  p75=$485      <- un pico
+GERENTE GENERAL        p05=$500          p95=$13.712     <- una cola
+```
+
+### La decisión
+
+**1. La banda dice *"la mitad de las EMPRESAS paga entre X e Y"***, no de las personas. Es lo
+coherente con el centro, que ya era la mediana de votos por empresa, y es la pregunta del cliente
+que decide su política salarial.
+
+**2. De ahí sale que `sigma` NO entra en la banda.** El nivel de una empresa es `mu + u_f`, con
+varianza `tau_c²`; `sigma²` separa a dos personas de la misma nómina y no mueve el nivel de la
+empresa.
+
+**3. `tau` y `sigma` por celda**, con el mismo empirical Bayes sin parámetros libres que ya usaba
+`sigma`. Y entran también en los **pesos** `w_f`: sin eso, `W` sale idéntico para dos cargos con
+dispersión 13× distinta.
+
+**4. Cuantiles empíricos donde hay 10+ empresas.** Umbral 10 y no 5 porque F≥5 gana el pinball por
+un 0,7% que casi seguro es ruido, y F≥10 gana las dos coberturas y está más lejos del dato crudo.
+
+Medido sobre votos de empresa apartados: deformación entre quintiles **50,5 → 13,5 → 4,3 puntos**,
+pinball medio **0,1290 → 0,1207**.
+
+### El número que este registro daba mal
+
+Medida contra **personas**, la cobertura global salía 68,7%; contra **empresas**, 53,5%. Buena parte
+de aquella descalibración aparente era el desajuste de definición, no un defecto del método. El
+problema de fondo no cambia: el 53,5% es la media de errores que se cancelan (Q1 81,3%, Q5 30,8%).
+
+### Límite declarado
+
+**La cobertura deja de ser métrica válida con masa puntual.** `TRABAJADOR AGRICOLA` tiene cuartiles
+reales $470–$472: la banda los reproduce **exactos** y aun así cubre el 90,3%, porque más del 90%
+de esa gente cobra el mismo número. Ninguna banda de ancho positivo contiene exactamente el 50%.
+En esos cargos manda el pinball.
+
+---
+
+## D-017 — La confianza mide lo bien que se conoce el CENTRO, no el ancho del mercado
+
+**Fecha:** 2026-09-04
+**Origen:** con la banda ya corregida (D-016), el **100,00%** de las celdas directas seguía
+saliendo ALTA. La etiqueta no distinguía nada.
+**Evidencia:** `research/experimentos/e3_varianza/06`, con salida commiteada.
+**Estado:** decisión tomada y montada.
+
+### El diagnóstico, que es algebraico y no empírico
+
+La etiqueta comparaba el ancho de la banda contra el suelo del cargo. Pero en la rama directa el
+suelo **es** casi todo el ancho:
+
+```
+CONTADOR:   var = tau²      + sigma²    + 1/W
+                  0,085026    0,020229    0,000122
+                    80,7%       19,2%        0,1%
+```
+
+El 99,9% del ancho son dos números iguales para los 65.081 cargos. Desarrollando a primer orden,
+`veces ~ 1 + 0,557·r` con `r = (1/W)/(tau²+sigma²)`, y salir de ALTA exige `W < 21,1`. Como cada
+empresa aporta al menos 9,50, hacen falta **menos de 2,2 empresas** — y `MIN_EMPRESAS` es 3.
+
+**Con 3 empresas o más era aritméticamente imposible salir de ALTA.** Y medido sobre 5.168 celdas
+da exactamente eso: **100,00%** en ALTA, con la peor de todas en 1,175 veces el suelo contra un
+corte de 1,25. No era una curiosidad empírica: estaba forzado.
+
+### Lo medido
+
+La alternativa es la varianza de **nuestra** estimación, que es todo lo que no es dispersión del
+mercado:
+
+```
+directo       var_centro = 1/W
+por analogía  var_centro = Σ(peso²/W) + Σ(peso·dist) + penal_nivel
+```
+
+Validado estimando la referencia sobre **dos mitades disjuntas de empresas** y midiendo cuánto se
+separan:
+
+| | Spearman con el movimiento real | ALTA | MEDIA | BAJA |
+|---|---|---|---|---|
+| hoy (ancho/suelo) | +0,367 | **100,0%** | 0,0% | 0,0% |
+| **nueva (1/W)** | **+0,576** | 17,6% | 45,5% | 37,0% |
+| …y cuánto se mueven | | **3,8%** | **13,3%** | **31,8%** |
+
+La vieja mete el 100% en ALTA. La nueva separa **8 a 1**.
+
+### Las decisiones
+
+**1. La etiqueta sale de `var_centro`.** El ancho del mercado ya lo comunica la banda; lo que la
+etiqueta añade es si el número del medio es fiable.
+
+**2. Los cortes pasan a ser en dólares** (ALTA ≤5%, MEDIA ≤15%) y no en veces-el-suelo, porque la
+pregunta ya tiene unidades interpretables: las decisiones salariales se mueven en escalones de ~5%.
+
+**3. Se quita la condición de que ALTA exija respuesta directa.** `var_centro` ya incluye el
+castigo de distancia semántica; exigirlo además lo contaría dos veces. Que la respuesta venga por
+analogía se dice en `base`.
+
+### Límite medido y declarado
+
+**`1/W` se queda CORTO**, de un 15% a un 40% según el tramo (obs/pred va de 0,96 en el primer decil
+a **1,42** en el último). Ordena bien pero es optimista. La causa probable es que el modelo supone
+la celda homogénea y `CONTADOR` mezcla empresas grandes y pequeñas. **No se corrige con un factor
+porque ese factor no está medido.**
+
+### La corrección de lectura que hay que arrastrar
+
+En la revisión se dijo que *"`SCRUM MASTER` con 14 empresas salía igual de ALTA que `CONTADOR` con
+823, y eso se corrigió"*. **No es exacto.** Se corrigió el criterio —de contar empresas a medir el
+ancho— pero el resultado para ese caso era el mismo, y ahora se sabe que lo era para casi todos. La
+etiqueta sólo discriminaba en la rama por analogía. La corrección de verdad es ésta, D-017.
+
+---
+
+## D-018 — El tamaño de empresa no estrecha la banda, pero corrige un sesgo grande en el centro
+
+**Fecha:** 2026-09-04
+**Origen:** viendo la banda de ±95% de `GERENTE GENERAL`, la pregunta natural: si sabemos el
+tamaño, el sector y la provincia de la empresa, ¿no conviene condicionar por ahí?
+**Evidencia:** `research/experimentos/e3_varianza/` scripts `07`–`09`, con salidas commiteadas.
+**Estado:** medido. **Decidido que sí aplica, pero NO montado**: exige dos decisiones de producto.
+
+### Lo medido, en tres pasos
+
+**1. Segmentar TODO pierde.** Diseño jerárquico (celda fina cuando aguanta, si no el cargo):
+
+| Definición | cob50 | pinball | ancho | incert |
+|---|---|---|---|---|
+| cargo (hoy) | 50,3% | **0,1255** | 28,2% | 10,4% |
+| cargo × tamaño | 49,9% | 0,1284 | 27,5% | 12,7% |
+| cargo × sector | 49,8% | 0,1289 | 27,3% | 13,2% |
+| cargo × provincia | 49,8% | 0,1288 | 27,4% | 12,6% |
+
+La banda se estrecha 0,7 puntos y la incertidumbre del centro sube 2,3. **El tamaño casi no explica
+el ancho.**
+
+**2. Segmentar SELECTIVAMENTE tampoco.** Doble partición anidada de empresas —`tr_a` ajusta, `tr_b`
+decide cargo a cargo por pinball, `ts` puntúa una sola vez—:
+
+| Variante | Cargos | pinball |
+|---|---|---|
+| cargo (hoy) | 0 | 0,1255 |
+| selectivo | 93 | 0,1253 |
+| **PLACEBO (al azar)** | **118** | 0,1258 |
+
+−0,0002 contra hoy. Y el aviso más duro: **el placebo eligió más cargos (118) que la selección real
+(93)**. A nivel de cargo individual la decisión está dominada por ruido, y **sin el placebo esto se
+habría reportado como una mejora.**
+
+**3. Pero la pregunta era otra.** El pinball evalúa la **banda**, que mezcla centro y anchura. Lo
+que falla es el **centro**:
+
+| Sesgo de la referencia de hoy | PEQUEÑA | MEDIANA | GRANDE | recorrido |
+|---|---|---|---|---|
+| nivel 1 | +6,9% | +8,3% | +6,1% | 10,1% |
+| nivel 4 | −16,4% | −8,4% | +9,6% | 26,1% |
+| **nivel 5** | **−32,8%** | −16,6% | **+22,2%** | **55,0%** |
+
+Por cargo es peor: `GERENTE GENERAL` va de **−56,0%** en pequeñas a **+81,9%** en grandes. A una
+empresa pequeña se le dice que su gerente cobra un 56% por debajo del mercado; a una grande, que el
+suyo cobra un 82% por encima. **Las dos afirmaciones son falsas.**
+
+**Y segmentar lo arregla:**
+
+| | HOY | SEGMENTADA |
+|---|---|---|
+| nivel 5 | −32,8% / −16,6% / +22,2% (55,0 pts) | −0,6% / −5,8% / +9,0% (**14,8 pts**) |
+| `GERENTE GENERAL` | −56,0% / −15,8% / +81,9% | −12,1% / +6,9% / +17,9% |
+| `CONTADOR` | −23,8% / −3,5% / +20,5% | +0,2% / +4,6% / +2,2% |
+| `CHOFER` | +11,0% / +5,7% / +2,7% | +13,4% / +8,3% / +0,9% |
+
+`CHOFER` no tenía nada que arreglar y no se estropea.
+
+### Las decisiones
+
+**1. El tamaño NO entra para estrechar la banda.** Medido dos veces, con placebo. Cerrado.
+
+**2. El tamaño SÍ entra para corregir el centro de los cargos altos**, por **lista explícita** de
+cargos. La selección automática está descartada: elige sobre ruido.
+
+**3. No se monta hasta resolver dos cosas de producto:** pedirle el segmento al cliente, y fijar
+qué cargos entran.
+
+### El número que este registro daba mal
+
+Se dijo que *"el 56% de los datos son empresas GRANDES"*. Eso es **por filas**. Por **empresas**
+—que es la unidad que vota— las grandes son el **20,9%** y una de cada cinco es pequeña o micro. El
+sesgo no viene de que dominen el conteo: viene de que la mediana de un mercado tan asimétrico no
+representa a nadie en los extremos.
+
+### Límite declarado
+
+**El 26–34% de las empresas no tiene `segmento` asignado**, y ese grupo paga distinto del resto. Si
+se monta la segmentación, ese tercio es el problema, no las bandas.

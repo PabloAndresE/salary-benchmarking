@@ -116,7 +116,8 @@ Z_NORMAL = {0.10: -1.2816, 0.25: -0.6745, 0.75: 0.6745, 0.90: 1.2816}
 # LA CONFIANZA MIDE LO BIEN QUE SE CONOCE EL CENTRO, no lo ancho que es el mercado. Son
 # dos preguntas distintas y antes se contestaba la que no era: la etiqueta salia del ancho
 # de la banda contra el suelo del cargo, y como en la rama directa el suelo ES casi todo el
-# ancho, el cociente daba ~1,00 y el 99,23% de las celdas se etiquetaba ALTA.
+# ancho, el cociente daba ~1,00 y el 100% de las celdas se etiquetaba ALTA (medido sobre 5.168
+# celdas con 3+ empresas; la peor de todas queda en 1,175 veces el suelo, y el corte era 1,25).
 #
 # El ancho del mercado ya lo comunica la banda. Lo que la etiqueta tiene que anadir es si
 # el numero del medio es fiable, y eso es la varianza de NUESTRA estimacion — todo lo que

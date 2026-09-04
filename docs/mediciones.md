@@ -918,7 +918,226 @@ reportar el techo como intervalo, o un economista laboral desarma el capítulo c
 
 ---
 
-## 16. Mediciones pendientes
+## 16. Las grafías del mismo puesto, y por qué el enlace lo decide todo
+
+**Fecha:** 2026-09-02/04. **Alcance:** el 80% de train, partido por empresas en 75% construir /
+25% evaluar. El 20% de test **no se tocó**. **Scripts:** `research/experimentos/e2_nivel/05…07`,
+con las salidas en `salidas/`.
+
+Contexto: `ANALISTA DE RIESGO CREDITICIO` competía contra seis grafías del mismo puesto, cada una
+con una o dos empresas. Ver D-015.
+
+### 16.1 La primera medición dijo que fusionar empeora
+
+Contraste pareado sobre los títulos afectados, 150 réplicas, remuestreando empresas con reemplazo
+y construyendo las dos variantes sobre **el mismo** remuestreo.
+
+| Umbral | Efecto | IC 95% | Veredicto |
+|---|---|---|---|
+| >0,99 | −0,0007 | [−0,0038, +0,0024] | sin efecto |
+| >0,97 | −0,0034 | [−0,0088, +0,0001] | sin efecto |
+| >0,95 | **+0,0154** | [+0,0095, +0,0206] | **empeora** |
+
+### 16.2 La inspección de los grupos concretos invalidó esa lectura
+
+Enlace simple (union-find) a 0,95 produce **un grupo de 1.758 títulos**:
+
+```
+ASISTENTE CONTABLE       0,324   4.670 pers.
+AUXILIAR DE LIMPIEZA     0,011   2.751 pers.      dispersion del grupo: 28,83x
+```
+
+Y otro de 502 que junta `ASISTENTE DE ALMACEN` (nivel 1) con `JEFE DE COMPRAS` (nivel 4), pese al
+candado de escalón. Verificado el mecanismo: el candado sólo actúa cuando **los dos** títulos
+tienen palabra de rango, y `GESTOR DE TALENTO HUMANO` → `None` hacía de puente.
+
+### 16.3 Con enlace completo el signo se invierte
+
+Un grupo vale sólo si **todos** sus pares superan el umbral. Mismo umbral, misma gente, mismas
+réplicas:
+
+| Variante | Efecto | IC 95% | Grupo mayor | p99 dispersión | Cobertura directa |
+|---|---|---|---|---|---|
+| simple >0,95 | **+0,0154** | [+0,0095, +0,0206] | 1.758 | 8,28× | 67,4% |
+| **completo >0,95** | **−0,0030** | [−0,0075, −0,0000] | **27** | 5,88× | **64,1%** |
+| completo >0,97 | −0,0017 | [−0,0063, +0,0016] | 22 | 5,39× | 59,9% |
+| completo >0,93 | −0,0005 | [−0,0056, +0,0052] | 33 | 6,75× | 66,1% |
+
+El tope de 60 títulos por grupo **nunca se activó**: el enlace completo acota el tamaño solo. Y
+sólo **18 uniones de 15.870** las rechazó el candado de escalón.
+
+Los grupos que sobreviven son puro ruido de tecleo:
+
+```
+ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO     0,179   1.920 pers.
+ASISTENTE/AYUDANTE/AUXILIAR ADMINISTRATIVO         0,142      50 pers.
+ASISTENTE/ AYUDANTE/ AUXILIAR ADMINISTRATIVO       0,019      38 pers.
+```
+
+**Lectura:** la ganancia es de **cobertura** (57,7% → 64,1%), no de precisión. El −0,0030 roza el
+cero.
+
+---
+
+## 17. La banda que se entrega al cliente, y la etiqueta que la acompaña
+
+**Fecha:** 2026-09-04. **Alcance:** el 80% de train, partido por empresas en 75%/25%. El 20% de
+test **no se tocó**. **Scripts:** `research/experimentos/e3_varianza/01…09`, con las salidas en
+`salidas/`.
+
+Origen: una objeción durante la revisión — *"`tau` y `sigma` representan la variación de un cargo
+específico, ¿y usan el mismo par para los 65.081?"*. Ver D-016, D-017 y D-018.
+
+### 17.1 `tau` varía 8,3× entre cargos, y la variación es real
+
+ANOVA de un factor dentro de cada celda, sobre las 704 celdas con 20+ empresas (45,2% de la gente):
+
+| | p05 | p25 | p50 | p75 | p95 |
+|---|---|---|---|---|---|
+| `tau` por celda | 0,080 | 0,213 | **0,322** | 0,446 | 0,663 |
+| `sigma` por celda | 0,039 | 0,089 | 0,133 | 0,185 | 0,288 |
+
+Global: `tau` = 0,2917.
+
+**Test-retest**, partiendo las empresas de cada cargo en dos mitades al azar y estimando por
+separado:
+
+| | Pearson | Spearman |
+|---|---|---|
+| `tau` | **+0,780** | +0,772 |
+| `sigma` | +0,484 | +0,486 |
+
+Si el parámetro fuese común y lo observado fuera ruido, `r ≈ 0`. Corregida la atenuación
+(Spearman-Brown), la fiabilidad de `tau_c` sobre la muestra completa es **~0,88**.
+
+El patrón sigue al escalón jerárquico, con causa mecánica —el mínimo legal comprime desde abajo—:
+
+```
+AUXILIAR DE LIMPIEZA   tau 0,073        JEFE DE BODEGA    tau 0,363
+GUARDIA DE SEGURIDAD   tau 0,101        CONTADOR          tau 0,451
+CHOFER                 tau 0,177        GERENTE GENERAL   tau 0,951
+```
+
+**Añade a §15:** el nivel no sólo mueve la media 2,37× — escala la varianza 13×.
+
+### 17.2 La banda no contenía al 50%: contenía entre el 18% y el 98%
+
+Medido sobre personas de empresas apartadas, con la banda que entregaba el producto:
+
+| Cargo | `tau_c` | Contenía |
+|---|---|---|
+| `GERENTE GENERAL` | 0,937 | **18,3%** |
+| `CONTADOR` | 0,442 | 34,7% |
+| `JEFE DE BODEGA` | 0,363 | 43,9% |
+| `ASISTENTE CONTABLE` | 0,229 | 54,0% |
+| `CHOFER` | 0,176 | 69,9% |
+| `AUXILIAR DE LIMPIEZA` | 0,060 | 92,4% |
+| `TRABAJADOR AGRICOLA` | 0,093 | **98,0%** |
+
+En dólares, `GERENTE GENERAL`: el mercado real va de $500 (p05) a $13.712 (p95) y se entregaba
+**$2.436 – $3.775**. De 20 personas al azar, **4** caían dentro.
+
+### 17.3 Son dos defectos, y el segundo es de forma, no de anchura
+
+| | Recorrido entre quintiles | cob. global | CRPS |
+|---|---|---|---|
+| `tau`, `sigma` globales | **54,7 pts** | 68,6% | 0,1720 |
+| `tau_c`, `sigma_c` por celda | **23,4 pts** | 66,5% | **0,1572** |
+
+`tau_c` arregla lo que depende del cargo y deja un sesgo global. La causa: el centro se estima de
+forma **robusta** (mediana de votos) y la dispersión **no** (raíz de una varianza). Y la forma
+cambia por cargo, así que recalibrar el multiplicador `0,6745` no puede arreglarlo:
+
+```
+AUXILIAR DE LIMPIEZA   p25=$475  p50=$475  p75=$485      <- un pico
+GERENTE GENERAL        p05=$500          p95=$13.712     <- una cola
+```
+
+### 17.4 Con la definición correcta —empresas— y cuantiles empíricos
+
+La banda dice *"la mitad de las **empresas** paga entre X e Y"*, así que se evalúa contra votos de
+empresas apartadas y `sigma` sale de la fórmula.
+
+| Variante | cob50 | cob80 | pinball.25 | pinball.75 | medio |
+|---|---|---|---|---|---|
+| hoy (normal, globales, +σ) | 53,5% | 76,1% | 0,1252 | 0,1329 | 0,1290 |
+| normal, `tau_c`, sin σ | 50,6% | 76,2% | 0,1168 | 0,1297 | 0,1233 |
+| empírico F≥5 | 49,0% | 77,4% | **0,1119** | 0,1278 | **0,1199** |
+| **empírico F≥10** | 49,4% | **78,0%** | 0,1133 | 0,1281 | 0,1207 |
+| empírico F≥20 | 49,6% | 77,8% | 0,1139 | 0,1285 | 0,1212 |
+
+Deformación entre quintiles de dispersión: **50,5 → 13,5 → 4,3 puntos**.
+
+Se elige **F≥10**: F≥5 gana el pinball por un 0,7% que no es distinguible de ruido, y F≥10 gana las
+dos coberturas y está más lejos del dato crudo.
+
+**Corrige un número de §17.2:** medida contra personas la cobertura global salía 68,7%; contra
+empresas, 53,5%. Buena parte de la descalibración aparente era el desajuste de definición.
+
+**Aviso de lectura:** con masa puntual la cobertura deja de ser métrica válida. `TRABAJADOR
+AGRICOLA` tiene cuartiles reales $470–$472, la banda los reproduce **exactos** y aun así cubre el
+90,3%.
+
+### 17.5 La etiqueta de confianza no distinguía nada, y era algebraico
+
+En la rama directa, `var = tau² + sigma² + 1/W` con reparto 80,7% / 19,2% / **0,1%**. Desarrollando
+a primer orden, `veces ≈ 1 + 0,557·r`, y salir de ALTA exige `W < 21,1`; como cada empresa aporta
+al menos 9,50, harían falta **menos de 2,2 empresas**. Con `MIN_EMPRESAS = 3` era **imposible**.
+Medido sobre las 5.168 celdas con 3+ empresas: **100,00%** en ALTA, incluidas las 1.561 que
+tienen exactamente 3. La celda mas desfavorable de todas queda en **1,175 veces el suelo** y el
+corte esta en 1,25: ninguna lo roza siquiera.
+
+La alternativa es la varianza de la estimación propia. Validada sobre dos mitades disjuntas de
+empresas:
+
+| | Spearman con el movimiento real | ALTA | MEDIA | BAJA |
+|---|---|---|---|---|
+| hoy (ancho/suelo) | +0,367 | **100,0%** | 0,0% | 0,0% |
+| nueva (`1/W`) | **+0,576** | 17,6% | 45,5% | 37,0% |
+| *y cuánto se mueve la referencia* | | **3,8%** | **13,3%** | **31,8%** |
+
+**Límite:** `1/W` se queda corto, obs/pred va de 0,96 en el primer decil a **1,42** en el último.
+Ordena bien pero es optimista.
+
+### 17.6 El tamaño de empresa: no para la banda, sí para el centro
+
+| Definición | cob50 | pinball | ancho | incert |
+|---|---|---|---|---|
+| cargo (hoy) | 50,3% | **0,1255** | 28,2% | 10,4% |
+| cargo × tamaño | 49,9% | 0,1284 | 27,5% | 12,7% |
+| cargo × sector | 49,8% | 0,1289 | 27,3% | 13,2% |
+| cargo × provincia | 49,8% | 0,1288 | 27,4% | 12,6% |
+
+Y la selección cargo a cargo, con doble partición anidada y **placebo**:
+
+| Variante | Cargos | pinball |
+|---|---|---|
+| cargo (hoy) | 0 | 0,1255 |
+| selectivo | 93 | 0,1253 |
+| **placebo (al azar)** | **118** | 0,1258 |
+
+El placebo elige **más** cargos que la señal real. Sin él, esto se habría reportado como mejora.
+
+**Pero el pinball evalúa la banda.** El sesgo del **centro** es otra cosa:
+
+| Sesgo de la referencia de hoy | PEQUEÑA | MEDIANA | GRANDE | recorrido |
+|---|---|---|---|---|
+| nivel 1 | +6,9% | +8,3% | +6,1% | 10,1% |
+| nivel 3 | −13,5% | +6,1% | +2,7% | 19,6% |
+| nivel 4 | −16,4% | −8,4% | +9,6% | 26,1% |
+| **nivel 5** | **−32,8%** | −16,6% | **+22,2%** | **55,0%** |
+
+Y segmentar lo arregla: nivel 5 pasa a −0,6% / −5,8% / +9,0% (**14,8 pts**). `GERENTE GENERAL` de
+−56,0%/+81,9% a −12,1%/+17,9%; `CONTADOR` de −23,8%/+20,5% a +0,2%/+2,2%; `CHOFER` no tenía nada
+que arreglar y no se estropea.
+
+**Corrige un número dado antes:** *"el 56% de los datos son empresas GRANDES"* es **por filas**. Por
+**empresas** —la unidad que vota— las grandes son el **20,9%** y una de cada cinco es pequeña o
+micro.
+
+---
+
+## 18. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
 |---|---|---|
@@ -929,3 +1148,8 @@ reportar el techo como intervalo, o un economista laboral desarma el capítulo c
 | Cuantificar el sesgo de movilidad limitada sobre η²_empresa | Es un número que sostiene el leave-company-out y probablemente está inflado | análisis |
 | Ruta de servicio: acierto de (título, centro, antigüedad) → arquetipo | Decide si el producto del §12 se puede servir | 1 día, tras el banco |
 | Ortogonalidad de `pct_fijo` frente a `log(sueldo/SBU)` | El spec la declara; hay que medirla | 1 consulta |
+| **Montar D-018**: segmentar el centro por tamano en los cargos altos | Medido que arregla -56%/+82% -> -12%/+18% en `GERENTE GENERAL`. Falta decidir la lista de cargos y pedirle el segmento al cliente | 1 dia |
+| El **26-34% de empresas sin `segmento`**, y por que paga distinto | Es el bloqueo real de D-018: un tercio del padron no se puede segmentar, y ese grupo no se comporta como los demas | 1 consulta + cruce SCVS |
+| La **escalera de antiguedad** `JUNIOR`/`SENIOR`/`I`/`II`/`III` | Notacion distinta de la de mando, invisible al eje de nivel. `LABORATORISTA JR.` $497 contra `LABORATORISTA SENIOR` $938 (1,9x). Mismo diseno que E2 | 1 experimento |
+| Por que **`1/W` se queda corto** entre un 15% y un 40% | La etiqueta de confianza (D-017) ordena bien pero es optimista. Sospecha: el modelo supone la celda homogenea y no lo es | 1 experimento |
+| El **ancla de empresa (-12,8%)** con contraste pareado | Es el numero mas grande del expediente y sigue sobre una sola particion. Pendiente desde D-014 | 1 corrida |

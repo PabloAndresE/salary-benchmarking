@@ -71,6 +71,28 @@ def main():
     MSB, _, n0, F_an, _ = _c.anova_por_celda(cod, ce, y, n_c)
     t2c, _ = _c.tau2_por_celda(MSB, s2c, n0, F_an, tau2_g)
 
+    # -- cuanto etiqueta ALTA la regla de hoy, sobre TODAS las celdas directas ---
+    # El argumento de por que es ~100% es algebraico (ver D-017), pero el numero hay que
+    # poder reproducirlo: se cita en `mediciones.md` y en el registro.
+    m_t, W_t, F_t = _c.referencia(cod, ce, y, t2c, s2c, n_c)
+    dir_t = F_t >= MIN_EMPRESAS
+    suelo_t = np.sqrt(t2c + s2c)
+    anch0 = lambda sd: np.exp(0.6745 * sd) - 1.0
+    with np.errstate(divide="ignore", invalid="ignore"):
+        sd_t = np.sqrt(t2c + s2c + np.where(W_t > 0, 1.0 / np.where(W_t > 0, W_t, 1), np.inf))
+        veces_t = anch0(sd_t) / anch0(suelo_t)
+    print(f"\nREGLA DE HOY sobre las {int(dir_t.sum()):,} celdas con {MIN_EMPRESAS}+ "
+          f"empresas:")
+    print(f"  etiquetadas ALTA (<= 1,25x el suelo): "
+          f"{float((veces_t[dir_t] <= 1.25).mean()):.2%}")
+    tres = dir_t & (F_t == MIN_EMPRESAS)
+    if tres.any():
+        print(f"  y entre las que tienen exactamente {MIN_EMPRESAS} empresas "
+              f"({int(tres.sum()):,}): {float((veces_t[tres] <= 1.25).mean()):.1%} ALTA")
+    print(f"  veces el suelo: mediana {np.nanmedian(veces_t[dir_t]):.3f}  "
+          f"p99 {np.nanquantile(veces_t[dir_t], 0.99):.3f}  "
+          f"max {np.nanmax(veces_t[dir_t]):.3f}")
+
     # dos mitades disjuntas de EMPRESAS
     rng = np.random.default_rng(SEM)
     lado = rng.integers(0, 2, size=ce.max() + 1)[ce]
