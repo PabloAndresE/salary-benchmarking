@@ -1,0 +1,61 @@
+train 847,046 filas / 5,758 empresas / 57,432 cargos
+
+celdas con datos directos (>= 3 empresas): 5,168
+
+================================================================================
+A. .CUANTAS ESTAN DOMINADAS?  (regla QCEW: una empresa > 80%)
+================================================================================
+
+  dominancia por PERSONAS
+    celdas dominadas       198 de 5,168 ( 3.8%)
+    personas afectadas  43,705 de 558,862 ( 7.8%)
+    de esas, con banda EMPIRICA (>= 10 empresas): 5 celdas, 14,949 personas
+
+  dominancia por PESO en la mediana
+    celdas dominadas         0 de 5,168 ( 0.0%)
+    personas afectadas       0 de 558,862 ( 0.0%)
+    de esas, con banda EMPIRICA (>= 10 empresas): 0 celdas, 0 personas
+
+================================================================================
+B. REPARTO DEL PESO DE LA EMPRESA MAYOR EN CELDAS DIRECTAS
+================================================================================
+  p50  personas  37.5%   peso  20.3%
+  p75  personas  50.0%   peso  33.3%
+  p90  personas  66.7%   peso  34.0%
+  p95  personas  76.7%   peso  35.4%
+  p99  personas  91.4%   peso  41.3%
+  p100 personas  99.3%   peso  67.7%
+
+================================================================================
+C. LOS CASOS PEORES: celdas dominadas con mas gente detras
+================================================================================
+  cargo                                         emp    pers   mayor    peso
+
+================================================================================
+D. EL SUELO CUENTA EMPRESAS Y NO DICE NADA DE PERSONAS
+================================================================================
+  `MIN_EMPRESAS = 3` protege contra que una empresa se reconozca en el numero.
+  Pero 3 empresas con una persona cada una son 3 PERSONAS, y la mediana de sus
+  votos ES el sueldo de una de ellas. Eso el suelo de empresas no lo ve.
+
+  personas en la celda       celdas       %   con banda empirica
+  3-4                           297   5.7%                   0
+  5-9                         1,278  24.7%                   0
+  10-19                       1,169  22.6%                  73
+  20-49                       1,092  21.1%                 427
+  50+                         1,332  25.8%                 942
+
+  celdas directas con menos de 10 personas: 1,575 (30.5%), 9,692 personas
+  de esas, con 10+ empresas y por tanto banda EMPIRICA: 0
+
+================================================================================
+E. QUE PASARIA AL APLICAR LA REGLA DE DOMINANCIA POR PESO
+================================================================================
+  0 celdas dejarian de contestarse con datos propios y pasarian
+  a contestarse por analogia. Eso afecta a 0 personas
+  de la base (0.0% de las que
+  hoy reciben respuesta directa).
+
+  No es una perdida de cobertura: se sigue respondiendo. Es que la respuesta
+  deja de ser la nomina de una sola empresa disfrazada de mercado.
+EXIT=0
