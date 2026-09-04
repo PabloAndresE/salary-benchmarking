@@ -1,0 +1,59 @@
+train 847,046 filas / 5,758 empresas / 57,432 cargos
+
+GLOBAL (lo que se usa hoy):  tau=0.2917  sigma=0.1423  suelo=0.3246  banda=±24.5%
+
+celdas con >=20 empresas: 704 de 57,432 (45.2% de la gente)
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\research\experimentos\e3_varianza\01_tau_y_sigma_son_globales.py:111: RuntimeWarning: invalid value encountered in sqrt
+  tau_c, sig_c = np.sqrt(tau2_c), np.sqrt(sigma2_c)
+
+==========================================================================
+A. .VARIA `tau` ENTRE CARGOS?
+==========================================================================
+  tau por celda   p05=0.080  p25=0.213  p50=0.322  p75=0.446  p95=0.663
+  sigma por celda p05=0.039  p25=0.089  p50=0.133  p75=0.185  p95=0.288
+
+  recorrido de tau p05->p95: 8.30x   (global = 0.2917)
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\research\experimentos\e3_varianza\01_tau_y_sigma_son_globales.py:131: RuntimeWarning: invalid value encountered in sqrt
+  res[lado] = (np.sqrt(t2), np.sqrt(s2), F2)
+
+==========================================================================
+B. .ES REAL O ES RUIDO DE ESTIMACION? (test-retest entre mitades)
+==========================================================================
+  celdas comparables: 622
+  tau    correlacion entre mitades: Pearson +0.780   Spearman +0.772
+  sigma  correlacion entre mitades: Pearson +0.484   Spearman +0.486
+
+  (si el parametro fuese el mismo para todas las celdas, lo que vemos seria
+   ruido y las dos mitades no correlacionarian: r ~ 0)
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\research\experimentos\e3_varianza\01_tau_y_sigma_son_globales.py:147: RuntimeWarning: invalid value encountered in sqrt
+  suelo_c = np.sqrt(tau2_c + sigma2_c)
+
+==========================================================================
+C. LO QUE LE LLEGA AL CLIENTE: el suelo y la banda
+==========================================================================
+  suelo global      0.3246   ->  banda ±24.5%
+  suelo p05 por celda 0.1064   ->  banda ±7.4%
+  suelo p25 por celda 0.2578   ->  banda ±19.0%
+  suelo p50 por celda 0.3615   ->  banda ±27.6%
+  suelo p75 por celda 0.4843   ->  banda ±38.6%
+  suelo p95 por celda 0.6852   ->  banda ±58.8%
+
+  cargos concretos:
+  cargo                        emp    pers     tau   sigma   suelo    banda
+  AUXILIAR DE LIMPIEZA         376    2751   0.073   0.056   0.092    6.4%
+  CONTADOR                     717    1305   0.451   0.183   0.486   38.8%
+  GERENTE GENERAL              655    1122   0.951   0.216   0.975   93.0%
+  VENDEDOR                     577   10707   0.274   0.173   0.324   24.4%
+  ASISTENTE CONTABLE          1449    4670   0.228   0.180   0.290   21.6%
+  TRABAJADOR AGRICOLA          131   27044   0.084   0.130   0.155   11.0%
+  GUARDIA DE SEGURIDAD          49    1428   0.101   0.048   0.112    7.8%
+  JEFE DE BODEGA               286     824   0.363   0.143   0.390   30.1%
+  CHOFER                      1081    6757   0.177   0.095   0.201   14.5%
+  MEDICO OCUPACIONAL           268     599   0.426   0.232   0.485   38.7%
+
+  si el suelo fuese por celda, .cambiaria la etiqueta de confianza?
+  (hoy el ancho se compara contra el suelo GLOBAL; con suelo por celda,
+   una celda dispersa dejaria de parecer tan precisa)
+    celda del p95 de dispersion: banda 2.40x la que se le asigna hoy
+    celda del p05 de dispersion: banda 0.30x la que se le asigna hoy
+EXIT=0

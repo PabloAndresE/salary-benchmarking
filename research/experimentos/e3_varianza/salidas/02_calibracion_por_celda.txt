@@ -1,0 +1,44 @@
+construir: 639,818 filas / 4,319 empresas
+evaluar:   207,228 filas / 1,439 empresas
+
+global: tau=0.2969  sigma=0.1452
+tau por celda estimado en 1,379 celdas de 57,432 (>= 8 empresas)
+  tau_c encogido: p05=0.073 p50=0.305 p95=0.629
+
+==============================================================================
+CALIBRACION GLOBAL. La banda p25-p75 deberia contener al 50% de la gente
+==============================================================================
+  variante                             n   cob 50%   cob 80%     CRPS      MAE    banda
+  A hoy (tau glob, sig glob)     119,662    68.6%    85.1%   0.1720   0.2001   25.7%
+  B (tau glob, sig celda)        119,662    69.7%    85.7%   0.1698   0.1996   25.9%
+  C (tau celda, sig celda)       119,662    66.5%    84.3%   0.1572   0.1996   22.5%
+
+  objetivo: cob 50% = 50,0%   cob 80% = 80,0%   CRPS mas bajo es mejor
+
+==============================================================================
+DONDE SE ROMPE: calibracion por quintil de dispersion real del cargo
+==============================================================================
+  quintil     banda real  personas         A        B        C
+  Q1         ±     7.3%    23,781     90.9%    89.4%    77.2%
+  Q2         ±    12.8%    23,805     86.5%    86.0%    76.1%
+  Q3         ±    21.1%    23,948     71.1%    70.6%    66.7%
+  Q4         ±    24.8%    24,184     58.8%    60.6%    58.8%
+  Q5         ±    40.0%    23,944     36.2%    42.5%    53.8%
+
+==============================================================================
+CARGOS CONCRETOS: .contiene la banda al 50%?
+==============================================================================
+  cargo                      pers   tau_c                A                 B                 C
+  AUXILIAR DE LIMPIEZA        737   0.060   92.4% ± 25.0%    91.7% ± 22.5%    80.7% ±  5.4%
+  GUARDIA DE SEGURIDAD        481   0.125   96.5% ± 25.3%    96.5% ± 22.7%    94.2% ±  9.3%
+  TRABAJADOR AGRICOLA        6078   0.093   98.0% ± 25.1%    98.0% ± 25.0%    97.0% ± 12.3%
+  CHOFER                     1212   0.176   69.9% ± 25.0%    69.6% ± 23.3%    30.2% ± 14.3%
+  ASISTENTE CONTABLE         1179   0.229   54.0% ± 25.0%    61.8% ± 26.6%    52.4% ± 21.9%
+  VENDEDOR                   2355   0.276   85.4% ± 25.0%    85.4% ± 26.2%    85.3% ± 24.7%
+  JEFE DE BODEGA              157   0.363   43.9% ± 25.0%    42.0% ± 24.4%    51.0% ± 29.7%
+  CONTADOR                    323   0.442   34.7% ± 25.0%    36.5% ± 27.0%    47.1% ± 38.5%
+  GERENTE GENERAL             262   0.937   18.3% ± 25.0%    19.1% ± 28.6%    45.4% ± 91.7%
+
+  (cobertura por encima del 50% = banda demasiado ANCHA, se subestima la
+   precision; por debajo = banda demasiado ESTRECHA, se promete de mas)
+EXIT=0

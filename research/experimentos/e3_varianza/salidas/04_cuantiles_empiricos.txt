@@ -1,0 +1,107 @@
+construir 639,818 filas / 4,319 empresas   evaluar 207,228 / 1,439
+global tau=0.2969 sigma=0.1452
+  empirico se usa en 1,079 celdas (46.6% de la gente a evaluar)
+  empirico se usa en 547 celdas (38.4% de la gente a evaluar)
+
+evaluando sobre 119,662 personas en celdas directas
+
+==================================================================================
+CALIBRACION. Objetivo: 50,0% y 80,0%.  Pinball mas bajo es mejor
+==================================================================================
+  variante                  cob 50%  cob 80%   pin.25   pin.75    banda
+  A hoy (normal, glob)       68.7%   85.3%   0.0973   0.1025   25.6%
+  C normal, tau_c            66.5%   84.3%   0.0841   0.0958   22.5%
+  D empirico F>=10           59.9%   83.5%   0.0728   0.0951   20.2%
+  D empirico F>=20           61.0%   83.7%   0.0745   0.0954   20.7%
+
+==================================================================================
+POR QUINTIL DE DISPERSION DEL CARGO
+==================================================================================
+  quintil    personas   A hoy (normal,  C normal, tau_  D empirico F>=  D empirico F>=
+  Q1           23,781            90.8%           77.2%           68.2%           70.9%
+  Q2           23,805            86.2%           76.1%           63.3%           65.8%
+  Q3           23,948            71.3%           66.7%           64.5%           64.4%
+  Q4           24,184            58.4%           58.8%           53.2%           53.2%
+  Q5           23,944            36.9%           53.8%           50.5%           50.8%
+
+==================================================================================
+CARGOS CONCRETOS: cobertura del 50% central
+==================================================================================
+  cargo                      pers     F   A hoy (normal,  C normal, tau_  D empirico F>=  D empirico F>=
+  AUXILIAR DE LIMPIEZA        737   285            92.4%           80.7%           61.6%           61.6%
+  GUARDIA DE SEGURIDAD        481    34            96.5%           94.2%           91.3%           91.3%
+  TRABAJADOR AGRICOLA        6078   101            98.0%           97.0%           90.3%           90.3%
+  CHOFER                     1212   822            69.9%           30.2%           51.5%           51.5%
+  ASISTENTE CONTABLE         1179  1090            57.1%           52.4%           54.7%           54.7%
+  VENDEDOR                   2355   434            85.4%           85.3%           71.0%           71.0%
+  JEFE DE BODEGA              157   216            43.9%           51.0%           52.9%           52.9%
+  CONTADOR                    323   538            34.7%           47.1%           44.6%           44.6%
+  GERENTE GENERAL             262   497            18.3%           45.4%           45.8%           45.8%
+
+==================================================================================
+LA BANDA EN DOLARES (SBU 2025), cargos concretos
+==================================================================================
+
+  AUXILIAR DE LIMPIEZA
+    REAL (evaluacion)        $     475 — $     480
+    A hoy (normal, glob)     $     381 — $     594
+    C normal, tau_c          $     451 — $     501
+    D empirico F>=10         $     475 — $     499
+    D empirico F>=20         $     475 — $     499
+
+  GUARDIA DE SEGURIDAD
+    REAL (evaluacion)        $     475 — $     475
+    A hoy (normal, glob)     $     380 — $     594
+    C normal, tau_c          $     435 — $     519
+    D empirico F>=10         $     475 — $     512
+    D empirico F>=20         $     475 — $     512
+
+  TRABAJADOR AGRICOLA
+    REAL (evaluacion)        $     470 — $     472
+    A hoy (normal, glob)     $     377 — $     590
+    C normal, tau_c          $     420 — $     530
+    D empirico F>=10         $     470 — $     472
+    D empirico F>=20         $     470 — $     472
+
+  CHOFER
+    REAL (evaluacion)        $     540 — $     722
+    A hoy (normal, glob)     $     491 — $     766
+    C normal, tau_c          $     536 — $     701
+    D empirico F>=10         $     500 — $     722
+    D empirico F>=20         $     500 — $     722
+
+  ASISTENTE CONTABLE
+    REAL (evaluacion)        $     562 — $     817
+    A hoy (normal, glob)     $     512 — $     800
+    C normal, tau_c          $     525 — $     781
+    D empirico F>=10         $     550 — $     800
+    D empirico F>=20         $     550 — $     800
+
+  VENDEDOR
+    REAL (evaluacion)        $     482 — $     520
+    A hoy (normal, glob)     $     409 — $     639
+    C normal, tau_c          $     410 — $     637
+    D empirico F>=10         $     482 — $     800
+    D empirico F>=20         $     482 — $     800
+
+  JEFE DE BODEGA
+    REAL (evaluacion)        $     700 — $   1,200
+    A hoy (normal, glob)     $     705 — $   1,103
+    C normal, tau_c          $     680 — $   1,144
+    D empirico F>=10         $     657 — $   1,152
+    D empirico F>=20         $     657 — $   1,152
+
+  CONTADOR
+    REAL (evaluacion)        $     920 — $   1,839
+    A hoy (normal, glob)     $   1,040 — $   1,625
+    C normal, tau_c          $     938 — $   1,801
+    D empirico F>=10         $     922 — $   1,696
+    D empirico F>=20         $     922 — $   1,696
+
+  GERENTE GENERAL
+    REAL (evaluacion)        $   1,932 — $   6,657
+    A hoy (normal, glob)     $   2,422 — $   3,796
+    C normal, tau_c          $   1,582 — $   5,812
+    D empirico F>=10         $   1,500 — $   5,460
+    D empirico F>=20         $   1,500 — $   5,460
+EXIT=0

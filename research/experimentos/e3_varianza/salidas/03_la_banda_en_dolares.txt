@@ -1,0 +1,128 @@
+SBU 2025 = $470   tau global = 0.2917  sigma global = 0.1423
+
+============================================================================
+AUXILIAR DE LIMPIEZA   —   2,751 personas en 376 empresas
+============================================================================
+
+  LO QUE PAGA EL MERCADO DE VERDAD (percentiles reales):
+    p05  $      470
+    p25  $      475
+    p50  $      475
+    p75  $      485
+    p95  $      586
+
+  LA BANDA QUE DAMOS HOY (tau y sigma globales):
+    $      382  —  $      475  —  $      591
+    decimos que contiene el 50%.  contiene el 95.1%
+
+  LA BANDA CON tau Y sigma DE ESTE CARGO (tau=0.073, sigma=0.056):
+    $      446  —  $      475  —  $      506
+    contiene el 84.7%
+
+  20 PERSONAS AL AZAR DE ESTE CARGO (dentro/fuera de la banda de hoy):
+    $      470   dentro
+    $      470   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      475   dentro
+    $      476   dentro
+    $      479   dentro
+    $      479   dentro
+    $      485   dentro
+    $      531   dentro
+    $      553   dentro
+    $      572   dentro
+    $      704   FUERA
+    -> 19/20 dentro (deberian ser 10/20)
+
+============================================================================
+CONTADOR   —   1,305 personas en 717 empresas
+============================================================================
+
+  LO QUE PAGA EL MERCADO DE VERDAD (percentiles reales):
+    p05  $      511
+    p25  $      940
+    p50  $    1,287
+    p75  $    1,737
+    p95  $    2,810
+
+  LA BANDA QUE DAMOS HOY (tau y sigma globales):
+    $    1,039  —  $    1,294  —  $    1,611
+    decimos que contiene el 50%.  contiene el 35.9%
+
+  LA BANDA CON tau Y sigma DE ESTE CARGO (tau=0.451, sigma=0.183):
+    $      932  —  $    1,294  —  $    1,796
+    contiene el 50.8%
+
+  20 PERSONAS AL AZAR DE ESTE CARGO (dentro/fuera de la banda de hoy):
+    $      487   FUERA
+    $      732   FUERA
+    $      795   FUERA
+    $    1,000   FUERA
+    $    1,226   dentro
+    $    1,226   dentro
+    $    1,300   dentro
+    $    1,500   dentro
+    $    1,533   dentro
+    $    1,533   dentro
+    $    1,635   FUERA
+    $    1,658   FUERA
+    $    1,800   FUERA
+    $    2,000   FUERA
+    $    2,334   FUERA
+    $    2,500   FUERA
+    $    2,593   FUERA
+    $    2,800   FUERA
+    $    2,978   FUERA
+    $    3,180   FUERA
+    -> 6/20 dentro (deberian ser 10/20)
+
+============================================================================
+GERENTE GENERAL   —   1,122 personas en 655 empresas
+============================================================================
+
+  LO QUE PAGA EL MERCADO DE VERDAD (percentiles reales):
+    p05  $      500
+    p25  $    1,533
+    p50  $    3,065
+    p75  $    6,000
+    p95  $   13,712
+
+  LA BANDA QUE DAMOS HOY (tau y sigma globales):
+    $    2,436  —  $    3,032  —  $    3,775
+    decimos que contiene el 50%.  contiene el 19.1%
+
+  LA BANDA CON tau Y sigma DE ESTE CARGO (tau=0.951, sigma=0.216):
+    $    1,571  —  $    3,032  —  $    5,853
+    contiene el 47.6%
+
+  20 PERSONAS AL AZAR DE ESTE CARGO (dentro/fuera de la banda de hoy):
+    $      500   FUERA
+    $      620   FUERA
+    $      700   FUERA
+    $    1,022   FUERA
+    $    1,128   FUERA
+    $    1,441   FUERA
+    $    2,000   FUERA
+    $    2,043   FUERA
+    $    3,000   dentro
+    $    3,065   dentro
+    $    3,065   dentro
+    $    3,213   dentro
+    $    4,000   FUERA
+    $    4,861   FUERA
+    $    5,000   FUERA
+    $    6,040   FUERA
+    $    7,200   FUERA
+    $    7,612   FUERA
+    $    9,500   FUERA
+    $   11,941   FUERA
+    -> 4/20 dentro (deberian ser 10/20)
+EXIT=0
