@@ -217,3 +217,69 @@ separación que la regla vieja no podía dar:
 GERENTE GENERAL   banda ±95%, confianza ALTA    <- mercado ancho, centro bien conocido
 ANALISTA DE RIESGO CREDITICIO   BAJA (44,5%)    <- por analogía, es una conjetura
 ```
+
+## `07`–`08` — segmentar por tamaño de empresa: medido dos veces, no paga
+
+Pregunta natural viendo la banda de ±95% de `GERENTE GENERAL`: si sabemos el **tamaño** de
+la empresa (`segmento`), el **sector** (`ciiu_n1`) y la **provincia**, ¿no conviene
+condicionar por ahí y estrechar la banda?
+
+**`07` — segmentar todo.** Diseño jerárquico: celda `cargo × segmento` cuando aguanta, si
+no se cae a `cargo`.
+
+```
+definición          cob50   cob80   pinball   ancho   incert   usa celda fina
+cargo (hoy)         50.3%   77.8%   0.1255    28.2%   10.4%       53.9%
+cargo × tamaño      49.9%   76.2%   0.1284    27.5%   12.7%       45.7%
+cargo × sector      49.8%   76.0%   0.1289    27.3%   13.2%       39.3%
+cargo × provincia   49.8%   76.2%   0.1288    27.4%   12.6%       44.0%
+```
+
+**Pierde en los tres.** La banda se estrecha 0,7 puntos y la incertidumbre del centro sube
+2,3. El tamaño casi no explica el *ancho*.
+
+**`08` — segmentar sólo donde compense.** Doble partición anidada de empresas: `tr_a`
+ajusta, `tr_b` decide cargo a cargo por pinball, `ts` puntúa una sola vez.
+
+```
+variante                     cargos   pinball   ancho   incert
+cargo (hoy)                       0   0.1255    28.2%   10.4%
+cargo × tamaño SIEMPRE       45,021   0.1284    27.5%   12.7%
+cargo × tamaño SELECTIVO         93   0.1253    27.9%   10.9%
+PLACEBO (selección al azar)     118   0.1258    28.1%   10.9%
+```
+
+**Tampoco.** −0,0002 contra hoy, −0,0005 contra el placebo. Y el aviso más duro: **el
+placebo eligió más cargos (118) que la señal real (93)**. A nivel de cargo individual la
+decisión está dominada por ruido.
+
+**Pero la regla acierta en QUÉ cargos elegir**, que es lo interesante:
+
+```
+GERENTE GENERAL       365 emp   gana +0.0177   SEGMENTA
+CONTADOR              407 emp   gana +0.0076   SEGMENTA
+CHOFER                606 emp   gana −0.0015   no
+AUXILIAR DE LIMPIEZA  209 emp   gana −0.0006   no
+```
+
+Elige los que la teoría predice y rechaza los que no. El agregado no se mueve porque esos
+cargos son pocos. Conclusión: **no automatizar**, pero una lista corta y explícita de cargos
+altos sí es defendible.
+
+## Lo que estas dos mediciones NO cubren, y parece más grave
+
+El pinball evalúa la **banda**, que mezcla centro y anchura. El problema que asoma en `07`
+es del **centro**:
+
+```
+GERENTE GENERAL en empresa PEQUEÑA
+  banda de su segmento:  $1,011 – $2,330
+  referencia que damos:  $3,032        <- fuera de su banda ENTERA
+```
+
+A una empresa pequeña le decimos que paga un 40% por debajo del mercado cuando entre sus
+pares está en la mitad de arriba. El agregado no lo ve porque **el 56% de los datos son
+empresas GRANDES** (y el 26% no tiene segmento asignado), así que la referencia acierta
+donde está la masa.
+
+Es una pregunta distinta de todo lo medido hasta aquí y está sin medir.

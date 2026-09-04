@@ -1,0 +1,44 @@
+tr_a 3,240 empresas (ajustar)   tr_b 1,079 (decidir)   ts 1,439 (evaluar)
+
+cargos evaluables para decidir: 1,498   elegidos para segmentar: 93
+PLACEBO (segmentos barajados): elegidos 118
+
+============================================================================================
+SOBRE VOTOS DE EMPRESA APARTADOS. pinball menor es mejor
+============================================================================================
+  variante                           cargos   cob50   cob80  pinball   ancho  incert
+  cargo (hoy)                             0   50.3%   77.8%   0.1255   28.2%   10.4%
+  cargo x tamano SIEMPRE             45,021   49.9%   76.2%   0.1284   27.5%   12.7%
+  cargo x tamano SELECTIVO               93   50.2%   77.5%   0.1253   27.9%   10.9%
+  PLACEBO (seleccion al azar)           118   50.2%   77.5%   0.1258   28.1%   10.9%
+
+  selectivo contra hoy:     -0.0002
+  selectivo contra placebo: -0.0005
+  (si selectivo ~ placebo, la seleccion es ruido con otro nombre)
+
+============================================================================================
+QUE CARGOS ELIGE, Y LOS CASOS CONOCIDOS
+============================================================================================
+
+  los 10 donde mas gana segmentar:
+    PROFESIONALES CON TITULO DE CUARTO NIVEL           7 emp   gana +0.3681
+    ADMINISTRADOR DE INFRAESTRUCTURA                   5 emp   gana +0.3616
+    COORDINADORA DE LOGISTICA                          7 emp   gana +0.1888
+    INGENIERO DE PREVENTA                              4 emp   gana +0.1720
+    ANALISTA NOMINA                                    6 emp   gana +0.1659
+    CONTADOR/CONTADOR GENERAL                          8 emp   gana +0.1455
+    DIRECTORA GENERAL                                  6 emp   gana +0.1436
+    MECANICO B                                         5 emp   gana +0.1379
+    CAJERO(A)                                          8 emp   gana +0.1342
+    JEFE COMPRAS                                       7 emp   gana +0.1239
+
+  casos conocidos:
+    GERENTE GENERAL                    365 emp   gana +0.0177   SEGMENTA
+    CONTADOR                           407 emp   gana +0.0076   SEGMENTA
+    JEFE DE BODEGA                     165 emp   gana +0.0013   SEGMENTA
+    ASISTENTE CONTABLE                 799 emp   gana -0.0007   no
+    VENDEDOR                           324 emp   gana -0.0006   no
+    CHOFER                             606 emp   gana -0.0015   no
+    AUXILIAR DE LIMPIEZA               209 emp   gana -0.0006   no
+    SUPERVISOR DE CAJA                   9 emp   gana +0.0095   no
+EXIT=0

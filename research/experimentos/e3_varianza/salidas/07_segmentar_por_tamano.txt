@@ -1,0 +1,72 @@
+segmentos: {'GRANDE': 472729, 'NA': 268093, 'MEDIANA': 84273, 'PEQUEÑA': 19228, 'MICROEMPRESA': 2723}
+sectores : 19  provincias: 25
+construir 639,818 filas / 4,319 empresas   evaluar 207,228 / 1,439
+evaluando 34,781 votos de empresa apartados
+
+============================================================================================
+SEGMENTAR: LO QUE SE GANA EN BANDA CONTRA LO QUE SE PAGA EN CONFIANZA
+============================================================================================
+  definicion             cob50   cob80  pin.med    ancho   incert  usa celda fina
+  cargo (hoy)           50.3%  77.8%   0.1255   28.2%   10.4%          53.9%
+  cargo x tamano        49.9%  76.2%   0.1284   27.5%   12.7%          45.7%
+  cargo x sector        49.8%  76.0%   0.1289   27.3%   13.2%          39.3%
+  cargo x provincia     49.8%  76.2%   0.1288   27.4%   12.6%          44.0%
+
+  MEJOR PINBALL: cargo (hoy)
+
+============================================================================================
+CARGOS CONCRETOS: banda en dolares por tamano de empresa
+============================================================================================
+
+  GERENTE GENERAL
+    TODOS (hoy)              497 emp  $   1,516 — $   5,332   incert   4.4%
+    GRANDE                   174 emp  $   2,527 — $   7,923   incert   7.5%
+    MEDIANA                  126 emp  $   1,049 — $   4,004   incert   7.9%
+    MICROEMPRESA               6 emp  $     689 — $   1,160   incert  28.3%
+    NA                       131 emp  $   1,791 — $   5,000   incert   8.0%
+    PEQUEÑA                   60 emp  $   1,011 — $   2,330   incert  10.3%
+
+  CONTADOR
+    TODOS (hoy)              538 emp  $     948 — $   1,687   incert   2.0%
+    GRANDE                   143 emp  $   1,191 — $   2,218   incert   4.0%
+    MEDIANA                  125 emp  $     907 — $   1,608   incert   3.7%
+    MICROEMPRESA               6 emp  $   1,094 — $   1,682   incert  12.8%
+    NA                       212 emp  $     909 — $   1,566   incert   3.2%
+    PEQUEÑA                   52 emp  $     680 — $   1,388   incert   6.6%
+
+  JEFE DE BODEGA
+    TODOS (hoy)              216 emp  $     664 — $   1,128   incert   2.6%
+    GRANDE                   119 emp  $     742 — $   1,286   incert   3.2%
+    MEDIANA                   41 emp  $     606 — $   1,011   incert   5.6%
+    NA                        54 emp  $     660 — $   1,073   incert   7.0%
+
+  ASISTENTE CONTABLE
+    TODOS (hoy)             1090 emp  $     556 — $     785   incert   0.8%
+    GRANDE                   355 emp  $     562 — $     809   incert   1.4%
+    MEDIANA                  274 emp  $     550 — $     758   incert   1.6%
+    MICROEMPRESA              10 emp  $     582 — $     719   incert  10.1%
+    NA                       353 emp  $     558 — $     791   incert   1.4%
+    PEQUEÑA                   98 emp  $     550 — $     719   incert   2.6%
+
+  VENDEDOR
+    TODOS (hoy)              434 emp  $     482 — $     800   incert   1.4%
+    GRANDE                   145 emp  $     482 — $     859   incert   2.7%
+    MEDIANA                  135 emp  $     482 — $     800   incert   3.1%
+    NA                        93 emp  $     482 — $     664   incert   1.9%
+    PEQUEÑA                   59 emp  $     482 — $     810   incert   4.2%
+
+  CHOFER
+    TODOS (hoy)              822 emp  $     505 — $     722   incert   0.6%
+    GRANDE                   315 emp  $     510 — $     722   incert   1.0%
+    MEDIANA                  181 emp  $     495 — $     721   incert   1.4%
+    MICROEMPRESA               6 emp  $     478 — $     735   incert  12.8%
+    NA                       266 emp  $     522 — $     722   incert   1.2%
+    PEQUEÑA                   54 emp  $     511 — $     708   incert   2.3%
+
+  AUXILIAR DE LIMPIEZA
+    TODOS (hoy)              285 emp  $     475 — $     494   incert   0.4%
+    GRANDE                   114 emp  $     475 — $     491   incert   0.7%
+    MEDIANA                   53 emp  $     475 — $     487   incert   0.7%
+    NA                        97 emp  $     475 — $     499   incert   0.8%
+    PEQUEÑA                   21 emp  $     475 — $     535   incert   2.2%
+EXIT=0
