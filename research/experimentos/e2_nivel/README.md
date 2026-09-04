@@ -1,6 +1,6 @@
 # E2 — El eje de nivel
 
-Cuatro mediciones para contestar si la jerarquía del puesto sirve en el producto, y cómo
+Siete mediciones para contestar si la jerarquía del puesto sirve en el producto, y cómo
 meterla. **La primera mejora significativa del proyecto sale de aquí.**
 
 Origen: D-012 midió que los embeddings son ciegos a la jerarquía (`GERENTE DE AUDITORIA` y
@@ -15,6 +15,52 @@ vecindario del producto promediaba `SUPERVISOR DE CAJA` con `AUXILIAR DE CAJA`.
 | `02_enmascarar_el_rango.py` | ¿Y si se tapa el rango al entrenar, para forzar la generalización? | **Tampoco.** 1,43×, no monótona. El nivel está en la palabra o no está en ninguna parte |
 | `03_area_enmascarada_y_nivel_lexico.py` | ¿Ordena el pago el nivel léxico **dentro** de la misma área? | **Sí, y limpio.** Monótona, 2,37× del escalón 1 al 5, ω² = 0,2878 con placebo −0,0000 |
 | `04_mejora_el_producto.py` | De las cuatro formas de meterlo, ¿cuál mejora? | **Título completo + corrección de escalón**, −0,0130 con IC [−0,0202, −0,0002] |
+| `05_fusionar_cuasi_duplicados.py` | ¿Y si se juntan las grafías del mismo puesto? | **Empeora**, +0,0154 a 0,95. Falso: era la implementación (ver `07`) |
+| `06_inspeccionar_fusiones.py` | ¿Qué está fusionando de verdad? | El defecto: un grupo de **1.758 títulos** con `ASISTENTE CONTABLE` y `AUXILIAR DE LIMPIEZA` dentro |
+| `07_fusion_enlace_completo.py` | Con enlace completo, ¿se sostiene? | **Sí.** Grupo mayor 27, y el efecto se da vuelta a −0,0030 [−0,0075, −0,0000] |
+
+## Lo que decidieron `05`–`07`: cómo se juntan las grafías
+
+`ANALISTA DE RIESGO CREDITICIO` competía contra seis grafías del mismo puesto, cada una
+con una o dos empresas, pagando castigo de distancia semántica contra sus propias
+hermanas. Juntarlas parecía obvio. Medido a lo bruto, **empeoraba**.
+
+La inspección de `06` explicó por qué, y no era la idea sino el algoritmo:
+
+| defecto | consecuencia |
+|---|---|
+| enlace simple (union-find) | encadena `A~B~C~D`: un grupo de **1.758 títulos** a 0,95 |
+| candado de escalón a medias | sólo actuaba si **ambos** títulos tenían palabra de rango |
+
+Lo segundo salía de lo primero: `GESTOR DE TALENTO HUMANO` no tiene nivel léxico (`GESTOR`
+está excluido por ambiguo), así que servía de puente entre `JEFE`(4) y `GERENTE`(5).
+
+**Enlace completo arregla las dos cosas de una vez.** Un grupo vale sólo si *todos* sus
+pares superan el umbral; para que `ASISTENTE`(1) y `JEFE`(4) acaben juntos haría falta que
+el par directo fuese válido, y el candado lo prohíbe. Mismo umbral, misma gente:
+
+| | efecto | IC 95% | grupo mayor | cobertura directa |
+|---|---|---|---|---|
+| simple >0,95 | **+0,0154** | [+0,0095, +0,0206] | 1.758 | 67,4% |
+| **completo >0,95** | **−0,0030** | [−0,0075, −0,0000] | **27** | **64,1%** |
+| completo >0,97 | −0,0017 | [−0,0063, +0,0016] | 22 | 59,9% |
+| completo >0,93 | −0,0005 | [−0,0056, +0,0052] | 33 | 66,1% |
+
+**La ganancia no es precisión.** El −0,0030 roza el cero y así hay que leerlo: neutro,
+quizá un pelo mejor. Lo que compra la fusión es **cobertura directa, 57,7% → 64,1%**:
+gente que pasa de "te respondo por analogía" a "te respondo con los datos de tu puesto".
+Bajar a 0,93 sube la cobertura pero el efecto vuelve a cero, así que **0,95 es el punto**.
+
+Los grupos que sobreviven son puro ruido de tecleo — la misma etiqueta del catálogo con
+espaciados distintos, y a 0,93 hasta con la errata `ASITENTE`. Sólo **18** uniones de
+15.870 las rechazó el candado de escalón: el daño nunca vino de pares malos sino de la
+cadena que los conectaba.
+
+Al montarlo en el producto apareció un riesgo que la medición no cubría: si el grupo
+entero sigue por debajo de `MIN_EMPRESAS`, sus hermanas de grafía comparten estadísticos y
+podrían reaparecer como "vecinas a distancia cero", colando la celda que el suelo de
+confidencialidad acaba de rechazar. En `base_referencia` se descarta **el grupo propio
+entero**, no sólo la etiqueta exacta, con test que lo fija.
 
 ## Lo que decidió `04`
 

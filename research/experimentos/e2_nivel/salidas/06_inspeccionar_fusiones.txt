@@ -1,0 +1,176 @@
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+57,432 titulos. Buscando vecinos (una sola vez)...
+
+==============================================================================
+UMBRAL 0.97   4,488 grupos con 2+ titulos, 12,822 titulos fusionados
+==============================================================================
+
+--- LOS MAS GRANDES (mas gente movida)
+
+  grupo de 116 titulos   dispersion de pago: 4.36x
+    ASISTENTE ADMINISTRATIVO                                 0.244   3,776 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO           0.179   1,920 pers.
+    ASISTENTE ADMINISTRATIVA                                 0.314   1,713 pers.
+    AUXILIAR ADMINISTRATIVO                                  0.141   1,559 pers.
+    AUXILIAR ADMINISTRATIVA                                  0.104     118 pers.
+    ASISTENTE ADMINISTRATIVO/A                               0.398      92 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR ADMINISTRATIVO               0.142      50 pers.
+    ... y 109 mas
+
+  grupo de 109 titulos   dispersion de pago: 5.43x
+    AUXILIAR DE SERVICIOS GENERALES                          0.011   3,695 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS EN GENE     0.000   2,086 pers.
+    AUXILIAR DE SERVICIOS EN GENERAL                         0.000   1,415 pers.
+    AUXILIAR DE SERVICIOS                                    0.062     923 pers.
+    AUXILIAR SERVICIOS GENERALES                             0.013     489 pers.
+    AUXILIAR DE SERVICIO                                     0.000     403 pers.
+    AUXILIAR DE SERVICIOS GENERAL                            0.000     235 pers.
+    ... y 102 mas
+
+  grupo de 45 titulos   dispersion de pago: 16.45x
+    GERENTE FINANCIERO                                       2.013     436 pers.
+    GERENTE ADMINISTRATIVO FINANCIERO                        2.163     129 pers.
+    GERENTE FINANCIERA                                       1.854      75 pers.
+    GERENTE FINANCIERO ADMINISTRATIVO                        2.163      60 pers.
+    GERENTE ADMINISTRATIVA FINANCIERA                        2.008      31 pers.
+    GERENTE DE ADMINISTRACION Y FINANZAS                     2.188      17 pers.
+    GERENTE ADMINISTRATIVO Y FINANCIERO                      2.163      15 pers.
+    ... y 38 mas
+
+--- LOS PEORES (mas dispersion de pago dentro del grupo)
+
+  grupo de 14 titulos   dispersion de pago: 17.00x
+    GERENTE ADMINISTRATIVO                                   1.693     276 pers.
+    ADMINISTRADOR GERENCIAL                                  0.959     201 pers.
+    GERENTE ADMINISTRATIVA                                   1.466     123 pers.
+    GERENTE ADMINISTRADOR                                    1.875       5 pers.
+    GERENTE ADMINISTRACION                                   2.320       4 pers.
+    GERENTE DE ADMINISTRACION                                2.219       4 pers.
+    GERENTE ADMINISTRATIVO(A)                                0.888       2 pers.
+    ... y 7 mas
+
+  grupo de 45 titulos   dispersion de pago: 16.45x
+    GERENTE FINANCIERO                                       2.013     436 pers.
+    GERENTE ADMINISTRATIVO FINANCIERO                        2.163     129 pers.
+    GERENTE FINANCIERA                                       1.854      75 pers.
+    GERENTE FINANCIERO ADMINISTRATIVO                        2.163      60 pers.
+    GERENTE ADMINISTRATIVA FINANCIERA                        2.008      31 pers.
+    GERENTE DE ADMINISTRACION Y FINANZAS                     2.188      17 pers.
+    GERENTE ADMINISTRATIVO Y FINANCIERO                      2.163      15 pers.
+    ... y 38 mas
+
+  grupo de 9 titulos   dispersion de pago: 10.95x
+    GERENTE DE OPERACIONES                                   2.008     487 pers.
+    GERENTE OPERACIONES                                      1.866      79 pers.
+    GERENTE OPERATIVO                                        1.581      14 pers.
+    GERENTE OPERATIV                                         0.244       9 pers.
+    GERENTE OPERACIONAL                                      1.250       4 pers.
+    GERENTE DE OPERAIONES                                    1.459       2 pers.
+    GERENTE EJECUTIVO DE OPERACIONES                         2.638       2 pers.
+    ... y 2 mas
+
+--- MUESTRA AL AZAR
+
+  grupo de 3 titulos   dispersion de pago: 4.39x
+    CONSULTOR DE NEGOCIOS SENIOR                             1.225       9 pers.
+    SENIOR DE CONSULTORIA DE NEGOCIOS                        0.782       4 pers.
+    CONSULTOR SENIOR DE NEGOCIOS                             2.262       3 pers.
+
+  grupo de 4 titulos   dispersion de pago: 2.40x
+    ESPECIALISTA DE COMPENSACIONES                           1.009       8 pers.
+    ESPECIALISTA DE COMPENSACION                             1.359       3 pers.
+    ESPECIALISTA COMPENSACIONES                              1.886       1 pers.
+    ESPECIALISTA EN COMPENSACION                             1.113       1 pers.
+
+  grupo de 2 titulos   dispersion de pago: 1.56x
+    JEFE DE UNIDAD DE ANALISIS DE CREDITO                    1.931       4 pers.
+    JEFE DE LA UNIDAD DE ANALISIS DE CREDITO                 1.484       2 pers.
+
+  dispersion mediana entre grupos con 200+ personas: 1.40x
+
+==============================================================================
+UMBRAL 0.95   5,644 grupos con 2+ titulos, 21,794 titulos fusionados
+==============================================================================
+
+--- LOS MAS GRANDES (mas gente movida)
+
+  grupo de 1758 titulos   dispersion de pago: 28.83x
+    ASISTENTE CONTABLE                                       0.324   4,670 pers.
+    ASISTENTE ADMINISTRATIVO                                 0.244   3,776 pers.
+    AUXILIAR DE SERVICIOS GENERALES                          0.011   3,695 pers.
+    AUXILIAR DE LIMPIEZA                                     0.011   2,751 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS EN GENE     0.000   2,086 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO           0.179   1,920 pers.
+    ASISTENTE ADMINISTRATIVA                                 0.314   1,713 pers.
+    ... y 1751 mas
+
+  grupo de 502 titulos   dispersion de pago: 17.31x
+    ASISTENTE DE ALMACEN                                     0.025   6,357 pers.
+    AUXILIAR DE LOGISTICA                                    0.022     673 pers.
+    ASISTENTE DE LOGISTICA                                   0.202     494 pers.
+    JEFE DE COMPRAS                                          1.091     445 pers.
+    JEFE DE ALMACEN                                          0.061     392 pers.
+    AYUDANTE LOGISTICA                                       0.019     273 pers.
+    JEFE DE LOGISTICA                                        1.188     242 pers.
+    ... y 495 mas
+
+  grupo de 134 titulos   dispersion de pago: 2.18x
+    AUXILIAR DE BODEGA                                       0.011   4,878 pers.
+    AYUDANTE DE BODEGA                                       0.021   2,360 pers.
+    ASISTENTE DE BODEGA                                      0.062   1,677 pers.
+    AUXILIAR DE FARMACIA                                     0.000   1,216 pers.
+    AUXILIAR DE PRODUCCION                                   0.028   1,097 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR DE BODEGA                0.017     629 pers.
+    AYUDANTE DE BODEGA - DISTRIBUCION                        0.013     321 pers.
+    ... y 127 mas
+
+--- LOS PEORES (mas dispersion de pago dentro del grupo)
+
+  grupo de 1758 titulos   dispersion de pago: 28.83x
+    ASISTENTE CONTABLE                                       0.324   4,670 pers.
+    ASISTENTE ADMINISTRATIVO                                 0.244   3,776 pers.
+    AUXILIAR DE SERVICIOS GENERALES                          0.011   3,695 pers.
+    AUXILIAR DE LIMPIEZA                                     0.011   2,751 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS EN GENE     0.000   2,086 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO           0.179   1,920 pers.
+    ASISTENTE ADMINISTRATIVA                                 0.314   1,713 pers.
+    ... y 1751 mas
+
+  grupo de 83 titulos   dispersion de pago: 27.69x
+    GERENTE FINANCIERO                                       2.013     436 pers.
+    GERENTE ADMINISTRATIVO FINANCIERO                        2.163     129 pers.
+    GERENTE FINANCIERA                                       1.854      75 pers.
+    GERENTE FINANCIERO ADMINISTRATIVO                        2.163      60 pers.
+    GERENTE ADMINISTRATIVA FINANCIERA                        2.008      31 pers.
+    GERENTE DE FINANZAS                                      2.259      25 pers.
+    GERENTE DE ADMINISTRACION Y FINANZAS                     2.188      17 pers.
+    ... y 76 mas
+
+  grupo de 17 titulos   dispersion de pago: 25.75x
+    JEFE DE TALENTO HUMANO                                   1.182     447 pers.
+    GERENTE DE TALENTO HUMANO                                2.008     128 pers.
+    JEFE TALENTO HUMANO                                      0.937      85 pers.
+    GERENTE TALENTO HUMANO                                   1.767      25 pers.
+    JEFE DE GESTION DEL TALENTO HUMANO                       1.448       7 pers.
+    JEFE DE GESTION DE TALENTO HUMANO                        0.844       7 pers.
+    GESTOR DE TALENTO HUMANO                                 0.850       7 pers.
+    ... y 10 mas
+
+--- MUESTRA AL AZAR
+
+  grupo de 2 titulos   dispersion de pago: 1.00x
+    REVISOR POLINIZACION                                     0.083      10 pers.
+    REVISOR DE POLINIZACION                                  0.082       4 pers.
+
+  grupo de 4 titulos   dispersion de pago: 4.70x
+    JEFE DE PROGRAMACION                                     1.448       9 pers.
+    JEFE DE PROGRAMADOR                                      1.366       5 pers.
+    JEFE DEL PROGRAMADOR                                     0.041       2 pers.
+    JEFE DE PROGRAMA                                         1.588       1 pers.
+
+  grupo de 2 titulos   dispersion de pago: 1.28x
+    GUARDAPARQUE                                             0.463      65 pers.
+    GUARDA PARQUE                                            0.712       2 pers.
+
+  dispersion mediana entre grupos con 200+ personas: 1.70x

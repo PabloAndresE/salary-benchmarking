@@ -1,0 +1,20 @@
+train 639,818 filas / 4319 empresas
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,432 titulos...
+lambda = 1.884
+
+==========================================================================
+COBERTURA DIRECTA: cuanta gente pasa de analogia a datos propios
+==========================================================================
+  sin fusionar      57,432 celdas   directo:  57.7% de la gente
+  fusion >0.99      55,174 celdas   directo:  58.6% de la gente
+  fusion >0.97      49,098 celdas   directo:  62.3% de la gente
+  fusion >0.95      41,282 celdas   directo:  67.4% de la gente
+
+==========================================================================
+CONTRASTE PAREADO (150 replicas), solo sobre los titulos AFECTADOS
+==========================================================================
+  fusion >0.99     = -0.0007  IC 95% [-0.0038, +0.0024]  sin efecto   (11.5% de la gente afectada)
+  fusion >0.97     = -0.0034  IC 95% [-0.0088, +0.0001]  sin efecto   (39.9% de la gente afectada)
+  fusion >0.95     = +0.0154  IC 95% [+0.0095, +0.0206]  EMPEORA   (63.6% de la gente afectada)

@@ -1,0 +1,106 @@
+train 639,818 filas / 4,319 empresas
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,432 titulos...
+buscando vecinos (una sola vez)...
+lambda = 1.884
+  enlace completo >0.97: rechazadas 3,881 por similitud, 0 por escalon, 0 por tope
+  enlace completo >0.95: rechazadas 15,870 por similitud, 18 por escalon, 0 por tope
+  enlace completo >0.93: rechazadas 45,321 por similitud, 463 por escalon, 0 por tope
+
+==============================================================================
+FORMA DE LOS GRUPOS (el defecto que `06` encontro)
+==============================================================================
+  variante          grupos 2+    mayor     p99  disp.mediana   disp.p99
+  completo >0.97        5,048       22       3         1.30x      5.39x
+  completo >0.95        7,713       27       4         1.33x      5.88x
+  completo >0.93        9,671       33       6         1.38x      6.75x
+  simple >0.95          5,644    1,758       6         1.38x      8.28x
+
+==============================================================================
+COBERTURA DIRECTA: cuanta gente se contesta con datos propios
+==============================================================================
+  sin fusionar      57,432 celdas   directo:  57.7% de la gente
+  completo >0.97    50,693 celdas   directo:  59.9% de la gente
+  completo >0.95    45,902 celdas   directo:  64.1% de la gente
+  completo >0.93    41,050 celdas   directo:  66.1% de la gente
+  simple >0.95      41,282 celdas   directo:  67.4% de la gente
+
+==============================================================================
+CONTRASTE PAREADO (150 replicas), solo sobre los titulos AFECTADOS
+==============================================================================
+    replica 25/150
+    replica 50/150
+    replica 75/150
+    replica 100/150
+    replica 125/150
+    replica 150/150
+  completo >0.97   = -0.0017  IC 95% [-0.0063, +0.0016]  sin efecto   (36.7% de la gente afectada)
+  completo >0.95   = -0.0030  IC 95% [-0.0075, -0.0000]  MEJORA   (55.3% de la gente afectada)
+  completo >0.93   = -0.0005  IC 95% [-0.0056, +0.0052]  sin efecto   (70.0% de la gente afectada)
+  simple >0.95     = +0.0154  IC 95% [+0.0095, +0.0206]  EMPEORA   (63.6% de la gente afectada)
+
+==============================================================================
+LOS GRUPOS MAS GRANDES QUE SOBREVIVEN AL ENLACE COMPLETO
+==============================================================================
+
+--- umbral 0.97
+
+  grupo de 22 titulos   dispersion 2.04x
+    ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO           0.179   1,920 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR ADMINISTRATIVO               0.142      50 pers.
+    ASISTENTE/ AYUDANTE/ AUXILIAR ADMINISTRATIVO             0.019      38 pers.
+    ASISTENTE / AUXILIAR ADMINISTRATIVO                      0.019      34 pers.
+    ASISTENTE/AYUDANTE/ AUXILIAR ADMINISTRATIVO              0.398      11 pers.
+    ASISTENTE / AYUDANTE /AUXILIAR ADMINISTRATIVO            0.252       4 pers.
+    ... y 16 mas
+
+  grupo de 21 titulos   dispersion 2.57x
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS EN GENE     0.000   2,086 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR DE SERVICIOS EN GENERAL      0.000     228 pers.
+    ASISTENTE AYUDANTE AUXILIAR DE SERVICIOS EN GENERAL      0.000      63 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR DE SERVICIO EN GENERAL       0.000      57 pers.
+    ASISTENTE/AYUDANTE/AUX. SERVICIOS EN GENERAL             0.000       7 pers.
+    ASISTENTE / AYUDANTE DE SERVICIOS EN GENERAL             0.116       6 pers.
+    ... y 15 mas
+
+--- umbral 0.95
+
+  grupo de 27 titulos   dispersion 2.34x
+    ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO           0.179   1,920 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR ADMINISTRATIVO               0.142      50 pers.
+    ASISTENTE/ AYUDANTE/ AUXILIAR ADMINISTRATIVO             0.019      38 pers.
+    ASISTENTE / AUXILIAR ADMINISTRATIVO                      0.019      34 pers.
+    ASISTENTE AYUDANTE AUXILIAR ADMINISTRATIVO               0.172      12 pers.
+    ASISTENTE/AYUDANTE/ AUXILIAR ADMINISTRATIVO              0.398      11 pers.
+    ... y 21 mas
+
+  grupo de 26 titulos   dispersion 2.57x
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS EN GENE     0.000   2,086 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR DE SERVICIOS EN GENERAL      0.000     228 pers.
+    ASISTENTE AYUDANTE AUXILIAR DE SERVICIOS EN GENERAL      0.000      63 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR DE SERVICIO EN GENERAL       0.000      57 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS GENERAL     0.016      26 pers.
+    ASISTENTE/AYUDANTE/AUX. SERVICIOS EN GENERAL             0.000       7 pers.
+    ... y 20 mas
+
+--- umbral 0.93
+
+  grupo de 33 titulos   dispersion 2.57x
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS EN GENE     0.000   2,086 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR DE SERVICIOS EN GENERAL      0.000     228 pers.
+    ASISTENTE AYUDANTE AUXILIAR DE SERVICIOS EN GENERAL      0.000      63 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR DE SERVICIO EN GENERAL       0.000      57 pers.
+    ASISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS GENERAL     0.016      26 pers.
+    ASITENTE/AYUDANTE/AUXILIAR DE SERVICIO EN GENERAL        0.000      11 pers.
+    ... y 27 mas
+
+  grupo de 31 titulos   dispersion 2.34x
+    ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO           0.179   1,920 pers.
+    ASISTENTE/AYUDANTE/AUXILIAR ADMINISTRATIVO               0.142      50 pers.
+    ASISTENTE/ AYUDANTE/ AUXILIAR ADMINISTRATIVO             0.019      38 pers.
+    ASISTENTE / AUXILIAR ADMINISTRATIVO                      0.019      34 pers.
+    ASISTENTE AYUDANTE AUXILIAR ADMINISTRATIVO               0.172      12 pers.
+    ASISTENTE/AYUDANTE/ AUXILIAR ADMINISTRATIVO              0.398      11 pers.
+    ... y 25 mas
+EXIT=0
