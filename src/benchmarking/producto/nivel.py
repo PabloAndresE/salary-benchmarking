@@ -31,9 +31,22 @@ import pandas as pd
 # Nivel aproximado de cada palabra de rango. Los sinonimos comparten escalon a proposito:
 # `AUXILIAR` y `AYUDANTE` no son jerarquia entre si, y tratarlos como escalones distintos
 # fabricaria diferencias donde no las hay.
+# QUE NO ENTRA, y por que. `EJECUTIVO` parece nivel 5 y en Ecuador no lo es: `EJECUTIVO DE
+# VENTAS` es un vendedor, y meterlo mandaria 17.000 personas al escalon mas alto por una
+# falsa amistad del idioma. `ADMINISTRADOR`, `OFICIAL`, `GESTOR`, `AGENTE` e `INSPECTOR`
+# son ambiguas —a veces rango, a veces oficio— y no entran sin criterio verificable.
+#
+# Y lo que NO es un hueco del diccionario: `TRABAJADOR AGRICOLA`, `DOCENTE`, `CHOFER`,
+# `GUARDIA`, `MEDICO`... no declaran escalon porque no lo tienen. Son ocupaciones. El 56%
+# de las personas seguira sin nivel lexico y es correcto que asi sea; para esas el
+# tratamiento es el intervalo, no inventarles un rango.
+#
+# El nivel de cada palabra se decide por lo que SIGNIFICA, nunca por lo que cobra: usar el
+# sueldo para asignar el escalon seria la circularidad que todo el proyecto evita.
 RANGOS = {
     "PASANTE": 1, "PRACTICANTE": 1,
-    "AYUDANTE": 1, "AUXILIAR": 1, "OPERARIO": 1, "OBRERO": 1, "ASISTENTE": 1,
+    "AYUDANTE": 1, "AUXILIAR": 1, "OPERARIO": 1, "OPERADOR": 1, "OBRERO": 1,
+    "ASISTENTE": 1,
     "TECNICO": 2, "ANALISTA": 2,
     "SUPERVISOR": 3, "COORDINADOR": 3, "ESPECIALISTA": 3,
     "JEFE": 4, "SUBGERENTE": 4,

@@ -125,3 +125,21 @@ def test_el_efecto_de_nivel_ignora_las_areas_de_un_solo_rango():
     filas = [{"cargo_norm": "AUXILIAR DE X", "empresa_ruc": f"E{e}", "y": 0.0}
              for e in range(20)]
     assert efecto_nivel(pd.DataFrame(filas)) == {}
+
+
+def test_operador_cuenta_como_operario():
+    # 40.962 personas. Sinonimo de OPERARIO, que ya estaba: era un descuido.
+    assert nivel_lexico("OPERADOR DE PARQUEADERO") == 1
+    assert nivel_lexico("OPERADOR DE MAQUINARIA") == 1
+
+
+def test_ejecutivo_NO_es_nivel_directivo():
+    # Falsa amistad del idioma: `EJECUTIVO DE VENTAS` es un vendedor en Ecuador, no un
+    # directivo. Meterlo mandaria 17.000 personas al escalon 5 por error.
+    assert nivel_lexico("EJECUTIVO DE VENTAS") is None
+
+
+def test_las_ocupaciones_sin_rango_siguen_sin_nivel():
+    # No es un hueco del diccionario: un DOCENTE no es ni auxiliar ni gerente.
+    for e in ("TRABAJADOR AGRICOLA", "DOCENTE", "CHOFER", "GUARDIA", "MEDICO OCUPACIONAL"):
+        assert nivel_lexico(e) is None
