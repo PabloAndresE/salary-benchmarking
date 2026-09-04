@@ -1,0 +1,79 @@
+global tau=0.2969 sigma=0.1452
+evaluando 18,747 votos de empresa en 2,848 celdas (6,280 con 3+ personas)
+
+========================================================================================
+SOBRE VOTOS DE EMPRESA. Objetivo cobertura 50,0% y 80,0%; pinball menor mejor
+========================================================================================
+  variante                     cob50   cob80   pin.25   pin.75  pin.med  cob50 n>=3  % celdas
+  A hoy (norm, glob, +sig)    53.5%  76.1%   0.1252   0.1329   0.1290      64.3%     0.0%
+  B norm, tau_c, sin sigma    50.6%  76.2%   0.1168   0.1297   0.1233      57.3%     0.0%
+  D empirico F>=5             49.0%  77.4%   0.1119   0.1278   0.1199      53.1%    92.4%
+  D empirico F>=10            49.4%  78.0%   0.1133   0.1281   0.1207      54.5%    80.6%
+  D empirico F>=15            49.5%  77.8%   0.1136   0.1284   0.1210      54.7%    73.9%
+  D empirico F>=20            49.6%  77.8%   0.1139   0.1285   0.1212      55.1%    69.3%
+  D empirico F>=30            49.9%  77.8%   0.1141   0.1285   0.1213      55.7%    62.0%
+
+  MEJOR PINBALL: D empirico F>=5
+
+========================================================================================
+POR QUINTIL DE DISPERSION DEL CARGO
+========================================================================================
+  quintil      votos   A hoy (norm, glo  B norm, tau_c, s   D empirico F>=5  D empirico F>=10  D empirico F>=15  D empirico F>=20  D empirico F>=30
+  Q1           3,742              81.3%             60.2%             49.4%             50.5%             51.3%             52.1%             52.9%
+  Q2           3,754              61.3%             48.8%             51.0%             51.2%             50.9%             50.8%             50.7%
+  Q3           3,723              52.6%             49.5%             48.1%             49.7%             49.5%             49.5%             49.4%
+  Q4           3,777              41.4%             46.7%             47.0%             46.9%             46.6%             46.6%             47.0%
+  Q5           3,751              30.8%             48.0%             49.2%             48.9%             48.9%             49.2%             49.3%
+
+========================================================================================
+CARGOS CONCRETOS: cobertura, y la banda en dolares (SBU 2025)
+========================================================================================
+
+  AUXILIAR DE LIMPIEZA   (91 empresas apartadas, 285 en la base)
+    REAL (votos apartados)     $     475 — $     497
+    A hoy (norm, glob, +sig)   $     381 — $     594   cobertura  96.7%
+    B norm, tau_c, sin sigma   $     457 — $     495   cobertura  74.7%
+    D empirico F>=10           $     475 — $     494   cobertura  47.3%
+
+  TRABAJADOR AGRICOLA   (30 empresas apartadas, 101 en la base)
+    REAL (votos apartados)     $     470 — $     472
+    A hoy (norm, glob, +sig)   $     377 — $     590   cobertura 100.0%
+    B norm, tau_c, sin sigma   $     443 — $     502   cobertura  93.3%
+    D empirico F>=10           $     470 — $     472   cobertura  76.7%
+
+  CHOFER   (259 empresas apartadas, 822 en la base)
+    REAL (votos apartados)     $     513 — $     722
+    A hoy (norm, glob, +sig)   $     491 — $     766   cobertura  69.9%
+    B norm, tau_c, sin sigma   $     545 — $     690   cobertura  25.9%
+    D empirico F>=10           $     505 — $     722   cobertura  52.5%
+
+  ASISTENTE CONTABLE   (359 empresas apartadas, 1090 en la base)
+    REAL (votos apartados)     $     567 — $     810
+    A hoy (norm, glob, +sig)   $     512 — $     800   cobertura  59.1%
+    B norm, tau_c, sin sigma   $     549 — $     747   cobertura  46.2%
+    D empirico F>=10           $     556 — $     785   cobertura  47.6%
+
+  VENDEDOR   (143 empresas apartadas, 434 en la base)
+    REAL (votos apartados)     $     482 — $     765
+    A hoy (norm, glob, +sig)   $     409 — $     639   cobertura  65.0%
+    B norm, tau_c, sin sigma   $     424 — $     616   cobertura  63.6%
+    D empirico F>=10           $     482 — $     800   cobertura  60.1%
+
+  JEFE DE BODEGA   (70 empresas apartadas, 216 en la base)
+    REAL (votos apartados)     $     700 — $   1,210
+    A hoy (norm, glob, +sig)   $     705 — $   1,103   cobertura  40.0%
+    B norm, tau_c, sin sigma   $     690 — $   1,128   cobertura  45.7%
+    D empirico F>=10           $     664 — $   1,128   cobertura  48.6%
+
+  CONTADOR   (179 empresas apartadas, 538 en la base)
+    REAL (votos apartados)     $     915 — $   1,819
+    A hoy (norm, glob, +sig)   $   1,040 — $   1,625   cobertura  35.8%
+    B norm, tau_c, sin sigma   $     964 — $   1,752   cobertura  44.1%
+    D empirico F>=10           $     948 — $   1,687   cobertura  42.5%
+
+  GERENTE GENERAL   (158 empresas apartadas, 497 en la base)
+    REAL (votos apartados)     $   2,000 — $   6,673
+    A hoy (norm, glob, +sig)   $   2,422 — $   3,796   cobertura  20.3%
+    B norm, tau_c, sin sigma   $   1,610 — $   5,709   cobertura  46.8%
+    D empirico F>=10           $   1,516 — $   5,332   cobertura  46.8%
+EXIT=0

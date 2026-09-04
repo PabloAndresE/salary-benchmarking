@@ -141,3 +141,35 @@ export PYTHONPATH=src
 
 `04` importa el estimador de `02` en vez de copiarlo, para que la comparación sea válida.
 Las salidas commiteadas están en `salidas/`.
+
+## `05` — decidido: la banda habla de EMPRESAS, umbral 10
+
+Decisión de producto tras `04`: la banda dice *"la mitad de las **empresas** paga entre X e
+Y"*. Es lo coherente con el centro, que ya es la mediana de los votos por empresa.
+
+**Eso corrige un número que este README daba mal.** Medida contra personas, la cobertura
+global de hoy salía 68,7%; medida contra empresas sale **53,5%**. Buena parte de aquella
+descalibración aparente era el desajuste de definición. El defecto de fondo no cambia: el
+53,5% es la media de errores que se cancelan.
+
+Y **`sigma` sale de la fórmula**. El nivel de una empresa es `mu + u_f`, con varianza `τ²`;
+`σ²` separa a dos personas de la misma nómina y no mueve el nivel de la empresa. La banda
+de empresas es `τ_c² + 1/W`.
+
+```
+                          cob50   cob80   pin.25   pin.75   pin.medio   % gente
+A hoy (norm, glob, +σ)    53.5%   76.1%   0.1252   0.1329    0.1290        —
+B norm, τ_c, sin σ        50.6%   76.2%   0.1168   0.1297    0.1233        —
+D empírico F>=5           49.0%   77.4%   0.1119   0.1278    0.1199      92.4%
+D empírico F>=10          49.4%   78.0%   0.1133   0.1281    0.1207      80.6%
+D empírico F>=20          49.6%   77.8%   0.1139   0.1285    0.1212      69.3%
+```
+
+Deformación entre quintiles de dispersión: **50,5 → 13,5 → 4,3 puntos**.
+
+**Umbral elegido: 10.** F≥5 gana el pinball por un 0,7% que casi seguro es ruido —no hay
+intervalo para esa diferencia— y F≥10 gana las dos coberturas (49,4% contra 49,0%; 78,0%
+contra 77,4%), cubre al 80,6% de la gente y está más lejos del dato crudo.
+
+`VENDEDOR`, que fallaba en `04`, era efectivamente el desajuste de definición: contra
+empresas su banda real es $482–$765, no $482–$520.
