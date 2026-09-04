@@ -116,7 +116,11 @@ def test_la_confianza_sale_del_intervalo_y_no_del_conteo(caso):
     filas, emb, centros = caso
     filas = list(filas)
     emb = dict(emb)
-    emb["BODEGA FLACA"] = centros["BODEGA"] + np.array([0.015, 0., 0.])
+    # Tiene que ser un puesto DISTINTO, no una grafia mas: por debajo del umbral de
+    # fusion. Si se la pone pegada al centro de la familia, la fusion la absorbe —con
+    # razon— y las dos celdas comparten estadisticos, que es justo lo contrario de lo
+    # que este test quiere contrastar.
+    emb["BODEGA FLACA"] = centros["BODEGA"] + 0.4 * centros["SISTEMAS"]
     filas += [(f"EF{e}", "BODEGA FLACA", 0.2) for e in range(3)]
     b = _base(filas, emb)
 
@@ -209,3 +213,115 @@ def test_sin_palabra_de_rango_el_intervalo_paga_la_ignorancia():
     r = b.referenciar(["ENCARGADO DE CAJA", "AUXILIAR DE CAJA"], emb).set_index("cargo")
     assert b.var_nivel > 0
     assert r.loc["ENCARGADO DE CAJA", "sd"] > r.loc["AUXILIAR DE CAJA", "sd"]
+
+
+def test_el_castigo_por_nivel_desconocido_sale_del_vecindario():
+    # Un puesto sin palabra de rango cuyo vecindario es HOMOGENEO en escalon no merece el
+    # mismo castigo que uno cuyo vecindario va de auxiliar a gerente. Antes los dos
+    # pagaban la dispersion global, o sea el caso peor.
+    filas, emb = _caso_jerarquico()
+    emb = dict(emb)
+    # vecindario homogeneo: pegado a los auxiliares de CAJA
+    emb["ENCARGADO X"] = emb["AUXILIAR DE CAJA"]
+    b = _base(filas, emb)
+    # y uno cuyo vecindario mezcla escalones: en medio de todo
+    todos = np.mean([emb[f"{r} DE CAJA"] for r in
+                     ("AUXILIAR", "TECNICO", "SUPERVISOR", "JEFE", "GERENTE")], axis=0)
+    emb["ENCARGADO Y"] = todos
+    b2 = _base(filas, emb)
+    homogeneo = b2.referenciar(["ENCARGADO X"], emb).iloc[0]
+    mezclado = b2.referenciar(["ENCARGADO Y"], emb).iloc[0]
+    assert homogeneo["base"] == mezclado["base"] == "por analogia"
+    assert homogeneo["sd"] <= mezclado["sd"] + 1e-9
+
+
+# --- fusion de cuasi-duplicados -------------------------------------------------
+
+def _caso_grafias(n_empresas=2):
+    """El mismo puesto tecleado de dos formas, lejos de todo lo demas.
+
+    Reproduce `ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO` contra
+    `ASISTENTE/AYUDANTE/AUXILIAR ADMINISTRATIVO`: vector identico, celdas separadas, y
+    cada una demasiado delgada para contestar sola.
+    """
+    filas, emb = [], {}
+    emb["ANALISTA DE RIESGO DE CREDITO"] = np.array([1.0, 0.0, 0.0])
+    emb["ANALISTA DE RIESGO CREDITICIO"] = np.array([1.0, 0.0, 0.0])
+    emb["MENSAJERO"] = np.array([0.0, 1.0, 0.0])
+    for i, etq in enumerate(["ANALISTA DE RIESGO DE CREDITO",
+                             "ANALISTA DE RIESGO CREDITICIO"]):
+        for e in range(n_empresas):
+            filas += [(f"EA{i}{e}", etq, 1.0 + 0.01 * j) for j in range(4)]
+    for e in range(9):
+        filas += [(f"EM{e}", "MENSAJERO", 0.1 + 0.01 * j) for j in range(4)]
+    return filas, emb
+
+
+def test_dos_grafias_del_mismo_puesto_votan_juntas():
+    # Por separado cada grafia tiene 2 empresas y no llega al suelo; fusionadas son 4 y
+    # se contestan con datos propios. Es la ganancia medida: 57,7% -> 64,1% de cobertura.
+    filas, emb = _caso_grafias()
+    con = _base(filas, emb).referenciar(list(emb), emb).set_index("cargo")
+    sin = BaseReferencia.construir(_marco(filas), emb, _sbu, umbral_fusion=None)
+    sin = sin.referenciar(list(emb), emb).set_index("cargo")
+
+    assert sin.loc["ANALISTA DE RIESGO CREDITICIO", "base"] == "por analogia"
+    assert con.loc["ANALISTA DE RIESGO CREDITICIO", "base"] == "datos directos"
+    assert con.loc["ANALISTA DE RIESGO CREDITICIO", "empresas"] == 4
+    # y las dos grafias dan exactamente la misma respuesta, que es el punto
+    assert (con.loc["ANALISTA DE RIESGO CREDITICIO", "referencia_log"]
+            == con.loc["ANALISTA DE RIESGO DE CREDITO", "referencia_log"])
+
+
+def test_sin_fusionar_el_informe_cuenta_mensajeros_como_evidencia():
+    # Sin fusion la respuesta NO se rompe —la hermana de grafia ya la rescataba por
+    # analogia a distancia cero, y el numero sale igual—; lo que se rompe es lo que el
+    # informe declara. `empresas` sumaba todo el vecindario, mensajeros incluidos, y el
+    # cliente leia 11 empresas de respaldo donde solo hay 4 de su puesto.
+    filas, emb = _caso_grafias()
+    sin = BaseReferencia.construir(_marco(filas), emb, _sbu, umbral_fusion=None)
+    r = sin.referenciar(["ANALISTA DE RIESGO CREDITICIO"], emb).iloc[0]
+    con = _base(filas, emb).referenciar(["ANALISTA DE RIESGO CREDITICIO"], emb).iloc[0]
+    assert r["base"] == "por analogia" and con["base"] == "datos directos"
+    assert r["empresas"] > con["empresas"] == 4, "la fusion declara el respaldo real"
+
+
+def test_la_fusion_no_cuela_una_celda_por_debajo_del_suelo():
+    # EL riesgo de la fusion. Si el grupo entero sigue sin llegar a MIN_EMPRESAS, su
+    # mediana no puede reaparecer disfrazada de "vecino a distancia cero": el suelo es
+    # de confidencialidad, no de gusto. La respuesta debe venir de FUERA del grupo.
+    filas, emb = _caso_grafias(n_empresas=1)          # 1 + 1 = 2 empresas, bajo el suelo
+    b = _base(filas, emb)
+    r = b.referenciar(["ANALISTA DE RIESGO CREDITICIO"], emb).iloc[0]
+    assert r["base"] == "por analogia"
+    # su propio grupo paga 1,0 y el unico vecino disponible paga 0,1: si la referencia
+    # saliera cerca de 1,0 es que se filtro por la puerta de atras
+    assert abs(r["referencia_log"] - 0.1) < abs(r["referencia_log"] - 1.0)
+
+
+def test_el_escalon_impide_fusionar_puestos_de_distinto_rango():
+    # `AUXILIAR DE CAJA` y `GERENTE DE CAJA` comparten vector exacto en este caso, y aun
+    # asi no pueden acabar en la misma celda: el candado de nivel lo prohibe.
+    filas, emb = _caso_jerarquico()
+    b = _base(filas, emb)
+    assert b.grupo[b.idx["AUXILIAR DE CAJA"]] != b.grupo[b.idx["GERENTE DE CAJA"]]
+    r = b.referenciar(["AUXILIAR DE CAJA", "GERENTE DE CAJA"], emb).set_index("cargo")
+    assert (r.loc["AUXILIAR DE CAJA", "referencia_log"]
+            < r.loc["GERENTE DE CAJA", "referencia_log"])
+
+
+def test_el_enlace_completo_no_encadena():
+    # El defecto que se midio: union-find junta A con C si existe la cadena A~B~C aunque
+    # A y C no se parezcan. Tres puntos en fila, cada uno cerca del siguiente y lejos del
+    # tercero, no pueden acabar en un solo grupo.
+    a = np.array([1.0, 0.0, 0.0])
+    b = np.array([1.0, 0.25, 0.0])
+    c = np.array([1.0, 0.52, 0.0])
+    emb = {"PUESTO A": a, "PUESTO B": b, "PUESTO C": c}
+    filas = [(f"E{n}{e}", n, 0.5) for n in emb for e in range(4)]
+    base = _base(filas, emb)
+    g = {n: int(base.grupo[base.idx[n]]) for n in emb}
+    cos = lambda u, v: float(u @ v / (np.linalg.norm(u) * np.linalg.norm(v)))
+    assert cos(a, b) > 0.95 and cos(b, c) > 0.95, "la cadena existe"
+    assert cos(a, c) < 0.95, "y los extremos no se parecen"
+    assert g["PUESTO A"] != g["PUESTO C"], "el enlace completo no debe encadenar"

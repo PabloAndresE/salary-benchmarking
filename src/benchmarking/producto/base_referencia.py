@@ -16,6 +16,13 @@ COMO FUNCIONA
 Lo segundo es lo que hace que la cobertura pase del 66,6% a casi todo: el 35,9% de la
 gente de una nomina nueva tiene un titulo que no esta en la base.
 
+ANTES DE NADA, LAS GRAFIAS SE JUNTAN. El catalogo trae el mismo puesto tecleado de varias
+formas —seis variantes de espaciado de `ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO`, y
+una con errata—, y cada una era una celda distinta y delgada que se contestaba por
+analogia... contra sus propias hermanas, pagando castigo de distancia. Fusionarlas sube la
+cobertura directa del 57,7% al 64,1% sin costar precision. El COMO importa mucho y esta
+medido: por enlace completo, no simple. Ver `UMBRAL_FUSION`.
+
 EL PESO DE CADA VECINO, y por que no es `similitud x precision`
 
 La version ingenua pesa cada vecino por su similitud multiplicada por su precision. Medido
@@ -57,6 +64,24 @@ from .nivel import efecto_nivel, nivel_lexico
 
 VECINOS = 25
 MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
+
+# FUSION DE CUASI-DUPLICADOS. El catalogo trae la misma etiqueta tecleada de varias formas
+# —`ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO` convive con seis variantes de espaciado
+# y una errata—, y cada grafia era una celda separada, delgada, que se contestaba por
+# analogia pagando castigo de distancia contra sus propios hermanos.
+#
+# Se juntan por ENLACE COMPLETO: un grupo vale solo si TODOS sus pares superan el umbral.
+# El enlace simple (union-find) NO sirve, y esta medido: encadena A~B~C~D hasta juntar
+# `ASISTENTE CONTABLE` con `AUXILIAR DE LIMPIEZA` en un grupo de 1.758 titulos, y empeora
+# el error un +0,0154 [IC +0,0095, +0,0206]. Con enlace completo, mismo umbral, el grupo
+# mayor baja a 27 titulos y el efecto se da vuelta: -0,0030 [IC -0,0075, -0,0000].
+#
+# La ganancia real no es precision —esa sale neutra, rozando la mejora— sino COBERTURA
+# DIRECTA: 57,7% -> 64,1% de la gente contestada con datos de su propio puesto en vez de
+# por analogia. Bajar a 0,93 sube la cobertura a 66,1% pero el efecto vuelve a cero.
+UMBRAL_FUSION = 0.95
+VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
+TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
 
 # La confianza sale del ANCHO DEL INTERVALO, no del numero de empresas. Contar empresas
 # engana: `SCRUM MASTER` con 14 salia igual de "ALTA" que `CONTADOR` con 823. Lo que le
@@ -109,14 +134,25 @@ class BaseReferencia:
     """Construida una vez sobre el universo; se consulta por titulo."""
 
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
-                 nivel=None, efecto=None):
+                 nivel=None, efecto=None, grupo=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
+        # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
+        # GRUPO de fusion: las grafias de un mismo puesto comparten estadisticos.
         self.m, self.W, self.emp = m, W, emp
-        # `Z` son los embeddings del titulo ENMASCARADO: el area sin contaminacion de
-        # rango. `AUXILIAR DE CAJA` y `SUPERVISOR DE CAJA` caen en el mismo punto, y
-        # es `nivel` quien los separa despues.
+        # `Z` son los embeddings del titulo COMPLETO, sin enmascarar el rango. Enmascarar
+        # esta MEDIDO que empeora (+6,0%, IC [+0,038, +0,080]): la palabra de rango no
+        # dice solo el rango, y al taparla `OPERARIO DE PRODUCCION` y `ANALISTA DE
+        # PRODUCCION` quedan identicos siendo trabajos distintos. La jerarquia entra por
+        # el AJUSTE de `nivel`, no por la representacion.
         self.Z = Z
+        self.grupo = (np.arange(len(self.celdas)) if grupo is None
+                      else np.asarray(grupo, dtype=np.int64))
+        # Al buscar vecinos hay que pedir de mas: los hermanos de grafia se descartan
+        # despues (comparten celda, no son evidencia nueva) y sin este margen podrian
+        # comerse los 25 sitios.
+        _, cuenta = np.unique(self.grupo, return_counts=True)
+        self.k_busqueda = VECINOS + int(cuenta.max()) if len(cuenta) else VECINOS
         self.tau2, self.sigma2, self.lam, self.sbu = tau2, sigma2, lam, sbu
         self.nivel = (np.full(len(self.celdas), np.nan) if nivel is None
                       else np.asarray(nivel, dtype=float))
@@ -129,42 +165,78 @@ class BaseReferencia:
     # -- construccion ----------------------------------------------------------
 
     @classmethod
-    def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm"):
-        """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector."""
-        tau2, sigma2 = componentes_varianza(marco, col)
-        s2c, _ = sigma2_por_celda(marco, col, sigma2_global=sigma2)
-        votos = tabla_votos(marco, col, tau2=tau2, sigma2=sigma2, sigma2_celda=s2c)
+    def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
+                  umbral_fusion=UMBRAL_FUSION):
+        """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
-        # Vectorizado. Un bucle por celda son 65.081 iteraciones de pandas y minutos
-        # de espera; `_cuantil_por_grupo` lo hace de una pasada. Es el mismo error
-        # que ya se corrigio dos veces en el paquete, asi que aqui se reutiliza.
-        v = votos.sort_values([col, "voto"], kind="mergesort")
-        cod, celdas = pd.factorize(v[col], sort=True)
-        o = np.argsort(cod, kind="stable")
-        cod = cod[o]
-        vv = v["voto"].to_numpy(float)[o]
-        ww = v["w"].to_numpy(float)[o]
-        n = len(celdas)
-        m = _cuantil_por_grupo(cod, vv, ww, n)
-        W = np.bincount(cod, weights=ww, minlength=n)
-        emp = np.bincount(cod, minlength=n).astype(int)
-        celdas = list(celdas)
+        `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
+        """
+        def _stats(d, columna):
+            """(m, W, emp) por celda de `columna`, mas el indice de celdas."""
+            tau2, sigma2 = componentes_varianza(d, columna)
+            s2c, _ = sigma2_por_celda(d, columna, sigma2_global=sigma2)
+            votos = tabla_votos(d, columna, tau2=tau2, sigma2=sigma2, sigma2_celda=s2c)
+            # Vectorizado. Un bucle por celda son 65.081 iteraciones de pandas y minutos
+            # de espera; `_cuantil_por_grupo` lo hace de una pasada. Es el mismo error
+            # que ya se corrigio dos veces en el paquete, asi que aqui se reutiliza.
+            v = votos.sort_values([columna, "voto"], kind="mergesort")
+            cod, claves = pd.factorize(v[columna], sort=True)
+            o = np.argsort(cod, kind="stable")
+            cod = cod[o]
+            vv = v["voto"].to_numpy(float)[o]
+            ww = v["w"].to_numpy(float)[o]
+            k = len(claves)
+            return (np.asarray(_cuantil_por_grupo(cod, vv, ww, k)),
+                    np.bincount(cod, weights=ww, minlength=k),
+                    np.bincount(cod, minlength=k).astype(int),
+                    list(claves), float(tau2), float(sigma2))
 
+        celdas = sorted(set(marco[col].astype(str)))
         Z = np.vstack([X_por_etiqueta[c] for c in celdas]).astype(float)
         Z /= np.linalg.norm(Z, axis=1, keepdims=True)
-        m, W, emp = np.array(m), np.array(W), np.array(emp, dtype=int)
-
-        # `lambda` sale de una MUESTRA de celdas. Todas contra todas son 65.081^2 x 768
-        # dimensiones —unos 3 billones de operaciones— para estimar un solo escalar. Con
-        # 3.000 celdas la estimacion ya es estable y tarda segundos.
-        rng = np.random.default_rng(20260805)
-        muestra = (rng.choice(n, 3000, replace=False) if n > 3000 else np.arange(n))
-        vec_s, sim_s = _vecinos(Z[muestra], Z, VECINOS, excluir_propio=False)
-        lam = _lambda_semantica(m[muestra], W[muestra], vec_s, sim_s, m_todos=m, W_todos=W)
         niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan
                         for c in celdas], dtype=float)
+        n = len(celdas)
+
+        # `lambda` se estima SIN fusionar, a proposito. Mide cuanto difieren dos celdas
+        # por unidad de distancia semantica, y dentro de un grupo fusionado esa diferencia
+        # es cero por construccion: estimarla sobre celdas fusionadas la sesgaria a la
+        # baja y encogeria todos los intervalos.
+        #
+        # Sale ademas de una MUESTRA de celdas. Todas contra todas son 65.081^2 x 768
+        # dimensiones —unos 3 billones de operaciones— para estimar un solo escalar. Con
+        # 3.000 celdas la estimacion ya es estable y tarda segundos.
+        m0, W0, emp0, celdas0, tau2, sigma2 = _stats(marco, col)
+        pos0 = {c: i for i, c in enumerate(celdas0)}
+        ix0 = np.array([pos0.get(c, -1) for c in celdas])
+        mm = np.where(ix0 >= 0, m0[np.maximum(ix0, 0)], np.nan)
+        WW = np.where(ix0 >= 0, W0[np.maximum(ix0, 0)], 0.0)
+        rng = np.random.default_rng(20260805)
+        muestra = (rng.choice(n, 3000, replace=False) if n > 3000 else np.arange(n))
+        vec_s, sim_s = _vecinos(Z[muestra], Z, min(VECINOS, n - 1) if n > 1 else 1,
+                                excluir_propio=False)
+        lam = _lambda_semantica(mm[muestra], WW[muestra], vec_s, sim_s,
+                                m_todos=mm, W_todos=WW)
+
+        # Los estadisticos SI salen del grupo fusionado: las grafias de un mismo puesto
+        # votan juntas. Se reagrega desde las filas, no sumando celdas: el voto de una
+        # empresa en el grupo es la mediana de TODA su gente en cualquiera de las grafias.
+        grupo = _fusionar(Z, niv, umbral_fusion) if umbral_fusion else np.arange(n)
+        if umbral_fusion:
+            g_por_etiqueta = dict(zip(celdas, grupo))
+            d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
+            m_g, W_g, emp_g, claves, tau2, sigma2 = _stats(d, "_g")
+            pos = {int(k): i for i, k in enumerate(claves)}
+            ix = np.array([pos.get(int(g), -1) for g in grupo])
+            m = np.where(ix >= 0, m_g[np.maximum(ix, 0)], np.nan)
+            W = np.where(ix >= 0, W_g[np.maximum(ix, 0)], 0.0)
+            emp = np.where(ix >= 0, emp_g[np.maximum(ix, 0)], 0).astype(int)
+        else:
+            m, W = mm, WW
+            emp = np.where(ix0 >= 0, emp0[np.maximum(ix0, 0)], 0).astype(int)
+
         ef = efecto_nivel(marco, col=col)
-        return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef)
+        return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -175,6 +247,7 @@ class BaseReferencia:
         np.savez_compressed(
             ruta, celdas=np.array(self.celdas, dtype=object), m=self.m, W=self.W,
             emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
+            grupo=self.grupo,
             ef_k=np.array(sorted(self.efecto), dtype=float),
             ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
@@ -184,9 +257,12 @@ class BaseReferencia:
         with np.load(ruta, allow_pickle=True) as z:
             tau2, sigma2, lam = z["escalares"]
             ef = {int(k): float(v) for k, v in zip(z["ef_k"], z["ef_v"])}
+            # `grupo` falta en las bases guardadas antes de la fusion; sin el, cada
+            # etiqueta es su propio grupo y el comportamiento es el de entonces.
+            grupo = z["grupo"] if "grupo" in z.files else None
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
-                       sbu, z["nivel"], ef)
+                       sbu, z["nivel"], ef, grupo)
 
     # -- consulta --------------------------------------------------------------
 
@@ -196,11 +272,12 @@ class BaseReferencia:
         unicos = sorted(set(titulos))
         Q = np.vstack([X_por_etiqueta[t] for t in unicos]).astype(float)
         Q /= np.linalg.norm(Q, axis=1, keepdims=True)
-        vec, sim = _vecinos(Q, self.Z, VECINOS, excluir_propio=False)
+        vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
 
         filas = {}
         for k, t in enumerate(unicos):
             propio = self.idx.get(t)
+            mi_grupo = int(self.grupo[propio]) if propio is not None else -1
             directo = propio is not None and self.emp[propio] >= MIN_EMPRESAS
             if directo:
                 mu = self.m[propio]
@@ -209,9 +286,20 @@ class BaseReferencia:
                 mejor, directo_ok = 1.0, True
             else:
                 j, s = vec[k], sim[k]
-                if propio is not None:              # existe pero es demasiado delgada
-                    quitar = j != propio
-                    j, s = j[quitar], s[quitar]
+                # Se descarta el GRUPO propio entero, no solo la etiqueta exacta. Si la
+                # celda no llega a MIN_EMPRESAS, sus hermanos de grafia comparten sus
+                # estadisticos: dejarlos entrar como "vecinos" a distancia cero colaria
+                # por la puerta de atras la misma celda que el suelo acaba de rechazar
+                # —y ese suelo es de confidencialidad, no de gusto—, y de paso fingiria
+                # precision promediando copias del mismo dato.
+                if mi_grupo >= 0:
+                    quedan = self.grupo[j] != mi_grupo
+                    # Si no queda NADA fuera del grupo, la base entera es ese grupo y no
+                    # hay evidencia externa que ofrecer. Se responde igual —es la decision
+                    # de producto— pero solo pasa en bases degeneradas de un solo puesto.
+                    if quedan.any():
+                        j, s = j[quedan], s[quedan]
+                j, s = j[:VECINOS], s[:VECINOS]
                 dist = self.lam * (1.0 - s)
                 var_j = 1.0 / self.W[j] + dist
                 peso = 1.0 / var_j
@@ -233,7 +321,27 @@ class BaseReferencia:
                                    if np.isfinite(nj) else 0.0 for nj in self.nivel[j]])
                     penal_nivel = 0.0
                 else:
-                    penal_nivel = self.var_nivel
+                    # No se sabe el escalon del puesto preguntado, asi que no se puede
+                    # ajustar. La ignorancia se paga en el intervalo — pero la que hay,
+                    # no la del caso peor.
+                    #
+                    # Antes se sumaba `var_nivel`, la dispersion del efecto entre los
+                    # CINCO escalones: tratar a un `OPERADOR DE PARQUEADERO` como si
+                    # pudiera ser gerente. Si sus vecinos son todos operarios y asistentes
+                    # de parqueadero, el puesto casi seguro es de nivel bajo y ese castigo
+                    # sobra. Aqui se usa la dispersion de los niveles QUE HAY EN SU
+                    # VECINDARIO: homogeneo -> penalizacion pequena; de auxiliar a gerente
+                    # -> grande, que ahi si la merece.
+                    ef_vec = np.array([self.efecto.get(int(nj), np.nan)
+                                       if np.isfinite(nj) else np.nan
+                                       for nj in self.nivel[j]])
+                    hay = np.isfinite(ef_vec)
+                    if hay.sum() >= 2:
+                        pv = peso[hay] / peso[hay].sum()
+                        media = float((pv * ef_vec[hay]).sum())
+                        penal_nivel = float((pv * (ef_vec[hay] - media) ** 2).sum())
+                    else:
+                        penal_nivel = self.var_nivel
                 mu = float((peso * (self.m[j] + aj)).sum())
                 # Las dos partes NO se promedian igual. El error de medicion de cada
                 # vecino es independiente y se cancela al promediar (suma de peso^2). La
@@ -266,11 +374,71 @@ class BaseReferencia:
         return out
 
 
+def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO):
+    """Agrupa cuasi-duplicados por ENLACE COMPLETO. Devuelve etiqueta -> id de grupo.
+
+    Aglomerativo y voraz: las aristas candidatas se recorren de mas a menos similares y
+    dos grupos se unen solo si el par PEOR entre ellos aguanta el umbral. Esa comprobacion
+    es toda la diferencia con union-find, y es la que impide que el grupo crezca por
+    cadena hasta juntar cosas que no se parecen.
+
+    El candado de escalon —dos niveles lexicos distintos no se juntan— aqui casi no hace
+    falta: con enlace completo solo rechaza 18 uniones de 15.870. El dano nunca vino de
+    pares malos sino de la cadena que los conectaba. Se deja porque es barato y porque sin
+    el, un titulo SIN palabra de rango podria servir de puente entre dos que si la tienen.
+    """
+    n = len(niveles)
+    if n < 2 or umbral is None:
+        return np.arange(n)
+    vec, sim = _vecinos(Z, Z, min(VECINOS_FUSION, n - 1), excluir_propio=True)
+
+    vistos, aristas = set(), []
+    for i in range(n):
+        for j, s in zip(vec[i], sim[i]):
+            if s < umbral:
+                break                       # `sim` viene ordenada de mayor a menor
+            j = int(j)
+            if j == i:
+                continue
+            par = (i, j) if i < j else (j, i)
+            if par in vistos:
+                continue
+            vistos.add(par)
+            na, nb = niveles[par[0]], niveles[par[1]]
+            if np.isfinite(na) and np.isfinite(nb) and na != nb:
+                continue
+            aristas.append((float(s), par[0], par[1]))
+    aristas.sort(key=lambda t: -t[0])
+
+    de = np.arange(n)
+    miembros = {}
+    for _, i, j in aristas:
+        gi, gj = int(de[i]), int(de[j])
+        if gi == gj:
+            continue
+        A, B = miembros.get(gi, [gi]), miembros.get(gj, [gj])
+        if len(A) + len(B) > tope:
+            continue
+        niv = np.unique(np.concatenate([niveles[A], niveles[B]]))
+        if len(niv[np.isfinite(niv)]) > 1:
+            continue
+        if float((Z[A] @ Z[B].T).min()) < umbral:      # el par PEOR manda
+            continue
+        miembros[gi] = A + B
+        miembros.pop(gj, None)
+        de[A + B] = gi
+    return de
+
+
 def _vecinos(Q, B, k, excluir_propio):
     """(indices, similitudes) de los k vecinos de cada fila de Q dentro de B."""
-    # argpartition exige kth < n, asi que con bases pequenas hay que recortar. Pasa en
-    # los tests y en clientes con catalogos cortos, no en produccion.
-    k = max(1, min(k, B.shape[0] - 1))
+    # `argpartition` exige kth < n. Antes se recortaba a n-1 SIEMPRE, y con bases cortas
+    # eso escondia la ultima celda: pedir 27 vecinos de una base de 3 devolvia 2. Cuando
+    # esos dos eran hermanos de grafia, el filtro de grupo se quedaba sin nada fuera del
+    # grupo y la celda acababa contestandose a si misma. Aqui, si caben todas, se ordena
+    # la fila entera y no se pierde ninguna.
+    n_b = B.shape[0]
+    k = max(1, min(k, n_b - 1 if excluir_propio else n_b))
     vec = np.zeros((Q.shape[0], k), dtype=np.int32)
     sim = np.zeros((Q.shape[0], k), dtype=float)
     paso = 512
@@ -280,8 +448,11 @@ def _vecinos(Q, B, k, excluir_propio):
             fila = S[r]
             if excluir_propio:
                 fila[i0 + r] = -np.inf
-            cand = np.argpartition(-fila, k)[:k]
-            cand = cand[np.argsort(-fila[cand])]
+            if k >= n_b:
+                cand = np.argsort(-fila)[:k]
+            else:
+                cand = np.argpartition(-fila, k)[:k]
+                cand = cand[np.argsort(-fila[cand])]
             vec[i0 + r] = cand
             sim[i0 + r] = np.clip(fila[cand], 0.0, None)
     return vec, sim
