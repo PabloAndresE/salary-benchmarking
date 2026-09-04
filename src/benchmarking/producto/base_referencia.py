@@ -113,39 +113,52 @@ MIN_EMPRESAS_BANDA = 10
 CUANTILES = (0.10, 0.25, 0.75, 0.90)
 Z_NORMAL = {0.10: -1.2816, 0.25: -0.6745, 0.75: 0.6745, 0.90: 1.2816}
 
-# La confianza sale del ANCHO DEL INTERVALO, no del numero de empresas. Contar empresas
-# engana: `SCRUM MASTER` con 14 salia igual de "ALTA" que `CONTADOR` con 823. Lo que le
-# importa a quien lee el informe es cuanto se puede mover el numero.
+# LA CONFIANZA MIDE LO BIEN QUE SE CONOCE EL CENTRO, no lo ancho que es el mercado. Son
+# dos preguntas distintas y antes se contestaba la que no era: la etiqueta salia del ancho
+# de la banda contra el suelo del cargo, y como en la rama directa el suelo ES casi todo el
+# ancho, el cociente daba ~1,00 y el 99,23% de las celdas se etiquetaba ALTA.
 #
-# Y el corte no es un porcentaje fijo, sino cuanto te alejas del SUELO IRREDUCIBLE: el
-# intervalo mas estrecho fisicamente posible para ESE cargo, que es el que se tendria con
-# infinitas empresas. La pregunta util es "cuantas veces mas ancho que el mejor caso". Un
-# umbral absoluto no se traslada entre mercados; este si.
+# El ancho del mercado ya lo comunica la banda. Lo que la etiqueta tiene que anadir es si
+# el numero del medio es fiable, y eso es la varianza de NUESTRA estimacion — todo lo que
+# no es dispersion del mercado:
 #
-# EL SUELO ES POR CELDA. Con el suelo global, `sqrt(tau^2+sigma^2)` era el 99,9% del propio
-# ancho en la rama directa, el cociente salia ~1,00 y el 99,23% de las celdas se etiquetaba
-# ALTA. Con `tau_c` el suelo va de 0,073 a 0,951 segun el cargo y el cociente vuelve a
-# significar algo.
+#     directo       var_centro = 1/W
+#     por analogia  var_centro = suma(peso^2/W) + suma(peso*dist) + penal_nivel
 #
-# LIMITE CONOCIDO, no resuelto (ver `e3_varianza/README`): esto sigue midiendo el ancho del
-# MERCADO, no lo bien que se conoce su centro. Un cargo con pocas empresas pero pago
-# homogeneo sale estrecho —y por tanto ALTA— aunque su mediana este mal determinada. La
-# alternativa seria etiquetar por `1/W`, que discrimina 8 a 1 donde esto discrimina 1,03 a
-# 1, pero cambia lo que la etiqueta le promete al cliente y es decision de producto.
-VECES_ALTA = 1.25
-VECES_MEDIA = 2.0
+# MEDIDO (`e3_varianza/06`), estimando la referencia sobre dos mitades disjuntas de
+# empresas y viendo cuanto se separan:
+#
+#                       Spearman con el movimiento real    ALTA     MEDIA    BAJA
+#     hoy (ancho/suelo)         +0,367                    100,0%     0,0%    0,0%
+#     nueva (1/W)               +0,576                     17,6%    45,5%   37,0%
+#     ...y lo que se mueve:                                  3,8%    13,3%   31,8%
+#
+# LOS CORTES son en dolares y no en veces-el-suelo, porque la pregunta ahora tiene unidades
+# interpretables. Las decisiones salariales se mueven en escalones de ~5%: un centro
+# conocido a mejor que 5% es accionable, entre 5% y 15% hay que mirarlo dos veces, y por
+# encima de 15% la referencia no distingue "sube un 10%" de "baja un 10%".
+#
+# LIMITE MEDIDO: `1/W` se queda CORTO, entre un 15% y un 40% segun el tramo (obs/pred va de
+# 0,96 en el primer decil a 1,42 en el ultimo). Ordena bien pero es optimista. La causa
+# probable es que el modelo supone la celda homogenea y `CONTADOR` mezcla empresas grandes
+# y pequenas. No se corrige con un factor porque ese factor no esta medido.
+CORTE_ALTA = 0.05       # el centro se conoce a mejor que +/-5%
+CORTE_MEDIA = 0.15
 
 
-def _confianza(sd, sd_suelo, directo):
-    """ALTA / MEDIA / BAJA segun cuanto se aleja el intervalo del suelo irreducible."""
-    ancho = float(np.exp(0.6745 * sd) - 1.0)
-    suelo = float(np.exp(0.6745 * sd_suelo) - 1.0)
-    veces = ancho / suelo if suelo > 0 else np.inf
-    if directo and veces <= VECES_ALTA:
-        return "ALTA", ancho
-    if veces <= VECES_MEDIA:
-        return "MEDIA", ancho
-    return "BAJA", ancho
+def _confianza(var_centro):
+    """ALTA / MEDIA / BAJA por cuanto puede moverse el CENTRO. Devuelve (etiqueta, pct).
+
+    No exige que la respuesta sea directa: `var_centro` ya incluye el castigo de distancia
+    semantica, asi que una analogia mala se penaliza sola y anadir la condicion seria
+    contarla dos veces. Que la respuesta venga por analogia se dice en la columna `base`.
+    """
+    pct = float(np.exp(np.sqrt(max(float(var_centro), 0.0))) - 1.0)
+    if pct <= CORTE_ALTA:
+        return "ALTA", pct
+    if pct <= CORTE_MEDIA:
+        return "MEDIA", pct
+    return "BAJA", pct
 
 
 def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
@@ -224,11 +237,21 @@ class BaseReferencia:
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
         """
-        def _stats(d, columna):
-            """(m, W, emp) por celda de `columna`, mas el indice de celdas."""
+        def _stats(d, columna, por_celda=True):
+            """(m, W, emp, claves, tau2, sigma2, t2_serie, s2_serie) de `columna`.
+
+            Con `por_celda`, los pesos usan `tau_c` y `sigma_c` en vez de los globales.
+            Es lo que se midio en `e3_varianza`: con un `tau` unico, el peso de cada
+            empresa sale igual para un gerente que para un auxiliar, y `1/W` —de donde
+            sale la confianza— deja de distinguirlos.
+            """
             tau2, sigma2 = componentes_varianza(d, columna)
             s2c, _ = sigma2_por_celda(d, columna, sigma2_global=sigma2)
-            votos = tabla_votos(d, columna, tau2=tau2, sigma2=sigma2, sigma2_celda=s2c)
+            t2c = None
+            if por_celda:
+                t2c, _ = tau2_por_celda(d, columna, s2c, tau2_global=tau2)
+            votos = tabla_votos(d, columna, tau2=tau2, sigma2=sigma2, sigma2_celda=s2c,
+                                tau2_celda=t2c)
             # Vectorizado. Un bucle por celda son 65.081 iteraciones de pandas y minutos
             # de espera; `_cuantil_por_grupo` lo hace de una pasada. Es el mismo error
             # que ya se corrigio dos veces en el paquete, asi que aqui se reutiliza.
@@ -242,7 +265,7 @@ class BaseReferencia:
             return (np.asarray(_cuantil_por_grupo(cod, vv, ww, k)),
                     np.bincount(cod, weights=ww, minlength=k),
                     np.bincount(cod, minlength=k).astype(int),
-                    list(claves), float(tau2), float(sigma2))
+                    list(claves), float(tau2), float(sigma2), t2c, s2c)
 
         celdas = sorted(set(marco[col].astype(str)))
         Z = np.vstack([X_por_etiqueta[c] for c in celdas]).astype(float)
@@ -259,7 +282,7 @@ class BaseReferencia:
         # Sale ademas de una MUESTRA de celdas. Todas contra todas son 65.081^2 x 768
         # dimensiones —unos 3 billones de operaciones— para estimar un solo escalar. Con
         # 3.000 celdas la estimacion ya es estable y tarda segundos.
-        m0, W0, emp0, celdas0, tau2, sigma2 = _stats(marco, col)
+        m0, W0, emp0, celdas0, tau2, sigma2, _, _ = _stats(marco, col, por_celda=False)
         pos0 = {c: i for i, c in enumerate(celdas0)}
         ix0 = np.array([pos0.get(c, -1) for c in celdas])
         mm = np.where(ix0 >= 0, m0[np.maximum(ix0, 0)], np.nan)
@@ -278,24 +301,25 @@ class BaseReferencia:
         if umbral_fusion:
             g_por_etiqueta = dict(zip(celdas, grupo))
             d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
-            m_g, W_g, emp_g, claves, tau2, sigma2 = _stats(d, "_g")
+            m_g, W_g, emp_g, claves, tau2, sigma2, t2_serie, s2_serie = _stats(d, "_g")
             pos = {int(k): i for i, k in enumerate(claves)}
             ix = np.array([pos.get(int(g), -1) for g in grupo])
             m = np.where(ix >= 0, m_g[np.maximum(ix, 0)], np.nan)
             W = np.where(ix >= 0, W_g[np.maximum(ix, 0)], 0.0)
             emp = np.where(ix >= 0, emp_g[np.maximum(ix, 0)], 0).astype(int)
         else:
-            m, W = mm, WW
-            emp = np.where(ix0 >= 0, emp0[np.maximum(ix0, 0)], 0).astype(int)
+            d = marco
+            m2, W2, emp2, celdas2, tau2, sigma2, t2_serie, s2_serie = _stats(marco, col)
+            pos2 = {c: i for i, c in enumerate(celdas2)}
+            ix2 = np.array([pos2.get(c, -1) for c in celdas])
+            m = np.where(ix2 >= 0, m2[np.maximum(ix2, 0)], np.nan)
+            W = np.where(ix2 >= 0, W2[np.maximum(ix2, 0)], 0.0)
+            emp = np.where(ix2 >= 0, emp2[np.maximum(ix2, 0)], 0).astype(int)
 
-        # Componentes de varianza POR CELDA y cuantiles empiricos de los votos. Se calculan
-        # sobre la columna de GRUPO cuando hay fusion: las grafias de un mismo puesto son
-        # una sola celda a todos los efectos, tambien para su dispersion.
-        dg = marco if not umbral_fusion else d
+        # Cuantiles empiricos de los votos, sobre la columna de GRUPO cuando hay fusion:
+        # las grafias de un mismo puesto son una sola celda a todos los efectos.
         colg = col if not umbral_fusion else "_g"
-        s2_serie, _ = sigma2_por_celda(dg, colg, sigma2_global=sigma2)
-        t2_serie, _ = tau2_por_celda(dg, colg, s2_serie, tau2_global=tau2)
-        qs = cuantiles_de_empresa(dg, colg, t2_serie, s2_serie, CUANTILES)
+        qs = cuantiles_de_empresa(d, colg, t2_serie, s2_serie, CUANTILES)
 
         def _expandir(serie, defecto):
             v = pd.Series(serie).reindex(
@@ -363,13 +387,7 @@ class BaseReferencia:
                 # La banda habla de EMPRESAS, asi que NO lleva `sigma`: la dispersion
                 # dentro de una nomina no mueve el nivel de la empresa. Ver `CUANTILES`.
                 var = self.tau2_c[propio] + 1.0 / self.W[propio]
-                # El suelo no puede ser mas estrecho que lo que se puede DISTINGUIR de
-                # cero con estos datos. Si `tau_c` sale por debajo del error de
-                # estimacion, el mercado y un punto son indistinguibles y el cociente
-                # `ancho/suelo` se dispara a infinito sin que pase nada raro: la banda
-                # es diminuta en absoluto. Pasa de verdad en cargos aplastados contra el
-                # minimo, donde todas las empresas pagan lo mismo.
-                suelo = np.sqrt(max(self.tau2_c[propio], 1.0 / self.W[propio]))
+                var_centro = 1.0 / self.W[propio]
                 # Con empresas de sobra, los cuantiles empiricos ganan a cualquier normal:
                 # describen la forma real, que va de un pico a una cola larga segun cargo.
                 if self.emp[propio] >= MIN_EMPRESAS_BANDA:
@@ -450,7 +468,10 @@ class BaseReferencia:
                        + float((peso ** 2 / self.W[j]).sum())
                        + float((peso * dist).sum())
                        + penal_nivel)
-                suelo = np.sqrt(max(tau2_v, float((peso ** 2 / self.W[j]).sum())))
+                # Todo lo que NO es dispersion del mercado es incertidumbre nuestra: el
+                # ruido de medicion de los vecinos, el castigo por no ser exactamente ese
+                # puesto, y lo que no se sabe de su escalon.
+                var_centro = var - tau2_v
                 base = "por analogia"
                 n_emp = int(self.emp[j].sum())
                 mejor, directo_ok = float(s.max()), False
@@ -465,12 +486,13 @@ class BaseReferencia:
             if banda is None:
                 banda = {q: mu + Z_NORMAL[q] * sd_modelo for q in CUANTILES}
             sd = float((banda[0.75] - banda[0.25]) / (2.0 * 0.6745))
-            conf, ancho = _confianza(sd_modelo, suelo, directo_ok)
+            conf, incert = _confianza(var_centro)
             ancho = float(np.exp(0.6745 * sd) - 1.0)      # el de la banda entregada
             filas[t] = {"referencia_log": mu, "sd": sd,
                         "p10_log": banda[0.10], "p25_log": banda[0.25],
                         "p75_log": banda[0.75], "p90_log": banda[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
+                        "incert_centro": round(incert, 4),
                         "empresas": n_emp, "similitud": round(mejor, 3)}
 
         out = pd.DataFrame([filas[t] for t in titulos])

@@ -153,9 +153,9 @@ def test_la_confianza_sale_del_intervalo_y_no_del_conteo(caso):
 
 
 def test_un_mercado_ruidoso_no_degrada_la_confianza_por_si_solo(caso):
-    # El corte es relativo al SUELO IRREDUCIBLE, no un porcentaje fijo. Si todo el
-    # mercado es disperso, una celda que ya esta en el suelo sigue siendo lo mejor
-    # posible: no tiene sentido llamarla BAJA cuando no existe nada mejor.
+    # La confianza mide lo bien que se conoce el CENTRO, no lo ancho que es el mercado.
+    # Si el cargo se dispersa mas, la banda se ensancha —eso es informacion, y se
+    # entrega— pero la referencia no se vuelve menos fiable por ello.
     filas, emb, _ = caso
     b = _base(filas, emb)
     antes = b.referenciar(["BODEGA 0"], emb).iloc[0]
@@ -351,3 +351,40 @@ def test_el_enlace_completo_no_encadena():
     assert cos(a, b) > 0.95 and cos(b, c) > 0.95, "la cadena existe"
     assert cos(a, c) < 0.95, "y los extremos no se parecen"
     assert g["PUESTO A"] != g["PUESTO C"], "el enlace completo no debe encadenar"
+
+
+def test_la_confianza_baja_cuando_hay_MENOS_empresas_aunque_el_mercado_sea_igual():
+    # Lo que la regla vieja NO podia distinguir. Dos cargos con la misma dispersion de
+    # mercado y muy distinto respaldo: 40 empresas contra 4. La banda de los dos es
+    # parecida —el mercado es igual de ancho— pero la referencia del segundo esta mucho
+    # peor determinada, y la etiqueta tiene que decirlo.
+    rng = np.random.default_rng(7)
+    emb = {"MUCHAS": np.array([1.0, 0.0, 0.0]), "POCAS": np.array([0.0, 1.0, 0.0])}
+    filas = [(f"EM{e}", "MUCHAS", 0.5 + rng.normal(0, .30)) for e in range(40)]
+    filas += [(f"EP{e}", "POCAS", 0.5 + rng.normal(0, .30)) for e in range(4)]
+    b = _base(filas, emb)
+    r = b.referenciar(["MUCHAS", "POCAS"], emb).set_index("cargo")
+    assert r.loc["MUCHAS", "base"] == r.loc["POCAS", "base"] == "datos directos"
+    assert r.loc["MUCHAS", "incert_centro"] < r.loc["POCAS", "incert_centro"] / 2
+    assert r.loc["MUCHAS", "confianza"] == "ALTA"
+    assert r.loc["POCAS", "confianza"] in ("MEDIA", "BAJA")
+
+
+def test_la_confianza_no_depende_del_ancho_del_mercado():
+    # Dos cargos con el MISMO numero de empresas y dispersiones muy distintas. El ancho
+    # de banda tiene que separarlos; la etiqueta NO, porque el centro de los dos esta
+    # igual de bien determinado. Con la regla vieja esto se confundia.
+    rng = np.random.default_rng(11)
+    emb = {"ESTRECHO": np.array([1.0, 0.0, 0.0]), "ANCHO": np.array([0.0, 1.0, 0.0])}
+    filas = [(f"EE{e}", "ESTRECHO", 0.5 + rng.normal(0, .02)) for e in range(30)]
+    filas += [(f"EA{e}", "ANCHO", 0.5 + rng.normal(0, .60)) for e in range(30)]
+    # relleno: el encogimiento empirico-bayesiano de `tau_c` necesita 3+ celdas para
+    # estimar la varianza ENTRE celdas. Con dos cae al global y el test no mide lo suyo.
+    for k in range(4):
+        etq = f"RELLENO {k}"
+        emb[etq] = np.array([0.0, 0.0, 1.0]) + rng.normal(0, .05, 3)
+        filas += [(f"ER{k}{e}", etq, 1.0 + rng.normal(0, .1 * (k + 1)), )
+                  for e in range(20)]
+    r = _base(filas, emb).referenciar(["ESTRECHO", "ANCHO"], emb).set_index("cargo")
+    assert r.loc["ANCHO", "ancho_rel"] > 5 * r.loc["ESTRECHO", "ancho_rel"], "la banda si"
+    assert r.loc["ESTRECHO", "confianza"] == "ALTA", "el centro se conoce bien"

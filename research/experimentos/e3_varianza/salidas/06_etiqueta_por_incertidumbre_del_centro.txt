@@ -1,0 +1,46 @@
+1,891 celdas con 3+ empresas en las DOS mitades
+
+============================================================================
+A. .PREDICE `1/W` CUANTO SE MUEVE LA REFERENCIA?
+============================================================================
+  correlacion  Pearson +0.578   Spearman +0.576
+
+  decil de 1/W    celdas   predicho  observado  obs/pred
+  D1                 189     0.0250     0.0240      0.96
+  D2                 189     0.0504     0.0572      1.14
+  D3                 190     0.0727     0.0842      1.16
+  D4                 188     0.0932     0.1013      1.09
+  D5                 189     0.1152     0.1332      1.16
+  D6                 190     0.1378     0.1676      1.22
+  D7                 189     0.1663     0.2043      1.23
+  D8                 188     0.1858     0.2280      1.23
+  D9                 189     0.2068     0.2545      1.23
+  D10                190     0.2826     0.4015      1.42
+
+  (calibrado perfecto = 1.00 en todos los deciles)
+
+============================================================================
+B. CONTRA LA CANTIDAD QUE USA LA ETIQUETA DE HOY
+============================================================================
+  hoy  (ancho/suelo)     Spearman con el movimiento real: +0.367
+  nuevo (sqrt(1/W))      Spearman con el movimiento real: +0.576
+
+============================================================================
+C. .SEPARAN LAS ETIQUETAS EL MOVIMIENTO REAL DE LA REFERENCIA?
+============================================================================
+
+  HOY
+    etiqueta   celdas       %   |mA-mB| medio   en dolares*
+    ALTA        1,891 100.0%          0.1657        18.0%
+    MEDIA           0
+    BAJA            0
+
+  NUEVA (1/W)
+    etiqueta   celdas       %   |mA-mB| medio   en dolares*
+    ALTA          332  17.6%          0.0378         3.8%
+    MEDIA         860  45.5%          0.1250        13.3%
+    BAJA          699  37.0%          0.2765        31.8%
+
+  * cuanto se mueve la referencia al cambiar la muestra de empresas
+    (una etiqueta util tiene que separar: ALTA << MEDIA << BAJA)
+EXIT=0

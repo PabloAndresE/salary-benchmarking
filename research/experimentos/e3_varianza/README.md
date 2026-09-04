@@ -173,3 +173,47 @@ contra 77,4%), cubre al 80,6% de la gente y está más lejos del dato crudo.
 
 `VENDEDOR`, que fallaba en `04`, era efectivamente el desajuste de definición: contra
 empresas su banda real es $482–$765, no $482–$520.
+
+## `06` — la etiqueta de confianza pasa a medir el centro
+
+La etiqueta comparaba el ancho de la banda contra el suelo del cargo, o sea contestaba
+*"¿qué tan ancho es el mercado?"* — que **ya lo dice la banda**. Lo que falta saber es si el
+número del medio es fiable, y eso es la varianza de **nuestra** estimación:
+
+```
+directo       var_centro = 1/W
+por analogía  var_centro = Σ(peso²/W) + Σ(peso·dist) + penal_nivel
+```
+
+Validado estimando la referencia sobre **dos mitades disjuntas de empresas** y midiendo
+cuánto se separan:
+
+```
+                    Spearman con el movimiento real
+hoy (ancho/suelo)          +0,367
+nueva (1/W)                +0,576
+
+            HOY                      NUEVA (1/W)
+etiqueta  celdas   mueve           celdas   mueve
+ALTA      100,0%   18,0%            17,6%    3,8%
+MEDIA       0,0%     —              45,5%   13,3%
+BAJA        0,0%     —              37,0%   31,8%
+```
+
+La vieja mete el 100% en ALTA. La nueva separa 8 a 1.
+
+**Cortes en dólares y no en veces-el-suelo**, porque la pregunta ya tiene unidades: las
+decisiones salariales se mueven en escalones de ~5%. ALTA ≤5%, MEDIA ≤15%.
+
+**Límite medido:** `1/W` se queda **corto**, de un 15% a un 40% según el tramo (obs/pred va
+de 0,96 en el primer decil a 1,42 en el último). Ordena bien pero es optimista; la causa
+probable es que el modelo supone la celda homogénea y `CONTADOR` mezcla empresas grandes y
+pequeñas. No se corrige con un factor porque ese factor no está medido.
+
+En la nómina de demo el reparto pasa de 90,6/9,4/0 a **81,2/9,4/9,4**, y aparece la
+separación que la regla vieja no podía dar:
+
+```
+GERENTE GENERAL   banda ±95%, confianza ALTA    <- mercado ancho, centro bien conocido
+ANALISTA DE RIESGO CREDITICIO   BAJA (44,5%)    <- por analogía, es una conjetura
+```

@@ -145,7 +145,16 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
     else:
         print("sin columna de sueldo: solo se emiten referencias")
 
-    salida = salida.drop(columns=[c for c in salida.columns if c.endswith("_log")])
+    # La hoja del cliente no lleva escala logaritmica. `sd = 0.4685` no significa nada
+    # para quien abre el archivo, y las columnas `_log` menos aun: todo lo que se entrega
+    # va en dolares o en porcentaje. `incert_centro` sustituye a `sd` y si es legible —es
+    # cuanto puede moverse la referencia de mercado, en tanto por uno.
+    salida = salida.drop(columns=[c for c in salida.columns
+                                  if c.endswith("_log") or c == "sd"])
+    orden = ["referencia", "p10", "p25", "p75", "p90", "confianza", "incert_centro",
+             "ancho_rel", "base", "empresas", "similitud"]
+    primeras = [c for c in salida.columns if c not in orden]
+    salida = salida[primeras + [c for c in orden if c in salida.columns]]
     pathlib.Path(ruta_salida).parent.mkdir(parents=True, exist_ok=True)
     with pd.ExcelWriter(ruta_salida) as xl:
         salida.to_excel(xl, sheet_name="detalle", index=False)

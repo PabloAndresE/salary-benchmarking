@@ -254,7 +254,8 @@ def cuantil_ponderado(valores, pesos, q=0.5):
     return float(np.interp(q, acum, v))
 
 
-def tabla_votos(train, col_celda, tau2=None, sigma2=None, sigma2_celda=None):
+def tabla_votos(train, col_celda, tau2=None, sigma2=None, sigma2_celda=None,
+                tau2_celda=None):
     """El voto de cada empresa en cada celda, con su peso. Es el insumo de `predecir`.
 
     Se expone aparte porque **el bootstrap remuestrea votos, no filas**. Remuestrear una
@@ -272,7 +273,11 @@ def tabla_votos(train, col_celda, tau2=None, sigma2=None, sigma2_celda=None):
     # sigma2 DE LA CELDA, no el global: es lo que hace que `sd_pred` sea una varianza
     # condicional y no el conteo de donantes disfrazado. Ver `sigma2_por_celda`.
     v["s2"] = v[col_celda].map(sigma2_celda).fillna(float(sigma2)).astype(float)
-    denom = float(tau2) + v["s2"].to_numpy(float) / v["n"].to_numpy(float)
+    # `tau2` DE LA CELDA cuando se conoce: varia 8,3x entre cargos y con uno solo el peso
+    # de cada empresa queda igual para un gerente que para un auxiliar. Ver `tau2_por_celda`.
+    t2 = (v[col_celda].map(tau2_celda).fillna(float(tau2)).astype(float).to_numpy(float)
+          if tau2_celda is not None else float(tau2))
+    denom = t2 + v["s2"].to_numpy(float) / v["n"].to_numpy(float)
     # Caso degenerado: sin varianza estimada el peso inverso-varianza es 1/0. Pasa cuando
     # todos los donantes valen lo mismo — imposible en datos reales, trivial en tests.
     # Sin la guarda, `predecir` devolveria NaN en silencio: parece abstencion y es un cero
