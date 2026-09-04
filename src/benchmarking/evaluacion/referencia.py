@@ -105,10 +105,11 @@ def sigma2_por_celda(train, col_celda, sigma2_global=None):
     hacia el global solas; las grandes conservan su estimacion. Es la misma idea que usa
     limma para varianzas de genes.
 
-    `tau2` se deja GLOBAL a proposito: estimar la varianza entre empresas por celda
-    necesita muchas empresas, y en `CARGO` la celda tipica tiene 3-5. Con ese `df` la
-    estimacion es ruido puro y el encogimiento la devolveria al global de todos modos.
-    Queda anotado como limite del metodo, no como descuido.
+    SOBRE `tau2`: ver `tau2_por_celda`. Aqui decia que dejarlo global era un limite
+    inevitable porque "la celda tipica tiene 3-5 empresas". Eso es cierto contando CELDAS
+    y falso contando PERSONAS —el 45% de la gente esta en celdas con 20+ empresas— y esta
+    medido que ahi `tau_c` es perfectamente estimable: test-retest entre mitades de
+    empresas r = 0,78. Ver `research/experimentos/e3_varianza/01`.
     """
     d = train[[col_celda, "empresa_ruc", "y"]].dropna(subset=["y"])
     if sigma2_global is None:
@@ -135,6 +136,99 @@ def sigma2_por_celda(train, col_celda, sigma2_global=None):
     salida = pd.Series(float(sigma2_global), index=porc.index, dtype=float)
     salida.loc[utiles.index] = encogido
     return salida, float(sigma2_global)
+
+
+def tau2_por_celda(train, col_celda, sigma2_celda, tau2_global=None, min_empresas=8):
+    """`tau2_c` por celda, encogido hacia el global. Devuelve (Serie, tau2_global).
+
+    POR QUE existe (medido, `research/experimentos/e3_varianza/01`): `tau` es la dispersion
+    de pago ENTRE empresas y varia 8,3x entre cargos —`AUXILIAR DE LIMPIEZA` 0,073 contra
+    `GERENTE GENERAL` 0,951—, con causa mecanica: el salario minimo comprime desde abajo.
+    Y no es ruido de estimacion: partiendo las empresas de cada cargo en dos mitades al
+    azar, las dos mitades correlacionan a 0,78.
+
+    Con un `tau` unico, la banda que se entrega al cliente contiene entre el 20% y el 100%
+    de las empresas segun el cargo, cuando deberia contener el 50% siempre.
+
+    MISMO ENCOGIMIENTO QUE `sigma2_por_celda`, sin parametros libres: se encoge `log tau2_c`
+    hacia el global con peso `V/(V + 2/df)`. La `df` efectiva es `F-1` porque bajo el modelo
+    el cuadrado medio ENTRE empresas se distribuye como chi2 con `F-1` grados. Es una
+    aproximacion —`tau2` es una DIFERENCIA de cuadrados medios, no un cuadrado medio— y por
+    eso se exige `min_empresas` antes de estimar nada; por debajo se usa el global.
+
+    Los ceros por truncamiento (`MSB < sigma2_c`, que pasa por ruido cuando la dispersion
+    real es baja) se llevan al percentil 1 de los positivos antes de tomar logaritmos: un
+    cero exacto no tiene logaritmo, y descartarlos sesgaria la muestra hacia arriba.
+    """
+    d = train[[col_celda, "empresa_ruc", "y"]].dropna(subset=["y"])
+    if tau2_global is None:
+        tau2_global = componentes_varianza(train, col_celda)[0]
+    if d.empty:
+        return pd.Series(dtype=float), float(tau2_global)
+
+    g = _agregados_grupo(d, col_celda)
+    g["_m2n"] = g["suma"] ** 2 / g["n"]
+    g["_n2"] = g["n"].astype(float) ** 2
+    p = g.groupby(col_celda, sort=False).agg(
+        N=("n", "sum"), F=("n", "size"), S=("suma", "sum"),
+        Q=("_m2n", "sum"), N2=("_n2", "sum"))
+    with np.errstate(invalid="ignore", divide="ignore"):
+        # cuadrado medio ENTRE empresas, y tamano efectivo de grupo
+        msb = (p["Q"] - p["S"] ** 2 / p["N"]) / (p["F"] - 1)
+        n0 = (p["N"] - p["N2"] / p["N"]) / (p["F"] - 1)
+    s2 = pd.Series(sigma2_celda).reindex(p.index).astype(float)
+    crudo = (msb - s2) / n0
+
+    salida = pd.Series(float(tau2_global), index=p.index, dtype=float)
+    utiles = p.index[(p["F"] >= min_empresas) & np.isfinite(crudo) & np.isfinite(s2)]
+    pos = crudo.loc[utiles]
+    pos = pos[pos > 0]
+    if len(utiles) < 3 or len(pos) < 3:
+        return salida, float(tau2_global)
+
+    v = np.maximum(crudo.loc[utiles].to_numpy(float), float(np.quantile(pos, 0.01)))
+    L = np.log(v)
+    var_muestreo = 2.0 / (p.loc[utiles, "F"].to_numpy(float) - 1.0)
+    V = max(0.0, float(L.var(ddof=1)) - float(var_muestreo.mean()))
+    w = V / (V + var_muestreo) if V > 0 else np.zeros_like(var_muestreo)
+    salida.loc[utiles] = np.exp(w * L + (1.0 - w) * float(L.mean()))
+    return salida, float(tau2_global)
+
+
+def cuantiles_de_empresa(train, col_celda, tau2_celda, sigma2_celda, cuantiles):
+    """Cuantiles EMPIRICOS de los votos por empresa. Devuelve DataFrame celda x cuantil.
+
+    La banda que se entrega dice *"la mitad de las EMPRESAS paga entre X e Y"*, asi que la
+    unidad es la empresa: una nomina de 400 contadores aporta UN voto, no 400. Los votos se
+    ponderan por `w_f` inverso-varianza, igual que el centro.
+
+    POR QUE EMPIRICOS Y NO UNA NORMAL (medido, `e3_varianza/03` y `05`): la forma cambia
+    por cargo y ninguna normal las cubre a las dos. `AUXILIAR DE LIMPIEZA` tiene p25=$475,
+    p50=$475, p75=$485 —un pico, no una campana— y `GERENTE GENERAL` va de $500 a $13.712.
+    Recalibrar el multiplicador `0,6745` arreglaria la media y seguiria fallando en los dos
+    extremos, porque el problema no es el ancho sino la forma.
+    """
+    d = train[[col_celda, "empresa_ruc", "y"]].dropna(subset=["y"])
+    if d.empty:
+        return pd.DataFrame(columns=list(cuantiles), dtype=float)
+    v = (d.groupby([col_celda, "empresa_ruc"], sort=False)["y"]
+           .agg(voto="median", n="size").reset_index())
+    t2 = pd.Series(tau2_celda).reindex(v[col_celda]).to_numpy(float)
+    s2 = pd.Series(sigma2_celda).reindex(v[col_celda]).to_numpy(float)
+    # Misma guarda que `tabla_votos`: sin varianza estimada el peso inverso es 1/0. Es
+    # imposible en datos reales y trivial en tests, pero sin ella el cuantil sale NaN en
+    # silencio, que es la peor forma de fallar.
+    den = t2 + s2 / v["n"].to_numpy(float)
+    v["w"] = np.where(den > 0, 1.0 / np.where(den > 0, den, 1.0), 1.0)
+    v = v.sort_values([col_celda, "voto"], kind="mergesort")
+    cod, celdas = pd.factorize(v[col_celda], sort=True)
+    o = np.argsort(cod, kind="stable")
+    cod = cod[o]
+    val = v["voto"].to_numpy(float)[o]
+    w = v["w"].to_numpy(float)[o]
+    return pd.DataFrame(
+        {q: _cuantil_por_grupo(cod, val, w, len(celdas), q=q) for q in cuantiles},
+        index=celdas)
 
 
 def pesos_empresa(n, tau2, sigma2):

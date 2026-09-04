@@ -59,7 +59,8 @@ import numpy as np
 import pandas as pd
 
 from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
-                                     sigma2_por_celda, tabla_votos)
+                                     cuantiles_de_empresa, sigma2_por_celda,
+                                     tabla_votos, tau2_por_celda)
 from .nivel import efecto_nivel, nivel_lexico
 
 VECINOS = 25
@@ -83,14 +84,54 @@ UMBRAL_FUSION = 0.95
 VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
 TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
 
+# LA BANDA HABLA DE EMPRESAS: "la mitad de las EMPRESAS paga entre X e Y". Es la pregunta
+# coherente con el centro —que ya es la mediana de los votos por empresa— y la que le
+# importa a un cliente que decide su politica salarial.
+#
+# De ahi salen las dos decisiones de esta seccion, ambas medidas en `e3_varianza`:
+#
+#   1. `sigma` NO entra en la banda. El nivel de una empresa es `mu + u_f`, con varianza
+#      `tau_c^2`; `sigma^2` separa a dos personas de la MISMA nomina y no mueve el nivel
+#      de la empresa. Meterla ensanchaba la banda por una variacion que la pregunta no
+#      incluye.
+#
+#   2. Donde hay `MIN_EMPRESAS_BANDA` o mas, no hace falta modelo: se reportan los
+#      CUANTILES EMPIRICOS de los votos. Ninguna normal describe a la vez el pico de
+#      `AUXILIAR DE LIMPIEZA` (p25=$475, p75=$485) y la cola de `GERENTE GENERAL` ($500 a
+#      $13.712), asi que el problema no era el ancho de la banda sino su forma.
+#
+# Medido sobre votos de empresa apartados, deformacion entre quintiles de dispersion:
+#
+#   hoy (tau,sigma globales, normal)   50,5 puntos    cob 50%: de 20% a 100% segun cargo
+#   tau_c sin sigma, normal            13,5 puntos
+#   cuantiles empiricos F>=10           4,3 puntos    pinball medio 0,1290 -> 0,1207
+#
+# UMBRAL 10 y no 5: F>=5 gana el pinball por un 0,7% que casi seguro es ruido, y F>=10 gana
+# las dos coberturas, cubre al 80,6% de la gente y esta mas lejos del dato crudo. Publicar
+# cuantiles empiricos de pocas empresas se acerca a revelar sueldos.
+MIN_EMPRESAS_BANDA = 10
+CUANTILES = (0.10, 0.25, 0.75, 0.90)
+Z_NORMAL = {0.10: -1.2816, 0.25: -0.6745, 0.75: 0.6745, 0.90: 1.2816}
+
 # La confianza sale del ANCHO DEL INTERVALO, no del numero de empresas. Contar empresas
 # engana: `SCRUM MASTER` con 14 salia igual de "ALTA" que `CONTADOR` con 823. Lo que le
 # importa a quien lee el informe es cuanto se puede mover el numero.
 #
-# Y el corte no es un porcentaje fijo, sino cuanto te alejas del SUELO IRREDUCIBLE. Con
-# tau y sigma se sabe cual es el intervalo mas estrecho fisicamente posible —ni con
-# infinitos datos se baja de ahi—, asi que la pregunta util es "cuantas veces mas ancho
-# que el mejor caso". Un umbral absoluto no se traslada entre mercados; este si.
+# Y el corte no es un porcentaje fijo, sino cuanto te alejas del SUELO IRREDUCIBLE: el
+# intervalo mas estrecho fisicamente posible para ESE cargo, que es el que se tendria con
+# infinitas empresas. La pregunta util es "cuantas veces mas ancho que el mejor caso". Un
+# umbral absoluto no se traslada entre mercados; este si.
+#
+# EL SUELO ES POR CELDA. Con el suelo global, `sqrt(tau^2+sigma^2)` era el 99,9% del propio
+# ancho en la rama directa, el cociente salia ~1,00 y el 99,23% de las celdas se etiquetaba
+# ALTA. Con `tau_c` el suelo va de 0,073 a 0,951 segun el cargo y el cociente vuelve a
+# significar algo.
+#
+# LIMITE CONOCIDO, no resuelto (ver `e3_varianza/README`): esto sigue midiendo el ancho del
+# MERCADO, no lo bien que se conoce su centro. Un cargo con pocas empresas pero pago
+# homogeneo sale estrecho —y por tanto ALTA— aunque su mediana este mal determinada. La
+# alternativa seria etiquetar por `1/W`, que discrimina 8 a 1 donde esto discrimina 1,03 a
+# 1, pero cambia lo que la etiqueta le promete al cliente y es decision de producto.
 VECES_ALTA = 1.25
 VECES_MEDIA = 2.0
 
@@ -134,7 +175,8 @@ class BaseReferencia:
     """Construida una vez sobre el universo; se consulta por titulo."""
 
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
-                 nivel=None, efecto=None, grupo=None):
+                 nivel=None, efecto=None, grupo=None,
+                 tau2_c=None, sigma2_c=None, bandas=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -153,6 +195,17 @@ class BaseReferencia:
         # comerse los 25 sitios.
         _, cuenta = np.unique(self.grupo, return_counts=True)
         self.k_busqueda = VECINOS + int(cuenta.max()) if len(cuenta) else VECINOS
+        # Componentes de varianza POR CELDA. Si faltan —bases guardadas antes de
+        # `e3_varianza`— se cae al global y el comportamiento es el de entonces.
+        n = len(self.celdas)
+        self.tau2_c = (np.full(n, float(tau2)) if tau2_c is None
+                       else np.asarray(tau2_c, dtype=float))
+        self.sigma2_c = (np.full(n, float(sigma2)) if sigma2_c is None
+                         else np.asarray(sigma2_c, dtype=float))
+        # `bandas` son los cuantiles EMPIRICOS de los votos por empresa, en el orden de
+        # `CUANTILES`. NaN donde la celda no llega a `MIN_EMPRESAS_BANDA`.
+        self.bandas = (np.full((n, len(CUANTILES)), np.nan) if bandas is None
+                       else np.asarray(bandas, dtype=float))
         self.tau2, self.sigma2, self.lam, self.sbu = tau2, sigma2, lam, sbu
         self.nivel = (np.full(len(self.celdas), np.nan) if nivel is None
                       else np.asarray(nivel, dtype=float))
@@ -235,8 +288,30 @@ class BaseReferencia:
             m, W = mm, WW
             emp = np.where(ix0 >= 0, emp0[np.maximum(ix0, 0)], 0).astype(int)
 
+        # Componentes de varianza POR CELDA y cuantiles empiricos de los votos. Se calculan
+        # sobre la columna de GRUPO cuando hay fusion: las grafias de un mismo puesto son
+        # una sola celda a todos los efectos, tambien para su dispersion.
+        dg = marco if not umbral_fusion else d
+        colg = col if not umbral_fusion else "_g"
+        s2_serie, _ = sigma2_por_celda(dg, colg, sigma2_global=sigma2)
+        t2_serie, _ = tau2_por_celda(dg, colg, s2_serie, tau2_global=tau2)
+        qs = cuantiles_de_empresa(dg, colg, t2_serie, s2_serie, CUANTILES)
+
+        def _expandir(serie, defecto):
+            v = pd.Series(serie).reindex(
+                pd.Index(grupo) if umbral_fusion else pd.Index(celdas)).to_numpy(float)
+            return np.where(np.isfinite(v), v, defecto)
+
+        tau2_c = _expandir(t2_serie, tau2)
+        sigma2_c = _expandir(s2_serie, sigma2)
+        bandas = np.full((n, len(CUANTILES)), np.nan)
+        for k, q in enumerate(CUANTILES):
+            if q in qs.columns:
+                bandas[:, k] = _expandir(qs[q], np.nan)
+
         ef = efecto_nivel(marco, col=col)
-        return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo)
+        return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
+                   tau2_c, sigma2_c, bandas)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -247,7 +322,8 @@ class BaseReferencia:
         np.savez_compressed(
             ruta, celdas=np.array(self.celdas, dtype=object), m=self.m, W=self.W,
             emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
-            grupo=self.grupo,
+            grupo=self.grupo, tau2_c=self.tau2_c, sigma2_c=self.sigma2_c,
+            bandas=self.bandas,
             ef_k=np.array(sorted(self.efecto), dtype=float),
             ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
@@ -259,10 +335,12 @@ class BaseReferencia:
             ef = {int(k): float(v) for k, v in zip(z["ef_k"], z["ef_v"])}
             # `grupo` falta en las bases guardadas antes de la fusion; sin el, cada
             # etiqueta es su propio grupo y el comportamiento es el de entonces.
-            grupo = z["grupo"] if "grupo" in z.files else None
+            opc = {k: (z[k] if k in z.files else None)
+                   for k in ("grupo", "tau2_c", "sigma2_c", "bandas")}
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
-                       sbu, z["nivel"], ef, grupo)
+                       sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
+                       opc["sigma2_c"], opc["bandas"])
 
     # -- consulta --------------------------------------------------------------
 
@@ -278,10 +356,26 @@ class BaseReferencia:
         for k, t in enumerate(unicos):
             propio = self.idx.get(t)
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
+            banda = None
             directo = propio is not None and self.emp[propio] >= MIN_EMPRESAS
             if directo:
                 mu = self.m[propio]
-                var = self.tau2 + self.sigma2 + 1.0 / self.W[propio]
+                # La banda habla de EMPRESAS, asi que NO lleva `sigma`: la dispersion
+                # dentro de una nomina no mueve el nivel de la empresa. Ver `CUANTILES`.
+                var = self.tau2_c[propio] + 1.0 / self.W[propio]
+                # El suelo no puede ser mas estrecho que lo que se puede DISTINGUIR de
+                # cero con estos datos. Si `tau_c` sale por debajo del error de
+                # estimacion, el mercado y un punto son indistinguibles y el cociente
+                # `ancho/suelo` se dispara a infinito sin que pase nada raro: la banda
+                # es diminuta en absoluto. Pasa de verdad en cargos aplastados contra el
+                # minimo, donde todas las empresas pagan lo mismo.
+                suelo = np.sqrt(max(self.tau2_c[propio], 1.0 / self.W[propio]))
+                # Con empresas de sobra, los cuantiles empiricos ganan a cualquier normal:
+                # describen la forma real, que va de un pico a una cola larga segun cargo.
+                if self.emp[propio] >= MIN_EMPRESAS_BANDA:
+                    q = self.bandas[propio]
+                    if np.isfinite(q).all():
+                        banda = dict(zip(CUANTILES, q))
                 base, n_emp = "datos directos", int(self.emp[propio])
                 mejor, directo_ok = 1.0, True
             else:
@@ -349,18 +443,33 @@ class BaseReferencia:
                 # igual de lejos, promediarlos no acerca la respuesta. Tratarla como ruido
                 # hacia que `LOTERO` —sin vecindario real— saliera con un intervalo
                 # estrecho por el mero hecho de promediar mucha gente equivocada.
-                var = (self.tau2 + self.sigma2
+                # `tau_c` se hereda del vecindario: un puesto desconocido rodeado de
+                # gerencias dispersa como una gerencia, y uno rodeado de auxiliares no.
+                tau2_v = float((peso * self.tau2_c[j]).sum())
+                var = (tau2_v
                        + float((peso ** 2 / self.W[j]).sum())
                        + float((peso * dist).sum())
                        + penal_nivel)
+                suelo = np.sqrt(max(tau2_v, float((peso ** 2 / self.W[j]).sum())))
                 base = "por analogia"
                 n_emp = int(self.emp[j].sum())
                 mejor, directo_ok = float(s.max()), False
-            sd = float(np.sqrt(var))
-            conf, ancho = _confianza(sd, np.sqrt(self.tau2 + self.sigma2),
-                                     directo_ok)
+            # DOS CANTIDADES, DOS PREGUNTAS. `sd_modelo` es la del modelo y sirve para
+            # la CONFIANZA: contra el suelo mide que parte del ancho es ignorancia
+            # nuestra y no anchura del mercado. La BANDA es lo que se entrega, y con
+            # datos de sobra sale de los cuantiles empiricos, que describen la forma
+            # real. Mezclarlas hacia que una celda de 48 empresas con banda de ±2%
+            # saliera BAJA, porque el suelo teorico y la dispersion observada no son la
+            # misma cosa: los votos observados llevan ademas su propio ruido sigma/n.
+            sd_modelo = float(np.sqrt(var))
+            if banda is None:
+                banda = {q: mu + Z_NORMAL[q] * sd_modelo for q in CUANTILES}
+            sd = float((banda[0.75] - banda[0.25]) / (2.0 * 0.6745))
+            conf, ancho = _confianza(sd_modelo, suelo, directo_ok)
+            ancho = float(np.exp(0.6745 * sd) - 1.0)      # el de la banda entregada
             filas[t] = {"referencia_log": mu, "sd": sd,
-                        "p25_log": mu - 0.6745 * sd, "p75_log": mu + 0.6745 * sd,
+                        "p10_log": banda[0.10], "p25_log": banda[0.25],
+                        "p75_log": banda[0.75], "p90_log": banda[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
                         "empresas": n_emp, "similitud": round(mejor, 3)}
 
@@ -368,8 +477,9 @@ class BaseReferencia:
         out.insert(0, "cargo", titulos)
         if anio is not None:
             f = float(self.sbu(int(anio)))
-            for col, nueva in (("referencia_log", "referencia"), ("p25_log", "p25"),
-                               ("p75_log", "p75")):
+            for col, nueva in (("referencia_log", "referencia"), ("p10_log", "p10"),
+                               ("p25_log", "p25"), ("p75_log", "p75"),
+                               ("p90_log", "p90")):
                 out[nueva] = (np.exp(out[col]) * f).round(2)
         return out
 

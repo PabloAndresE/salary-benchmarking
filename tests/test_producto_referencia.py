@@ -101,13 +101,34 @@ def test_convierte_a_dolares_con_el_sbu_del_anio(caso):
     assert r["p25"] < r["referencia"] < r["p75"]
 
 
-def test_el_intervalo_nunca_baja_del_ruido_irreducible(caso):
-    # tau + sigma son irreducibles bajo comparacion entre empresas: el intervalo no puede
-    # prometer mas precision de la que existe, por muchos donantes que haya.
-    filas, emb, _ = caso
+def test_la_banda_no_incluye_la_dispersion_DENTRO_de_la_empresa():
+    # La banda dice "la mitad de las EMPRESAS paga entre X e Y", asi que `sigma` no entra:
+    # que dos personas de la misma nomina cobren muy distinto no mueve el nivel de esa
+    # empresa. Aqui las 12 empresas tienen la MISMA mediana y una dispersion interna
+    # enorme; la banda tiene que salir estrecha.
+    emb = {"PUESTO": np.array([1.0, 0.0, 0.0]), "OTRO": np.array([0.0, 1.0, 0.0])}
+    filas = [(f"E{e}", "PUESTO", v) for e in range(12) for v in (0.0, .1, .2, .3, .4)]
+    filas += [(f"O{e}", "OTRO", 1.0) for e in range(4)]
+    r = _base(filas, emb).referenciar(["PUESTO"], emb).iloc[0]
+    assert r["base"] == "datos directos"
+    # sigma dentro de empresa es ~0.15; si entrara en la banda, el ancho seria >10%
+    assert r["ancho_rel"] < 0.02, f"la banda se contamino de sigma: {r['ancho_rel']}"
+    assert r["p25_log"] <= r["referencia_log"] <= r["p75_log"]
+
+
+def test_el_intervalo_del_modelo_nunca_baja_del_suelo_del_cargo(caso):
+    # En la rama de modelo —sin empresas de sobra para cuantiles empiricos— el intervalo
+    # no puede prometer mas precision que la dispersion real del cargo entre empresas.
+    filas, emb, centros = caso
+    filas = list(filas)
+    emb = dict(emb)
+    emb["PUESTO FLACO"] = centros["BODEGA"] + 0.4 * centros["SISTEMAS"]
+    filas += [(f"EFL{e}", "PUESTO FLACO", 0.2 + 0.1 * e) for e in range(5)]
     b = _base(filas, emb)
-    r = b.referenciar(["BODEGA 0"], emb).iloc[0]
-    assert r["sd"] >= np.sqrt(b.tau2 + b.sigma2) - 1e-9
+    i = b.idx["PUESTO FLACO"]
+    assert b.emp[i] < 10, "debe caer en la rama de modelo, no en cuantiles empiricos"
+    r = b.referenciar(["PUESTO FLACO"], emb).iloc[0]
+    assert r["sd"] >= np.sqrt(b.tau2_c[i]) - 1e-9
 
 
 def test_la_confianza_sale_del_intervalo_y_no_del_conteo(caso):
@@ -138,7 +159,12 @@ def test_un_mercado_ruidoso_no_degrada_la_confianza_por_si_solo(caso):
     filas, emb, _ = caso
     b = _base(filas, emb)
     antes = b.referenciar(["BODEGA 0"], emb).iloc[0]
-    b.tau2 = 0.5
+    # la dispersion del CARGO es la que manda ahora, no la global
+    i = b.idx["BODEGA 0"]
+    b.tau2_c = b.tau2_c.copy()
+    b.tau2_c[i] = 0.5
+    b.bandas = b.bandas.copy()
+    b.bandas[i] = np.nan          # sin banda empirica, se ve el efecto del modelo
     despues = b.referenciar(["BODEGA 0"], emb).iloc[0]
     assert despues["ancho_rel"] > antes["ancho_rel"]
     assert despues["confianza"] == "ALTA"
