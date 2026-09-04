@@ -1,0 +1,65 @@
+construir 4,319 empresas   evaluar 1,439
+18,747 votos de empresa evaluables
+
+========================================================================================
+A. SESGO POR TAMANO DE EMPRESA. Si la referencia es justa, deberia ser ~0
+========================================================================================
+  segmento         votos    sesgo HOY   sesgo SEGMENT.   MAE hoy  MAE segm.
+  MICROEMPRESA       159      +11.7%          +16.9%    0.4314     0.4181
+  PEQUEÑA          1,120       -2.1%           +5.3%    0.3307     0.3259
+  MEDIANA          3,537       +3.0%           +6.1%    0.3076     0.3185
+  GRANDE           7,665       +8.0%           +4.4%    0.3065     0.3055
+  NA               6,266       +2.8%           +2.9%    0.2738     0.2808
+  TODOS           18,747       +4.7%           +4.4%    0.2983     0.3019
+
+========================================================================================
+B. CRUZADO CON EL ESCALON: .manda el tamano mas cuanto mas alto el puesto?
+========================================================================================
+
+  referencia HOY (solo cargo)
+    nivel      MICROEMPR      PEQUEÑA      MEDIANA       GRANDE   recorrido
+    1             +16.2%        +6.9%        +8.3%        +6.1%       10.1%
+    2                  -       +16.3%        +6.2%        +5.6%       10.7%
+    3                  -       -13.5%        +6.1%        +2.7%       19.6%
+    4                  -       -16.4%        -8.4%        +9.6%       26.1%
+    5                  -       -32.8%       -16.6%       +22.2%       55.0%
+
+  referencia SEGMENTADA
+    nivel      MICROEMPR      PEQUEÑA      MEDIANA       GRANDE   recorrido
+    1             +16.0%        +7.2%        +9.0%        +6.0%       10.1%
+    2                  -       +19.3%        +5.1%        +4.3%       15.0%
+    3                  -       -11.3%       +11.3%        +1.1%       22.5%
+    4                  -        -3.1%        +7.2%        +1.9%       10.3%
+    5                  -        -0.6%        -5.8%        +9.0%       14.8%
+
+  (sesgo de la referencia de HOY. Negativo = les decimos que pagan menos de
+   lo que paga su mercado real; positivo = les decimos que pagan de mas)
+
+========================================================================================
+C. CARGOS CONCRETOS: sesgo de hoy por segmento
+========================================================================================
+  cargo                      MICROEMPR      PEQUEÑA      MEDIANA       GRANDE
+  GERENTE GENERAL (hoy)              -       -56.0%       -15.8%       +81.9%
+  GERENTE GENERAL (segm)             -       -12.1%        +6.9%       +17.9%
+  CONTADOR (hoy)                     -       -23.8%        -3.5%       +20.5%
+  CONTADOR (segm)                    -        +0.2%        +4.6%        +2.2%
+  JEFE DE BODEGA (hoy)               -            -        +9.0%       +25.5%
+  JEFE DE BODEGA (segm)              -            -       +34.5%       +11.9%
+  ASISTENTE CONTABLE (hoy)           -       +16.2%       +11.2%        +9.2%
+  ASISTENTE CONTABLE (segm)           -       +21.3%       +15.7%        +6.7%
+  VENDEDOR (hoy)                     -       +24.7%       +30.0%       +28.5%
+  VENDEDOR (segm)                    -       +15.6%       +28.0%       +31.3%
+  CHOFER (hoy)                       -       +11.0%        +5.7%        +2.7%
+  CHOFER (segm)                      -       +13.4%        +8.3%        +0.9%
+  AUXILIAR DE LIMPIEZ (hoy)           -            -        +1.8%        +2.1%
+  AUXILIAR DE LIMPIEZ (segm)           -            -        +1.9%        +2.1%
+
+========================================================================================
+D. .A CUANTA GENTE LE AFECTA? (empresas apartadas por segmento)
+========================================================================================
+  MICROEMPRESA       50 empresas  ( 3.5%)
+  PEQUEÑA           243 empresas  (16.9%)
+  MEDIANA           356 empresas  (24.7%)
+  GRANDE            301 empresas  (20.9%)
+  NA                489 empresas  (34.0%)
+EXIT=0

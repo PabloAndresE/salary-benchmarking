@@ -189,7 +189,7 @@ class BaseReferencia:
 
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
                  nivel=None, efecto=None, grupo=None,
-                 tau2_c=None, sigma2_c=None, bandas=None):
+                 tau2_c=None, sigma2_c=None, bandas=None, personas=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -219,6 +219,11 @@ class BaseReferencia:
         # `CUANTILES`. NaN donde la celda no llega a `MIN_EMPRESAS_BANDA`.
         self.bandas = (np.full((n, len(CUANTILES)), np.nan) if bandas is None
                        else np.asarray(bandas, dtype=float))
+        # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
+        # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
+        # quien lee un informe: ".cuanta gente hay detras de este numero?".
+        self.personas = (np.zeros(n, dtype=np.int64) if personas is None
+                         else np.asarray(personas, dtype=np.int64))
         self.tau2, self.sigma2, self.lam, self.sbu = tau2, sigma2, lam, sbu
         self.nivel = (np.full(len(self.celdas), np.nan) if nivel is None
                       else np.asarray(nivel, dtype=float))
@@ -333,9 +338,15 @@ class BaseReferencia:
             if q in qs.columns:
                 bandas[:, k] = _expandir(qs[q], np.nan)
 
+        # personas por GRUPO, no por etiqueta: las grafias de un puesto suman juntas
+        pg = d.groupby(colg).size()
+        personas = pd.Series(pg).reindex(
+            pd.Index(grupo) if umbral_fusion else pd.Index(celdas)
+        ).fillna(0).to_numpy(dtype=np.int64)
+
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
-                   tau2_c, sigma2_c, bandas)
+                   tau2_c, sigma2_c, bandas, personas)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -347,7 +358,7 @@ class BaseReferencia:
             ruta, celdas=np.array(self.celdas, dtype=object), m=self.m, W=self.W,
             emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
             grupo=self.grupo, tau2_c=self.tau2_c, sigma2_c=self.sigma2_c,
-            bandas=self.bandas,
+            bandas=self.bandas, personas=self.personas,
             ef_k=np.array(sorted(self.efecto), dtype=float),
             ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
@@ -360,11 +371,11 @@ class BaseReferencia:
             # `grupo` falta en las bases guardadas antes de la fusion; sin el, cada
             # etiqueta es su propio grupo y el comportamiento es el de entonces.
             opc = {k: (z[k] if k in z.files else None)
-                   for k in ("grupo", "tau2_c", "sigma2_c", "bandas")}
+                   for k in ("grupo", "tau2_c", "sigma2_c", "bandas", "personas")}
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
-                       opc["sigma2_c"], opc["bandas"])
+                       opc["sigma2_c"], opc["bandas"], opc["personas"])
 
     # -- consulta --------------------------------------------------------------
 
@@ -395,6 +406,7 @@ class BaseReferencia:
                     if np.isfinite(q).all():
                         banda = dict(zip(CUANTILES, q))
                 base, n_emp = "datos directos", int(self.emp[propio])
+                n_per = int(self.personas[propio])
                 mejor, directo_ok = 1.0, True
             else:
                 j, s = vec[k], sim[k]
@@ -473,7 +485,13 @@ class BaseReferencia:
                 # puesto, y lo que no se sabe de su escalon.
                 var_centro = var - tau2_v
                 base = "por analogia"
-                n_emp = int(self.emp[j].sum())
+                # SIN CONTAR DOS VECES. Los vecinos que comparten grupo de fusion
+                # comparten estadisticos, asi que sumarlos multiplicaria el respaldo por
+                # el numero de grafias. `ANALISTA DE RIESGO CREDITICIO` declaraba 194
+                # empresas cuando las de verdad eran 46.
+                _, uno = np.unique(self.grupo[j], return_index=True)
+                n_emp = int(self.emp[j[uno]].sum())
+                n_per = int(self.personas[j[uno]].sum())
                 mejor, directo_ok = float(s.max()), False
             # DOS CANTIDADES, DOS PREGUNTAS. `sd_modelo` es la del modelo y sirve para
             # la CONFIANZA: contra el suelo mide que parte del ancho es ignorancia
@@ -493,7 +511,8 @@ class BaseReferencia:
                         "p75_log": banda[0.75], "p90_log": banda[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
                         "incert_centro": round(incert, 4),
-                        "empresas": n_emp, "similitud": round(mejor, 3)}
+                        "empresas": n_emp, "personas": n_per,
+                        "similitud": round(mejor, 3)}
 
         out = pd.DataFrame([filas[t] for t in titulos])
         out.insert(0, "cargo", titulos)
