@@ -2058,3 +2058,106 @@ más hay una constante que debería variar?"*— y no midiendo.
 Queda una tercera de la misma forma **sin comprobar**: `lambda` es un solo escalar para los
 65.081 cargos. `tau` se comprobó y varía 8,3×; `sigma` se comprobó y varía; `lambda` no se
 ha mirado. Anotado en pendientes.
+
+---
+
+## D-021 — `lambda` por escalón, y la lección de haber medido con la métrica equivocada
+
+**Fecha:** 2026-09-08
+**Origen:** la revisión de la lógica de cálculo (D-020) dejó una tercera sospecha de la
+misma forma: `lambda` era un solo escalar para los 65.081 cargos, mientras `tau` y `sigma`
+ya se habían comprobado y varían.
+**Evidencia:** `research/experimentos/e3_varianza/` scripts `12`, `13` y `14`.
+**Estado:** decisión tomada y montada.
+
+### Qué es `lambda`, para que el registro se lea solo
+
+El embedding mide parecido entre títulos como una similitud coseno, que está en unidades de
+texto. Lo que hace falta está en unidades de dinero, y `lambda` es el **tipo de cambio**:
+cuánta diferencia de pago hay que esperar por unidad de distancia semántica.
+
+```
+var_j = 1/W_j + lambda·(1 − sim_j)          peso_j ∝ 1/var_j
+```
+
+Hace dos cosas: decide **a quién se escucha** y fija **el ancho del intervalo**.
+
+### Lo medido
+
+**Varía 18× y es real** (`12`). Test-retest partiendo las empresas en dos mitades:
+**Pearson +0,563, Spearman +0,627** — entre el de `tau` (0,780) y el de `sigma` (0,484).
+
+```
+nivel 1   0,368      nivel 3   2,212      nivel 5   6,505      global   1,938
+nivel 2   1,038      nivel 4   3,340
+```
+
+Misma causa mecánica que `tau`: abajo el salario mínimo comprime y dos cargos parecidos
+pagan casi igual; arriba, `GERENTE DE FINANZAS` y `GERENTE DE OPERACIONES` están cerca en el
+texto y lejos en el sueldo.
+
+**Y usarlo por escalón mejora** (`14`), con el criterio declarado antes de correr:
+
+| | pinball | MAE | cob 50% | ancho |
+|---|---|---|---|---|
+| global | 0,1424 | 0,3061 | 76,0% | 55,6% |
+| **por escalón** | **0,1338** | 0,3047 | 72,8% | 49,4% |
+| PLACEBO | 0,1427 | 0,3061 | 76,3% | 56,0% |
+
+```
+por escalón − global = −0,00856   IC 95% [−0,01083, −0,00589]   MEJORA
+PLACEBO     − global = +0,00032   IC 95% [+0,00024, +0,00041]   no lo reproduce
+```
+
+**El placebo es la parte convincente.** Barajando las etiquetas de escalón entre cargos y
+re-estimando, los cinco `lambda` **colapsan al global**: 1,95 / 1,92 / 1,93 / 2,05 / 2,04.
+La señal vive en el escalón, no en tener cinco grupos en vez de uno.
+
+### La lección de método, que vale más que el resultado
+
+`13` midió esto mismo con **MAE y cobertura por separado** y dio **−0,0015 (0,5%)**. Con
+pinball da **−0,0086 (6,0%)**: un factor de **12**.
+
+La razón es simple una vez vista: **`lambda` actúa sobre todo en el ANCHO, y el MAE no ve el
+ancho.** Estaba midiendo con un instrumento ciego a la mitad del efecto, y con ese número
+esto se habría descartado por marginal.
+
+Reportar MAE y cobertura por separado tiene además un problema de método: el MAE premia el
+centro y la cobertura se puede ensanchar a voluntad, así que quedan dos números y libertad
+para elegir cuál pesa **después** de verlos. Una regla de puntuación **propia** los integra
+en un número que empeora si se miente en cualquiera de los dos. **Es la regla que el propio
+proyecto ya usaba en D-016 y D-017, y aquí me la salté.**
+
+De aquí salen dos reglas para lo que queda:
+
+1. **Lo que se entrega son cuantiles, así que se puntúa con pinball.** El MAE sólo como
+   secundaria.
+2. **El criterio se declara antes de correr**, y el placebo no es opcional cuando se llevan
+   catorce experimentos en la misma familia.
+
+### La decisión
+
+**`lambda` por escalón léxico**, estimado con la misma regresión por el origen restringida a
+los pares de cada nivel. Si el título no declara rango se usa la media de los `lambda` de
+sus vecinos que sí lo declaran — sin pesos, porque los pesos dependen de `lambda` y usarlos
+sería circular.
+
+Por escalón y no por celda, a diferencia de `tau_c` y `sigma_c`: el patrón es monótono en el
+nivel, así que agrupar casi no pierde y gana mucha estabilidad — `lambda_c` por celda sale
+de ~25 pares y el **15,8%** de esas estimaciones son negativas por ruido.
+
+### Coste conocido, no resuelto
+
+La ganancia entera viene del **nivel 1** (−0,0244, y es el 70% de la gente contestada por
+analogía). Los niveles **4 y 5 empeoran**: +0,0027 y +0,0146, con la cobertura del nivel 5
+alejándose del objetivo (51,9% → 68,4%).
+
+Sospecha concreta y comprobable: `lambda` se estima de diferencias **al cuadrado** y la
+distribución de pago del nivel 5 tiene cola larguísima, así que unos pocos pares extremos
+pueden estar inflando `lambda_5`. Un estimador robusto —diferencias absolutas o ajuste
+recortado— daría un `lambda_5` menor. Anotado en pendientes.
+
+**No se revierte para recuperar la calibración del nivel 5.** Si dos errores se estaban
+cancelando, arreglar uno y dejar el otro visible es preferible a mantener los dos
+escondidos: un modelo bien especificado y visiblemente imperfecto se defiende, uno
+accidentalmente calibrado se cae en cuanto alguien pregunta por qué.

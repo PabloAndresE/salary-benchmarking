@@ -1,0 +1,35 @@
+construir 4,328 empresas   evaluar 1,442
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,771 titulos...
+construyendo la base sobre tr...
+
+lambda global: 1.927
+lambda por escalon: 1:0.450  2:1.233  3:2.037  4:2.958  5:6.424
+
+por analogia: 90,641 personas en 16,190 titulos (39.3% de la gente apartada)
+evaluables: 90,641
+
+==============================================================================
+A. GLOBAL, sobre toda la gente por analogia
+==============================================================================
+  variante               MAE   cob 50%   ancho medio
+  global (hoy)        0.3061    76.2%        55.7%
+  por escalon         0.3046    73.3%        50.3%
+
+==============================================================================
+B. CONTRASTE PAREADO (300 replicas de empresas apartadas)
+==============================================================================
+  MAE  por escalon - global = -0.0015  IC 95% [-0.0027, -0.0007]  MEJORA
+
+==============================================================================
+C. POR ESCALON DEL PUESTO PREGUNTADO
+==============================================================================
+  nivel       personas  MAE global  MAE escalon       dif  cob global  cob escalon
+  1             21,958      0.1907       0.1859   -0.0048      90.4%       81.0%
+  2              5,979      0.3341       0.3347   +0.0006      67.6%       56.7%
+  3              5,476      0.3975       0.3974   -0.0001      58.5%       59.2%
+  4              3,365      0.4098       0.4094   -0.0004      57.7%       65.3%
+  5              3,134      0.5235       0.5255   +0.0020      51.9%       69.9%
+  sin rango     50,729      0.3226       0.3218   -0.0009
+EXIT=0

@@ -1,0 +1,37 @@
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,772 titulos...
+construyendo la base sobre tr...
+
+lambda global:  1.919
+  real:    1:0.497  2:1.160  3:1.861  4:2.696  5:5.855
+  PLACEBO: 1:1.946  2:1.923  3:1.928  4:2.054  5:2.043
+  (si el placebo da cinco numeros parecidos entre si y al global, la particion
+   por escalon lleva senal; si da tanta variedad como el real, no)
+
+por analogia y evaluables: 90,641 personas (39.3% de la gente apartada)
+
+==================================================================================
+PRIMARIA: pinball. Secundarias abajo, y NO deciden
+==================================================================================
+  variante         PINBALL       MAE   cob 50%     ancho
+  global            0.1424    0.3061    76.0%    55.6%
+  por escalon       0.1338    0.3047    72.8%    49.4%
+  PLACEBO           0.1427    0.3061    76.3%    56.0%
+
+==================================================================================
+CONTRASTE PAREADO (300 replicas de empresas apartadas)
+==================================================================================
+  pinball  por escalon  - global = -0.00856  IC 95% [-0.01083, -0.00589]  MEJORA
+  pinball  PLACEBO      - global = +0.00032  IC 95% [+0.00024, +0.00041]  EMPEORA
+
+==================================================================================
+SECUNDARIO (no decide): desglose por escalon
+==================================================================================
+  nivel       personas  pin global  pin escalon        dif  cob glob   cob esc
+  1             21,958      0.1106       0.0862    -0.0244    89.6%    81.6%
+  2              5,979      0.1335       0.1298    -0.0036    67.6%    56.1%
+  3              5,476      0.1596       0.1594    -0.0002    58.5%    58.1%
+  4              3,365      0.1604       0.1631    +0.0027    57.7%    64.1%
+  5              3,134      0.2081       0.2228    +0.0146    51.9%    68.4%
+EXIT=0

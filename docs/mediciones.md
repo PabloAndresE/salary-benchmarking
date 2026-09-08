@@ -1199,6 +1199,41 @@ Crece monotonamente con la gente por empresa, como predice el modelo. Ver D-020.
 
 ---
 
+### 17.9 `lambda` era el tercer parametro global, y tambien varia
+
+| | Varia | Test-retest | Estado |
+|---|---|---|---|
+| `tau` | 8,3x | +0,780 | por celda con encogimiento (D-016) |
+| `sigma` | si | +0,484 | por celda con encogimiento (D-016) |
+| **`lambda`** | **18x** | **+0,563** | **por escalon (D-021)** |
+
+```
+nivel 1  0,368    nivel 3  2,212    nivel 5  6,505    global  1,938
+nivel 2  1,038    nivel 4  3,340
+```
+
+Y usarlo por escalon mejora, con pinball como primaria y placebo:
+
+```
+                 pinball      pareado contra global
+global            0.1424
+por escalon       0.1338      -0,00856  IC [-0,01083, -0,00589]  MEJORA
+PLACEBO           0.1427      +0,00032  IC [+0,00024, +0,00041]  no lo reproduce
+```
+
+Con las etiquetas barajadas los cinco `lambda` colapsan al global (1,95 / 1,92 / 1,93 /
+2,05 / 2,04): la senal vive en el escalon.
+
+**LA LECCION DE METODO.** La primera version midio con MAE y cobertura por separado y dio
+**-0,0015 (0,5%)**; con pinball da **-0,0086 (6,0%)**, un factor de **12**. `lambda` actua
+sobre todo en el ANCHO y el MAE no ve el ancho. Con el numero equivocado esto se habria
+descartado por marginal. Lo que se entrega son cuantiles: se puntua con pinball. Ver D-021.
+
+**Coste conocido:** la ganancia entera viene del nivel 1 (-0,0244) y los niveles 4 y 5
+empeoran (+0,0027 y +0,0146).
+
+---
+
 ## 18. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
@@ -1215,7 +1250,7 @@ Crece monotonamente con la gente por empresa, como predice el modelo. Ver D-020.
 | La **escalera de antiguedad** `JUNIOR`/`SENIOR`/`I`/`II`/`III` | Notacion distinta de la de mando, invisible al eje de nivel. `LABORATORISTA JR.` $497 contra `LABORATORISTA SENIOR` $938 (1,9x). Mismo diseno que E2 | 1 experimento |
 | Por que **`1/W` se queda corto** entre un 15% y un 40% | La etiqueta de confianza (D-017) ordena bien pero es optimista. Sospecha: el modelo supone la celda homogenea y no lo es | 1 experimento |
 | **El SBU de 2026** (y los siguientes) | La tabla `_SBU` llega a 2025 y el ano en curso es 2026. El producto ahora se NIEGA a emitir dolares de un ano sin SBU, asi que esto bloquea cualquier informe de 2026. Es un dato publico, de acuerdo ministerial | 1 busqueda |
-| Montar **`lambda_c`**: .por celda con encogimiento, o por escalon? | Medido que varia 18x y que es real (test-retest 0,563). Falta decidir la forma: por escalon es mas robusto y el patron es monotono en el nivel | 1 dia |
+| Un estimador ROBUSTO de `lambda` | Sale de diferencias AL CUADRADO y el nivel 5 tiene cola larga: unos pocos pares extremos pueden inflar `lambda_5`, que es donde D-021 empeora. Diferencias absolutas o ajuste recortado | 1 experimento |
 | El sesgo de una pasada en **`efecto_nivel`** | Centra por empresa, luego por area, y toma la media por nivel. Con areas desbalanceadas en composicion de niveles eso deja sesgo; lo correcto es un ajuste de dos vias | 1 experimento |
 | .Varia **`lambda`** entre cargos, como varian `tau` y `sigma`? | Es el tercer parametro global del mismo modelo y el unico sin comprobar. `tau` varia 8,3x. Se mide igual: test-retest entre mitades de empresas | 1 experimento |
 | El **ancla de empresa (-12,8%)** con contraste pareado | Es el numero mas grande del expediente y sigue sobre una sola particion. Pendiente desde D-014 | 1 corrida |

@@ -212,13 +212,81 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
     return float(max(np.finfo(float).tiny, (x * d2).sum() / den)) if den > 0 else 1.0
 
 
+def _lambda_por_nivel(m, W, vec, sim, niveles, lam_global, minimo=200):
+    """`lambda` por escalon lexico. Devuelve dict nivel -> lambda.
+
+    POR QUE (medido, `e3_varianza/12`): `lambda` es el tercer parametro del modelo y era
+    un solo escalar para los 65.081 cargos. Varia 18x y no es ruido — test-retest entre
+    mitades de empresas r = 0,563, entre el de `tau` (0,780) y el de `sigma` (0,484):
+
+        nivel 1   0,368      nivel 3   2,212      nivel 5   6,505
+        nivel 2   1,038      nivel 4   3,340      global    1,938
+
+    Misma causa mecanica que `tau`: abajo el salario minimo comprime y dos cargos
+    parecidos pagan casi igual; arriba, `GERENTE DE FINANZAS` y `GERENTE DE OPERACIONES`
+    estan cerca en el texto y lejos en el sueldo.
+
+    LA DIRECCION DEL ERROR ERA LA PELIGROSA. Con el global, en los cargos altos se
+    castigaba 3x DE MENOS a los vecinos lejanos: la respuesta se arrastraba hacia puestos
+    que no eran y el intervalo no lo declaraba.
+
+    POR ESCALON Y NO POR CELDA, a diferencia de `tau_c` y `sigma_c`. El patron es
+    monotono en el nivel, asi que agrupar no pierde casi nada y gana mucha estabilidad:
+    `lambda_c` por celda sale de ~25 pares y el 15,8% de las estimaciones son negativas
+    por ruido. Cinco grupos con miles de pares cada uno no tienen ese problema.
+
+    MEDIDO QUE MEJORA (`e3_varianza/14`), con pinball como metrica primaria y placebo:
+
+        global        pinball 0,1424      por escalon  0,1338     -6,0%
+        pareado: -0,00856  IC 95% [-0,01083, -0,00589]  MEJORA
+        PLACEBO: +0,00032  IC 95% [+0,00024, +0,00041]  no lo reproduce
+
+    El placebo baraja las etiquetas de escalon entre cargos y vuelve a estimar: los cinco
+    `lambda` colapsan al global (1,95 / 1,92 / 1,93 / 2,05 / 2,04). La senal vive en el
+    escalon, no en tener cinco grupos.
+
+    OJO CON LA METRICA. Medido con MAE la mejora era -0,0015 (0,5%) y con pinball es
+    -0,0086 (6,0%): un factor de 12. `lambda` actua sobre todo en el ANCHO y el MAE no ve
+    el ancho. Con MAE esto se habria descartado por marginal.
+
+    COSTE CONOCIDO, no resuelto: la ganancia entera viene del nivel 1 (-0,0244, el 70% de
+    la gente por analogia) y los niveles 4 y 5 EMPEORAN (+0,0027 y +0,0146). Sospecha
+    comprobable: `lambda` sale de diferencias AL CUADRADO y el nivel 5 tiene cola larga,
+    asi que unos pocos pares extremos pueden inflar `lambda_5`. Un estimador robusto
+    —diferencias absolutas o ajuste recortado— daria un `lambda_5` menor.
+    """
+    i = np.repeat(np.arange(len(m)), vec.shape[1])
+    j = vec.ravel()
+    s = sim.ravel()
+    ok = (np.isfinite(m[i]) & np.isfinite(m[j]) & (W[i] > 0) & (W[j] > 0)
+          & (s < 0.9999))
+    if ok.sum() < minimo:
+        return {}
+    d2 = (m[i][ok] - m[j][ok]) ** 2 - (1.0 / W[i][ok] + 1.0 / W[j][ok])
+    x = 1.0 - s[ok]
+    niv_i = niveles[i][ok]
+
+    out = {}
+    for k in np.unique(niv_i[np.isfinite(niv_i)]):
+        sel = niv_i == k
+        if sel.sum() < minimo:
+            continue
+        den = float((x[sel] * x[sel]).sum())
+        if den <= 0:
+            continue
+        # el suelo evita que una estimacion negativa por ruido anule el castigo de
+        # distancia, que dejaria entrar a cualquier vecino con peso completo
+        out[int(k)] = float(max(0.05 * lam_global, (x[sel] * d2[sel]).sum() / den))
+    return out
+
+
 class BaseReferencia:
     """Construida una vez sobre el universo; se consulta por titulo."""
 
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
                  nivel=None, efecto=None, grupo=None,
                  tau2_c=None, sigma2_c=None, bandas=None, personas=None,
-                 bandas_per=None):
+                 bandas_per=None, lam_nivel=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -256,6 +324,9 @@ class BaseReferencia:
                        else np.asarray(bandas, dtype=float))
         self.bandas_per = (np.full((n, len(CUANTILES)), np.nan) if bandas_per is None
                            else np.asarray(bandas_per, dtype=float))
+        # `lambda` por escalon. Vacio en bases guardadas antes de D-021: ahi se cae al
+        # global y el comportamiento es el de entonces.
+        self.lam_nivel = dict(lam_nivel or {})
         # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
         # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
         # quien lee un informe: ".cuanta gente hay detras de este numero?".
@@ -340,6 +411,11 @@ class BaseReferencia:
                                 excluir_propio=False)
         lam = _lambda_semantica(mm[muestra], WW[muestra], vec_s, sim_s,
                                 m_todos=mm, W_todos=WW)
+        # ...y por escalon, que es donde de verdad cambia. Sobre TODAS las celdas: la
+        # muestra de 3.000 basta para un escalar pero no para cinco.
+        vec_n, sim_n = _vecinos(Z, Z, min(VECINOS, n - 1) if n > 1 else 1,
+                                excluir_propio=True)
+        lam_nivel = _lambda_por_nivel(mm, WW, vec_n, sim_n, niv, lam)
 
         # Los estadisticos SI salen del grupo fusionado: las grafias de un mismo puesto
         # votan juntas. Se reagrega desde las filas, no sumando celdas: el voto de una
@@ -392,7 +468,7 @@ class BaseReferencia:
 
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
-                   tau2_c, sigma2_c, bandas, personas, bandas_per)
+                   tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -405,6 +481,9 @@ class BaseReferencia:
             emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
             grupo=self.grupo, tau2_c=self.tau2_c, sigma2_c=self.sigma2_c,
             bandas=self.bandas, bandas_per=self.bandas_per,
+            lam_k=np.array(sorted(self.lam_nivel), dtype=float),
+            lam_v=np.array([self.lam_nivel[k] for k in sorted(self.lam_nivel)],
+                           dtype=float),
             personas=self.personas,
             ef_k=np.array(sorted(self.efecto), dtype=float),
             ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
@@ -420,11 +499,13 @@ class BaseReferencia:
             opc = {k: (z[k] if k in z.files else None)
                    for k in ("grupo", "tau2_c", "sigma2_c", "bandas", "personas",
                              "bandas_per")}
+            lam_nivel = ({int(k): float(v) for k, v in zip(z["lam_k"], z["lam_v"])}
+                         if "lam_k" in z.files else {})
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
                        opc["sigma2_c"], opc["bandas"], opc["personas"],
-                       opc["bandas_per"])
+                       opc["bandas_per"], lam_nivel)
 
     # -- consulta --------------------------------------------------------------
 
@@ -481,7 +562,24 @@ class BaseReferencia:
                     if quedan.any():
                         j, s = j[quedan], s[quedan]
                 j, s = j[:VECINOS], s[:VECINOS]
-                dist = self.lam * (1.0 - s)
+                # `lambda` DEL ESCALON del puesto preguntado. Varia 18x del nivel 1 al 5
+                # y con el global se castigaba de menos justo arriba, que es donde mas
+                # duele: la respuesta se arrastraba hacia vecinos que no eran.
+                #
+                # Si el titulo no declara rango se usa la media de los `lambda` de sus
+                # vecinos que si lo declaran. Sin pesos a proposito: los pesos dependen de
+                # `lambda`, y usarlos aqui seria circular.
+                mi_niv = self.nivel[propio] if propio is not None else nivel_lexico(t)
+                lam_i = None
+                if self.lam_nivel:
+                    if mi_niv is not None and np.isfinite(mi_niv):
+                        lam_i = self.lam_nivel.get(int(mi_niv))
+                    if lam_i is None:
+                        vecinos_lam = [self.lam_nivel[int(nj)] for nj in self.nivel[j]
+                                       if np.isfinite(nj) and int(nj) in self.lam_nivel]
+                        if vecinos_lam:
+                            lam_i = float(np.mean(vecinos_lam))
+                dist = (self.lam if lam_i is None else lam_i) * (1.0 - s)
                 var_j = 1.0 / self.W[j] + dist
                 peso = 1.0 / var_j
                 peso /= peso.sum()
