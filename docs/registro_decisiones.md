@@ -1958,3 +1958,103 @@ D-015: la primera lectura de un problema suele ser la equivocada.
 ancho"*. Con D-016 y D-017 eso es **falso**: el ancho de la banda mide el mercado —que puede
 ser estrecho con pocos datos— y lo que crece al tener menos empresas es `incert_centro`. El
 test se reescribió sobre la magnitud correcta en vez de relajarse.
+
+---
+
+## D-020 — Dos bandas, y una lectura que mira la banda en vez de un porcentaje fijo
+
+**Fecha:** 2026-09-08
+**Origen:** una revisión de la lógica de cálculo buscando *"la misma forma del error de `tau`
+y `sigma`"* — un parámetro que varía tratado como constante, algo que se calcula y se tira,
+una cantidad correcta usada para otra pregunta. Aparecieron dos.
+**Evidencia:** verificación sobre la nómina de demo y sobre la base completa (65.081 celdas),
+con los tests que lo fijan.
+**Estado:** decisión tomada y montada.
+
+### A. La lectura de mercado usaba cortes fijos
+
+`comparacion.py` clasificaba con ±5% y ±15%, iguales para todos los cargos. **Es
+literalmente el error de `tau` global:** un umbral que tiene que escalar con la dispersión
+del puesto, escrito como constante.
+
+Medido sobre la nómina de demo, **cuatro de los diez cargos marcados "muy por encima"
+estaban DENTRO de su propia banda**:
+
+| Cargo | `vs_mercado` | Lectura vieja | Banda | ¿Dentro? |
+|---|---|---|---|---|
+| `GERENTE GENERAL` | +15,4% | muy por encima | ±95,0% | **sí** |
+| `CONTADOR` | +15,4% | muy por encima | ±37,2% | **sí** |
+| `JEFE DE BODEGA` | +15,2% | muy por encima | ±30,6% | **sí** |
+| `VENDEDOR` | +15,7% | muy por encima | ±28,9% | **sí** |
+| `AUXILIAR DE LIMPIEZA` | +15,4% | muy por encima | ±2,1% | no |
+| `TRABAJADOR AGRICOLA` | +15,5% | muy por encima | ±0,2% | no |
+
+Lo incómodo: **la banda ya estaba bien calculada desde D-016 y la etiqueta no la miraba.**
+Es el mismo patrón de "se calcula y se tira" que tenía `sigma_c` antes de D-016.
+
+**La decisión:** la lectura sale de dónde cae el sueldo dentro de la banda de su cargo.
+
+```
+< p10          muy por debajo
+p10 - p25      por debajo
+p25 - p75      EN LINEA        <- el 50% central del mercado
+p75 - p90      por encima
+> p90          muy por encima
+```
+
+*"En línea"* pasa a significar **dentro del 50% central del mercado**, que es una frase que
+el cliente puede comprobar, en vez de *"a menos del 5% de un número"*.
+
+Efecto en el resumen que lee un gerente, sobre la misma nómina —construida a +15% uniforme:
+
+```
+antes:  Puestos MUY POR ENCIMA (8)
+ahora:  Puestos MUY POR ENCIMA (1)   <- solo TRABAJADOR AGRICOLA
+```
+
+**Ocho falsas alarmas se convierten en una real.** Para casi todos los cargos, +15% es un
+sueldo alto pero normal; para uno cuyo mercado entero va de $470 a $472, no lo es.
+
+### B. El detalle comparaba una PERSONA contra una banda de EMPRESAS
+
+D-016 decidió que la banda dice *"la mitad de las **empresas** paga entre X e Y"*. Correcto
+para la hoja `por_puesto`. Pero `detalle` tiene **una fila por persona** y le ponía al lado
+esa misma banda.
+
+Son poblaciones distintas: la de personas incluye además la dispersión **dentro** de cada
+nómina.
+
+```
+banda de empresas = raiz(tau_c^2          + 1/W)
+banda de personas = raiz(tau_c^2 + sigma_c^2 + 1/W)
+```
+
+**La decisión:** se calculan y se guardan las dos, por cuantiles empíricos donde hay 10+
+empresas y por modelo debajo. `detalle` lleva la de personas; `por_puesto` la de empresas y
+compara contra la **mediana** de la empresa, que es su voto — la misma unidad con la que se
+construyó.
+
+Verificado sobre las 5.377 celdas con las dos bandas empíricas:
+
+| Personas por empresa | Celdas | `ancho_personas / ancho_empresas` |
+|---|---|---|
+| ~1 | 129 | **1,00×** |
+| 1,5–4 | 3.388 | 1,09× |
+| 4–20 | 1.626 | 1,14× |
+| 20+ | 234 | **1,19×** |
+
+El cociente **crece monótonamente** con la gente por empresa, que es exactamente lo que
+predice el modelo: cuanta más gente tiene una empresa, más suaviza su mediana la dispersión
+interna. Y donde hay una persona por empresa las dos bandas coinciden, porque el voto de la
+empresa *es* el sueldo de una persona.
+
+### Lo que enseña sobre el método
+
+Los dos defectos son de la **misma familia** que `tau`/`sigma`, y ninguno se veía desde una
+métrica agregada: el pinball no los detecta porque los dos están en la capa de presentación,
+después del estimador. Se encontraron leyendo el código con una pregunta concreta —*"¿dónde
+más hay una constante que debería variar?"*— y no midiendo.
+
+Queda una tercera de la misma forma **sin comprobar**: `lambda` es un solo escalar para los
+65.081 cargos. `tau` se comprobó y varía 8,3×; `sigma` se comprobó y varía; `lambda` no se
+ha mirado. Anotado en pendientes.

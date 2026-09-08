@@ -17,17 +17,21 @@ logarítmica:
 | columna | qué es |
 |---|---|
 | `referencia` | lo que paga la empresa que está en el medio del mercado |
-| `p25`, `p75` | la banda: **la mitad de las empresas paga entre esos dos números** |
+| `p25`, `p75` | la banda: **la mitad de las personas de ese cargo cobra entre esos dos números** |
 | `p10`, `p90` | la banda ancha, el 80% central |
 | `confianza` | ALTA / MEDIA / BAJA — qué tan bien se conoce la **referencia** |
 | `incert_centro` | cuánto puede moverse la referencia, en tanto por uno |
 | `ancho_rel` | media anchura de la banda, en tanto por uno |
 | `base` | `datos directos` o `por analogia` |
 | `empresas`, `personas` | respaldo real, sin contar dos veces las grafías del mismo puesto |
-| `vs_mercado` | cuánto se aleja del mercado |
+| `lectura_mercado` | dónde cae **dentro de la banda de su cargo**, no a qué % de la referencia |
+| `vs_mercado` | cuánto se aleja del mercado, en % |
 | `vs_politica_interna` | cuánto se aleja de la política de su **propia** empresa |
 
-**Hoja `por_puesto`**: agregado por cargo, ordenado del más bajo al más alto.
+**Hoja `por_puesto`**: agregado por cargo, ordenado del más bajo al más alto. Aquí la banda
+es la de **empresas** y se compara contra la **mediana** que paga el cliente, que es su voto
+— la misma unidad con la que se construyó la banda. En `detalle` es la de **personas**, que
+incluye además la dispersión dentro de la nómina y es hasta un 19% más ancha. Ver D-020.
 
 ## Las cuatro decisiones de diseño
 
@@ -44,6 +48,11 @@ El **cómo** importa y está medido: por **enlace completo**, no simple. Union-f
 `A~B~C~D` hasta juntar `ASISTENTE CONTABLE` con `AUXILIAR DE LIMPIEZA` en un grupo de 1.758
 títulos, y empeora el error un +0,0154. Con enlace completo el grupo mayor baja a 27 y el
 efecto se da vuelta: −0,0030 (D-015).
+
+**Dos bandas y una lectura relativa.** La lectura de mercado dice dónde cae el sueldo
+**dentro de la banda de su cargo**, no a qué porcentaje de la referencia. Con cortes fijos
+de ±15%, cuatro de diez cargos de la demo salían "muy por encima" estando dentro de su
+propia banda, y el resumen del gerente listaba **8 puestos fuera de línea donde hay 1**.
 
 **La banda habla de EMPRESAS, y la confianza del CENTRO.** Son dos preguntas distintas y
 antes se contestaba la misma dos veces:

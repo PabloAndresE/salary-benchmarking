@@ -1167,6 +1167,38 @@ bloquea ninguna de las 3.391 celdas con banda empírica. Ver D-019.
 
 ---
 
+### 17.8 Dos defectos de presentacion, de la misma familia que `tau`/`sigma`
+
+Encontrados leyendo el codigo con una pregunta concreta —*".donde mas hay una constante que
+deberia variar?"*—, no midiendo. Ninguna metrica agregada los ve: los dos estan **despues**
+del estimador.
+
+**La lectura de mercado usaba cortes fijos** de +-5% y +-15% para todos los cargos. Cuatro
+de los diez cargos de la nomina de demo marcados "muy por encima" estaban **dentro** de su
+propia banda:
+
+```
+GERENTE GENERAL      +15,4%  "muy por encima"  banda +-95,0%   <- dentro
+TRABAJADOR AGRICOLA  +15,5%  "muy por encima"  banda +- 0,2%   <- muy fuera
+```
+
+Con la lectura relativa a la banda, el resumen que lee un gerente pasa de **8 puestos "muy
+por encima" a 1** sobre la misma nomina, construida a +15% uniforme.
+
+**Y el detalle comparaba una PERSONA contra la banda de EMPRESAS**, que no lleva `sigma_c`.
+Verificado sobre las 5.377 celdas con las dos bandas empiricas:
+
+| Personas por empresa | Celdas | `ancho_personas / ancho_empresas` |
+|---|---|---|
+| ~1 | 129 | **1,00x** |
+| 1,5-4 | 3.388 | 1,09x |
+| 4-20 | 1.626 | 1,14x |
+| 20+ | 234 | **1,19x** |
+
+Crece monotonamente con la gente por empresa, como predice el modelo. Ver D-020.
+
+---
+
 ## 18. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |
@@ -1182,4 +1214,5 @@ bloquea ninguna de las 3.391 celdas con banda empírica. Ver D-019.
 | El **26-34% de empresas sin `segmento`**, y por que paga distinto | Es el bloqueo real de D-018: un tercio del padron no se puede segmentar, y ese grupo no se comporta como los demas | 1 consulta + cruce SCVS |
 | La **escalera de antiguedad** `JUNIOR`/`SENIOR`/`I`/`II`/`III` | Notacion distinta de la de mando, invisible al eje de nivel. `LABORATORISTA JR.` $497 contra `LABORATORISTA SENIOR` $938 (1,9x). Mismo diseno que E2 | 1 experimento |
 | Por que **`1/W` se queda corto** entre un 15% y un 40% | La etiqueta de confianza (D-017) ordena bien pero es optimista. Sospecha: el modelo supone la celda homogenea y no lo es | 1 experimento |
+| .Varia **`lambda`** entre cargos, como varian `tau` y `sigma`? | Es el tercer parametro global del mismo modelo y el unico sin comprobar. `tau` varia 8,3x. Se mide igual: test-retest entre mitades de empresas | 1 experimento |
 | El **ancla de empresa (-12,8%)** con contraste pareado | Es el numero mas grande del expediente y sigue sobre una sola particion. Pendiente desde D-014 | 1 corrida |

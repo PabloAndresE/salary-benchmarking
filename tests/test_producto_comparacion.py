@@ -7,6 +7,21 @@ def _sbu(anio):
     return 470.0
 
 
+def _ref(refs, confianzas, ancho=0.2):
+    """La salida minima de `referenciar`: referencia, confianza y las DOS bandas.
+
+    `ancho` es la media anchura en log. Es un argumento porque el ancho de la banda ya no
+    es decorativo: es lo que decide la lectura de mercado.
+    """
+    r = np.asarray(refs, dtype=float)
+    a = np.asarray(ancho, dtype=float)
+    d = {"referencia_log": r, "confianza": list(confianzas)}
+    for pre in ("", "per"):
+        for q, z in ((10, -2.0), (25, -1.0), (75, 1.0), (90, 2.0)):
+            d[f"p{q}{pre}_log"] = r + z * a
+    return pd.DataFrame(d)
+
+
 def test_el_ancla_detecta_el_nivel_de_la_empresa():
     # Todos cobran un 20% por encima de su referencia: el ancla debe ser log(1,2).
     ref = pd.Series([0.5, 1.0, 1.5, 0.8, 1.2])
@@ -42,7 +57,7 @@ def test_mercado_y_politica_interna_son_preguntas_distintas():
                                   np.exp(0.8 + np.log(1.2)) * 470,
                                   np.exp(1.0) * 470]})
     ref = [1.0, 1.2, 0.8, 1.0]
-    det, _, res = comparar(df, "sueldo", "cargo", ref, ["ALTA"] * 4, _sbu, 2025)
+    det, _, res = comparar(df, "sueldo", "cargo", _ref(ref, ["ALTA"] * 4), _sbu, 2025)
     c = det[det.cargo == "CONTADOR"].iloc[0]
     assert abs(c["vs_mercado"]) < 0.01, "frente al mercado esta en linea"
     assert c["vs_politica_interna"] < -0.10, "frente a su casa esta por debajo"
@@ -52,8 +67,8 @@ def test_mercado_y_politica_interna_son_preguntas_distintas():
 def test_detecta_puestos_fuera_de_linea():
     df = pd.DataFrame({"cargo": ["BARATO", "NORMAL", "CARO"],
                        "sueldo": [np.exp(0.5) * 470, np.exp(1.0) * 470, np.exp(2.0) * 470]})
-    _, puesto, _ = comparar(df, "sueldo", "cargo", [1.0, 1.0, 1.0], ["ALTA"] * 3,
-                            _sbu, 2025)
+    _, puesto, _ = comparar(df, "sueldo", "cargo",
+                            _ref([1.0, 1.0, 1.0], ["ALTA"] * 3), _sbu, 2025)
     p = puesto.set_index("cargo")
     assert p.loc["BARATO", "lectura"] == "muy por debajo"
     assert p.loc["CARO", "lectura"] == "muy por encima"
@@ -62,12 +77,46 @@ def test_detecta_puestos_fuera_de_linea():
 
 def test_avisa_cuando_el_ancla_es_ruido():
     df = pd.DataFrame({"cargo": ["A", "B"], "sueldo": [500.0, 600.0]})
-    _, puesto, res = comparar(df, "sueldo", "cargo", [1.0, 1.0], ["ALTA"] * 2, _sbu, 2025)
+    _, puesto, res = comparar(df, "sueldo", "cargo", _ref([1.0, 1.0], ["ALTA"] * 2), _sbu, 2025)
     assert res["ancla_fiable"] is False
     assert "ORIENTATIVO" in texto_resumen(res, puesto)
 
 
 def test_sin_referencia_no_inventa_comparacion():
     df = pd.DataFrame({"cargo": ["X"], "sueldo": [500.0]})
-    det, _, _ = comparar(df, "sueldo", "cargo", [np.nan], ["BAJA"], _sbu, 2025)
+    det, _, _ = comparar(df, "sueldo", "cargo", _ref([np.nan], ["BAJA"]), _sbu, 2025)
     assert det["lectura_mercado"].iloc[0] == "sin referencia"
+
+
+def test_el_mismo_exceso_NO_significa_lo_mismo_en_dos_cargos():
+    # EL defecto que esto arregla. Antes la lectura usaba cortes fijos de +/-5% y +/-15%
+    # iguales para todo cargo, que es el mismo error que `tau` global: un umbral que tiene
+    # que escalar con la dispersion del puesto, escrito como constante.
+    #
+    # Medido sobre la nomina de demo, cuatro de diez cargos marcados "muy por encima"
+    # estaban DENTRO de su propia banda:
+    #     GERENTE GENERAL      +15,4%  banda +/-95,0%   <- dentro, es un sueldo normal
+    #     TRABAJADOR AGRICOLA  +15,5%  banda +/- 0,2%   <- muy fuera, es una anomalia
+    exceso = np.log(1.15)
+    df = pd.DataFrame({"cargo": ["ANCHO", "ESTRECHO"],
+                       "sueldo": [np.exp(1.0 + exceso) * 470,
+                                  np.exp(1.0 + exceso) * 470]})
+    ref = _ref([1.0, 1.0], ["ALTA"] * 2, ancho=[0.60, 0.02])
+    det, _, _ = comparar(df, "sueldo", "cargo", ref, _sbu, 2025)
+    d = det.set_index("cargo")
+    # el mismo +15% en los dos
+    assert abs(d.loc["ANCHO", "vs_mercado"] - d.loc["ESTRECHO", "vs_mercado"]) < 1e-9
+    # y lecturas distintas, que es lo correcto
+    assert d.loc["ANCHO", "lectura_mercado"] == "en linea"
+    assert d.loc["ESTRECHO", "lectura_mercado"] == "muy por encima"
+
+
+def test_la_persona_se_compara_contra_la_banda_de_PERSONAS():
+    # La banda de empresas no lleva `sigma` y es mas estrecha. Usarla junto al sueldo de
+    # una persona la hace parecer mas rara de lo que es. `detalle` usa la de personas.
+    df = pd.DataFrame({"cargo": ["X"], "sueldo": [np.exp(1.25) * 470]})
+    r = _ref([1.0], ["ALTA"], ancho=0.10)          # banda de EMPRESAS estrecha
+    for q, z in ((10, -2.0), (25, -1.0), (75, 1.0), (90, 2.0)):
+        r[f"p{q}per_log"] = 1.0 + z * 0.40         # la de PERSONAS, mucho mas ancha
+    det, _, _ = comparar(df, "sueldo", "cargo", r, _sbu, 2025)
+    assert det["lectura_mercado"].iloc[0] == "en linea", "cae dentro de la de personas"

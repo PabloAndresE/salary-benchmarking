@@ -139,8 +139,7 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
     resumen = por_puesto = None
     if cs:
         print(f"columna de sueldo '{cs}': se compara contra el mercado")
-        det, por_puesto, resumen = comparar(salida, cs, col, ref["referencia_log"],
-                                            ref["confianza"], settings.get_sbu, anio)
+        det, por_puesto, resumen = comparar(salida, cs, col, ref, settings.get_sbu, anio)
         salida = det
     else:
         print("sin columna de sueldo: solo se emiten referencias")
@@ -151,8 +150,13 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
     # cuanto puede moverse la referencia de mercado, en tanto por uno.
     salida = salida.drop(columns=[c for c in salida.columns
                                   if c.endswith("_log") or c == "sd"])
+    # La hoja de personas lleva la banda de PERSONAS (`p25`/`p75`); la de empresas se
+    # queda fuera del detalle para no poner dos bandas al lado del mismo sueldo. Va en
+    # `por_puesto`, que es donde la unidad coincide.
+    salida = salida.drop(columns=[c for c in salida.columns
+                                  if c.endswith("_emp")], errors="ignore")
     orden = ["referencia", "p10", "p25", "p75", "p90", "confianza", "incert_centro",
-             "ancho_rel", "base", "empresas", "similitud"]
+             "ancho_rel", "base", "empresas", "personas", "similitud"]
     primeras = [c for c in salida.columns if c not in orden]
     salida = salida[primeras + [c for c in orden if c in salida.columns]]
     pathlib.Path(ruta_salida).parent.mkdir(parents=True, exist_ok=True)

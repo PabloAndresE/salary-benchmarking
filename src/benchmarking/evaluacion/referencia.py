@@ -231,6 +231,50 @@ def cuantiles_de_empresa(train, col_celda, tau2_celda, sigma2_celda, cuantiles):
         index=celdas)
 
 
+def cuantiles_de_persona(train, col_celda, tau2_celda, sigma2_celda, cuantiles):
+    """Cuantiles EMPIRICOS de lo que cobran las PERSONAS. Devuelve celda x cuantil.
+
+    Hermana de `cuantiles_de_empresa`, y contesta la otra pregunta. La de empresa dice
+    *"la mitad de las EMPRESAS paga entre X e Y"* y sirve para juzgar a una empresa; esta
+    dice *"la mitad de las PERSONAS cobra entre X e Y"* y es la que hay que poner al lado
+    del sueldo de UNA PERSONA.
+
+    No son la misma banda: la de personas incluye ademas la dispersion DENTRO de cada
+    nomina (`sigma_c`), asi que es mas ancha. Y lo es mas donde la de empresa es estrecha:
+
+        CONTADOR              tau 0,451  sigma 0,183   ->   8% mas ancha
+        AUXILIAR DE LIMPIEZA  tau 0,073  sigma 0,056   ->  26% mas ancha
+
+    Poner la banda de EMPRESAS junto al sueldo de una persona la hace parecer mas rara de
+    lo que es, y justo en los cargos comprimidos, que es donde las etiquetas se voltean.
+
+    EL PESO SIGUE SIENDO POR EMPRESA. Cada empresa aporta `w_f` repartido entre su gente,
+    no una observacion por cabeza: si no, una nomina de 400 contadores define sola los
+    cuantiles del cargo, que es el mismo problema que el voto resuelve para el centro.
+    """
+    d = train[[col_celda, "empresa_ruc", "y"]].dropna(subset=["y"])
+    if d.empty:
+        return pd.DataFrame(columns=list(cuantiles), dtype=float)
+    g = d.groupby([col_celda, "empresa_ruc"], sort=False)["y"]
+    n_f = g.transform("size").to_numpy(float)
+    t2 = pd.Series(tau2_celda).reindex(d[col_celda]).to_numpy(float)
+    s2 = pd.Series(sigma2_celda).reindex(d[col_celda]).to_numpy(float)
+    den = t2 + s2 / n_f
+    w_emp = np.where(den > 0, 1.0 / np.where(den > 0, den, 1.0), 1.0)
+
+    x = pd.DataFrame({"c": d[col_celda].to_numpy(), "y": d["y"].to_numpy(float),
+                      "w": w_emp / n_f})
+    x = x.sort_values(["c", "y"], kind="mergesort")
+    cod, celdas = pd.factorize(x["c"], sort=True)
+    o = np.argsort(cod, kind="stable")
+    cod = cod[o]
+    val = x["y"].to_numpy(float)[o]
+    w = x["w"].to_numpy(float)[o]
+    return pd.DataFrame(
+        {q: _cuantil_por_grupo(cod, val, w, len(celdas), q=q) for q in cuantiles},
+        index=celdas)
+
+
 def pesos_empresa(n, tau2, sigma2):
     """w_f = 1/(tau2 + sigma2/n_f). Derivado del modelo, no elegido."""
     n = np.asarray(n, dtype=float)

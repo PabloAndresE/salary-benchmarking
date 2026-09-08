@@ -59,7 +59,8 @@ import numpy as np
 import pandas as pd
 
 from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
-                                     cuantiles_de_empresa, sigma2_por_celda,
+                                     cuantiles_de_empresa, cuantiles_de_persona,
+                                     sigma2_por_celda,
                                      tabla_votos, tau2_por_celda)
 from .nivel import efecto_nivel, nivel_lexico
 
@@ -216,7 +217,8 @@ class BaseReferencia:
 
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
                  nivel=None, efecto=None, grupo=None,
-                 tau2_c=None, sigma2_c=None, bandas=None, personas=None):
+                 tau2_c=None, sigma2_c=None, bandas=None, personas=None,
+                 bandas_per=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -244,8 +246,16 @@ class BaseReferencia:
                          else np.asarray(sigma2_c, dtype=float))
         # `bandas` son los cuantiles EMPIRICOS de los votos por empresa, en el orden de
         # `CUANTILES`. NaN donde la celda no llega a `MIN_EMPRESAS_BANDA`.
+        # DOS BANDAS, DOS PREGUNTAS. `bandas` es la de EMPRESAS —"la mitad de las
+        # empresas paga entre X e Y"— y sirve para juzgar a una empresa. `bandas_per` es
+        # la de PERSONAS, que ademas incluye la dispersion dentro de cada nomina y es la
+        # que hay que poner al lado del sueldo de UNA PERSONA. Poner la de empresas hace
+        # que la gente parezca mas rara de lo que es, y mas donde la banda es estrecha:
+        # `AUXILIAR DE LIMPIEZA` es un 26% mas ancha en personas que en empresas.
         self.bandas = (np.full((n, len(CUANTILES)), np.nan) if bandas is None
                        else np.asarray(bandas, dtype=float))
+        self.bandas_per = (np.full((n, len(CUANTILES)), np.nan) if bandas_per is None
+                           else np.asarray(bandas_per, dtype=float))
         # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
         # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
         # quien lee un informe: ".cuanta gente hay detras de este numero?".
@@ -357,6 +367,7 @@ class BaseReferencia:
         # las grafias de un mismo puesto son una sola celda a todos los efectos.
         colg = col if not umbral_fusion else "_g"
         qs = cuantiles_de_empresa(d, colg, t2_serie, s2_serie, CUANTILES)
+        qp = cuantiles_de_persona(d, colg, t2_serie, s2_serie, CUANTILES)
 
         def _expandir(serie, defecto):
             v = pd.Series(serie).reindex(
@@ -366,9 +377,12 @@ class BaseReferencia:
         tau2_c = _expandir(t2_serie, tau2)
         sigma2_c = _expandir(s2_serie, sigma2)
         bandas = np.full((n, len(CUANTILES)), np.nan)
+        bandas_per = np.full((n, len(CUANTILES)), np.nan)
         for k, q in enumerate(CUANTILES):
             if q in qs.columns:
                 bandas[:, k] = _expandir(qs[q], np.nan)
+            if q in qp.columns:
+                bandas_per[:, k] = _expandir(qp[q], np.nan)
 
         # personas por GRUPO, no por etiqueta: las grafias de un puesto suman juntas
         pg = d.groupby(colg).size()
@@ -378,7 +392,7 @@ class BaseReferencia:
 
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
-                   tau2_c, sigma2_c, bandas, personas)
+                   tau2_c, sigma2_c, bandas, personas, bandas_per)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -390,7 +404,8 @@ class BaseReferencia:
             ruta, celdas=np.array(self.celdas, dtype=object), m=self.m, W=self.W,
             emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
             grupo=self.grupo, tau2_c=self.tau2_c, sigma2_c=self.sigma2_c,
-            bandas=self.bandas, personas=self.personas,
+            bandas=self.bandas, bandas_per=self.bandas_per,
+            personas=self.personas,
             ef_k=np.array(sorted(self.efecto), dtype=float),
             ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
@@ -403,11 +418,13 @@ class BaseReferencia:
             # `grupo` falta en las bases guardadas antes de la fusion; sin el, cada
             # etiqueta es su propio grupo y el comportamiento es el de entonces.
             opc = {k: (z[k] if k in z.files else None)
-                   for k in ("grupo", "tau2_c", "sigma2_c", "bandas", "personas")}
+                   for k in ("grupo", "tau2_c", "sigma2_c", "bandas", "personas",
+                             "bandas_per")}
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
-                       opc["sigma2_c"], opc["bandas"], opc["personas"])
+                       opc["sigma2_c"], opc["bandas"], opc["personas"],
+                       opc["bandas_per"])
 
     # -- consulta --------------------------------------------------------------
 
@@ -423,7 +440,7 @@ class BaseReferencia:
         for k, t in enumerate(unicos):
             propio = self.idx.get(t)
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
-            banda = None
+            banda = banda_per = None
             directo = (propio is not None
                        and self.emp[propio] >= MIN_EMPRESAS
                        and self.personas[propio] >= self.min_personas)
@@ -432,6 +449,9 @@ class BaseReferencia:
                 # La banda habla de EMPRESAS, asi que NO lleva `sigma`: la dispersion
                 # dentro de una nomina no mueve el nivel de la empresa. Ver `CUANTILES`.
                 var = self.tau2_c[propio] + 1.0 / self.W[propio]
+                # ...y la de PERSONAS si la lleva: al sueldo de UNA persona hay que
+                # ponerle al lado lo que cobra la gente, no lo que pagan las empresas.
+                var_per = var + self.sigma2_c[propio]
                 var_centro = 1.0 / self.W[propio]
                 # Con empresas de sobra, los cuantiles empiricos ganan a cualquier normal:
                 # describen la forma real, que va de un pico a una cola larga segun cargo.
@@ -439,6 +459,9 @@ class BaseReferencia:
                     q = self.bandas[propio]
                     if np.isfinite(q).all():
                         banda = dict(zip(CUANTILES, q))
+                    qp = self.bandas_per[propio]
+                    if np.isfinite(qp).all():
+                        banda_per = dict(zip(CUANTILES, qp))
                 base, n_emp = "datos directos", int(self.emp[propio])
                 n_per = int(self.personas[propio])
                 mejor, directo_ok = 1.0, True
@@ -518,6 +541,7 @@ class BaseReferencia:
                 # ruido de medicion de los vecinos, el castigo por no ser exactamente ese
                 # puesto, y lo que no se sabe de su escalon.
                 var_centro = var - tau2_v
+                var_per = var + float((peso * self.sigma2_c[j]).sum())
                 base = "por analogia"
                 # SIN CONTAR DOS VECES. Los vecinos que comparten grupo de fusion
                 # comparten estadisticos, asi que sumarlos multiplicaria el respaldo por
@@ -537,12 +561,17 @@ class BaseReferencia:
             sd_modelo = float(np.sqrt(var))
             if banda is None:
                 banda = {q: mu + Z_NORMAL[q] * sd_modelo for q in CUANTILES}
+            if banda_per is None:
+                sdp = float(np.sqrt(var_per))
+                banda_per = {q: mu + Z_NORMAL[q] * sdp for q in CUANTILES}
             sd = float((banda[0.75] - banda[0.25]) / (2.0 * 0.6745))
             conf, incert = _confianza(var_centro)
             ancho = float(np.exp(0.6745 * sd) - 1.0)      # el de la banda entregada
             filas[t] = {"referencia_log": mu, "sd": sd,
                         "p10_log": banda[0.10], "p25_log": banda[0.25],
                         "p75_log": banda[0.75], "p90_log": banda[0.90],
+                        "p10per_log": banda_per[0.10], "p25per_log": banda_per[0.25],
+                        "p75per_log": banda_per[0.75], "p90per_log": banda_per[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
                         "incert_centro": round(incert, 4),
                         "empresas": n_emp, "personas": n_per,
@@ -552,9 +581,11 @@ class BaseReferencia:
         out.insert(0, "cargo", titulos)
         if anio is not None:
             f = float(self.sbu(int(anio)))
-            for col, nueva in (("referencia_log", "referencia"), ("p10_log", "p10"),
-                               ("p25_log", "p25"), ("p75_log", "p75"),
-                               ("p90_log", "p90")):
+            for col, nueva in (("referencia_log", "referencia"),
+                               ("p10_log", "p10_emp"), ("p25_log", "p25_emp"),
+                               ("p75_log", "p75_emp"), ("p90_log", "p90_emp"),
+                               ("p10per_log", "p10"), ("p25per_log", "p25"),
+                               ("p75per_log", "p75"), ("p90per_log", "p90")):
                 out[nueva] = (np.exp(out[col]) * f).round(2)
         return out
 
