@@ -1,0 +1,45 @@
+construir 4,319 empresas   evaluar 1,439
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,432 titulos...
+construyendo la base sobre tr...
+base: 45,021 celdas
+
+========================================================================================
+EL BARRIDO. Que protege, que cuesta
+========================================================================================
+  suelo    celdas dir.  cobertura   pierde      MAE   personas protegidas
+  0              9,872     62.4%    0.0%   0.2372                    0
+  3              9,872     62.4%    0.0%   0.2372                    0
+  5              9,398     62.2%    0.2%   0.2372                1,781
+  10             7,044     61.0%    1.4%   0.2372               17,669
+  15             5,825     59.6%    2.8%   0.2375               32,022
+  20             4,935     58.3%    4.1%   0.2382               46,983
+  30             3,899     56.9%    5.5%   0.2386               71,694
+
+========================================================================================
+LO QUE DE VERDAD DECIDE: .empeora la respuesta de la gente afectada?
+========================================================================================
+  Se compara, SOLO sobre las personas que cambian de regimen, el error con
+  datos propios contra el error por analogia. Si es parecido, el suelo es gratis.
+
+  suelo    personas  MAE directo  MAE analogia     coste
+  3               0  (muy poca gente para medir)
+  5             314       0.3615        0.3754   +0.0139
+  10          2,899       0.3772        0.3821   +0.0049
+  15          5,860       0.3106        0.3245   +0.0138
+  20          8,428       0.3096        0.3360   +0.0264
+  30         11,419       0.3196        0.3454   +0.0258
+
+========================================================================================
+Y CUANTAS CELDAS SIGUEN PUBLICANDO CUANTILES EMPIRICOS
+========================================================================================
+  (son las mas expuestas: cuartiles de datos reales, no un numero de modelo)
+  suelo 0    con banda empirica:  3,391   bloqueadas:     0
+  suelo 3    con banda empirica:  3,391   bloqueadas:     0
+  suelo 5    con banda empirica:  3,391   bloqueadas:     0
+  suelo 10   con banda empirica:  3,391   bloqueadas:     0
+  suelo 15   con banda empirica:  3,375   bloqueadas:    16
+  suelo 20   con banda empirica:  3,194   bloqueadas:   197
+  suelo 30   con banda empirica:  2,790   bloqueadas:   601
+EXIT=0

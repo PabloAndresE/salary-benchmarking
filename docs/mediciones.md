@@ -1137,6 +1137,36 @@ micro.
 
 ---
 
+### 17.7 El suelo cuenta empresas y no dice nada de personas
+
+La regla de dominancia del QCEW (`SUELO_SHARE = 0,80`) no estaba aplicada en el producto.
+**Medido, no hace falta:** sobre las 5.168 celdas directas, **cero** superan el 80% de peso
+en la mediana, y el máximo de todo el padrón es 67,7%. El peso `w_f` está acotado por
+`1/tau_c²`, así que ninguna empresa puede dominar. Se satisface por construcción.
+
+El hueco real es otro: tres empresas con una persona cada una son tres personas.
+
+| Personas en la celda | Celdas directas | % |
+|---|---|---|
+| **3–4** | **297** | **5,7%** |
+| 5–9 | 1.278 | 24,7% |
+| 10–19 | 1.169 | 22,6% |
+| 20+ | 2.424 | 46,9% |
+
+Barrido del suelo de personas:
+
+| Suelo | Cobertura | Pierde | MAE | Protegidas | Coste por afectado |
+|---|---|---|---|---|---|
+| 3 | 62,4% | 0,0% | 0,2372 | 0 | *no-op* |
+| 5 | 62,2% | 0,2% | 0,2372 | 1.781 | +0,0139 |
+| **10** | **61,0%** | **1,4%** | **0,2372** | **17.669** | **+0,0049** |
+| 20 | 58,3% | 4,1% | 0,2382 | 46.983 | +0,0264 |
+
+Se elige **10**: el MAE global no se mueve, es donde menos pierde la gente afectada, y no
+bloquea ninguna de las 3.391 celdas con banda empírica. Ver D-019.
+
+---
+
 ## 18. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |

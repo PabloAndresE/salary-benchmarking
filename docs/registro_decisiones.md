@@ -1876,3 +1876,85 @@ representa a nadie en los extremos.
 
 **El 26–34% de las empresas no tiene `segmento` asignado**, y ese grupo paga distinto del resto. Si
 se monta la segmentación, ese tercio es el problema, no las bandas.
+
+---
+
+## D-019 — El suelo cuenta empresas y también tiene que contar personas
+
+**Fecha:** 2026-09-04
+**Origen:** al repasar qué decisiones estaban aplicadas en el producto se vio que
+`evaluacion/referencia.py` define `SUELO_SHARE = 0,80` —la regla de dominancia del QCEW,
+D-011— y que `producto/base_referencia.py` no la aplicaba. Parecía un hueco de
+confidencialidad.
+**Evidencia:** `research/experimentos/e3_varianza/` scripts `10` y `11`, con salidas
+commiteadas.
+**Estado:** decisión tomada y montada.
+
+### Lo primero que se midió resultó no ser el problema
+
+**La regla de dominancia se cumple sola.** Sobre las 5.168 celdas directas:
+
+| | celdas dominadas | peso de la empresa mayor |
+|---|---|---|
+| por PERSONAS | 198 (3,8%) | — |
+| **por PESO en la mediana** | **0 (0,0%)** | p50 20,3% · p95 35,4% · **máx 67,7%** |
+
+Nunca llega al 80%, y no por suerte: `w_f = 1/(tau_c² + sigma_c²/n_f)` está acotado por
+`1/tau_c²`, así que por muchos empleados que tenga, una empresa no puede dominar la mediana
+ponderada. La regla del QCEW existe porque ellos agregan por cabezas; **el estimador
+inverso-varianza la satisface por construcción.** Se registra como propiedad verificada, no
+como pendiente — y **no se añade la regla**, que habría sido código muerto.
+
+### El hueco real es otro
+
+`MIN_EMPRESAS = 3` protege contra que **una empresa** se reconozca en el número. No dice
+nada de **personas**: tres empresas con una persona cada una son tres personas, y la
+mediana de sus tres votos **es el sueldo de una de ellas**.
+
+| Personas en la celda | Celdas directas | % |
+|---|---|---|
+| **3–4** | **297** | **5,7%** |
+| 5–9 | 1.278 | 24,7% |
+| 10–19 | 1.169 | 22,6% |
+| 20+ | 2.424 | 46,9% |
+
+### El umbral sale de un barrido, no de la costumbre
+
+| Suelo | Cobertura directa | Pierde | MAE global | Personas protegidas | Coste por afectado |
+|---|---|---|---|---|---|
+| 3 | 62,4% | 0,0% | 0,2372 | 0 | *no-op* |
+| 5 | 62,2% | 0,2% | 0,2372 | 1.781 | +0,0139 |
+| **10** | **61,0%** | **1,4%** | **0,2372** | **17.669** | **+0,0049** |
+| 15 | 59,6% | 2,8% | 0,2375 | 32.022 | +0,0138 |
+| 20 | 58,3% | 4,1% | 0,2382 | 46.983 | +0,0264 |
+| 30 | 56,9% | 5,5% | 0,2386 | 71.694 | +0,0258 |
+
+**Un suelo de 3 sería inútil**: con 3 empresas ya hay 3 personas por construcción.
+
+### La decisión
+
+**`MIN_PERSONAS = 10`**, junto al suelo de empresas. Tres razones convergen:
+
+1. **El MAE global no se mueve** (0,2372, idéntico a no tener suelo). A partir de 15 sube.
+2. **Es donde menos pierde la gente afectada**: +0,0049 contra +0,0139 en 5 y +0,0264 en
+   20. Las celdas de 5–9 personas son justo las que la analogía contesta casi igual de bien.
+3. **No bloquea ni una banda empírica.** Las 3.391 celdas que publican cuartiles reales
+   —las más expuestas— sobreviven intactas hasta el umbral 15.
+
+**No es pérdida de cobertura de respuesta**: se sigue contestando siempre. Lo que cambia es
+que esas 17.669 personas se contestan por analogía en vez de publicar una mediana que es el
+sueldo de alguien.
+
+### Lo que enseñó sobre el método
+
+El defecto que motivó la revisión —la regla de dominancia ausente— **no existía**. Medirlo
+en vez de aplicarlo directamente ahorró código muerto y, de paso, destapó el hueco de
+verdad, que estaba al lado y era invisible desde la misma pregunta. Es el mismo patrón de
+D-015: la primera lectura de un problema suele ser la equivocada.
+
+### Un test que el cambio dejó obsoleto, y por qué importa
+
+`test_la_confianza_sale_del_intervalo_y_no_del_conteo` afirmaba *"menos datos, intervalo más
+ancho"*. Con D-016 y D-017 eso es **falso**: el ancho de la banda mide el mercado —que puede
+ser estrecho con pocos datos— y lo que crece al tener menos empresas es `incert_centro`. El
+test se reescribió sobre la magnitud correcta en vez de relajarse.

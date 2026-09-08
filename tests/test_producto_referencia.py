@@ -142,13 +142,20 @@ def test_la_confianza_sale_del_intervalo_y_no_del_conteo(caso):
     # razon— y las dos celdas comparten estadisticos, que es justo lo contrario de lo
     # que este test quiere contrastar.
     emb["BODEGA FLACA"] = centros["BODEGA"] + 0.4 * centros["SISTEMAS"]
-    filas += [(f"EF{e}", "BODEGA FLACA", 0.2) for e in range(3)]
+    # 3 empresas pero con gente dentro: el suelo de personas rechaza las celdas de 3-4
+    # personas, y aqui lo que se quiere contrastar es POCAS EMPRESAS, no poca gente.
+    # Y las tres pagan distinto, para que su mercado sea comparable al de la gorda.
+    for e, base in enumerate((0.10, 0.20, 0.32)):
+        filas += [(f"EF{e}", "BODEGA FLACA", base + 0.01 * k) for k in range(4)]
     b = _base(filas, emb)
 
     gorda = b.referenciar(["BODEGA 0"], emb).iloc[0]
     flaca = b.referenciar(["BODEGA FLACA"], emb).iloc[0]
     assert gorda["base"] == flaca["base"] == "datos directos"
-    assert flaca["ancho_rel"] > gorda["ancho_rel"], "menos datos, intervalo mas ancho"
+    # Lo que separa a las dos es la INCERTIDUMBRE DEL CENTRO, no el ancho de la banda: el
+    # ancho dice cuanto varia el mercado —que puede ser estrecho con pocos datos— y la
+    # incertidumbre dice cuanto puede moverse la referencia. Ver D-017.
+    assert flaca["incert_centro"] > gorda["incert_centro"], "menos empresas, centro peor"
     assert gorda["confianza"] == "ALTA"
 
 
@@ -360,8 +367,15 @@ def test_la_confianza_baja_cuando_hay_MENOS_empresas_aunque_el_mercado_sea_igual
     # peor determinada, y la etiqueta tiene que decirlo.
     rng = np.random.default_rng(7)
     emb = {"MUCHAS": np.array([1.0, 0.0, 0.0]), "POCAS": np.array([0.0, 1.0, 0.0])}
-    filas = [(f"EM{e}", "MUCHAS", 0.5 + rng.normal(0, .30)) for e in range(40)]
-    filas += [(f"EP{e}", "POCAS", 0.5 + rng.normal(0, .30)) for e in range(4)]
+    # el efecto de empresa lo comparten los empleados de esa empresa, y cada celda tiene
+    # gente de sobra: lo que se contrasta es el NUMERO DE EMPRESAS, no el de personas
+    filas = []
+    for e in range(40):
+        u = rng.normal(0, .30)
+        filas += [(f"EM{e}", "MUCHAS", 0.5 + u + rng.normal(0, .02)) for _ in range(3)]
+    for e in range(4):
+        u = rng.normal(0, .30)
+        filas += [(f"EP{e}", "POCAS", 0.5 + u + rng.normal(0, .02)) for _ in range(3)]
     b = _base(filas, emb)
     r = b.referenciar(["MUCHAS", "POCAS"], emb).set_index("cargo")
     assert r.loc["MUCHAS", "base"] == r.loc["POCAS", "base"] == "datos directos"
@@ -388,3 +402,33 @@ def test_la_confianza_no_depende_del_ancho_del_mercado():
     r = _base(filas, emb).referenciar(["ESTRECHO", "ANCHO"], emb).set_index("cargo")
     assert r.loc["ANCHO", "ancho_rel"] > 5 * r.loc["ESTRECHO", "ancho_rel"], "la banda si"
     assert r.loc["ESTRECHO", "confianza"] == "ALTA", "el centro se conoce bien"
+
+
+def test_una_celda_de_tres_personas_no_publica_su_mediana():
+    # El suelo de EMPRESAS no dice nada de PERSONAS: tres empresas con una persona cada
+    # una son tres personas, y la mediana de sus tres votos ES el sueldo de una de ellas.
+    # Con `MIN_PERSONAS` esa celda pasa a contestarse por analogia.
+    from benchmarking.producto.base_referencia import MIN_EMPRESAS, MIN_PERSONAS
+    emb = {"RARO": np.array([1.0, 0.0, 0.0]), "VECINO": np.array([0.93, 0.37, 0.0])}
+    # 3 empresas, 1 persona cada una: pasa el suelo de empresas, no el de personas
+    filas = [(f"ER{e}", "RARO", 1.0 + 0.1 * e) for e in range(3)]
+    filas += [(f"EV{e}", "VECINO", 0.5) for e in range(6) for _ in range(4)]
+    b = _base(filas, emb)
+    i = b.idx["RARO"]
+    assert b.emp[i] >= MIN_EMPRESAS, "pasa el suelo de empresas"
+    assert b.personas[i] < MIN_PERSONAS, "y no el de personas"
+    r = b.referenciar(["RARO"], emb).iloc[0]
+    assert r["base"] == "por analogia", "no puede publicar la mediana de 3 personas"
+    # se sigue respondiendo: es la decision de producto
+    assert np.isfinite(r["referencia_log"])
+
+
+def test_el_suelo_de_personas_no_toca_las_celdas_con_gente():
+    from benchmarking.producto.base_referencia import MIN_PERSONAS
+    emb = {"GORDO": np.array([1.0, 0.0, 0.0]), "OTRO": np.array([0.0, 1.0, 0.0])}
+    filas = [(f"EG{e}", "GORDO", 1.0 + 0.05 * k) for e in range(4) for k in range(5)]
+    filas += [(f"EO{e}", "OTRO", 0.5) for e in range(4) for _ in range(5)]
+    b = _base(filas, emb)
+    i = b.idx["GORDO"]
+    assert b.personas[i] >= MIN_PERSONAS
+    assert b.referenciar(["GORDO"], emb).iloc[0]["base"] == "datos directos"

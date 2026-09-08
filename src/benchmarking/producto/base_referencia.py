@@ -66,6 +66,32 @@ from .nivel import efecto_nivel, nivel_lexico
 VECINOS = 25
 MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
 
+# EL SUELO DE EMPRESAS NO DICE NADA DE PERSONAS, y hace falta que lo diga.
+#
+# `MIN_EMPRESAS = 3` protege contra que UNA empresa se reconozca en el numero, y esa parte
+# funciona: el peso `w_f = 1/(tau_c^2 + sigma_c^2/n_f)` esta acotado por `1/tau_c^2`, asi
+# que ninguna empresa puede dominar la mediana ponderada. Medido: el peso mayor llega como
+# mucho al 67,7% y la regla de dominancia del QCEW (80%) se cumple sola en las 5.168
+# celdas directas — no hace falta anadirla.
+#
+# Lo que ese suelo NO ve es otra cosa: tres empresas con UNA persona cada una son tres
+# personas, y la mediana de sus tres votos ES el sueldo de una de ellas. Medido: 297 celdas
+# directas (5,7%) tienen 3 o 4 personas en total. Ver `e3_varianza/10`.
+#
+# EL 10 SALE DE UN BARRIDO (`e3_varianza/11`), no de la costumbre:
+#
+#   suelo   cobertura  pierde     MAE   protegidas   coste p/afectado
+#      3       62,4%     0,0%  0,2372            0   <- no-op: 3 empresas ya son 3 personas
+#      5       62,2%     0,2%  0,2372        1.781        +0,0139
+#     10       61,0%     1,4%  0,2372       17.669        +0,0049   <- elegido
+#     20       58,3%     4,1%  0,2382       46.983        +0,0264
+#
+# Tres razones convergen: el MAE global no se mueve (a partir de 15 empieza a subir), es el
+# umbral donde MENOS pierde la gente afectada —las celdas de 5-9 personas son justo las que
+# la analogia contesta casi igual de bien—, y no bloquea ni una de las 3.391 celdas que
+# publican cuantiles empiricos, que son las mas expuestas.
+MIN_PERSONAS = 10
+
 # FUSION DE CUASI-DUPLICADOS. El catalogo trae la misma etiqueta tecleada de varias formas
 # —`ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO` convive con seis variantes de espaciado
 # y una errata—, y cada grafia era una celda separada, delgada, que se contestaba por
@@ -225,6 +251,11 @@ class BaseReferencia:
         # quien lee un informe: ".cuanta gente hay detras de este numero?".
         self.personas = (np.zeros(n, dtype=np.int64) if personas is None
                          else np.asarray(personas, dtype=np.int64))
+        # Suelo de personas, ademas del de empresas. Es atributo y no constante para poder
+        # barrerlo en los experimentos sin reconstruir la base. Las bases guardadas antes
+        # de `e3_varianza/11` no traen `personas` —quedan en cero— y ahi el suelo se apaga
+        # solo, porque aplicarlo dejaria toda la base sin respuesta directa.
+        self.min_personas = MIN_PERSONAS if self.personas.max(initial=0) > 0 else 0
         self.tau2, self.sigma2, self.lam, self.sbu = tau2, sigma2, lam, sbu
         self.nivel = (np.full(len(self.celdas), np.nan) if nivel is None
                       else np.asarray(nivel, dtype=float))
@@ -393,7 +424,9 @@ class BaseReferencia:
             propio = self.idx.get(t)
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
             banda = None
-            directo = propio is not None and self.emp[propio] >= MIN_EMPRESAS
+            directo = (propio is not None
+                       and self.emp[propio] >= MIN_EMPRESAS
+                       and self.personas[propio] >= self.min_personas)
             if directo:
                 mu = self.m[propio]
                 # La banda habla de EMPRESAS, asi que NO lleva `sigma`: la dispersion
