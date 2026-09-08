@@ -150,3 +150,42 @@ def test_un_sueldo_ilegible_no_se_confunde_con_falta_de_referencia():
     assert det["lectura_mercado"].iloc[1] == "sueldo ilegible"
     assert res["sueldos_ilegibles"] == 1
     assert "formato de la columna" in texto_resumen(res, puesto)
+
+
+def test_por_puesto_entrega_la_banda_QUE_SUSTENTA_LA_LECTURA():
+    # La banda de EMPRESAS se calculaba, decidia la columna `lectura` y se botaba en la
+    # linea siguiente: el cliente recibia "en linea" / "muy por encima" sin los numeros
+    # que lo justifican. `_lectura` existe precisamente para que la frase sea comprobable
+    # —"dentro del 50% central del mercado"— y sin la banda no se podia comprobar.
+    df = pd.DataFrame({"cargo": ["BARATO", "NORMAL", "CARO"],
+                       "sueldo": [np.exp(0.5) * 470, np.exp(1.0) * 470,
+                                  np.exp(2.0) * 470]})
+    _, puesto, _ = comparar(df, "sueldo", "cargo",
+                            _ref([1.0, 1.0, 1.0], ["ALTA"] * 3), _sbu, 2025)
+    p = puesto.set_index("cargo")
+    for q in ("p10_emp", "p25_emp", "p75_emp", "p90_emp"):
+        assert q in p.columns, f"falta {q}: la lectura viaja sin su banda"
+
+    # En DOLARES, no en log: `_ref` pone p25 = ref - 0,2 y p75 = ref + 0,2.
+    assert abs(p.loc["NORMAL", "p25_emp"] - np.exp(0.8) * 470) < 0.01
+    assert abs(p.loc["NORMAL", "p75_emp"] - np.exp(1.2) * 470) < 0.01
+    assert (p["p10_emp"] < p["p25_emp"]).all() and (p["p75_emp"] < p["p90_emp"]).all()
+
+    # LA INVARIANTE: la etiqueta tiene que ser comprobable contra la banda publicada.
+    for cargo, r in p.iterrows():
+        dentro = r["p25_emp"] <= r["sueldo_mediano"] <= r["p75_emp"]
+        assert dentro == (r["lectura"] == "en linea"), (
+            f"{cargo}: lectura {r['lectura']!r} no cuadra con su propia banda")
+
+
+def test_el_resumen_por_puesto_usa_la_MEDIANA_y_lo_dice_en_el_nombre():
+    # La columna se llamaba `sueldo_medio` y contenia una mediana. El numero estaba bien
+    # y el nombre mentia: un cliente que lea "medio" y sume por su cuenta encuentra otra
+    # cosa y deja de creerse el informe. Y la mediana es la correcta, porque es la unidad
+    # con la que vota cada empresa de la base.
+    df = pd.DataFrame({"cargo": ["CONTADOR"] * 4,
+                       "sueldo": [900.0, 900.0, 900.0, 9000.0]})
+    _, puesto, _ = comparar(df, "sueldo", "cargo", _ref([1.0] * 4, ["ALTA"] * 4),
+                            _sbu, 2025)
+    assert "sueldo_medio" not in puesto.columns, "el nombre mentia"
+    assert puesto["sueldo_mediano"].iloc[0] == 900.0, "un solo sueldo no mueve el voto"

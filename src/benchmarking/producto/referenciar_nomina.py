@@ -165,6 +165,11 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
     # La hoja de personas lleva la banda de PERSONAS (`p25`/`p75`); la de empresas se
     # queda fuera del detalle para no poner dos bandas al lado del mismo sueldo. Va en
     # `por_puesto`, que es donde la unidad coincide.
+    #
+    # Esto ultimo era falso hasta que se arreglo: `comparar` calculaba la banda de
+    # empresas, decidia con ella la columna `lectura` y la botaba en la linea siguiente.
+    # El cliente recibia el veredicto sin los numeros que lo sustentan, que es justo lo
+    # que `_lectura` existe para evitar. Ahora `por_puesto` la lleva en dolares.
     salida = salida.drop(columns=[c for c in salida.columns
                                   if c.endswith("_emp")], errors="ignore")
     orden = ["referencia", "p10", "p25", "p75", "p90", "confianza", "incert_centro",

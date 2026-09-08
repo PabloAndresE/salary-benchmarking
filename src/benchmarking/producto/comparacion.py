@@ -192,13 +192,30 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     # UN PUESTO de la empresa se compara contra la banda de EMPRESAS, y con la MEDIANA de
     # lo que paga la empresa —que es su voto—, no con cada persona. Es la misma unidad con
     # la que se construyo la banda.
+    #
+    # Y LA BANDA VIAJA CON LA LECTURA. Antes se calculaba, se usaba para decidir la
+    # etiqueta y se botaba en la linea siguiente: el cliente leia "en linea" o "muy por
+    # encima" sin los numeros que lo sustentan. El docstring de `_lectura` dice que "en
+    # linea" significa *dentro del 50% central del mercado*, "una frase que el cliente
+    # puede comprobar" — y no la podia comprobar. Es tambien la banda que un gerente usa
+    # para decidir politica, porque su unidad es la empresa y no la persona.
+    #
+    # Se recalcula desde los `_log` y no se toma de `ref_df`: las columnas en dolares solo
+    # existen si a `referenciar` se le paso el anio, y aqui el anio siempre se conoce.
+    f = float(sbu(int(anio)))
     out["_y"] = yv
     for q in ("p10", "p25", "p75", "p90"):
-        out["_" + q] = col(q + "_log").to_numpy(float)
+        lg = col(q + "_log").to_numpy(float)
+        out["_" + q] = lg
+        out[q + "_emp"] = (np.exp(lg) * f).round(2)
     por_puesto = (out.groupby(col_cargo)
                      .agg(personas=(col_sueldo, "size"),
-                          sueldo_medio=("sueldo_actual", "median"),
+                          sueldo_mediano=("sueldo_actual", "median"),
                           referencia=("referencia", "first"),
+                          p10_emp=("p10_emp", "first"),
+                          p25_emp=("p25_emp", "first"),
+                          p75_emp=("p75_emp", "first"),
+                          p90_emp=("p90_emp", "first"),
                           vs_mercado=("vs_mercado", "median"),
                           confianza=("confianza", "first"),
                           _voto=("_y", "median"), _p10=("_p10", "first"),
