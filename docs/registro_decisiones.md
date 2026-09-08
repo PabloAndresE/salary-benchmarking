@@ -2161,3 +2161,89 @@ recortado— daría un `lambda_5` menor. Anotado en pendientes.
 cancelando, arreglar uno y dejar el otro visible es preferible a mantener los dos
 escondidos: un modelo bien especificado y visiblemente imperfecto se defiende, uno
 accidentalmente calibrado se cae en cuanto alguien pregunta por qué.
+
+---
+
+## D-022 — El sector no entra, ni para la banda ni para el centro. Y se retira lo de D-014
+
+**Fecha:** 2026-09-08
+**Origen:** al inventariar qué variables usa el modelo y cuáles no, apareció que **D-014
+había decidido que el sector entra como segundo eje del arquetipo** y que esa decisión
+nunca se implementó ni se retiró. Y que sólo se había medido para la banda.
+**Evidencia:** `research/experimentos/e3_varianza/07` (banda) y `16` (centro).
+**Estado:** decisión tomada. **Cierra la que D-014 dejó abierta.**
+
+### Lo que D-014 decidió, y con qué condición
+
+> *«El sector entra como segundo eje del arquetipo, no como control. Pasa de
+> `rol-familia × nivel` a `rol-familia × nivel × sector`.»*
+
+Con 24,7% de reducción de varianza dentro de las etiquetas anchas y placebo de 1,7%. Pero
+el propio D-014 puso el freno:
+
+> *«Lo de `10` es descomposición de varianza, no R² fuera de muestra. Antes de que el
+> sector entre al spec como eje, hay que medirlo fuera de muestra.»*
+
+Esa medición se hizo en dos partes, y las dos dicen que no.
+
+### Para la BANDA: pierde (`07`)
+
+| Definición | pinball |
+|---|---|
+| cargo (hoy) | **0,1255** |
+| cargo × sector | 0,1289 |
+| cargo × tamaño | 0,1284 |
+| cargo × provincia | 0,1288 |
+
+### Para el CENTRO: indistinguible del azar (`16`)
+
+Con el tamaño la conclusión fue justo la contraria —pierde para la banda, arregla el
+centro (D-018)—, así que hacía falta la segunda medición. Misma forma: desplazamiento
+`(cargo, sector)` con 10+ empresas, 1.065 correcciones sobre 469 cargos, actuando en el
+25,5% de los votos apartados.
+
+```
+con sector − sin sector = +0,00232   IC 95% [+0,00165, +0,00302]   EMPEORA
+PLACEBO    − sin sector = +0,00241   IC 95% [+0,00187, +0,00288]   EMPEORA
+```
+
+**El placebo es lo que lo cierra.** Barajar el sector entre empresas hace exactamente el
+mismo daño que aplicarlo bien: +0,00241 contra +0,00232. No hay señal en la asignación —
+todo el perjuicio viene de meter ruido en la referencia.
+
+### Por qué el sector no sesga el centro y el tamaño sí
+
+| | sesgo de la referencia |
+|---|---|
+| **tamaño** | PEQUEÑA −34,2% · MEDIANA −15,0% · GRANDE +9,0% |
+| **sector** | todos entre +2,6% y +17,3%, y casi todos cerca de +5% |
+
+Los del tamaño tienen **signos opuestos y estructura monótona**. Los del sector son todos
+del mismo signo: eso no es un efecto de sector, es un **desplazamiento global** de la
+referencia sobre esa población. El «recorrido de 36,4%» lo produce el sector `P` con 33
+votos, que es ruido.
+
+Y por escalón tampoco hay subconjunto que rescatar: el nivel 1 mejoraría algo y los
+niveles 3, 4 y 5 empeoran.
+
+### Las decisiones
+
+**1. El sector NO entra al estimador.** Ni en la banda ni en el centro. Sigue usándose
+para **estratificar la partición train/test**, que es otra cosa: hacer la muestra
+representativa, no predecir.
+
+**2. Se retira explícitamente la decisión 2 de D-014.** El arquetipo no pasa a
+`rol-familia × nivel × sector`. Se queda en `rol-familia × nivel`, que es lo único que ha
+sobrevivido a una validación fuera de muestra.
+
+**3. La descomposición de varianza de D-014 no se contradice: se reinterpreta.** El 24,7%
+era ω² dentro de muestra sobre etiquetas anchas. Que una variable explique varianza en la
+muestra no implica que mejore la predicción fuera de ella — y aquí no lo hace. Es
+exactamente el límite que D-014 se puso a sí mismo, cumplido.
+
+### Lo que enseña sobre el método
+
+Con el tamaño, «pierde para la banda» **no** implicaba «pierde para el centro»: eran dos
+preguntas y la segunda tenía otra respuesta. Con el sector, la segunda pregunta da lo
+mismo que la primera. **No se podía saber sin medirla**, y saltársela habría dejado a
+D-014 en pie por defecto.

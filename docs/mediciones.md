@@ -1234,6 +1234,36 @@ empeoran (+0,0027 y +0,0146).
 
 ---
 
+### 17.10 El sector: medido para la banda y para el centro, y no entra en ninguno
+
+D-014 decidio que el sector entra como segundo eje, con la condicion explicita de medirlo
+FUERA DE MUESTRA antes. Esa medicion se hizo en dos partes y las dos dicen que no.
+
+**Para la banda** (`07`): pinball 0,1289 contra 0,1255 del cargo solo. Pierde.
+
+**Para el centro** (`16`): con el tamano la conclusion fue la contraria —pierde para la
+banda, arregla el centro (D-018)—, asi que hacia falta la segunda medicion.
+
+```
+con sector - sin sector = +0,00232   IC 95% [+0,00165, +0,00302]   EMPEORA
+PLACEBO    - sin sector = +0,00241   IC 95% [+0,00187, +0,00288]   EMPEORA
+```
+
+**El placebo es lo que lo cierra:** barajar el sector hace exactamente el mismo dano que
+aplicarlo bien. No hay senal en la asignacion.
+
+Y se ve por que al mirar los sesgos:
+
+```
+tamano    PEQUENA -34,2%   MEDIANA -15,0%   GRANDE +9,0%   <- signos opuestos
+sector    todos entre +2,6% y +17,3%, casi todos cerca de +5%   <- mismo signo
+```
+
+Los del sector son un desplazamiento GLOBAL de la referencia, no un efecto de sector. El
+"recorrido de 36,4%" lo produce un sector con 33 votos. Ver D-022.
+
+---
+
 ## 18. Mediciones pendientes
 
 | Qué | Por qué importa | Coste |

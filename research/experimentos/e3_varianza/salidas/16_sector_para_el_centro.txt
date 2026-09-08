@@ -1,0 +1,49 @@
+construir 4,328 empresas   evaluar 1,442   sectores: 19
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,772 titulos...
+construyendo la base sobre tr...
+
+correcciones (cargo x sector) con 10+ empresas: 1,065
+cargos con al menos una: 469 de 44,124
+votos donde la correccion actua: 9,440 de 37,084 (25.5%)
+
+==============================================================================
+A. .HAY SESGO POR SECTOR EN LA REFERENCIA DE HOY?
+==============================================================================
+  sector                           votos   sesgo hoy   con sector
+  A                                  562      +4.0%       +6.8%
+  C                                1,395      +5.3%       +3.0%
+  F                                  105     +17.3%      +16.6%
+  G                                2,322      +2.6%       +3.3%
+  H                                  187      +5.5%       +2.2%
+  I                                   97      -0.8%       +9.8%
+  M                                  135     +15.3%      +11.0%
+  N                                   97      +6.0%       -0.4%
+  NA                               4,327      +5.1%       +5.9%
+  P                                   33     +35.6%      +20.5%
+  Q                                  107      +2.7%       -0.1%
+  RECORRIDO                                   36.4%       20.8%
+
+==============================================================================
+B. PRIMARIA: pinball sobre los votos corregibles
+==============================================================================
+  variante           PINBALL   |sesgo|   cob 50%
+  sin sector          0.1153     4.7%    50.4%
+  con sector          0.1176     4.9%    49.5%
+  PLACEBO             0.1177     4.9%    49.2%
+
+  contraste pareado (300 replicas de empresas apartadas)
+    con sector     - sin sector = +0.00232  IC 95% [+0.00165, +0.00302]  EMPEORA
+    PLACEBO        - sin sector = +0.00241  IC 95% [+0.00187, +0.00288]  EMPEORA
+
+==============================================================================
+C. .DONDE ESTA EL SESGO? por escalon, para ver si hay que estrechar
+==============================================================================
+  nivel        votos   recorrido hoy   con sector
+  1            2,726          21.7%       15.1%
+  2              534           8.0%        8.7%
+  3              546           8.7%       11.5%
+  4              981           8.9%       13.6%
+  5              723          23.4%       24.6%
+EXIT=0
