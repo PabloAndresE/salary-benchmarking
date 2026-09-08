@@ -432,3 +432,79 @@ def test_el_suelo_de_personas_no_toca_las_celdas_con_gente():
     i = b.idx["GORDO"]
     assert b.personas[i] >= MIN_PERSONAS
     assert b.referenciar(["GORDO"], emb).iloc[0]["base"] == "datos directos"
+
+
+# --- D-018: correccion del centro por tamano de empresa -------------------------
+
+def _caso_segmentado(n_por_seg=14):
+    """Un cargo ALTO donde el tamano manda, y uno de BASE donde no.
+
+    Reproduce el patron medido: en el nivel 5 la empresa pequena paga la mitad que la
+    grande, y en el nivel 1 pagan lo mismo.
+    """
+    emb = {"GERENTE DE PLANTA": np.array([1.0, 0.0, 0.0]),
+           "AUXILIAR DE PLANTA": np.array([0.0, 1.0, 0.0])}
+    paga = {("GERENTE DE PLANTA", "GRANDE"): 2.0,
+            ("GERENTE DE PLANTA", "PEQUEÑA"): 1.0,
+            ("AUXILIAR DE PLANTA", "GRANDE"): 0.2,
+            ("AUXILIAR DE PLANTA", "PEQUEÑA"): 0.2}
+    filas = []
+    for (cargo, seg), base in paga.items():
+        for e in range(n_por_seg):
+            filas += [(f"E{cargo[:3]}{seg[:2]}{e}", cargo, base + 0.01 * k, seg)
+                      for k in range(4)]
+    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "segmento"]), emb
+
+
+def test_el_tamano_corrige_el_centro_en_los_cargos_altos():
+    from benchmarking.producto.base_referencia import NIVEL_MIN_SEGMENTAR
+    from benchmarking.producto.nivel import nivel_lexico
+    marco, emb = _caso_segmentado()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    assert nivel_lexico("GERENTE DE PLANTA") >= NIVEL_MIN_SEGMENTAR
+
+    sin = b.referenciar(["GERENTE DE PLANTA"], emb).iloc[0]["referencia_log"]
+    gr = b.referenciar(["GERENTE DE PLANTA"], emb, segmento="GRANDE").iloc[0]
+    pq = b.referenciar(["GERENTE DE PLANTA"], emb, segmento="PEQUENA").iloc[0]
+
+    assert pq["referencia_log"] < sin < gr["referencia_log"], "el centro se desplaza"
+    # la banda se mueve con el centro, no se queda atras
+    assert pq["p25_log"] < gr["p25_log"] and pq["p75_log"] < gr["p75_log"]
+    # y la ANCHURA no cambia: se desplaza, no se reestima
+    assert abs((gr["p75_log"] - gr["p25_log"]) - (pq["p75_log"] - pq["p25_log"])) < 1e-9
+
+
+def test_el_tamano_NO_toca_los_cargos_de_base():
+    # El sesgo medido es plano en el nivel 1 (recorrido 10,1%), asi que segmentar ahi
+    # moveria la referencia sin razon.
+    marco, emb = _caso_segmentado()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    sin = b.referenciar(["AUXILIAR DE PLANTA"], emb).iloc[0]["referencia_log"]
+    for seg in ("GRANDE", "PEQUENA"):
+        r = b.referenciar(["AUXILIAR DE PLANTA"], emb, segmento=seg).iloc[0]
+        assert abs(r["referencia_log"] - sin) < 1e-9, f"{seg} no deberia moverlo"
+
+
+def test_sin_segmento_el_comportamiento_es_el_de_siempre():
+    marco, emb = _caso_segmentado()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    a = b.referenciar(["GERENTE DE PLANTA"], emb)
+    for vacio in (None, "", "NA", "  "):
+        pd.testing.assert_frame_equal(a, b.referenciar(["GERENTE DE PLANTA"], emb,
+                                                       segmento=vacio))
+
+
+def test_un_segmento_con_pocas_empresas_no_mueve_nada():
+    # Por debajo del minimo el desplazamiento seria ruido. Aqui MICROEMPRESA tiene 2.
+    from benchmarking.producto.base_referencia import MIN_EMPRESAS_SEGMENTO
+    marco, emb = _caso_segmentado()
+    extra = pd.DataFrame(
+        [(f"EMICRO{e}", "GERENTE DE PLANTA", 0.1 + 0.01 * k, "MICROEMPRESA")
+         for e in range(2) for k in range(4)],
+        columns=["empresa_ruc", "cargo_norm", "y", "segmento"])
+    b = BaseReferencia.construir(pd.concat([marco, extra]), emb, _sbu)
+    assert 2 < MIN_EMPRESAS_SEGMENTO
+    sin = b.referenciar(["GERENTE DE PLANTA"], emb).iloc[0]["referencia_log"]
+    mi = b.referenciar(["GERENTE DE PLANTA"], emb,
+                       segmento="MICROEMPRESA").iloc[0]["referencia_log"]
+    assert abs(mi - sin) < 1e-9, "2 empresas no bastan para desplazar la referencia"

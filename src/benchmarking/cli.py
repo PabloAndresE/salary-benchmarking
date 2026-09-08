@@ -45,6 +45,11 @@ def main():
     rf.add_argument("--columna", default=None, help="columna de cargo (se autodetecta)")
     rf.add_argument("--columna-sueldo", default=None, help="columna de sueldo (se autodetecta)")
     rf.add_argument("--anio", type=int, default=2025, help="anio del SBU para los dolares")
+    rf.add_argument("--segmento", default=None,
+                    choices=["MICROEMPRESA", "PEQUENA", "MEDIANA", "GRANDE"],
+                    help="tamano de la empresa del cliente. Corrige el sesgo de los "
+                         "cargos altos: sin el, a una empresa pequena se le dice que su "
+                         "gerente general cobra un 56%% por debajo del mercado")
     rf.add_argument("--cache-embeddings", default=None)
     rf.add_argument("--base", default="base_referencia.npz", help="base serializada")
     rf.add_argument("--rehacer-base", action="store_true")
@@ -84,7 +89,7 @@ def main():
         from .producto.referenciar_nomina import referenciar_archivo
         referenciar_archivo(args.nomina, args.salida, client, s,
                             col_cargo=args.columna, col_sueldo=args.columna_sueldo,
-                            anio=args.anio,
+                            anio=args.anio, segmento=args.segmento,
                             cache_emb=args.cache_embeddings, ruta_base=args.base,
                             rehacer=args.rehacer_base)
 

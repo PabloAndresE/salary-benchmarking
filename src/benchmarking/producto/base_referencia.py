@@ -212,6 +212,112 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
     return float(max(np.finfo(float).tiny, (x * d2).sum() / den)) if den > 0 else 1.0
 
 
+# SEGMENTAR EL CENTRO POR TAMANO DE EMPRESA, en los cargos altos y solo ahi.
+#
+# Medido (`e3_varianza/07`-`09`): el tamano NO estrecha la banda —pinball 0,1255 -> 0,1284,
+# pierde— pero el CENTRO esta sesgado, y mucho, cuanto mas alto el escalon:
+#
+#   sesgo de la referencia    PEQUENA   MEDIANA   GRANDE   recorrido
+#   nivel 1                    +6,9%     +8,3%    +6,1%     10,1%   <- plano
+#   nivel 4                   -16,4%     -8,4%    +9,6%     26,1%
+#   nivel 5                   -32,8%    -16,6%   +22,2%     55,0%
+#
+# `GERENTE GENERAL` va de -56,0% en pequenas a +81,9% en grandes: a una empresa pequena se
+# le dice que su gerente cobra un 56% por debajo del mercado cuando entre sus pares esta
+# bien. Segmentando, el recorrido del nivel 5 baja de 55,0 a 14,8 puntos.
+#
+# POR ESCALON Y NO POR LISTA DE CARGOS. La seleccion automatica cargo a cargo esta medida
+# que es ruido: en `08` el PLACEBO eligio mas cargos (118) que la senal real (93).
+#
+# SE DESPLAZA LA BANDA ENTERA, no se reestima. Las dos mediciones son compatibles: la
+# distribucion de las empresas pequenas esta corrida hacia abajo, no es mas estrecha.
+#
+# NO SE ACTIVA SOLA: hace falta pasar `segmento` explicitamente. Y esa no es solo una
+# decision de interfaz — es la postura honesta despues de medir esta implementacion
+# (`e3_varianza/15`) con el criterio declarado ANTES de correr:
+#
+#   pinball  con segmento - sin segmentar = -0,00392  IC [-0,00797, +0,00005]  no pasa
+#            PLACEBO      - sin segmentar = +0,00662  IC [+0,00212, +0,01093]  empeora
+#
+# El criterio exigia el IC ENTERO bajo cero y el extremo superior es +0,00005. Es un casi
+# —un 2,0% de mejora dentro de la poblacion afectada— pero un casi no es un si.
+#
+# El sesgo, que es el defecto que motivo D-018, SI se arregla casi del todo:
+#
+#   segmento     sin segmentar   con segmento
+#   PEQUENA         -34,2%          +0,7%
+#   MEDIANA         -15,0%          -0,1%
+#   GRANDE           +9,0%          -4,3%
+#   recorrido        43,3%           5,0%
+#
+# Se podria argumentar que el pinball es la primaria equivocada para un defecto de
+# LOCALIZACION: penaliza debilmente un desplazamiento cuando la banda es muy ancha, y la
+# de `GERENTE GENERAL` es +-95%. El argumento es probablemente cierto y NO se usa, porque
+# cambiar la metrica despues de ver el resultado vacia el pre-registro de sentido. Para
+# volver a intentarlo hay que declarar antes cual es la primaria correcta y por que.
+NIVEL_MIN_SEGMENTAR = 4
+MIN_EMPRESAS_SEGMENTO = 10
+SEGMENTOS = ("MICROEMPRESA", "PEQUENA", "MEDIANA", "GRANDE")
+
+
+def _norm_segmento(v):
+    """`PEQUEÑA` llega con enie de BigQuery y sin ella de una bandera de consola."""
+    t = str(v or "").strip().upper().replace("Ñ", "N").replace("Ñ", "N")
+    return t if t in SEGMENTOS else None
+
+
+def _ajuste_segmento(marco, col, celdas, niveles, tau2_c, sigma2_c,
+                     nivel_min=NIVEL_MIN_SEGMENTAR, min_emp=MIN_EMPRESAS_SEGMENTO):
+    """Desplazamiento en log de cada (celda, segmento). Devuelve array celdas x SEGMENTOS.
+
+    Es la diferencia entre la mediana ponderada de los votos de ESE segmento y la de
+    todos. Positivo = ese tamano de empresa paga por encima de la referencia global.
+
+    Solo para los cargos con escalon >= `nivel_min`, que es donde el sesgo esta medido.
+    Y solo para los segmentos con `min_emp` empresas: por debajo, el desplazamiento seria
+    ruido y moveria la referencia sin razon.
+    """
+    idx = {c: i for i, c in enumerate(celdas)}
+    fuera = np.zeros((len(celdas), len(SEGMENTOS)))
+    if "segmento" not in marco.columns:
+        return fuera
+    alto = {c for c, n in zip(celdas, niveles)
+            if np.isfinite(n) and int(n) >= nivel_min}
+    if not alto:
+        return fuera
+
+    d = marco[marco[col].astype(str).isin(alto)]
+    d = d[[col, "empresa_ruc", "segmento", "y"]].dropna(subset=["y"])
+    if d.empty:
+        return fuera
+    v = (d.groupby([col, "empresa_ruc"], sort=False)
+          .agg(voto=("y", "median"), n=("y", "size"),
+               seg=("segmento", "first")).reset_index())
+    v["seg"] = v["seg"].map(_norm_segmento)
+    c = v[col].astype(str).map(idx)
+    t2 = np.asarray(tau2_c)[c.to_numpy()]
+    s2 = np.asarray(sigma2_c)[c.to_numpy()]
+    den = t2 + s2 / v["n"].to_numpy(float)
+    v["w"] = np.where(den > 0, 1.0 / np.where(den > 0, den, 1.0), 1.0)
+
+    def mediana(g):
+        g = g.sort_values("voto")
+        w = g["w"].to_numpy(float)
+        acum = np.cumsum(w) - 0.5 * w
+        return float(np.interp(0.5, acum / w.sum(), g["voto"].to_numpy(float)))
+
+    for cargo, g in v.groupby(col, sort=False):
+        i = idx.get(str(cargo))
+        if i is None or len(g) < 2:
+            continue
+        base = mediana(g)
+        for k, seg in enumerate(SEGMENTOS):
+            gs = g[g["seg"] == seg]
+            if len(gs) >= min_emp:
+                fuera[i, k] = mediana(gs) - base
+    return fuera
+
+
 def _lambda_por_nivel(m, W, vec, sim, niveles, lam_global, minimo=200):
     """`lambda` por escalon lexico. Devuelve dict nivel -> lambda.
 
@@ -286,7 +392,7 @@ class BaseReferencia:
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
                  nivel=None, efecto=None, grupo=None,
                  tau2_c=None, sigma2_c=None, bandas=None, personas=None,
-                 bandas_per=None, lam_nivel=None):
+                 bandas_per=None, lam_nivel=None, ajuste_seg=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -327,6 +433,10 @@ class BaseReferencia:
         # `lambda` por escalon. Vacio en bases guardadas antes de D-021: ahi se cae al
         # global y el comportamiento es el de entonces.
         self.lam_nivel = dict(lam_nivel or {})
+        # Desplazamiento de la referencia por tamano de empresa, solo en cargos altos.
+        # Cero donde no aplica, asi que sumarlo siempre es inocuo. Ver `_ajuste_segmento`.
+        self.ajuste_seg = (np.zeros((n, len(SEGMENTOS))) if ajuste_seg is None
+                           else np.asarray(ajuste_seg, dtype=float))
         # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
         # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
         # quien lee un informe: ".cuanta gente hay detras de este numero?".
@@ -466,9 +576,12 @@ class BaseReferencia:
             pd.Index(grupo) if umbral_fusion else pd.Index(celdas)
         ).fillna(0).to_numpy(dtype=np.int64)
 
+        ajuste_seg = _ajuste_segmento(marco, col, celdas, niv, tau2_c, sigma2_c)
+
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
-                   tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel)
+                   tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel,
+                   ajuste_seg)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -481,6 +594,7 @@ class BaseReferencia:
             emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
             grupo=self.grupo, tau2_c=self.tau2_c, sigma2_c=self.sigma2_c,
             bandas=self.bandas, bandas_per=self.bandas_per,
+            ajuste_seg=self.ajuste_seg,
             lam_k=np.array(sorted(self.lam_nivel), dtype=float),
             lam_v=np.array([self.lam_nivel[k] for k in sorted(self.lam_nivel)],
                            dtype=float),
@@ -498,24 +612,33 @@ class BaseReferencia:
             # etiqueta es su propio grupo y el comportamiento es el de entonces.
             opc = {k: (z[k] if k in z.files else None)
                    for k in ("grupo", "tau2_c", "sigma2_c", "bandas", "personas",
-                             "bandas_per")}
+                             "bandas_per", "ajuste_seg")}
             lam_nivel = ({int(k): float(v) for k, v in zip(z["lam_k"], z["lam_v"])}
                          if "lam_k" in z.files else {})
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
                        opc["sigma2_c"], opc["bandas"], opc["personas"],
-                       opc["bandas_per"], lam_nivel)
+                       opc["bandas_per"], lam_nivel, opc["ajuste_seg"])
 
     # -- consulta --------------------------------------------------------------
 
-    def referenciar(self, titulos, X_por_etiqueta, anio=None):
-        """Una fila por titulo: referencia, intervalo, confianza y en que se basa."""
+    def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None):
+        """Una fila por titulo: referencia, intervalo, confianza y en que se basa.
+
+        `segmento` es el tamano de la empresa del CLIENTE —`GRANDE`, `MEDIANA`,
+        `PEQUENA`, `MICROEMPRESA`— y sirve para corregir el sesgo de los cargos altos:
+        a una empresa pequena se le decia que su gerente general cobra un 56% por debajo
+        del mercado cuando entre sus pares esta bien. Sin el, no se segmenta y el
+        comportamiento es el de siempre. Ver `_ajuste_segmento`.
+        """
         titulos = [str(t) for t in titulos]
         unicos = sorted(set(titulos))
         Q = np.vstack([X_por_etiqueta[t] for t in unicos]).astype(float)
         Q /= np.linalg.norm(Q, axis=1, keepdims=True)
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
+        seg = _norm_segmento(segmento)
+        k_seg = SEGMENTOS.index(seg) if seg else None
 
         filas = {}
         for k, t in enumerate(unicos):
@@ -662,6 +785,15 @@ class BaseReferencia:
             if banda_per is None:
                 sdp = float(np.sqrt(var_per))
                 banda_per = {q: mu + Z_NORMAL[q] * sdp for q in CUANTILES}
+            # DESPLAZAMIENTO POR TAMANO. Mueve el centro y la banda entera; no reestima
+            # la anchura, que esta medido que no mejora. Cero fuera de los cargos altos.
+            if k_seg is not None and propio is not None:
+                aj_seg = float(self.ajuste_seg[propio, k_seg])
+                if aj_seg:
+                    mu += aj_seg
+                    banda = {q: v + aj_seg for q, v in banda.items()}
+                    banda_per = {q: v + aj_seg for q, v in banda_per.items()}
+
             sd = float((banda[0.75] - banda[0.25]) / (2.0 * 0.6745))
             conf, incert = _confianza(var_centro)
             ancho = float(np.exp(0.6745 * sd) - 1.0)      # el de la banda entregada
@@ -672,6 +804,7 @@ class BaseReferencia:
                         "p75per_log": banda_per[0.75], "p90per_log": banda_per[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
                         "incert_centro": round(incert, 4),
+                        "segmento": seg or "", 
                         "empresas": n_emp, "personas": n_per,
                         "similitud": round(mejor, 3)}
 

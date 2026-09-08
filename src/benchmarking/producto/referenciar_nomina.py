@@ -108,7 +108,7 @@ def _buscar_sueldo(df, col_sueldo):
 def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
                         col_cargo=None, col_sueldo=None, anio=2025,
                         anios_base=(2024, 2025), cache_emb=None,
-                        ruta_base=None, rehacer=False):
+                        ruta_base=None, rehacer=False, segmento=None):
     # El SBU convierte el entregable a dolares: si no lo tenemos para ese anio, parar.
     # Usar el del anio anterior desplaza sistematicamente TODAS las cifras del informe.
     try:
@@ -134,7 +134,13 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
         cache.volcar()
         emb.update(dict(zip(nuevos, X)))
 
-    ref = base.referenciar(titulos.tolist(), emb, anio=anio)
+    ref = base.referenciar(titulos.tolist(), emb, anio=anio, segmento=segmento)
+    if segmento:
+        n_aj = int((ref["segmento"] != "").sum() and
+                   (base.ajuste_seg[[base.idx[t] for t in titulos if t in base.idx]]
+                    != 0).any(axis=1).sum())
+        print(f"segmento del cliente: {segmento}   "
+              f"cargos con correccion por tamano: {n_aj}")
     salida = pd.concat([df.reset_index(drop=True),
                         ref.drop(columns=["cargo"]).reset_index(drop=True)], axis=1)
 

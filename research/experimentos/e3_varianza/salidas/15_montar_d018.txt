@@ -1,0 +1,32 @@
+construir 4,328 empresas   evaluar 1,442
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,772 titulos...
+construyendo la base sobre tr...
+celdas con correccion: 113   22,845 personas
+
+votos de empresa donde la correccion actua: 1,559 de 37,084 (4.2%)
+
+==============================================================================
+PRIMARIA: pinball sobre los votos corregibles
+==============================================================================
+  variante           PINBALL   |sesgo|   cob 50%
+  sin segmentar       0.1975     0.6%    49.3%
+  con segmento        0.1936     3.1%    50.3%
+  PLACEBO             0.2042     5.8%    47.3%
+
+==============================================================================
+CONTRASTE PAREADO (300 replicas de empresas apartadas)
+==============================================================================
+  con segmento     - sin segmentar = -0.00392  IC 95% [-0.00797, +0.00005]  sin efecto
+  PLACEBO          - sin segmentar = +0.00662  IC 95% [+0.00212, +0.01093]  EMPEORA
+
+==============================================================================
+SECUNDARIO (no decide): el sesgo con signo, que es lo que motivo D-018
+==============================================================================
+  segmento         votos   sin segmentar    con segmento
+  PEQUENA             76         -34.2%          +0.7%
+  MEDIANA            348         -15.0%          -0.1%
+  GRANDE           1,133          +9.0%          -4.3%
+  recorrido                       43.3%           5.0%
+EXIT=0
