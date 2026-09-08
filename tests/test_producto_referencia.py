@@ -508,3 +508,105 @@ def test_un_segmento_con_pocas_empresas_no_mueve_nada():
     mi = b.referenciar(["GERENTE DE PLANTA"], emb,
                        segmento="MICROEMPRESA").iloc[0]["referencia_log"]
     assert abs(mi - sin) < 1e-9, "2 empresas no bastan para desplazar la referencia"
+
+
+# --------------------------------------------------------------------------
+# BANDA POR RUBRO (D-023). Es una lente de PRODUCTO: esta medido que el sector no
+# mejora la precision (D-022, indistinguible de placebo). Lo que estos tests fijan
+# no es que acierte mas, sino que sea COHERENTE y que el coste sea visible.
+# --------------------------------------------------------------------------
+
+def _marco_rubro(filas):
+    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "ciiu_n1"])
+
+
+def _dos_rubros(n=14, sep=1.0):
+    """`CONTADOR` en dos rubros que pagan distinto, cada uno con respaldo de sobra."""
+    filas = []
+    for i in range(n):
+        filas.append((f"A{i}", "CONTADOR", 1.0 + 0.01 * i, "C"))
+        filas.append((f"B{i}", "CONTADOR", 1.0 + sep + 0.01 * i, "G"))
+    # un cargo con rubro pero SIN respaldo suficiente: tiene que caer al global
+    for i in range(4):
+        filas.append((f"Z{i}", "BODEGUERO", 0.5 + 0.01 * i, "C"))
+    return _marco_rubro(filas)
+
+
+def _emb_rubro():
+    return {"CONTADOR": np.array([1.0, 0.0]), "BODEGUERO": np.array([0.0, 1.0])}
+
+
+def test_el_rubro_cambia_la_referencia_cuando_tiene_respaldo():
+    b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
+    emb = _emb_rubro()
+    glob = b.referenciar(["CONTADOR"], emb).iloc[0]
+    c = b.referenciar(["CONTADOR"], emb, rubro="C").iloc[0]
+    g = b.referenciar(["CONTADOR"], emb, rubro="G").iloc[0]
+    assert c["rubro"] == "C" and g["rubro"] == "G" and glob["rubro"] == ""
+    assert c["referencia_log"] < glob["referencia_log"] < g["referencia_log"], (
+        "el rubro barato debe quedar por debajo del global y el caro por encima")
+    assert abs(g["referencia_log"] - c["referencia_log"] - 1.0) < 0.1
+
+
+def test_el_centro_del_rubro_cae_DENTRO_de_la_banda_del_rubro():
+    # La incoherencia que este diseno existe para prohibir: publicar un centro global
+    # dentro de una banda sectorial lo dejaria fuera de su propio p25-p75.
+    b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
+    for r in ("C", "G"):
+        f = b.referenciar(["CONTADOR"], _emb_rubro(), rubro=r).iloc[0]
+        assert f["p25_log"] <= f["referencia_log"] <= f["p75_log"], (
+            f"rubro {r}: el centro cae fuera de su propia banda")
+        assert f["p10_log"] <= f["p25_log"] <= f["p75_log"] <= f["p90_log"]
+
+
+def test_el_cargo_sin_respaldo_en_su_rubro_cae_al_global_EL_SOLO():
+    # El fallback es por CARGO, no por informe: `CONTADOR` tiene rubro y `BODEGUERO` no,
+    # y los dos salen en la misma consulta.
+    b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
+    out = b.referenciar(["CONTADOR", "BODEGUERO"], _emb_rubro(),
+                        rubro="C").set_index("cargo")
+    assert out.loc["CONTADOR", "rubro"] == "C"
+    assert out.loc["BODEGUERO", "rubro"] == "", "4 empresas no llegan al suelo"
+
+
+def test_el_coste_del_rubro_es_visible_en_el_respaldo():
+    # Es la mitad de la promesa: el cliente ve que su referencia sectorial sale de menos
+    # empresas. Si el coste no se ve, la lente engana.
+    b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
+    emb = _emb_rubro()
+    glob = b.referenciar(["CONTADOR"], emb).iloc[0]
+    c = b.referenciar(["CONTADOR"], emb, rubro="C").iloc[0]
+    assert c["empresas"] < glob["empresas"], "el rubro tiene menos empresas detras"
+    assert c["incert_centro"] > glob["incert_centro"], (
+        "menos empresas => 1/W mayor => el centro se conoce peor, y hay que decirlo")
+
+
+def test_un_rubro_desconocido_avisa_y_sigue_en_global():
+    b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
+    with pytest.warns(UserWarning, match="sin datos suficientes"):
+        f = b.referenciar(["CONTADOR"], _emb_rubro(), rubro="Q").iloc[0]
+    assert f["rubro"] == "", "cae al mercado entero en vez de devolver nada"
+
+
+def test_el_rubro_sobrevive_a_guardar_y_cargar(tmp_path):
+    b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
+    ruta = tmp_path / "b.npz"
+    b.guardar(ruta)
+    b2 = BaseReferencia.cargar(ruta, _sbu)
+    a = b.referenciar(["CONTADOR"], _emb_rubro(), rubro="G").iloc[0]
+    c = b2.referenciar(["CONTADOR"], _emb_rubro(), rubro="G").iloc[0]
+    assert c["rubro"] == "G"
+    assert abs(a["referencia_log"] - c["referencia_log"]) < 1e-9
+    assert abs(a["p25_log"] - c["p25_log"]) < 1e-9
+
+
+def test_sin_columna_de_rubro_la_base_se_construye_igual():
+    # El marco de los tests viejos no trae `ciiu_n1`, y una base sin rubro tiene que
+    # comportarse exactamente como antes.
+    emb = _emb_rubro()
+    filas = [(f"A{i}", "CONTADOR", 1.0 + 0.01 * i) for i in range(12)]
+    b = BaseReferencia.construir(_marco(filas), emb, _sbu)
+    assert b.rub == {} and b.rubros == []
+    with pytest.warns(UserWarning, match="sin datos suficientes"):
+        f = b.referenciar(["CONTADOR"], emb, rubro="C").iloc[0]
+    assert f["rubro"] == ""

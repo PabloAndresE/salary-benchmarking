@@ -55,6 +55,8 @@ puede predecir (tau = 0,29). Esto da el MERCADO, no la politica salarial de una 
 concreta. Dos personas identicas en empresas distintas cobran muy diferente y ningun
 metodo basado en el puesto arregla eso.
 """
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -139,6 +141,47 @@ TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la 
 MIN_EMPRESAS_BANDA = 10
 CUANTILES = (0.10, 0.25, 0.75, 0.90)
 Z_NORMAL = {0.10: -1.2816, 0.25: -0.6745, 0.75: 0.6745, 0.90: 1.2816}
+
+# ---------------------------------------------------------------------------
+# BANDA POR RUBRO. Es una LENTE de producto, no una mejora del modelo, y la
+# distincion importa porque la medicion dice lo contrario de lo que sugiere la
+# intuicion:
+#
+#   sector para la BANDA    pinball 0,1289 contra 0,1255 sin el   -> PIERDE (`07`)
+#   sector para el CENTRO   indistinguible de un placebo          -> nulo   (D-022)
+#
+# La razon de que no ayude esta medida: el sector YA esta codificado en el titulo
+# para los puestos donde importa. Una petrolera tiene `PERFORADOR` y una textilera
+# `OPERARIO TEXTIL` — celdas distintas, nunca se comparan entre si. Lo que las dos
+# comparten es `CONTADOR`, `CHOFER`, `GUARDIA`, y ahi pagan casi lo mismo: sobre
+# `ASISTENTE CONTABLE` (1.688 empresas) los sectores grandes caen dentro de un 5%
+# entre si, y cada desviacion grande viene de un sector con menos de 20 empresas.
+#
+# SE MONTA IGUAL, y la razon es legitima aunque no sea estadistica: un cliente no
+# acepta que le comparen su nomina contra el mercado entero. "De que me sirve
+# compararme contra una petrolera" es una objecion de PRODUCTO, y la respuesta a
+# una objecion de percepcion puede ser ensenar el corte, no ganar precision.
+#
+# EL COSTE SE DECLARA, no se esconde: la celda del rubro tiene menos empresas, asi
+# que `1/W` sube y la etiqueta de confianza BAJA sola. El cliente ve que su
+# referencia sectorial sale de 93 empresas y no de 826, y lo ve en la misma fila.
+#
+# EL CENTRO SIGUE A LA BANDA. Si la banda es del rubro, el centro es el p50 de esos
+# MISMOS votos. Publicar un centro global dentro de una banda sectorial permitiria
+# que el centro caiga fuera de su propio p25-p75, que es justo la incoherencia que
+# prohibe el test de `_lectura`.
+#
+# `tau_c` y `sigma_c` NO se reestiman dentro del rubro: con 10-90 empresas saldrian
+# pesimamente estimadas, y ya vienen encogidas de la celda entera (D-016).
+#
+# FALLBACK POR CARGO, no por informe: cada cargo cae al global por separado. Un
+# cliente de manufactura tendra rubro para `CONTADOR` (93 empresas) y global para
+# `SOLDADOR DE PRECISION` (3). Es lo unico coherente con un suelo que es de
+# confidencialidad y no de gusto.
+COL_RUBRO = "ciiu_n1"
+MIN_EMPRESAS_RUBRO = MIN_EMPRESAS_BANDA     # mismo suelo que la banda global
+MIN_PERSONAS_RUBRO = MIN_PERSONAS
+_RUBRO_NULO = {"", "NAN", "NONE", "NA", "NULL"}
 
 # LA CONFIANZA MIDE LO BIEN QUE SE CONOCE EL CENTRO, no lo ancho que es el mercado. Son
 # dos preguntas distintas y antes se contestaba la que no era: la etiqueta salia del ancho
@@ -264,6 +307,105 @@ def _norm_segmento(v):
     """`PEQUEÑA` llega con enie de BigQuery y sin ella de una bandera de consola."""
     t = str(v or "").strip().upper().replace("Ñ", "N").replace("Ñ", "N")
     return t if t in SEGMENTOS else None
+
+
+def _norm_rubro(v):
+    """Codigo CIIU de primer nivel, una letra. Vacio y sus disfraces cuentan como
+    ausencia: `astype(str)` convierte los nulos en la cadena `'nan'` y sin esta guarda
+    `'NAN'` seria un rubro mas, con miles de empresas dentro."""
+    t = str(v if v is not None else "").strip().upper()
+    return None if t in _RUBRO_NULO else t
+
+
+def _bandas_por_rubro(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave):
+    """Centro, banda y respaldo de cada (grupo, rubro) que aguanta los suelos.
+
+    Devuelve arrays PARALELOS y no una matriz densa a proposito: 65.081 celdas por 19
+    rubros son 1,2 millones de casillas de las que casi ninguna pasa el suelo de 10
+    empresas. Denso costaria ~80 MB de NaN.
+
+    `clave_etiqueta` da, para cada etiqueta, el valor que tiene en `colg` — el id de
+    grupo cuando hay fusion y la etiqueta misma cuando no. Sin el, la version sin fusion
+    buscaria grupos "0,1,2..." contra claves que son titulos.
+
+    `d` es el marco con la columna de grupo ya puesta; `t2_por_clave` y `s2_por_clave`
+    son Series indexadas por el valor de `colg` — la varianza de la CELDA ENTERA, que es
+    la que se usa para pesar dentro del rubro. Reestimarlas con las 10-90 empresas del
+    rubro daria ruido con nombre de parametro.
+    """
+    vacio = (np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0),
+             np.zeros(0), np.zeros(0, np.int64), np.zeros(0, np.int64),
+             np.zeros((0, len(CUANTILES))), np.zeros((0, len(CUANTILES))), [])
+    if COL_RUBRO not in d.columns:
+        return vacio
+    x = d[[colg, COL_RUBRO, "empresa_ruc", "y"]].dropna(subset=["y"]).copy()
+    x["_r"] = x[COL_RUBRO].map(_norm_rubro)
+    x = x[x["_r"].notna()]
+    if x.empty:
+        return vacio
+    x["_cr"] = x[colg].astype(str) + "\x1f" + x["_r"].astype(str)
+
+    # Las varianzas de la celda, reindexadas a la clave compuesta.
+    mapa = x[["_cr", colg]].drop_duplicates().set_index("_cr")[colg]
+    t2 = pd.Series(t2_por_clave.reindex(mapa.to_numpy()).to_numpy(float), index=mapa.index)
+    s2 = pd.Series(s2_por_clave.reindex(mapa.to_numpy()).to_numpy(float), index=mapa.index)
+
+    # Respaldo y peso total. `W` es lo que hace que la confianza baje sola cuando el
+    # rubro tiene menos empresas que el mercado entero: es el coste, hecho visible.
+    v = (x.groupby(["_cr", "empresa_ruc"], sort=False)["y"].size()
+          .rename("n").reset_index())
+    den = (t2.reindex(v["_cr"]).to_numpy(float)
+           + s2.reindex(v["_cr"]).to_numpy(float) / v["n"].to_numpy(float))
+    v["w"] = np.where(den > 0, 1.0 / np.where(den > 0, den, 1.0), 1.0)
+    agg = v.groupby("_cr").agg(W=("w", "sum"), empresas=("empresa_ruc", "nunique"))
+    agg["personas"] = x.groupby("_cr").size()
+    agg = agg[(agg["empresas"] >= MIN_EMPRESAS_RUBRO)
+              & (agg["personas"] >= MIN_PERSONAS_RUBRO)]
+    if agg.empty:
+        return vacio
+
+    x = x[x["_cr"].isin(agg.index)]
+    # El 0,50 es el CENTRO: sale de los mismos votos que la banda, no del global.
+    qs = cuantiles_de_empresa(x, "_cr", t2, s2, CUANTILES + (0.50,))
+    qp = cuantiles_de_persona(x, "_cr", t2, s2, CUANTILES)
+
+    claves = [k for k in agg.index if k in qs.index]
+    partes = [k.split("\x1f") for k in claves]
+    rubros = sorted({p[1] for p in partes})
+    pos_r = {r: i for i, r in enumerate(rubros)}
+    # de clave de grupo (texto) a las etiquetas que pertenecen a ese grupo
+    por_grupo = {}
+    for i, g in enumerate(clave_etiqueta):
+        por_grupo.setdefault(str(g), []).append(i)
+
+    cel, cod, m, W, emp, per, bq, bp = [], [], [], [], [], [], [], []
+    for k, (gk, r) in zip(claves, partes):
+        etiquetas = por_grupo.get(gk)
+        if not etiquetas:
+            continue
+        fila_q = qs.loc[k]
+        fila_p = qp.loc[k] if k in qp.index else None
+        centro = float(fila_q[0.50])
+        if not np.isfinite(centro):
+            continue
+        banda = np.array([fila_q[q] for q in CUANTILES], dtype=float)
+        banda_p = (np.array([fila_p[q] for q in CUANTILES], dtype=float)
+                   if fila_p is not None else np.full(len(CUANTILES), np.nan))
+        for i in etiquetas:
+            cel.append(i)
+            cod.append(pos_r[r])
+            m.append(centro)
+            W.append(float(agg.at[k, "W"]))
+            emp.append(int(agg.at[k, "empresas"]))
+            per.append(int(agg.at[k, "personas"]))
+            bq.append(banda)
+            bp.append(banda_p)
+    if not cel:
+        return vacio
+    return (np.array(cel, dtype=np.int64), np.array(cod, dtype=np.int64),
+            np.array(m, dtype=float), np.array(W, dtype=float),
+            np.array(emp, dtype=np.int64), np.array(per, dtype=np.int64),
+            np.vstack(bq), np.vstack(bp), rubros)
 
 
 def _ajuste_segmento(marco, col, celdas, niveles, tau2_c, sigma2_c,
@@ -392,7 +534,7 @@ class BaseReferencia:
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
                  nivel=None, efecto=None, grupo=None,
                  tau2_c=None, sigma2_c=None, bandas=None, personas=None,
-                 bandas_per=None, lam_nivel=None, ajuste_seg=None):
+                 bandas_per=None, lam_nivel=None, ajuste_seg=None, rubro=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -437,6 +579,22 @@ class BaseReferencia:
         # Cero donde no aplica, asi que sumarlo siempre es inocuo. Ver `_ajuste_segmento`.
         self.ajuste_seg = (np.zeros((n, len(SEGMENTOS))) if ajuste_seg is None
                            else np.asarray(ajuste_seg, dtype=float))
+        # BANDA POR RUBRO, dispersa. `self.rub` mapea (indice de celda, codigo de rubro)
+        # a la fila de los arrays paralelos; lo que no esta en el diccionario cae al
+        # global, que es el fallback POR CARGO. Las bases guardadas antes de esto no
+        # traen nada y el comportamiento es el de entonces.
+        (self.rub_cel, self.rub_cod, self.rub_m, self.rub_W, self.rub_emp,
+         self.rub_per, self.rub_bandas, self.rub_bandas_per) = (
+            np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0), np.zeros(0),
+            np.zeros(0, np.int64), np.zeros(0, np.int64),
+            np.zeros((0, len(CUANTILES))), np.zeros((0, len(CUANTILES))))
+        self.rubros = []
+        if rubro is not None:
+            (self.rub_cel, self.rub_cod, self.rub_m, self.rub_W, self.rub_emp,
+             self.rub_per, self.rub_bandas, self.rub_bandas_per, rr) = rubro
+            self.rubros = list(rr)
+        self.rub = {(int(c), self.rubros[int(k)]): i
+                    for i, (c, k) in enumerate(zip(self.rub_cel, self.rub_cod))}
         # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
         # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
         # quien lee un informe: ".cuanta gente hay detras de este numero?".
@@ -578,10 +736,22 @@ class BaseReferencia:
 
         ajuste_seg = _ajuste_segmento(marco, col, celdas, niv, tau2_c, sigma2_c)
 
+        # Banda por rubro. Las varianzas van indexadas por la clave de `colg` y salen de
+        # los arrays YA expandidos: `t2_serie` no cubre las celdas que se cayeron de
+        # `tau2_por_celda`, y ahi hace falta el global, no un NaN.
+        clave_et = grupo if umbral_fusion else np.array(celdas, dtype=object)
+        t2_cl = pd.Series(tau2_c, index=clave_et)
+        s2_cl = pd.Series(sigma2_c, index=clave_et)
+        t2_cl = t2_cl[~t2_cl.index.duplicated()]
+        s2_cl = s2_cl[~s2_cl.index.duplicated()]
+        rubro = _bandas_por_rubro(d, colg, clave_et, t2_cl, s2_cl)
+        print(f"banda por rubro: {len(rubro[0]):,} pares (celda, rubro) sobre "
+              f"{len(rubro[8])} rubros")
+
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
                    tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel,
-                   ajuste_seg)
+                   ajuste_seg, rubro)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -601,6 +771,11 @@ class BaseReferencia:
             personas=self.personas,
             ef_k=np.array(sorted(self.efecto), dtype=float),
             ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
+            # Banda por rubro, dispersa: pares (celda, rubro) y sus estadisticos.
+            rub_cel=self.rub_cel, rub_cod=self.rub_cod, rub_m=self.rub_m, rub_W=self.rub_W, rub_emp=self.rub_emp,
+            rub_per=self.rub_per, rub_bandas=self.rub_bandas,
+            rub_bandas_per=self.rub_bandas_per,
+            rubros=np.array(self.rubros, dtype=object),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
 
     @classmethod
@@ -615,15 +790,24 @@ class BaseReferencia:
                              "bandas_per", "ajuste_seg")}
             lam_nivel = ({int(k): float(v) for k, v in zip(z["lam_k"], z["lam_v"])}
                          if "lam_k" in z.files else {})
+            # La banda por rubro falta en las bases guardadas antes de D-023; sin ella
+            # `--rubro` no encuentra nada y todo cae al global, que es el comportamiento
+            # de entonces y no un error.
+            rubro = None
+            if "rub_cel" in z.files:
+                rubro = (z["rub_cel"], z["rub_cod"], z["rub_m"], z["rub_W"],
+                         z["rub_emp"], z["rub_per"], z["rub_bandas"],
+                         z["rub_bandas_per"], list(z["rubros"]))
             return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
                        opc["sigma2_c"], opc["bandas"], opc["personas"],
-                       opc["bandas_per"], lam_nivel, opc["ajuste_seg"])
+                       opc["bandas_per"], lam_nivel, opc["ajuste_seg"], rubro)
 
     # -- consulta --------------------------------------------------------------
 
-    def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None):
+    def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None,
+                    rubro=None):
         """Una fila por titulo: referencia, intervalo, confianza y en que se basa.
 
         `segmento` es el tamano de la empresa del CLIENTE —`GRANDE`, `MEDIANA`,
@@ -631,6 +815,12 @@ class BaseReferencia:
         a una empresa pequena se le decia que su gerente general cobra un 56% por debajo
         del mercado cuando entre sus pares esta bien. Sin el, no se segmenta y el
         comportamiento es el de siempre. Ver `_ajuste_segmento`.
+
+        `rubro` es el CIIU de primer nivel del CLIENTE. Donde su celda tiene rubro con
+        respaldo suficiente, la referencia y las dos bandas salen SOLO de las empresas de
+        ese rubro; donde no lo tiene, ese cargo cae al mercado entero. El fallback es POR
+        CARGO, no por informe. Ver el bloque de `COL_RUBRO`: no mejora la precision y se
+        monta por legitimidad, con el coste visible en `empresas` y en la confianza.
         """
         titulos = [str(t) for t in titulos]
         unicos = sorted(set(titulos))
@@ -639,6 +829,13 @@ class BaseReferencia:
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None
+        rub = _norm_rubro(rubro)
+        if rub and rub not in self.rubros:
+            # Un rubro que la base no conoce no es un error del cliente: puede ser un
+            # CIIU sin ninguna celda que aguante el suelo. Se avisa y se sigue en global,
+            # que es mejor que devolver un informe vacio sin decir por que.
+            warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+                          f"todo el informe cae al mercado entero")
 
         filas = {}
         for k, t in enumerate(unicos):
@@ -649,25 +846,44 @@ class BaseReferencia:
                        and self.emp[propio] >= MIN_EMPRESAS
                        and self.personas[propio] >= self.min_personas)
             if directo:
-                mu = self.m[propio]
+                # .HAY RUBRO PARA ESTE CARGO? El fallback es por cargo: un cliente de
+                # manufactura tendra rubro en `CONTADOR` y mercado entero en
+                # `SOLDADOR DE PRECISION`, porque el suelo es de confidencialidad.
+                fr = self.rub.get((propio, rub)) if rub else None
+                if fr is not None:
+                    # Centro y banda salen de los MISMOS votos —los del rubro— o el
+                    # centro podria caer fuera de su propio p25-p75.
+                    mu = float(self.rub_m[fr])
+                    W_i = float(self.rub_W[fr])
+                    n_emp, n_per = int(self.rub_emp[fr]), int(self.rub_per[fr])
+                    q, qp = self.rub_bandas[fr], self.rub_bandas_per[fr]
+                    base, usado = f"rubro {rub}", rub
+                else:
+                    mu = self.m[propio]
+                    W_i = float(self.W[propio])
+                    n_emp, n_per = int(self.emp[propio]), int(self.personas[propio])
+                    q = (self.bandas[propio] if self.emp[propio] >= MIN_EMPRESAS_BANDA
+                         else np.full(len(CUANTILES), np.nan))
+                    qp = (self.bandas_per[propio] if self.emp[propio] >= MIN_EMPRESAS_BANDA
+                          else np.full(len(CUANTILES), np.nan))
+                    base, usado = "datos directos", ""
+                # `tau_c` y `sigma_c` son SIEMPRE los de la celda entera, tambien con
+                # rubro: con 10-90 empresas se estimarian pesimo y ya vienen encogidas.
                 # La banda habla de EMPRESAS, asi que NO lleva `sigma`: la dispersion
                 # dentro de una nomina no mueve el nivel de la empresa. Ver `CUANTILES`.
-                var = self.tau2_c[propio] + 1.0 / self.W[propio]
+                var = self.tau2_c[propio] + 1.0 / W_i
                 # ...y la de PERSONAS si la lleva: al sueldo de UNA persona hay que
                 # ponerle al lado lo que cobra la gente, no lo que pagan las empresas.
                 var_per = var + self.sigma2_c[propio]
-                var_centro = 1.0 / self.W[propio]
+                # Menos empresas en el rubro => `1/W` mayor => la confianza BAJA sola.
+                # Ese es el coste de la lente, y se paga donde se ve.
+                var_centro = 1.0 / W_i
                 # Con empresas de sobra, los cuantiles empiricos ganan a cualquier normal:
                 # describen la forma real, que va de un pico a una cola larga segun cargo.
-                if self.emp[propio] >= MIN_EMPRESAS_BANDA:
-                    q = self.bandas[propio]
-                    if np.isfinite(q).all():
-                        banda = dict(zip(CUANTILES, q))
-                    qp = self.bandas_per[propio]
-                    if np.isfinite(qp).all():
-                        banda_per = dict(zip(CUANTILES, qp))
-                base, n_emp = "datos directos", int(self.emp[propio])
-                n_per = int(self.personas[propio])
+                if np.isfinite(q).all():
+                    banda = dict(zip(CUANTILES, q))
+                if np.isfinite(qp).all():
+                    banda_per = dict(zip(CUANTILES, qp))
                 mejor, directo_ok = 1.0, True
             else:
                 j, s = vec[k], sim[k]
@@ -763,7 +979,7 @@ class BaseReferencia:
                 # puesto, y lo que no se sabe de su escalon.
                 var_centro = var - tau2_v
                 var_per = var + float((peso * self.sigma2_c[j]).sum())
-                base = "por analogia"
+                base, usado = "por analogia", ""
                 # SIN CONTAR DOS VECES. Los vecinos que comparten grupo de fusion
                 # comparten estadisticos, asi que sumarlos multiplicaria el respaldo por
                 # el numero de grafias. `ANALISTA DE RIESGO CREDITICIO` declaraba 194
@@ -804,7 +1020,7 @@ class BaseReferencia:
                         "p75per_log": banda_per[0.75], "p90per_log": banda_per[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
                         "incert_centro": round(incert, 4),
-                        "segmento": seg or "", 
+                        "segmento": seg or "", "rubro": usado,
                         "empresas": n_emp, "personas": n_per,
                         "similitud": round(mejor, 3)}
 

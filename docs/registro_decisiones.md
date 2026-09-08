@@ -2247,3 +2247,78 @@ Con el tamaño, «pierde para la banda» **no** implicaba «pierde para el centr
 preguntas y la segunda tenía otra respuesta. Con el sector, la segunda pregunta da lo
 mismo que la primera. **No se podía saber sin medirla**, y saltársela habría dejado a
 D-014 en pie por defecto.
+
+---
+
+## D-023 — El rubro entra como **lente de producto**, no como mejora del modelo
+
+**Fecha:** 2026-09-08
+**Origen:** decisión de producto de Pablo, sostenida tras ver la evidencia en contra. La
+objeción, en sus palabras: *«¿de qué le sirve a una empresa de textiles comparar su nómina
+contra una petrolera?»*
+**Evidencia:** `e3_varianza/07` (banda), `16` (centro), y el corte por sector de
+`research/herramientas/banda_por_tamano.py`.
+**Estado:** implementado, **apagado por defecto**. Se activa con `--rubro`.
+
+### Esta decisión va contra la medición, y por eso queda escrita
+
+D-022 midió el sector dos veces y las dos dijeron que no:
+
+| | resultado |
+|---|---|
+| sector para la **banda** | pinball 0,1289 contra 0,1255 sin él → **pierde** |
+| sector para el **centro** | indistinguible de un placebo → **nulo** |
+
+Y hay una explicación de por qué la señal no aparece: **el sector ya está codificado en el
+título para los puestos donde importa.** Una petrolera tiene `PERFORADOR` y una textilera
+`OPERARIO TEXTIL` — celdas distintas que nunca se comparan entre sí. Lo que las dos
+comparten es `CONTADOR`, `CHOFER`, `GUARDIA`: cargos que transfieren de verdad, y ahí pagan
+casi lo mismo. Sobre `ASISTENTE CONTABLE` (1.688 empresas) los sectores grandes caen dentro
+de un 5% entre sí, y **cada desviación grande viene de un sector con menos de 20 empresas**.
+
+### Por qué se monta igual
+
+Porque **precisión y legitimidad son dos preguntas distintas**, y sólo se había medido la
+primera. Un cliente que no acepta el conjunto de comparación no usa el informe, y eso no se
+arregla con un pinball mejor. La medición dice que el sector no ayuda a *acertar*; no dice
+nada sobre si el cliente *acepta* la comparación.
+
+Lo que se compra es comparabilidad declarada. Lo que se paga está medido y es visible.
+
+### Las cuatro reglas del diseño
+
+1. **El centro sigue a la banda.** Si la banda sale de los votos del rubro, el centro es el
+   p50 de esos mismos votos. Publicar un centro global dentro de una banda sectorial
+   permitiría que el centro caiga fuera de su propio p25–p75 — la incoherencia que prohíbe
+   el test de `_lectura` (commit `690a9a6`).
+2. **`tau_c` y `sigma_c` NO se reestiman dentro del rubro.** Con 10–90 empresas saldrían
+   pésimamente estimadas, y ya vienen encogidas de la celda entera (D-016).
+3. **El fallback es POR CARGO, no por informe.** Un cliente de manufactura tendrá rubro en
+   `CONTADOR` (93 empresas) y mercado entero en `SOLDADOR DE PRECISION` (3). El suelo es de
+   confidencialidad —`MIN_EMPRESAS_RUBRO = 10`, `MIN_PERSONAS_RUBRO = 10`, los mismos que
+   la banda global— y no se negocia por conveniencia.
+4. **El coste se declara, no se esconde.** Menos empresas en la celda del rubro ⇒ `1/W`
+   mayor ⇒ la etiqueta de confianza baja sola. Medido sobre la prueba de integración:
+
+   | | global | rubro |
+   |---|---|---|
+   | empresas detrás | 1.114 | **63** |
+   | `incert_centro` | 0,0079 | **0,0338** (4,3× peor) |
+
+   Y `referenciar_archivo` imprime siempre en cuántas filas se pudo aplicar y en cuántas se
+   cayó al mercado entero. Si el coste no se ve, la lente engaña.
+
+### Lo que esto NO es
+
+No es una revisión de D-022. **D-022 sigue en pie**: el sector no mejora la precisión y no
+entra en la ruta por defecto. Si algún día se enciende por defecto, hace falta una medición
+nueva y un criterio declarado antes de correrla.
+
+### Qué falta
+
+- Medir la **cobertura real** sobre la base completa: cuántos pares (celda, rubro) aguantan
+  el suelo y qué fracción de personas alcanzan. Si es marginal, la lente es cosmética y hay
+  que decirlo en la venta.
+- Decidir qué pasa cuando `--rubro` y `--segmento` se piden a la vez. Hoy componen —el
+  desplazamiento por tamaño se suma sobre la banda que esté en uso— y **esa combinación no
+  está medida**.
