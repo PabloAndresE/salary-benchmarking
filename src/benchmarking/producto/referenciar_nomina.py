@@ -146,8 +146,18 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
         print(f"rubro {rubro}: {n_c:,} de {len(ref):,} filas con banda del rubro "
               f"({n_c/max(len(ref),1):.1%}); el resto sale del mercado entero")
         if n_c:
-            print(f"  empresas detras, mediana: rubro {int(ref.loc[con,'empresas'].median()):,}"
-                  f"   global {int(ref.loc[~con,'empresas'].median()) if (~con).any() else 0:,}")
+            # LAS MISMAS FILAS, global contra rubro. Contrastar las filas CON rubro
+            # contra las que cayeron al global compara cargos distintos y dice lo
+            # contrario de la verdad: las que consiguen rubro son las comunes, con
+            # cientos de empresas, y las que caen son las raras. Asi salia "rubro 102,
+            # global 51" cuando el rubro tiene SIEMPRE menos respaldo por construccion.
+            sin = base.referenciar(list(ref.loc[con, "cargo"]), emb, anio=anio,
+                                   segmento=segmento)
+            print(f"  respaldo de esas mismas filas: {int(sin['empresas'].median()):,} "
+                  f"empresas en el mercado entero -> "
+                  f"{int(ref.loc[con, 'empresas'].median()):,} en el rubro")
+            print(f"  el centro se mueve, en mediana absoluta: "
+                  f"{np.exp(np.median(np.abs(np.log(ref.loc[con,'referencia'].to_numpy(float)) - np.log(sin['referencia'].to_numpy(float))))) - 1:.1%}")
     if segmento:
         n_aj = int((ref["segmento"] != "").sum() and
                    (base.ajuste_seg[[base.idx[t] for t in titulos if t in base.idx]]
