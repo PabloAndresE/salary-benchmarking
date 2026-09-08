@@ -1,0 +1,47 @@
+train 847,046 filas / 5,758 empresas
+C:\Users\usuario\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+embebiendo 57,432 titulos...
+buscando vecinos...
+
+lambda GLOBAL (lo que usa el producto hoy): 1.938
+celdas con lambda_c estimable: 5,168 de 57,432
+
+==============================================================================
+A. .VARIA `lambda` ENTRE CARGOS?
+==============================================================================
+  p05    -0.464
+  p25     0.367
+  p50     1.459
+  p75     3.268
+  p95     8.110
+  negativos: 15.8%   (ruido: la distancia no puede reducir la diferencia)
+
+==============================================================================
+B. .ES REAL O ES RUIDO? (test-retest entre mitades de empresas)
+==============================================================================
+  celdas comparables: 1,878
+  lambda   Pearson +0.563   Spearman +0.627
+
+  (referencia: tau dio +0,780 y sigma +0,484 con el mismo diseno.
+   Si lambda sale cerca de 0, el escalar global esta justificado.)
+
+==============================================================================
+C. POR ESCALON LEXICO
+==============================================================================
+  nivel      celdas   lambda mediana       p25       p75
+  1             966            0.368    -0.304     1.926
+  2             532            1.038     0.434     2.113
+  3             644            2.212     1.269     3.806
+  4             511            3.340     1.956     4.882
+  5             314            6.505     4.111    10.455
+  sin rango    2,201            1.083     0.229     2.497
+
+==============================================================================
+D. QUE SIGNIFICA EN EL PRODUCTO
+==============================================================================
+  El castigo a un vecino es `lambda * (1 - sim)`. Para un vecino a sim 0,95:
+    global (hoy)         lambda   1.938  ->  castigo 0.0969  (sd equivalente 0.311)
+    p25 de los cargos    lambda   0.367  ->  castigo 0.0184  (sd equivalente 0.136)
+    p75 de los cargos    lambda   3.268  ->  castigo 0.1634  (sd equivalente 0.404)
+EXIT=0
