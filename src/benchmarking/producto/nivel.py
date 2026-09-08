@@ -151,7 +151,8 @@ def escalera_salarial(niveles, y):
     return g, recorrido, monotona
 
 
-def efecto_nivel(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc"):
+def efecto_nivel(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc",
+                 estimador="media"):
     """Cuanto paga cada escalon, en log, DENTRO de la misma area enmascarada.
 
     Medido asi porque es el unico contraste sin confusion: `PUESTO DE CAJA` existe como
@@ -166,13 +167,25 @@ def efecto_nivel(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc"):
     d = marco[[col, col_y, col_empresa]].dropna(subset=[col_y]).copy()
     d["area"] = d[col].map(lambda e: enmascarar(e))
     d["nivel"] = d[col].map(nivel_lexico)
+    # `estimador` existe porque hay un DESAJUSTE en el producto: esto sale de PROMEDIOS y
+    # se suma a `m`, que es una MEDIANA ponderada. Una diferencia-de-promedios solo es una
+    # diferencia-de-medianas si las dos distribuciones tienen la MISMA FORMA, y aqui no la
+    # tienen: los escalones altos arrastran cola derecha mucho mas gorda (`GERENTE GENERAL`
+    # va de $500 a $13.712; `AUXILIAR DE LIMPIEZA`, de $475 a $485). Con mas asimetria el
+    # promedio se aleja mas de su mediana, asi que E[nivel 5]-E[nivel 1] SOBREESTIMA
+    # med[nivel 5]-med[nivel 1] y el ajuste queda sobredimensionado.
+    #
+    # Por defecto sigue siendo `media`: cambiar el estimador cambia la respuesta del 35,9%
+    # de la gente —la que va por analogia— y eso se decide midiendo, no opinando.
+    ag = "median" if estimador == "mediana" else "mean"
     # dentro de empresa primero: el empleador es el 81% del ruido y taparia el efecto
-    d["r"] = d[col_y] - d.groupby(col_empresa)[col_y].transform("mean")
+    d["r"] = d[col_y] - d.groupby(col_empresa)[col_y].transform(ag)
     d = d[d["nivel"].notna()]
     mixtas = d.groupby("area")["nivel"].nunique()
     d = d[d.area.isin(mixtas[mixtas >= 2].index)]
     if d.empty:
         return {}
-    d["r"] = d["r"] - d.groupby("area")["r"].transform("mean")
-    g = d.groupby("nivel")["r"].mean()
-    return {int(k): float(v - g.mean()) for k, v in g.items()}
+    d["r"] = d["r"] - d.groupby("area")["r"].transform(ag)
+    g = d.groupby("nivel")["r"].agg(ag)
+    centro = g.median() if estimador == "mediana" else g.mean()
+    return {int(k): float(v - centro) for k, v in g.items()}
