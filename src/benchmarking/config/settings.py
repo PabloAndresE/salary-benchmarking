@@ -7,7 +7,16 @@ _SBU = {2016:366,2017:375,2018:386,2019:394,2020:400,
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="PIPELINE_", extra="ignore")
-    salt: str                                    # PIPELINE_SALT (obligatorio)
+    # EL SALT SE EXIGE DONDE SE USA, no al arrancar. Se usa en UNA linea de todo el
+    # paquete —`orquestador.py`, `anonimizar(df, settings.salt_obligatorio())`— y
+    # `referenciar` no lo toca: lee de BigQuery datos ya anonimizados.
+    #
+    # Pedirlo para cualquier subcomando FABRICABA el mal habito que la regla del salt
+    # existe para evitar: para sacar un informe habia que inventarse uno, y ese valor
+    # basura quedaba vivo en la shell para la siguiente ingesta, que escribiria `id_hash`
+    # incomparables con todo lo ya escrito y sin avisar. Exigirlo solo en la frontera es
+    # ESTRICTAMENTE mas seguro, no menos.
+    salt: str | None = None                      # PIPELINE_SALT, solo para anonimizar
     min_sbu: float = 0.5
     edad_min: int = 18
     edad_max: int = 80
@@ -68,6 +77,21 @@ class Settings(BaseSettings):
                 f"SBU de {anio} desconocido: se usa el de {ultimo} ({self.sbu[ultimo]}). "
                 f"Anade el valor real en `config/settings.py`.", stacklevel=2)
         return self.sbu[ultimo]
+
+    def salt_obligatorio(self) -> str:
+        """El salt, y se para si no esta. Solo lo llama la frontera de anonimizacion.
+
+        Falla AQUI y no al arrancar, a proposito: asi `referenciar` —que no anonimiza
+        nada— no obliga a nadie a inventarse un valor, y quien de verdad va a escribir
+        `id_hash` recibe el aviso en el momento en que importa.
+        """
+        if not self.salt:
+            raise ValueError(
+                "Falta PIPELINE_SALT y esta ruta anonimiza cedulas. El salt NUNCA va "
+                "en codigo ni en config: sacalo de Secret Manager y pasalo como "
+                "variable de entorno. Con un salt distinto al de siempre los `id_hash` "
+                "quedan incomparables con todo lo ya escrito en BigQuery, y sin avisar.")
+        return self.salt
 
 def cargar_settings() -> Settings:
     return Settings()

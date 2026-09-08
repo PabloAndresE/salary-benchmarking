@@ -141,7 +141,7 @@ def _ensamblar(base, scvs, base_url, settings, descargar, max_workers):
     df = base.merge(comp.drop(columns=["identificacion"]), how="left",
                     on=["numero_proceso", "_ced_key"]).drop(columns=["_ced_key"])
     df["cargo_norm"] = df["cargo"].map(_norm)
-    df = anonimizar(df, settings.salt)                 # FRONTERA: elimina cédula (+ nombres si hubiera)
+    df = anonimizar(df, settings.salt_obligatorio())   # FRONTERA: elimina cédula (+ nombres si hubiera)
     df = agregar_features(df, settings)                # total/pct NULL-safe, sueldo_sbu, antiguedad...
     df = marcar_cuarentena(df, settings)               # depende de total -> corre despues de features
     return unir_scvs(df, scvs)

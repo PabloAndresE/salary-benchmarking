@@ -1,10 +1,24 @@
 import pytest
 from benchmarking.config.settings import cargar_settings
 
-def test_salt_requerido(monkeypatch):
+def test_el_salt_se_exige_EN_LA_FRONTERA_y_no_al_arrancar(monkeypatch):
+    # Antes `cargar_settings()` moria sin PIPELINE_SALT, para cualquier subcomando. Eso
+    # FABRICABA el mal habito que la regla del salt existe para evitar: para sacar un
+    # informe —que no anonimiza nada— habia que inventarse un salt, y ese valor basura
+    # quedaba vivo en la shell para la siguiente ingesta, que escribiria `id_hash`
+    # incomparables con todo lo ya escrito y en silencio.
     monkeypatch.delenv("PIPELINE_SALT", raising=False)
-    with pytest.raises(Exception):
-        cargar_settings()
+    s = cargar_settings()                    # el informe puede correr
+    assert s.salt is None
+    assert s.get_sbu(2025) == 470
+    # ...y la frontera se planta, con el motivo escrito.
+    with pytest.raises(ValueError, match="PIPELINE_SALT"):
+        s.salt_obligatorio()
+
+
+def test_con_salt_la_frontera_lo_devuelve(monkeypatch):
+    monkeypatch.setenv("PIPELINE_SALT", "x")
+    assert cargar_settings().salt_obligatorio() == "x"
 
 def test_sbu_por_anio(monkeypatch):
     monkeypatch.setenv("PIPELINE_SALT", "x")
