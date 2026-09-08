@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
-from benchmarking.producto.comparacion import anclar, comparar, texto_resumen
+from benchmarking.producto.comparacion import (a_numero, anclar, comparar,
+                                               texto_resumen)
 
 
 def _sbu(anio):
@@ -120,3 +121,32 @@ def test_la_persona_se_compara_contra_la_banda_de_PERSONAS():
         r[f"p{q}per_log"] = 1.0 + z * 0.40         # la de PERSONAS, mucho mas ancha
     det, _, _ = comparar(df, "sueldo", "cargo", r, _sbu, 2025)
     assert det["lectura_mercado"].iloc[0] == "en linea", "cae dentro de la de personas"
+
+
+def test_lee_los_sueldos_como_los_escribe_rrhh():
+    # `leer_nomina` lee con dtype=str, asi que esta es la UNICA conversion a numero. Con
+    # `pd.to_numeric` a secas fallaba todo lo que no fuera ingles puro, y un Excel en
+    # configuracion regional espanola escribe `1.500,64`.
+    casos = {"1500.64": 1500.64, "1,500.64": 1500.64, "1.500,64": 1500.64,
+             "$1500.64": 1500.64, "1 500,64": 1500.64, "1500,64": 1500.64,
+             " 1500.64 ": 1500.64,
+             # un solo separador con tres digitos detras es de MILES, no decimal
+             "1.500": 1500.0, "1,500": 1500.0,
+             "1,50": 1.5, "1.5": 1.5,
+             "12.345.678,90": 12345678.90, "12,345,678.90": 12345678.90}
+    got = a_numero(list(casos))
+    for k, (txt, esperado) in enumerate(casos.items()):
+        assert abs(got.iloc[k] - esperado) < 1e-9, f"{txt!r} -> {got.iloc[k]}"
+    assert a_numero(["", "abc", None]).isna().all()
+
+
+def test_un_sueldo_ilegible_no_se_confunde_con_falta_de_referencia():
+    # Antes los dos decian "sin referencia" y el cliente concluia que no conocemos su
+    # cargo, cuando la referencia estaba bien y lo ilegible era su numero.
+    df = pd.DataFrame({"cargo": ["A", "B"], "sueldo": ["1.500,64", "sin dato"]}, dtype=str)
+    det, puesto, res = comparar(df, "sueldo", "cargo", _ref([1.0, 1.0], ["ALTA"] * 2),
+                                _sbu, 2025)
+    assert det["lectura_mercado"].iloc[0] != "sueldo ilegible", "este si se lee"
+    assert det["lectura_mercado"].iloc[1] == "sueldo ilegible"
+    assert res["sueldos_ilegibles"] == 1
+    assert "formato de la columna" in texto_resumen(res, puesto)

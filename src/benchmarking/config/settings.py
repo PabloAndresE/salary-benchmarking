@@ -1,3 +1,5 @@
+import warnings
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _SBU = {2016:366,2017:375,2018:386,2019:394,2020:400,
@@ -37,8 +39,35 @@ class Settings(BaseSettings):
     vertex_location: str = "us-central1"
     gcs_cache_embeddings: str = ""      # gs://bucket/ruta.npz, o vacio para no cachear
 
-    def get_sbu(self, anio: int) -> int:
-        return self.sbu.get(anio, max(self.sbu.values()))
+    def get_sbu(self, anio: int, estricto: bool = False) -> int:
+        """SBU del anio. Con `estricto`, falla en vez de adivinar.
+
+        La tolerancia existe para el camino de DATOS: en BigQuery hay filas con
+        `anio_valoracion` nulo, que llegan aqui como 0, y tirar por eso seria peor.
+
+        Pero envejece mal y ya paso: la tabla acaba en 2025 y el ano en curso es 2026, asi
+        que un dato de 2026 se normalizaba con el SBU de 2025 SIN AVISAR. El objetivo es
+        `log(sueldo/SBU)`, o sea que un SBU equivocado desplaza todo de forma sistematica,
+        y al volver a dolares lo desplaza otra vez.
+
+        Por eso el camino de PRODUCTO —donde el SBU convierte el entregable a dolares—
+        llama con `estricto=True`: ahi adivinar corrompe cada cifra del informe y es mejor
+        parar y pedir el dato, que es publico y sale en un acuerdo ministerial.
+        """
+        if anio in self.sbu:
+            return self.sbu[anio]
+        if estricto:
+            raise ValueError(
+                f"No hay SBU para {anio}. La tabla llega hasta "
+                f"{max(self.sbu)}. Anadelo en `config/settings.py` (`_SBU`) antes de "
+                f"emitir dolares de ese anio: usar el del anio anterior desplaza TODAS "
+                f"las cifras del informe.")
+        ultimo = max(self.sbu)
+        if anio > ultimo:
+            warnings.warn(
+                f"SBU de {anio} desconocido: se usa el de {ultimo} ({self.sbu[ultimo]}). "
+                f"Anade el valor real en `config/settings.py`.", stacklevel=2)
+        return self.sbu[ultimo]
 
 def cargar_settings() -> Settings:
     return Settings()

@@ -109,6 +109,12 @@ def referenciar_archivo(ruta_nomina, ruta_salida, cliente_bq, settings,
                         col_cargo=None, col_sueldo=None, anio=2025,
                         anios_base=(2024, 2025), cache_emb=None,
                         ruta_base=None, rehacer=False):
+    # El SBU convierte el entregable a dolares: si no lo tenemos para ese anio, parar.
+    # Usar el del anio anterior desplaza sistematicamente TODAS las cifras del informe.
+    try:
+        settings.get_sbu(int(anio), estricto=True)
+    except ValueError as e:                      # mensaje limpio, como `leer_nomina`
+        raise SystemExit(str(e))
     df, col = leer_nomina(ruta_nomina, col_cargo)
     print(f"nomina: {len(df):,} filas, columna de cargo '{col}'")
 

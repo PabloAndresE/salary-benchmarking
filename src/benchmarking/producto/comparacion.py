@@ -22,14 +22,71 @@ error un 12,8%, y un 14,6% en empresas con mas de 100 personas referenciadas.
   partes 1 y 2 son aritmetica directa y no dependen de ese numero; la 3 si. Tratarla como
   preliminar hasta verificarla.
 """
+import re
+
 import numpy as np
 import pandas as pd
 
 MIN_PARA_ANCLA = 5      # por debajo, el nivel de la empresa es ruido y se dice
 
 
+_LIMPIA = re.compile(r"[^\d,.\-]")
+
+
+def a_numero(sueldos):
+    """Convierte a numero los sueldos como los escribe un area de RR.HH., no como los
+    quiere pandas.
+
+    `leer_nomina` lee la nomina con `dtype=str`, asi que esto es el UNICO sitio donde el
+    sueldo se vuelve numero. Con `pd.to_numeric` a secas fallaba todo lo que no fuera
+    ingles puro:
+
+        1.500,64   ->  NaN      (Excel en configuracion regional espanola)
+        1,500.64   ->  NaN
+        $1500.64   ->  NaN
+
+    Y fallaba EN SILENCIO y con mensaje falso: la fila salia como "sin referencia" cuando
+    la referencia estaba perfectamente calculada — lo que faltaba era el sueldo. El
+    cliente concluia que no conocemos su cargo.
+
+    LA REGLA para decidir cual separador es el decimal: manda el que aparece MAS A LA
+    DERECHA. Si solo hay uno y le siguen exactamente tres digitos, es de miles
+    (`1.500` = mil quinientos, no uno coma cinco). Es la convencion habitual y la unica
+    que resuelve `1.500` sin preguntar.
+    """
+    s = pd.Series(sueldos).astype(str).str.strip()
+    s = s.str.replace(" ", "", regex=False).str.replace(_LIMPIA, "", regex=True)
+
+    ult_p, ult_c = s.str.rfind("."), s.str.rfind(",")
+    solo_uno = (ult_p >= 0) ^ (ult_c >= 0)
+    sep = np.where(ult_p > ult_c, ".", np.where(ult_c > ult_p, ",", ""))
+    # con un solo separador y tres digitos detras, es de miles
+    cola = s.str.len() - np.maximum(ult_p, ult_c) - 1
+    miles = solo_uno & (cola == 3)
+    dec = np.where(miles, "", sep)
+
+    out = []
+    for txt, d in zip(s.tolist(), dec.tolist()):
+        # `astype(str)` NO garantiza texto: con el dtype `str` nuevo de pandas, un `None`
+        # sale como NaN float y aqui reventaba con AttributeError.
+        if not isinstance(txt, str) or not txt:
+            out.append(np.nan)
+            continue
+        t = txt
+        for otro in (".", ","):
+            if otro != d:
+                t = t.replace(otro, "")
+        if d:
+            t = t.replace(d, ".")
+        try:
+            out.append(float(t))
+        except ValueError:
+            out.append(np.nan)
+    return pd.Series(out, index=pd.Series(sueldos).index, dtype=float)
+
+
 def _log_sueldo(sueldos, sbu, anio):
-    s = pd.to_numeric(sueldos, errors="coerce")
+    s = a_numero(sueldos)
     return np.log(s.where(s > 0) / float(sbu(int(anio))))
 
 
@@ -82,8 +139,13 @@ def _lectura(y, p10, p25, p75, p90):
     "en linea" pasa a significar *dentro del 50% central del mercado*, que es una frase
     que el cliente puede comprobar.
     """
+    # DOS FALLOS DISTINTOS, DOS MENSAJES. Antes los dos decian "sin referencia", y con un
+    # sueldo en formato `1.500,64` el cliente leia que no conocemos su cargo cuando la
+    # referencia estaba perfectamente calculada y lo ilegible era su numero.
     out = np.full(len(y), "sin referencia", dtype=object)
-    hay = np.isfinite(y) & np.isfinite(p25) & np.isfinite(p75)
+    banda_ok = np.isfinite(p25) & np.isfinite(p75)
+    out[banda_ok & ~np.isfinite(y)] = "sueldo ilegible"
+    hay = np.isfinite(y) & banda_ok
     out[hay & (y < p10)] = "muy por debajo"
     out[hay & (y >= p10) & (y < p25)] = "por debajo"
     out[hay & (y >= p25) & (y <= p75)] = "en linea"
@@ -107,7 +169,7 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     ancla, n_ancla, nivel = anclar(y, ref, confianza)
 
     out = df.copy()
-    out["sueldo_actual"] = pd.to_numeric(df[col_sueldo], errors="coerce")
+    out["sueldo_actual"] = a_numero(df[col_sueldo])
     out["referencia"] = (np.exp(ref) * float(sbu(int(anio)))).round(2)
     # 1 y 2: frente al MERCADO
     out["vs_mercado"] = (np.exp(y - ref) - 1.0).round(4)
@@ -154,6 +216,7 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     resumen = {
         "personas": int(len(out)),
         "con_referencia": int(out["referencia"].notna().sum()),
+        "sueldos_ilegibles": int((out["lectura_mercado"] == "sueldo ilegible").sum()),
         "usadas_para_el_ancla": int(n_ancla),
         "nivel_vs_mercado": float(np.exp(nivel) - 1.0) if np.isfinite(nivel) else float("nan"),
         "ancla_fiable": bool(n_ancla >= MIN_PARA_ANCLA),
@@ -179,6 +242,15 @@ def texto_resumen(resumen, por_puesto):
         lin.append("  " + "!" * 68)
     lin.append(f"{resumen['con_referencia']} de {resumen['personas']} personas "
                f"tienen referencia de mercado.")
+    ilegibles = resumen.get("sueldos_ilegibles", 0)
+    if ilegibles:
+        lin.append("")
+        lin.append("  " + "!" * 68)
+        plural = "sueldo no se pudo" if ilegibles == 1 else "sueldos no se pudieron"
+        lin.append(f"  AVISO: {ilegibles} {plural} leer como numero y se quedaron sin")
+        lin.append("  comparar. NO es que falte la referencia: es el formato de la columna")
+        lin.append("  de sueldo. Revisa que no traiga texto ni celdas vacias.")
+        lin.append("  " + "!" * 68)
     # Se filtra por la LECTURA, que es relativa a la banda de cada cargo, no por el
     # porcentaje. Con el corte fijo de +/-15% este listado sacaba ocho puestos "muy por
     # encima" de los cuales CUATRO estaban dentro de su propia banda — y es el primer
