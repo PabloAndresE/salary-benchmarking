@@ -189,3 +189,54 @@ def test_el_resumen_por_puesto_usa_la_MEDIANA_y_lo_dice_en_el_nombre():
                             _sbu, 2025)
     assert "sueldo_medio" not in puesto.columns, "el nombre mentia"
     assert puesto["sueldo_mediano"].iloc[0] == 900.0, "un solo sueldo no mueve el voto"
+
+
+def _ref_brecha(refs, confianzas, brechas, ancho=0.2):
+    d = _ref(refs, confianzas, ancho)
+    d["brecha_grafia"] = brechas
+    return d
+
+
+def test_la_brecha_entre_grafias_va_por_puesto_y_no_por_persona():
+    # Es una propiedad del CARGO. Repetirla en cada fila del detalle la convierte en
+    # ruido al lado de un sueldo individual, que es otra unidad.
+    df = pd.DataFrame({"cargo": ["ENFERMERA", "ENFERMERA", "CONTADOR"],
+                       "sueldo": [700.0, 720.0, 1300.0]})
+    det, puesto, _ = comparar(df, "sueldo", "cargo",
+                              _ref_brecha([1.0, 1.0, 1.2], ["ALTA"] * 3,
+                                          [-0.213, -0.213, ""]), _sbu, 2025)
+    assert "brecha_grafia" not in det.columns, "fuera del detalle"
+    p = puesto.set_index("cargo")
+    assert abs(p.loc["ENFERMERA", "brecha_grafia"] + 0.213) < 1e-9
+    assert p.loc["CONTADOR", "brecha_grafia"] == ""
+
+
+def test_el_resumen_DICE_la_brecha_en_vez_de_esconderla():
+    # "Hacer visible la brecha" no puede significar la columna 27 de una hoja de calculo.
+    # Y el texto tiene que decir lo que la cifra NO es, o invita a leerla como brecha
+    # salarial medida — que no lo es: son dos grafias de empresas distintas sin controles.
+    df = pd.DataFrame({"cargo": ["ENFERMERA", "CONTADOR"], "sueldo": [700.0, 1300.0]})
+    _, puesto, res = comparar(df, "sueldo", "cargo",
+                              _ref_brecha([1.0, 1.2], ["ALTA"] * 2, [-0.213, ""]),
+                              _sbu, 2025)
+    txt = texto_resumen(res, puesto)
+    assert "ENFERMERA" in txt and "-21" in txt
+    assert "NO es una brecha salarial" in txt
+    assert "sin controlar por empresa" in txt
+    # el listado ordenaba reindexando con el indice COMPLETO y colaba una linea
+    # "nan +nan%" por cada puesto sin brecha
+    assert "nan" not in txt.lower()
+
+
+def test_una_brecha_pequena_no_ensucia_el_resumen():
+    df = pd.DataFrame({"cargo": ["A", "B"], "sueldo": [700.0, 800.0]})
+    _, puesto, res = comparar(df, "sueldo", "cargo",
+                              _ref_brecha([1.0, 1.0], ["ALTA"] * 2, [-0.01, ""]),
+                              _sbu, 2025)
+    assert "brecha" not in texto_resumen(res, puesto).lower()
+
+
+def test_una_base_vieja_sin_la_columna_no_rompe_nada():
+    df = pd.DataFrame({"cargo": ["A"], "sueldo": [700.0]})
+    det, puesto, res = comparar(df, "sueldo", "cargo", _ref([1.0], ["ALTA"]), _sbu, 2025)
+    assert texto_resumen(res, puesto)

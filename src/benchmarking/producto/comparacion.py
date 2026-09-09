@@ -33,6 +33,12 @@ MIN_PARA_ANCLA = 5      # por debajo, el nivel de la empresa es ruido y se dice
 _LIMPIA = re.compile(r"[^\d,.\-]")
 
 
+# Por debajo de esto la diferencia entre grafias es ruido y no merece un parrafo
+# en el resumen que lee un gerente. Mismo orden que `CORTE_ALTA`: las decisiones
+# salariales se mueven en escalones de ~5%.
+CORTE_BRECHA = 0.05
+
+
 def a_numero(sueldos):
     """Convierte a numero los sueldos como los escribe un area de RR.HH., no como los
     quiere pandas.
@@ -202,6 +208,11 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     #
     # Se recalcula desde los `_log` y no se toma de `ref_df`: las columnas en dolares solo
     # existen si a `referenciar` se le paso el anio, y aqui el anio siempre se conoce.
+    # LA BRECHA ENTRE GRAFIAS va en `por_puesto` y no en el detalle: es una propiedad
+    # del CARGO, no de la persona, y repetirla en cada fila la convierte en ruido. Se
+    # lee de `ref_df` con guarda porque las bases anteriores a D-026 no la traen.
+    out["_brecha"] = (pd.Series(list(ref_df["brecha_grafia"]), index=df.index)
+                      if "brecha_grafia" in ref_df.columns else "")
     f = float(sbu(int(anio)))
     out["_y"] = yv
     for q in ("p10", "p25", "p75", "p90"):
@@ -218,6 +229,7 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
                           p90_emp=("p90_emp", "first"),
                           vs_mercado=("vs_mercado", "median"),
                           confianza=("confianza", "first"),
+                          brecha_grafia=("_brecha", "first"),
                           _voto=("_y", "median"), _p10=("_p10", "first"),
                           _p25=("_p25", "first"), _p75=("_p75", "first"),
                           _p90=("_p90", "first"))
@@ -229,6 +241,7 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     por_puesto = por_puesto.drop(columns=[c for c in por_puesto.columns
                                           if c.startswith("_")])
     out = out.drop(columns=[c for c in out.columns if c.startswith("_")])
+    out = out.drop(columns=["brecha_grafia"], errors="ignore")
 
     resumen = {
         "personas": int(len(out)),
@@ -259,6 +272,29 @@ def texto_resumen(resumen, por_puesto):
         lin.append("  " + "!" * 68)
     lin.append(f"{resumen['con_referencia']} de {resumen['personas']} personas "
                f"tienen referencia de mercado.")
+    # LA BRECHA ENTRE GRAFIAS, dicha en el resumen y no escondida en una columna. Se
+    # unifican las dos grafias del mismo oficio (D-026) porque el titulo era un proxy de
+    # genero dentro del modelo; la diferencia que habia se guarda y se reporta, porque
+    # fusionar sin decirlo la haria desaparecer en vez de resolverla.
+    if "brecha_grafia" in por_puesto.columns:
+        b = pd.to_numeric(por_puesto["brecha_grafia"], errors="coerce")
+        gr = por_puesto[b.abs() >= CORTE_BRECHA]
+        if len(gr):
+            lin.append("")
+            lin.append(f"  En {len(gr)} puesto(s), la grafia femenina y la masculina del "
+                       f"titulo estaban en")
+            lin.append("  celdas distintas y pagaban distinto. La referencia que se "
+                       "entrega ya las unifica:")
+            # Ordenar DENTRO del subconjunto filtrado. Reindexar `gr` con el indice
+            # completo metia filas NaN de los puestos sin brecha, y el resumen imprimia
+            # una linea "nan +nan%".
+            orden_gr = b.loc[gr.index].abs().sort_values(ascending=False).index
+            for _, r in gr.loc[orden_gr].head(5).iterrows():
+                v = float(r["brecha_grafia"])
+                lin.append(f"    {str(r.iloc[0])[:38]:<40} {v:>+7.1%} la femenina")
+            lin.append("  NO es una brecha salarial medida: compara dos GRAFIAS escritas "
+                       "por empresas")
+            lin.append("  distintas, sin controlar por empresa, sector ni antiguedad.")
     ilegibles = resumen.get("sueldos_ilegibles", 0)
     if ilegibles:
         lin.append("")
