@@ -2322,3 +2322,79 @@ nueva y un criterio declarado antes de correrla.
 - Decidir qué pasa cuando `--rubro` y `--segmento` se piden a la vez. Hoy componen —el
   desplazamiento por tamaño se suma sobre la banda que esté en uso— y **esa combinación no
   está medida**.
+
+---
+
+## D-024 — El estimador de `efecto_nivel` se queda en PROMEDIO. Hipótesis rechazada
+
+**Fecha:** 2026-09-09
+**Origen:** al auditar dónde un promedio y una mediana se encuentran en la misma resta,
+apareció que `efecto_nivel` estima la escalera con promedios y ese número se suma a `m`,
+que es una mediana ponderada.
+**Evidencia:** `research/experimentos/e3_varianza/17_efecto_nivel_robusto.py`
+**Estado:** **medido y rechazado.** El código no cambia; queda el parámetro `estimador`
+para poder volver a probarlo.
+
+### El argumento que hice, y por qué era más flojo de lo que parecía
+
+Una diferencia-de-promedios solo coincide con una diferencia-de-medianas si las dos
+distribuciones tienen la misma forma. Los escalones altos tienen cola derecha mucho más
+gorda, luego `E[nivel 5] − E[nivel 1]` debería **sobreestimar** la diferencia de medianas,
+y el ajuste quedaría sobredimensionado sobre un centro que es mediana.
+
+**La primera mitad del argumento es correcta y está medida.** La segunda no se sostiene:
+`mu` en la rama de analogía **ya es una media ponderada** de las medianas de 25 vecinos, no
+un objeto puramente mediano. El requisito de "que el estimador case con el funcional" no
+aplica tan limpio como lo presenté.
+
+### La medición
+
+**Los dos estimadores sí difieren, y en la dirección predicha** (secundario, no decide):
+
+| nivel | promedio | mediana | dif |
+|---|---|---|---|
+| 1 | −0,3477 | −0,1466 | +0,2011 |
+| 2 | −0,2815 | −0,1403 | +0,1413 |
+| 3 | −0,0951 | +0,0000 | +0,0951 |
+| 4 | +0,1650 | +0,2137 | +0,0488 |
+| 5 | +0,5594 | +0,6763 | +0,1169 |
+| **recorrido 1→5** | **2,477×** | **2,277×** | |
+
+El promedio ensancha la escalera un 8,8%. El defecto es real.
+
+**Pero la primaria dice que no importa.** Sobre 7.451 votos de empresas apartadas donde el
+ajuste actúa:
+
+| variante | pinball | pareado contra la media | veredicto |
+|---|---|---|---|
+| **media (hoy)** | **0,1522** | — | |
+| mediana | 0,1529 | +0,00069 IC [+0,00049, +0,00086] | **EMPEORA** |
+| sin ajuste | 0,1627 | +0,01059 IC [+0,00869, +0,01243] | EMPEORA |
+| PLACEBO | 0,1691 | +0,01706 IC [+0,01444, +0,01971] | EMPEORA |
+
+El criterio pre-declarado pedía el IC **entero por debajo de cero**. Está entero por
+**encima**. Se rechaza.
+
+Por escalón (parte C) tampoco hay ninguno donde cambiar ayude: las diferencias van de
++0,0031 a −0,0008 y solo el nivel 5 sale marginalmente a favor de la mediana.
+
+### Los dos resultados que valen más que el rechazado
+
+1. **El ajuste de nivel se gana su sitio.** Quitarlo cuesta **+0,0106** de pinball — quince
+   veces la diferencia entre los dos estimadores. Era una pieza aplicada sin contraste
+   pareado propio y ahora lo tiene.
+2. **El placebo es lo peor de todo (+0,0171).** Barajar los escalones es peor que no
+   ajustar, lo que confirma que el eje de nivel lleva señal real y no está compensando
+   ruido. Es la validación out-of-sample que D-013 dejó pendiente.
+
+### Caveat honesto
+
+La base se construye sobre 4.328 empresas (no las 9.142 del universo), así que la rama de
+analogía cubre el **46%** de los votos en vez del 36% de producción. Eso **favorece**
+encontrar un efecto del ajuste de nivel, no lo contrario — y aun así la mediana pierde.
+
+### Lo que esto deja abierto
+
+El pendiente de §18 sobre el **sesgo de una pasada** en `efecto_nivel` —centrar por empresa
+y luego por área deja sesgo con áreas desbalanceadas— **sigue vivo y es independiente**.
+Esta medición cambió el estimador, no el esquema de centrado.

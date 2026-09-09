@@ -1,0 +1,44 @@
+construir 4,328 empresas   evaluar 1,442
+embebiendo 57,772 titulos...
+construyendo la base sobre tr...
+banda por rubro: 3,029 pares (celda, rubro) sobre 14 rubros
+titulos solo en las empresas apartadas: 13,648
+
+==============================================================================
+A. SECUNDARIO (no decide): .cuanto se separan los dos estimadores?
+==============================================================================
+  nivel        promedio      mediana        dif
+  1             -0.3477      -0.1466    +0.2011
+  2             -0.2815      -0.1403    +0.1413
+  3             -0.0951      +0.0000    +0.0951
+  4             +0.1650      +0.2137    +0.0488
+  5             +0.5594      +0.6763    +0.1169
+  recorrido 1->5 con promedio : 2.477x
+  recorrido 1->5 con mediana  : 2.277x
+
+votos por analogia: 17,230 de 37,084
+...y donde el ajuste ACTUA (las dos variantes difieren): 7,451
+
+==============================================================================
+B. PRIMARIA: pinball sobre los votos donde el ajuste actua
+==============================================================================
+  variante           PINBALL   |sesgo|   cob 50%
+  media (hoy)         0.1522    12.4%    61.4%
+  mediana             0.1529    12.4%    61.1%
+  sin ajuste          0.1627    13.7%    66.7%
+  PLACEBO             0.1691    11.5%    55.9%
+
+  contraste pareado (300 replicas de empresas apartadas)
+    mediana        - media = +0.00069  IC 95% [+0.00049, +0.00086]  EMPEORA
+    sin ajuste     - media = +0.01059  IC 95% [+0.00869, +0.01243]  EMPEORA
+    PLACEBO        - media = +0.01706  IC 95% [+0.01444, +0.01971]  EMPEORA
+
+==============================================================================
+C. .DONDE cambia? por escalon del puesto preguntado
+==============================================================================
+  nivel      votos      media    mediana        dif
+  1            354     0.0925     0.0957    +0.0031
+  2            277     0.1160     0.1162    +0.0002
+  3            390     0.1479     0.1483    +0.0004
+  4            325     0.1702     0.1720    +0.0017
+  5            186     0.2246     0.2237    -0.0008

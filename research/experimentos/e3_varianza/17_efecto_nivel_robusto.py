@@ -41,6 +41,8 @@ entero no esta haciendo nada.
 
 TODO SOBRE TRAIN. El 20% de test no se toca.
 """
+import gc
+
 import numpy as np
 import pandas as pd
 from google.cloud import bigquery
@@ -62,18 +64,29 @@ def pinball(y, lo, hi):
 
 
 def main():
+    # FRUGAL CON LA MEMORIA, y no es cosmetica: la primera version murio por OOM. El marco
+    # trae 18 columnas y el script arrastraba cuatro copias de un millon de filas mas dos
+    # matrices de 65.081x768. Aqui se recorta a las cinco columnas que se usan y se suelta
+    # cada cosa en cuanto deja de hacer falta.
     s = cargar_settings()
     cl = bigquery.Client(project=s.bq_project)
     mk = datos.marco_evaluable(datos.agregar_objetivo(
         datos.cargar_marco(cl, s.bq_project, s.bq_dataset, anios=(2024, 2025)), s))
-    mk = mk.copy()
+    # `segmento` y `ciiu_n1` los usa `construir` (ajuste por tamano y banda por rubro);
+    # el resto del marco no interviene en esta medicion.
+    cols = [c for c in ("cargo_norm", "empresa_ruc", "y", "segmento", "ciiu_n1")
+            if c in mk.columns]
+    mk = mk[cols].copy()
     mk["cargo_norm"] = mk.cargo_norm.astype(str)
     train, _ = splits.partir(mk, splits.empresas_test(mk))
     rng = np.random.default_rng(SEM)
     emp0 = np.array(sorted(train.empresa_ruc.unique()))
     val = set(rng.choice(emp0, len(emp0) // 4, replace=False))
-    tr = train[~train.empresa_ruc.isin(val)].copy()
-    ts = train[train.empresa_ruc.isin(val)].copy()
+    en_val = train.empresa_ruc.isin(val)
+    tr = train[~en_val].copy()
+    ts = train[en_val][["cargo_norm", "empresa_ruc", "y"]].copy()
+    del mk, train, en_val
+    gc.collect()
     print(f"construir {tr.empresa_ruc.nunique():,} empresas   "
           f"evaluar {ts.empresa_ruc.nunique():,}")
 
@@ -94,6 +107,17 @@ def main():
 
     ef_media = efecto_nivel(tr, col="cargo_norm", estimador="media")
     ef_mediana = efecto_nivel(tr, col="cargo_norm", estimador="mediana")
+
+    # `tr` y `X` ya no hacen falta. `emb` se rehace como VISTAS de `b.Z` —no copia— para
+    # no tener la matriz de 65.081x768 dos veces en memoria. Ojo: `b.Z` solo cubre las
+    # celdas de `tr`, y los titulos que aparecen SOLO en `ts` se quedarian sin embedding;
+    # de esos se guarda copia antes de soltar `X`.
+    solo_ts = {c: np.array(emb[c]) for c in etiquetas if c not in b.idx}
+    del tr, X
+    emb = {c: b.Z[i] for i, c in enumerate(b.celdas)}
+    emb.update(solo_ts)
+    print(f"titulos solo en las empresas apartadas: {len(solo_ts):,}")
+    gc.collect()
 
     print("\n" + "=" * 78)
     print("A. SECUNDARIO (no decide): .cuanto se separan los dos estimadores?")
