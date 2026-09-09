@@ -1,0 +1,34 @@
+construir 4,328 empresas   evaluar 1,442
+votos de empresas apartadas: 37,084 sobre 19,323 titulos
+
+[1/3] base SIN erratas...
+banda por rubro: 3,029 pares (celda, rubro) sobre 14 rubros
+[2/3] base CON erratas...
+fusion por errata: 513 grupos absorbidos
+banda por rubro: 4,337 pares (celda, rubro) sobre 14 rubros
+
+titulos que la absorcion mueve de grupo: 57
+[3/3] base PLACEBO (57 absorciones al azar)...
+fusion por errata: 57 absorciones INYECTADAS
+banda por rubro: 3,034 pares (celda, rubro) sobre 14 rubros
+
+==============================================================================
+A. PRIMARIA: cobertura directa sobre los titulos afectados
+==============================================================================
+  variante           directa   personas   empresas detras
+  sin erratas          0.0%          0               220
+  con erratas        100.0%        308                50
+
+==============================================================================
+B. GUARDARRAIL: pinball sobre los votos que la absorcion toca
+==============================================================================
+  votos utilizables: 64
+
+  variante           PINBALL   |sesgo|   cob 50%
+  sin erratas         0.1319     4.0%    75.0%
+  con erratas         0.1165     2.4%    43.8%
+  PLACEBO             0.1484     6.9%    70.3%
+
+  contraste pareado (300 replicas)
+    con erratas    - sin erratas = -0.01476  IC 95% [-0.03307, +0.00958]  sin efecto
+    PLACEBO        - sin erratas = +0.01768  IC 95% [-0.00172, +0.04537]  sin efecto

@@ -2468,9 +2468,84 @@ ocurre en producción** para los pares que la semántica junta sola, y la decisi
 sobre género es más amplia de lo que parecía: no es sólo si fusionar los 961 pares
 sueltos, sino qué hacer con los que ya están fusionados.
 
+### La medición pareada: **el criterio pre-declarado NO se cumple**
+
+`research/experimentos/e2_nivel/08_fusion_por_errata.py`. Y conviene decirlo antes que los
+números: **esta decisión queda adoptada con evidencia más débil que las demás del
+registro.** No está validada; está sin contradecir.
+
+El criterio se apartó del guion de los experimentos 15–17 a propósito. Aquéllos declararon
+pinball como primaria porque medían cambios en el *estimador*; éste no cambia el
+estimador, cambia a qué celda pertenece un título. Así que:
+
+```
+PRIMARIA      cobertura directa sobre los titulos que la absorcion toca
+GUARDARRAIL   pinball pareado: basta con que NO empeore
+SE ADOPTA si  (1) sube la cobertura  (2) el guardarrail no empeora
+              (3) el PLACEBO SI empeora    <- la pieza que discrimina
+```
+
+**(1) Primaria — se cumple, y es inequívoca.** Sobre los 57 títulos afectados en las
+empresas apartadas:
+
+| | directa | personas |
+|---|---|---|
+| sin erratas | 0,0% | 0 |
+| con erratas | **100,0%** | 308 |
+
+*(El «empresas detrás» que baja de 220 a 50 no es pérdida de respaldo: en la rama de
+analogía esa cifra es la suma sobre los 25 vecinos deduplicados, y en la directa es una
+celda real. No son la misma unidad.)*
+
+**(2) Guardarraíl — se cumple, y todo indicador puntual mejora:**
+
+| | pinball | \|sesgo\| | cob 50% |
+|---|---|---|---|
+| sin erratas | 0,1319 | 4,0% | 75,0% |
+| con erratas | **0,1165** | **2,4%** | **43,8%** |
+| PLACEBO | 0,1484 | 6,9% | 70,3% |
+
+La cobertura del 50% central pasa de desviarse **25 puntos** del nominal a desviarse **6**:
+las bandas de la analogía estaban demasiado anchas y la respuesta directa las calibra.
+
+**(3) Placebo — NO se cumple.**
+
+```
+con erratas - sin erratas = -0,01476   IC 95% [-0,03307, +0,00958]   sin efecto
+PLACEBO     - sin erratas = +0,01768   IC 95% [-0,00172, +0,04537]   sin efecto
+```
+
+Las estimaciones puntuales van exactamente en las direcciones predichas —el real mejora,
+el placebo empeora, con una brecha de 0,032— pero ningún IC excluye el cero.
+
+### Por qué falla, y en qué se distingue de un resultado negativo
+
+**64 votos utilizables.** No hay potencia, y es estructural: la intervención afecta a cosas
+raras por definición. Sobre `tr` (4.328 de 9.142 empresas) se absorben 513 grupos en vez de
+los 873 del universo, y de ésos sólo 57 aparecen en las nóminas apartadas.
+
+Esto **no** es «el placebo reprodujo la mejora», que sería condenatorio. Es que con n=64 no
+se distingue nada. Es un fallo de potencia, no de dirección.
+
+Y un **error de diseño del experimento**: debió incluir el contraste directo entre real y
+placebo, que es el más agudo de los tres y compara justo lo que difiere. Se comparó cada
+uno contra el control por separado, que es la forma menos potente de hacerlo.
+
+### Por qué se deja montado a pesar de todo
+
+Tres razones, y ninguna es que el resultado saliera bien:
+
+1. La primaria es **mecánica**: la gente afectada pasa de analogía a datos propios, y eso
+   no depende de ningún contraste.
+2. El guardarraíl **no empeora**, y todos los indicadores puntuales apuntan a favor.
+3. La regla es **conservadora por construcción**: absorbe sólo grupos de ≤2 empresas dentro
+   de otros de ≥10, en una dirección, sin encadenar, con dígitos, romanos, letras de grado
+   y género excluidos. El modo de fallo está acotado.
+
 ### Qué falta
 
-- **La medición pareada**: pinball sobre empresas apartadas, restringido a los votos donde
-  la absorción actúa, con placebo. La ganancia esperada es de cobertura, no de precisión
-  —igual que en D-015— pero hay que comprobarlo, no suponerlo.
-- La decisión sobre **género**, con su propio registro.
+- **Repetir con potencia**: varias particiones de empresas para multiplicar los votos
+  afectados, y el contraste directo real-contra-placebo. Son 3 bases por partición, así que
+  5 particiones son ~7 horas de máquina. Hasta entonces esto no está validado.
+- La decisión sobre **género**, con su propio registro — y ahora se sabe que es más amplia:
+  incluye los pares que la fusión semántica ya junta sola.
