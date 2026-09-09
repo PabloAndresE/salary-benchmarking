@@ -100,7 +100,7 @@ admite ampliación hacia atrás.
 A partir de 6 hilos el servidor corta conexiones, los reintentos se multiplican y el rendimiento
 se desploma. El valor anterior (8) no sólo perdía datos: **también era 5× más lento**.
 
-**Cambios aplicados** (`e03ff8d`):
+**Cambios aplicados** (`503d825`):
 
 1. `descargar_plantilla` reintenta ante `RequestException` (SSL / conexión / timeout) y agota en
    `DescargaFallida`, distinta de `404 → None`. Espera inyectable para tests rápidos.
@@ -110,10 +110,10 @@ se desploma. El valor anterior (8) no sólo perdía datos: **también era 5× m�
 
 **Dos bugs adicionales, descubiertos al desplegar:**
 
-- **`c8efc3f`** — el job de Cloud Run pasaba `--concurrencia=8` por `--args`, lo que habría pisado
+- **`754e6d0`** — el job de Cloud Run pasaba `--concurrencia=8` por `--args`, lo que habría pisado
   el valor medido y reintroducido la pérdida. Se retira el flag: la concurrencia tiene una sola
   fuente de verdad (`settings.py`).
-- **`ad9409a`** — la primera ejecución del job murió al importar, con `FileNotFoundError` sobre
+- **`54652f6`** — la primera ejecución del job murió al importar, con `FileNotFoundError` sobre
   `esquema_plantilla.yaml`: `setuptools` no copia archivos no-`.py`, y en local no se nota porque
   se ejecuta desde `src/`. Bug preexistente que nadie había visto porque el job se creó el 4-ago y
   nunca se había ejecutado. Se añade `package-data` y un **smoke en el Dockerfile**
@@ -2290,7 +2290,7 @@ Lo que se compra es comparabilidad declarada. Lo que se paga está medido y es v
 1. **El centro sigue a la banda.** Si la banda sale de los votos del rubro, el centro es el
    p50 de esos mismos votos. Publicar un centro global dentro de una banda sectorial
    permitiría que el centro caiga fuera de su propio p25–p75 — la incoherencia que prohíbe
-   el test de `_lectura` (commit `690a9a6`).
+   el test de `_lectura` (commit `bb9ce40`).
 2. **`tau_c` y `sigma_c` NO se reestiman dentro del rubro.** Con 10–90 empresas saldrían
    pésimamente estimadas, y ya vienen encogidas de la celda entera (D-016).
 3. **El fallback es POR CARGO, no por informe.** Un cliente de manufactura tendrá rubro en
