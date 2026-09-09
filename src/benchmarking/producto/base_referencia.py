@@ -651,10 +651,18 @@ class BaseReferencia:
 
     @classmethod
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
-                  umbral_fusion=UMBRAL_FUSION):
+                  umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
+
+        `erratas=False` apaga la segunda pasada de D-025. Existe para poder medirla: la
+        variante de control tiene que salir del MISMO codigo con una sola diferencia.
+
+        `mapa_erratas` inyecta las absorciones en vez de calcularlas —un dict grupo_raro
+        -> grupo_comun—. Lo usa el PLACEBO del experimento, que absorbe los mismos grupos
+        raros pero hacia destinos al azar: si la mejora se reprodujera barajando, no
+        vendria de la distancia de edicion sino del mero hecho de absorber.
         """
         def _stats(d, columna, por_celda=True):
             """(m, W, emp, claves, tau2, sigma2, t2_serie, s2_serie) de `columna`.
@@ -727,10 +735,16 @@ class BaseReferencia:
             # grupo para decidir cual es el dedazo y cual el titulo comun, y eso solo se
             # sabe DESPUES de la fusion semantica. Se cuenta aqui con un groupby barato,
             # antes de los estadisticos, para no calcularlos dos veces.
-            g0 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
-            emp_g0 = marco.assign(_g=g0).groupby("_g")["empresa_ruc"].nunique().to_dict()
-            grupo, n_err = _fusionar_erratas(celdas, grupo, niv, emp_g0)
-            print(f"fusion por errata: {n_err:,} grupos absorbidos")
+            if mapa_erratas is not None:
+                grupo = np.array([mapa_erratas.get(int(g), int(g)) for g in grupo],
+                                 dtype=np.int64)
+                print(f"fusion por errata: {len(mapa_erratas):,} absorciones INYECTADAS")
+            elif erratas:
+                g0 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
+                emp_g0 = (marco.assign(_g=g0).groupby("_g")["empresa_ruc"]
+                          .nunique().to_dict())
+                grupo, n_err = _fusionar_erratas(celdas, grupo, niv, emp_g0)
+                print(f"fusion por errata: {n_err:,} grupos absorbidos")
 
             g_por_etiqueta = dict(zip(celdas, grupo))
             d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
