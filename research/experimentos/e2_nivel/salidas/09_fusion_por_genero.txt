@@ -1,0 +1,33 @@
+construir 4,328 empresas   evaluar 1,442
+votos de empresas apartadas: 37,084 sobre 19,323 titulos
+
+[1/3] base SIN genero...
+fusion por errata: 513 grupos absorbidos
+banda por rubro: 4,337 pares (celda, rubro) sobre 14 rubros
+[2/3] base CON genero...
+fusion por errata: 513 grupos absorbidos
+fusion por genero: 447 pares juntados
+banda por rubro: 4,953 pares (celda, rubro) sobre 14 rubros
+
+titulos que la fusion mueve de celda: 213
+[3/3] base PLACEBO (187 uniones al azar)...
+fusion por errata: 513 grupos absorbidos
+fusion por genero: 187 uniones INYECTADAS
+banda por rubro: 4,675 pares (celda, rubro) sobre 14 rubros
+
+votos utilizables: 1,036
+
+==============================================================================
+PRIMARIA: pinball sobre los votos donde la fusion actua
+==============================================================================
+  variante           PINBALL   |sesgo|   cob 50%     ancho
+  sin genero          0.1417     5.7%    50.2%    85.6%
+  con genero          0.1379     3.9%    49.6%    81.4%
+  PLACEBO             0.1690    24.5%    51.7%   117.5%
+
+  contraste pareado (300 replicas)
+    con genero   - sin genero = -0.00386  IC 95% [-0.00665, -0.00100]
+    PLACEBO      - sin genero = +0.02749  IC 95% [+0.02153, +0.03330]
+
+  DISCRIMINANTE: real contra placebo, directo
+    con genero - PLACEBO = -0.03134  IC 95% [-0.03859, -0.02467]   el real es MAS BARATO

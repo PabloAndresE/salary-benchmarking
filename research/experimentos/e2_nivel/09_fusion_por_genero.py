@@ -113,33 +113,33 @@ def main():
     # PLACEBO: las mismas uniones, pero entre celdas AL AZAR de tamano parecido. Si
     # costara lo mismo que la real, la regla de genero no estaria reconociendo oficios
     # equivalentes sino mezclando celdas cualesquiera.
-    uniones = {}
-    for t in tocados:
-        uniones.setdefault(gru_con[t], set()).add(gru_sin[t])
-    grupos_libres = sorted({g for t, g in gru_sin.items()
-                            if g not in {x for ss in uniones.values() for x in ss}})
-    tam = {g: 0 for g in grupos_libres}
+    # Los grupos ABSORBIDOS son los de los titulos que cambian de celda; el
+    # superviviente no cambia y por eso no aparece en `tocados`. La primera version
+    # agrupaba por destino y exigia dos fuentes, asi que se saltaba casi todo y solo
+    # inyectaba 5 uniones: un placebo que no hacia nada y un discriminante que no
+    # discriminaba.
+    absorbidos = sorted({gru_sin[t] for t in tocados})
+    tam = {}
     for t, g in gru_sin.items():
-        if g in tam:
-            tam[g] = max(tam[g], int(emp_sin.get(t, 0)))
+        tam[g] = max(tam.get(g, 0), int(emp_sin.get(t, 0)))
+    en_juego = set(absorbidos) | {gru_con[t] for t in tocados}
+    libres = sorted(set(gru_sin.values()) - en_juego)
     rp = np.random.default_rng(99)
     mapa_plac, usados = {}, set()
-    for dest, subs in uniones.items():
-        subs = sorted(subs)
-        if len(subs) < 2:
-            continue
-        # cada subgrupo real se une a uno al azar de tamano comparable
-        for sg in subs[1:]:
-            objetivo = tam.get(subs[0], 1)
-            cands = [g for g in grupos_libres
-                     if g not in usados and 0.5 * objetivo <= tam[g] <= 2 * objetivo]
-            if not cands:
-                cands = [g for g in grupos_libres if g not in usados]
-            if not cands:
-                break
-            elegido = int(rp.choice(cands))
-            usados.add(elegido)
-            mapa_plac[sg] = elegido
+    for sg in absorbidos:
+        objetivo = max(tam.get(sg, 1), 1)
+        cands = [g for g in libres
+                 if g not in usados and 0.5 * objetivo <= tam.get(g, 0) <= 2 * objetivo]
+        if not cands:
+            cands = [g for g in libres if g not in usados]
+        if not cands:
+            break
+        elegido = int(rp.choice(cands))
+        usados.add(elegido)
+        mapa_plac[sg] = elegido
+    assert len(mapa_plac) >= 0.8 * len(absorbidos), (
+        f"el placebo solo cubre {len(mapa_plac)} de {len(absorbidos)} absorciones: "
+        f"no serviria de contraste")
     print(f"[3/3] base PLACEBO ({len(mapa_plac):,} uniones al azar)...")
     ref_pla, _, _ = construir(mapa_genero=mapa_plac)
 

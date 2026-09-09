@@ -2660,3 +2660,74 @@ barato que el placebo.
 
 Y esta vez hay potencia: 114 pares con respaldo, frente a los 57 títulos y 64 votos que
 dejaron D-025 sin concluir.
+
+### El resultado: se cumplen las tres condiciones
+
+`research/experimentos/e2_nivel/09_fusion_por_genero.py`. 213 títulos afectados,
+**1.036 votos** de empresas apartadas — la potencia que a D-025 le faltó.
+
+| | pinball | \|sesgo\| | cob 50% | ancho |
+|---|---|---|---|---|
+| sin género | 0,1417 | 5,7% | 50,2% | 85,6% |
+| **con género** | **0,1379** | **3,9%** | **49,6%** | **81,4%** |
+| PLACEBO | 0,1690 | 24,5% | 51,7% | 117,5% |
+
+```
+con genero - sin genero = -0,00386   IC 95% [-0,00665, -0,00100]   MEJORA
+PLACEBO    - sin genero = +0,02749   IC 95% [+0,02153, +0,03330]   EMPEORA
+
+DISCRIMINANTE
+con genero - PLACEBO    = -0,03134   IC 95% [-0,03859, -0,02467]   el real es MAS BARATO
+```
+
+**No cuesta: gana.** Y la mejora (0,0039) es **mayor que la de la fusión semántica entera**
+(D-015: −0,0030), que es la pieza central del método.
+
+**Y juntar al azar duele siete veces más.** Con 187 uniones aleatorias de tamaño
+comparable, el sesgo salta del 5,7% al 24,5%. Eso es lo que había que demostrar: la regla
+está reconociendo **el mismo oficio**, no mezclando celdas. Si sólo importara juntar, el
+placebo habría dado lo mismo.
+
+El patrón lo confirma por otro lado: con género la banda **se estrecha manteniendo la
+cobertura** en el nominal (85,6% → 81,4% de ancho, 50,2% → 49,6% de cobertura), mientras el
+placebo la ensancha un 37% y sube la cobertura a 51,7%. **Estrechar sin perder cobertura es
+la firma de haber unido dos celdas que eran una; ensancharla es la de haber unido dos que
+no lo eran.**
+
+### Un placebo vacío estuvo a punto de pasar por validación
+
+La primera corrida inyectó **5** uniones en vez de 187, y salió idéntica al control. El
+discriminante decía entonces *«el real es más barato que el placebo»* con un IC precioso —
+y no significaba nada, porque sólo repetía *«el real es mejor que el control»*.
+
+El fallo: se agrupaban las fuentes por destino y se exigían dos, pero `tocados` sólo
+contiene los títulos que **cambian** de grupo, y el superviviente no cambia. Cada destino
+tenía una sola fuente y se saltaba.
+
+Es el mismo tipo de fallo que dejó a D-025 sin discriminante, y **el modo más fácil de
+auto-engañarse en este diseño**: un placebo que no hace nada produce un contraste que
+parece favorable. Ahora hay un `assert` que exige que el placebo cubra al menos el 80% de
+las uniones reales.
+
+### Cómo llega la brecha al cliente
+
+Va en `por_puesto` —es propiedad del cargo, no de la persona— con corte en 5%, y **el
+resumen la dice** en vez de dejarla en una columna:
+
+```
+En 1 puesto(s), la grafia femenina y la masculina del titulo estaban en
+celdas distintas y pagaban distinto. La referencia que se entrega ya las unifica:
+  ENFERMERA                                 -21.3% la femenina
+NO es una brecha salarial medida: compara dos GRAFIAS escritas por empresas
+distintas, sin controlar por empresa, sector ni antiguedad.
+```
+
+Esa última frase no es adorno: sin ella, un −21,3% junto a `ENFERMERA` se lee como brecha
+salarial medida, y no lo es.
+
+### Estado final
+
+**Adoptado, con las tres condiciones pre-declaradas cumplidas.** Es la decisión mejor
+sostenida de las tomadas hoy: el argumento de principio (sacar el proxy de género del
+modelo) y la medición apuntan en la misma dirección, cosa que no pasó ni con el rubro
+(D-023, medición nula) ni con las erratas (D-025, placebo sin potencia).
