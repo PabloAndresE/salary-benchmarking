@@ -100,7 +100,7 @@ admite ampliación hacia atrás.
 A partir de 6 hilos el servidor corta conexiones, los reintentos se multiplican y el rendimiento
 se desploma. El valor anterior (8) no sólo perdía datos: **también era 5× más lento**.
 
-**Cambios aplicados** (`652c745`):
+**Cambios aplicados** (commit *«fix(plantilla_client): reintentar ante caida de conexion; concurrencia 8 -> 4»*):
 
 1. `descargar_plantilla` reintenta ante `RequestException` (SSL / conexión / timeout) y agota en
    `DescargaFallida`, distinta de `404 → None`. Espera inyectable para tests rápidos.
@@ -110,10 +110,10 @@ se desploma. El valor anterior (8) no sólo perdía datos: **también era 5× m�
 
 **Dos bugs adicionales, descubiertos al desplegar:**
 
-- **`848fa87`** — el job de Cloud Run pasaba `--concurrencia=8` por `--args`, lo que habría pisado
+- Commit *«fix(infra): el job no fija --concurrencia»* — el job de Cloud Run pasaba `--concurrencia=8` por `--args`, lo que habría pisado
   el valor medido y reintroducido la pérdida. Se retira el flag: la concurrencia tiene una sola
   fuente de verdad (`settings.py`).
-- **`7aa94d7`** — la primera ejecución del job murió al importar, con `FileNotFoundError` sobre
+- Commit *«fix(empaque): incluir esquema_plantilla.yaml en el paquete instalado»* — la primera ejecución del job murió al importar, con `FileNotFoundError` sobre
   `esquema_plantilla.yaml`: `setuptools` no copia archivos no-`.py`, y en local no se nota porque
   se ejecuta desde `src/`. Bug preexistente que nadie había visto porque el job se creó el 4-ago y
   nunca se había ejecutado. Se añade `package-data` y un **smoke en el Dockerfile**
@@ -163,7 +163,7 @@ faltado **de forma sistemática por provincia**, no al azar. Ajustar los arqueti
 introducido un sesgo geográfico indetectable a posteriori — y habría contaminado justo el eje
 principal del modelo (§5 del spec de clustering).
 
-**Arreglo** (`50b20b8`): `_ced_key()` normaliza para el join (quita el `.0` espurio de las columnas
+**Arreglo** (commit *«fix(enlace): normalizar la cedula para el join; separar rechazo 4xx de perdida»*): `_ced_key()` normaliza para el join (quita el `.0` espurio de las columnas
 leídas como float; rellena con ceros a 10 sólo si el valor es enteramente numérico, dejando intactos
 los RUC de 13 dígitos y los pasaportes). Se usa **exclusivamente como llave de enlace**:
 `identificacion` no se toca, y el `id_hash` sigue calculándose sobre el valor original. Hay un test
@@ -2290,7 +2290,7 @@ Lo que se compra es comparabilidad declarada. Lo que se paga está medido y es v
 1. **El centro sigue a la banda.** Si la banda sale de los votos del rubro, el centro es el
    p50 de esos mismos votos. Publicar un centro global dentro de una banda sectorial
    permitiría que el centro caiga fuera de su propio p25–p75 — la incoherencia que prohíbe
-   el test de `_lectura` (commit `cb3c8eb`).
+   el test de `_lectura` (commit *«fix(producto): la banda que decide la lectura ahora viaja con ella»*).
 2. **`tau_c` y `sigma_c` NO se reestiman dentro del rubro.** Con 10–90 empresas saldrían
    pésimamente estimadas, y ya vienen encogidas de la celda entera (D-016).
 3. **El fallback es POR CARGO, no por informe.** Un cliente de manufactura tendrá rubro en

@@ -100,7 +100,7 @@ arquitectura de D-003, y se deciden dentro del train.
 
 ---
 
-### Tarea 1: Generador de data sintética — ✅ HECHA (`d31d89c`)
+### Tarea 1: Generador de data sintética — ✅ HECHA (*«test: generador de data sintetica con rol conocido (Tarea 1)»*)
 
 > Lo implementado difiere del bloque de abajo en un punto, y el motivo importa: el plan proponía
 > `nivel_empresa` con sd 0,35, que daba η²_empresa de 0,46–0,61 frente al **0,388 real**. Data
@@ -240,7 +240,7 @@ git commit -m "test: generador de data sintetica con rol conocido"
 
 ---
 
-### Tarea 2: Carga del marco y variable objetivo — ✅ HECHA (`27fe3e4`, `af0c49e`)
+### Tarea 2: Carga del marco y variable objetivo — ✅ HECHA (*«feat(evaluacion): carga del marco y objetivo log(sueldo/SBU) (Tarea 2)»*, *«docs: D-011 â€” el estimador no estimaba lo que la metrica puntuaba»*)
 
 > **Añadido en v3:** `sexo` entra en `SQL_MARCO`, con un test que exige los cuatro ejes de subgrupo
 > (`sexo`, `provincia`, `segmento`, `ciiu_n1`). Sin ellos la regla de abstención queda sin auditar y
