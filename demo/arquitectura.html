@@ -1,0 +1,665 @@
+<title>Arquitectura del referenciador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --papel:#f6f7f5; --papel-2:#eef1ee; --papel-3:#e4e9e5;
+  --tinta:#16211f; --tinta-2:#33413d; --sage:#65756f;
+  --acento:#0f6b5c; --acento-suave:#d7e8e3;
+  --oxido:#9c4221; --oxido-suave:#f2e0d8;
+  --ambar:#8a6212;
+  --linea:#d3dbd6; --linea-fuerte:#b6c2bc;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --papel:#0e1614; --papel-2:#152220; --papel-3:#1d2b28;
+    --tinta:#e6ece9; --tinta-2:#bcc9c4; --sage:#8fa19b;
+    --acento:#5cbfa8; --acento-suave:#17342e;
+    --oxido:#e08b63; --oxido-suave:#3a231a;
+    --ambar:#d3a648;
+    --linea:#2a3a36; --linea-fuerte:#3d524d;
+  }
+}
+:root[data-theme="dark"]{
+  --papel:#0e1614; --papel-2:#152220; --papel-3:#1d2b28;
+  --tinta:#e6ece9; --tinta-2:#bcc9c4; --sage:#8fa19b;
+  --acento:#5cbfa8; --acento-suave:#17342e;
+  --oxido:#e08b63; --oxido-suave:#3a231a;
+  --ambar:#d3a648;
+  --linea:#2a3a36; --linea-fuerte:#3d524d;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--papel); color:var(--tinta);
+  font-family:var(--serif); font-size:17px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.envoltura{max-width:1080px; margin:0 auto; padding:0 28px 96px}
+h1,h2,h3{text-wrap:balance; margin:0}
+a{color:var(--acento)}
+code,.mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+/* ---- cabecera ---- */
+header{padding:64px 0 40px; border-bottom:2px solid var(--tinta)}
+.eyebrow{
+  font-family:var(--mono); font-size:12px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--acento); margin-bottom:18px;
+}
+h1{font-size:clamp(38px,6vw,60px); line-height:1.02; font-weight:700; letter-spacing:-.02em}
+.bajada{
+  font-size:20px; line-height:1.5; color:var(--tinta-2);
+  max-width:60ch; margin-top:18px; font-weight:300;
+}
+.cifras{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:2px; margin-top:36px; background:var(--linea); border:1px solid var(--linea);
+}
+.cifra{background:var(--papel); padding:14px 16px}
+.cifra b{display:block; font-family:var(--mono); font-size:22px; font-weight:600; line-height:1.2}
+.cifra span{font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--sage)}
+
+/* ---- secciones ---- */
+section{padding-top:56px}
+h2{
+  font-size:13px; font-family:var(--mono); font-weight:600; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--acento); padding-bottom:10px;
+  border-bottom:1px solid var(--linea); margin-bottom:26px;
+}
+h3{font-size:23px; font-weight:600; letter-spacing:-.01em; margin-bottom:8px}
+p{max-width:66ch; margin:0 0 16px}
+.sage{color:var(--sage)}
+
+/* ---- formula ---- */
+.formula{
+  font-family:var(--mono); font-size:19px; background:var(--papel-2);
+  border-left:3px solid var(--acento); padding:20px 24px; margin:22px 0;
+  overflow-x:auto; white-space:pre;
+}
+.formula .an{color:var(--acento)}
+.formula small{display:block; font-size:12px; color:var(--sage); margin-top:10px;
+  white-space:normal; line-height:1.6}
+
+/* ---- pasos del pipeline ---- */
+.paso{display:grid; grid-template-columns:56px 1fr; gap:22px; padding:26px 0;
+  border-top:1px solid var(--linea)}
+.paso:first-of-type{border-top:none}
+.num{
+  font-family:var(--mono); font-size:13px; font-weight:600; color:var(--acento);
+  border:1px solid var(--acento); border-radius:999px; width:34px; height:34px;
+  display:grid; place-items:center; margin-top:4px;
+}
+.paso .cuerpo p:last-child{margin-bottom:0}
+.dato{
+  font-family:var(--mono); font-size:13px; background:var(--papel-2);
+  padding:10px 14px; margin-top:12px; border:1px solid var(--linea);
+  overflow-x:auto; white-space:pre; line-height:1.7;
+}
+
+/* ---- tablas ---- */
+.tabla-scroll{overflow-x:auto; margin:18px 0; border:1px solid var(--linea)}
+table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:560px}
+th{
+  font-family:var(--mono); font-size:11px; letter-spacing:.09em; text-transform:uppercase;
+  color:var(--sage); text-align:left; padding:11px 14px; background:var(--papel-2);
+  border-bottom:1px solid var(--linea-fuerte); font-weight:500; white-space:nowrap;
+}
+td{padding:11px 14px; border-bottom:1px solid var(--linea); vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.n{font-family:var(--mono); font-variant-numeric:tabular-nums; white-space:nowrap}
+.mejora{color:var(--acento); font-weight:600}
+.coste{color:var(--oxido); font-weight:600}
+
+/* ---- diagrama de bifurcacion ---- */
+.diagrama{margin:26px 0; overflow-x:auto; border:1px solid var(--linea);
+  background:var(--papel-2); padding:22px}
+.diagrama svg{display:block; min-width:660px}
+
+/* ---- fichas de decision ---- */
+.decisiones{display:grid; gap:2px; background:var(--linea);
+  border:1px solid var(--linea); margin-top:8px}
+.dec{background:var(--papel); padding:20px 22px;
+  display:grid; grid-template-columns:88px 1fr; gap:20px}
+.dec .id{font-family:var(--mono); font-size:13px; font-weight:600; color:var(--acento)}
+.dec h3{font-size:18px; margin-bottom:6px}
+.dec p{font-size:15px; margin-bottom:10px; color:var(--tinta-2)}
+.ev{font-family:var(--mono); font-size:12.5px; color:var(--sage); line-height:1.7;
+  white-space:pre-wrap}
+
+/* ---- limites ---- */
+.limite{border-left:3px solid var(--oxido); background:var(--oxido-suave);
+  padding:16px 20px; margin:14px 0}
+.limite h3{font-size:16px; margin-bottom:5px}
+.limite p{font-size:15px; margin-bottom:0; color:var(--tinta-2)}
+.limite .mono{font-size:13px}
+
+footer{margin-top:64px; padding-top:22px; border-top:1px solid var(--linea);
+  font-family:var(--mono); font-size:12px; color:var(--sage); line-height:1.9}
+
+@media (max-width:640px){
+  body{font-size:16px}
+  .paso{grid-template-columns:1fr; gap:10px}
+  .dec{grid-template-columns:1fr; gap:8px}
+  .envoltura{padding:0 18px 64px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important; transition:none!important}}
+</style>
+
+<div class="envoltura">
+
+<header>
+  <div class="eyebrow">ActuaLab · Benchmarking salarial · Ecuador</div>
+  <h1>Arquitectura del referenciador</h1>
+  <p class="bajada">Cómo una nómina entra por un lado y salen referencias de mercado con
+  su banda y su marca de confianza. Cada constante del estimador está estimada de los
+  datos; ninguna se eligió a mano.</p>
+  <div class="cifras">
+    <div class="cifra"><b>65.181</b><span>puestos en la base</span></div>
+    <div class="cifra"><b>1.000.490</b><span>filas de nómina</span></div>
+    <div class="cifra"><b>261</b><span>tests en verde</span></div>
+    <div class="cifra"><b>26</b><span>decisiones con evidencia</span></div>
+    <div class="cifra"><b>0</b><span>hiperparámetros a dedo</span></div>
+  </div>
+</header>
+
+<section>
+  <h2>El objetivo</h2>
+  <p>Lo que el modelo predice no es el sueldo: es el sueldo transformado dos veces, y cada
+  transformación resuelve un problema concreto.</p>
+  <div class="formula">y<sub>i</sub> = log( sueldo<sub>i</sub> / SBU<sub>año</sub> )
+<small><b>Dividir por el SBU</b> quita el año. Dos contadores que ganan $1.272 en 2024 y
+$1.300 en 2025 están en la misma posición del mercado: el salario básico subió de 460 a
+470. Sin esto, el modelo trataría la inflación como diferencia de cargo — y el SBU subió
+un 28% en la década.
+
+<b>El logaritmo</b> convierte multiplicar en sumar. «Esta empresa paga un 15% más» son
++$195 para un contador y +$455 para un gerente; en logaritmos son <b>+0,140</b> para los
+dos. El modelo aditivo de abajo sólo tiene sentido en esta escala.</small></div>
+</section>
+
+<section>
+  <h2>El modelo</h2>
+  <p>De esta única suposición sale todo lo demás. Para una persona <span class="mono">i</span>
+  en la empresa <span class="mono">f</span>, dentro del cargo <span class="mono">c</span>:</p>
+  <div class="formula">y<sub>i</sub> = <span class="an">μ<sub>c</sub></span> + <span class="an">u<sub>f</sub></span> + <span class="an">e<sub>i</sub></span>
+<small><b>μ<sub>c</sub></b> el nivel real del mercado para ese cargo — lo que se quiere estimar.
+<b>u<sub>f</sub></b> el efecto empleador: esta empresa paga por encima o por debajo, a todos.
+<b>e<sub>i</sub></b> el efecto persona: antigüedad, desempeño, negociación.</small></div>
+
+  <p>Los dos últimos son <b>irreducibles</b>: no bajan con más datos, son cómo es el
+  mercado. Y su reparto es la restricción que gobierna todo el diseño.</p>
+
+  <div class="tabla-scroll"><table>
+    <thead><tr><th>Componente</th><th>Valor</th><th>En dólares</th><th>Qué significa</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">τ</td><td class="n">0,2916</td><td class="n">±34%</td>
+        <td>Dos personas idénticas en <b>empresas distintas</b></td></tr>
+      <tr><td class="mono">σ</td><td class="n">0,1422</td><td class="n">±15%</td>
+        <td>Dos personas idénticas en la <b>misma empresa</b></td></tr>
+      <tr><td class="mono">τ² / (τ²+σ²)</td><td class="n">80,8%</td><td class="n">—</td>
+        <td><b>El empleador es el 81% de lo impredecible.</b> Ese número explica por qué la
+        banda es ancha, por qué el suelo no baja, y por qué anclar contra la nómina del
+        propio cliente vale tanto</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>El recorrido, paso a paso</h2>
+
+  <div class="paso">
+    <div class="num">1</div>
+    <div class="cuerpo">
+      <h3>Las grafías del mismo puesto se juntan — en tres pasadas</h3>
+      <p>La misma etiqueta del catálogo, tecleada por 418 áreas de RR.HH. distintas. Cada
+      variante era una celda propia y delgada que se contestaba por analogía… <b>contra sus
+      propias hermanas</b>, pagando castigo de distancia por un espacio de más.</p>
+      <div class="dato">un grupo real: 29 títulos, 2.291 personas, 418 empresas
+
+sim 1,0000   ASISTENTE / AYUDANTE / AUXILIAR ADMINISTRATIVO
+sim 0,9994   ASISTENTE / AYUDANTE /AUXILIAR ADMINISTRATIVO
+sim 0,9981   ASISTENTE / AYUDANTE/ AUXILIAR ADMINISTRATIVO
+sim 0,9925   ASISTENTE / AYUDANTE / ADMINISTRATIVO
+sim 0,9746   ASISTENTE / ADMINISTRATIVO</div>
+      <p>Por <b>enlace completo</b>: un grupo vale sólo si <i>todos</i> sus pares superan
+      0,95. El enlace simple sólo exige que los <i>consecutivos</i> lo superen, y eso se
+      propaga: cada salto cambia una palabra, y diecinueve saltos llevan de la contabilidad
+      a la limpieza.</p>
+      <div class="dato">ASISTENTE CONTABLE
+ASISTENTE ADM CONTABLE                             0,9586
+ASISTENTE ADMINISTRATIVO Y CONTABLE                0,9672
+ASISTENTE ADMINISTRATIVO Y COMERCIAL               0,9531   ← se pierde «contable»
+ASISTENTE AUXILIAR ADMINISTRATIVO                  0,9820
+AUXILIAR ADMINISTRATIVO-OPERATIVO                  0,9545   ← entra «operativo»
+ASISTENTE ADMINISTRATIVO DE OPERACIONES            0,9601
+ASISTENTE ADMINISTRATIVO Y DE MANTENIMIENTO        0,9598   ← entra «mantenimiento»
+AUXILIAR DE SERVICIOS GENERALES Y MANTENIMIENTO    0,9741
+AUXILIAR DE MANTENIMIENTO Y LIMPIEZA SERVICIOS     0,9619   ← entra «limpieza»
+AUXILIAR DE LIMPIEZA                               0,9543
+                              (19 saltos, aquí 10 de ellos)
+
+extremo a extremo:  0,7068   ← jamás se fusionarían por parecerse</div>
+      <p>Cada eslabón es defendible por separado; la cadena no. Sobre la base completa esa
+      componente conexa son <b>2.921 títulos y 761.263 personas</b> — el 77% de la gente en
+      un solo grupo. Con enlace completo el grupo mayor baja a <b>27</b>.</p>
+      <p>Esa primera pasada <b>arregla el espaciado y no la ortografía</b>: una letra que
+      falta cuesta 0,06–0,08 de similitud y un espacio de más sólo 0,00–0,03. De ahí las
+      otras dos, que atacan justo lo que los embeddings no ven.</p>
+
+      <h3 style="margin-top:28px">2ª pasada · las erratas</h3>
+      <p>Los embeddings codifican significado y son <b>ciegos a las letras</b>. Para un
+      dedazo, una distancia de edición gana trivialmente. Pero de 2.887 pares a distancia 1
+      en la base, <b>la mayoría no son erratas</b>:</p>
+      <div class="dato">escalón por dígito   OPERARIO 1 / OPERARIO 2      1.570 pares   ← NO
+escalón romano       ANALISTA I / ANALISTA II       188 pares   ← NO
+género               VENDEDOR / VENDEDORA           961 pares   ← otra pasada
+errata / plural / tilde / puntuación             2.887 pares   ← sí</div>
+      <p>El umbral salió de los datos y no de la intuición: el lado menor tiene <b>una</b>
+      empresa en el 68% de los pares, pero la razón mayor/menor mediana es sólo <b>4,0×</b>,
+      porque hay dos familias. El dedazo contra un título común (razón enorme) y dos títulos
+      raros a distancia 1 (razón ~1) — estos últimos no cruzan el suelo ni antes ni después,
+      así que se dejan fuera.</p>
+      <div class="dato">regla:  lado raro ≤2 empresas   ·   lado común ≥10   ·   una sola dirección
+
+873 grupos absorbidos · 4.278 personas pasan de analogía a datos propios
+respaldo que ganan, mediana:  1 → 60 empresas</div>
+      <p class="sage">Dos falsos positivos aparecieron sólo al mirar la base real y habrían
+      pasado en silencio: <span class="mono">AYUDANTE B</span> contra
+      <span class="mono">AYUDANTE C</span> —una letra suelta es escalafón— y
+      <span class="mono">ENFERMERAS</span> contra <span class="mono">ENFERMEROS</span>, que
+      es género burlando la guarda por la S del plural.</p>
+
+      <h3 style="margin-top:28px">3ª pasada · el género</h3>
+      <p>Ésta no es un ajuste técnico. Para que <span class="mono">ENFERMERA</span> y
+      <span class="mono">ENFERMERO</span> acaben en la misma celda tiene que superarse el
+      coseno de 0,95 — y eso pasaba en <b>690 pares y no pasaba en 738</b>. Casi una moneda
+      al aire, sin patrón alguno.</p>
+      <div class="dato">ENFERMERA   240 empresas  ┐  coseno < 0,95  →  celdas SEPARADAS
+ENFERMERO    67 empresas  ┘                       diferencia de centro: −21,3%
+
+ENFERMERAS  ┐  coseno ≥ 0,95  →  misma celda
+ENFERMEROS  ┘                    ...sin que nadie lo decidiera</div>
+      <p>La consecuencia: dos personas del mismo oficio recibían referencias distintas
+      <b>según cómo tecleó el título su empleador</b>. Y como el título es un <b>proxy de
+      género</b>, al ser la unidad de agrupamiento el modelo terminaba segmentando por
+      género — justo lo que la regla de «<span class="mono">sexo</span> nunca es una
+      variable» existe para impedir.</p>
+      <p class="sage"><b>Fusionar no mete el género en el modelo: saca el proxy que ya
+      estaba dentro.</b> 657 pares juntados, 213.011 personas en alguna celda afectada. Y la
+      diferencia que había entre las dos grafías no se borra: se guarda y se reporta.</p>
+    </div>
+  </div>
+
+  <div class="paso">
+    <div class="num">2</div>
+    <div class="cuerpo">
+      <h3>Cada empresa emite un voto</h3>
+      <p>La mediana de su gente en ese cargo. <b>Una empresa, un voto</b> — una nómina con
+      400 contadores no vale 400 veces más que una con uno.</p>
+      <p>El peso del voto se deduce, no se elige: es inverso a su varianza.</p>
+      <div class="dato">w_f = 1 / ( τ²_c + σ²_c / n_f )
+
+τ²_c    no lleva n_f: los 400 contadores comparten el MISMO u_f, así que
+        preguntarle a 400 no dice nada nuevo sobre el mercado
+σ²_c/n_f sí baja: las desviaciones personales son independientes</div>
+      <p class="sage">De ahí sale un techo que nadie impuso: una empresa con un millón de
+      empleados pesa como mucho <span class="mono">1 + σ²/τ² = 1,24</span> veces una con
+      uno. La regla de dominancia del QCEW se cumple sola — medido, el peso máximo en toda
+      la base es 67,7%.</p>
+    </div>
+  </div>
+
+  <div class="paso">
+    <div class="num">3</div>
+    <div class="cuerpo">
+      <h3>El centro es la mediana ponderada de los votos</h3>
+      <p>Mediana y no media: está medido sobre 498.653 personas que la diferencia es 0,0533
+      en log y que <b>no es neutral entre métodos</b>, así que usar la media sería un sesgo
+      a favor de la hipótesis propia.</p>
+    </div>
+  </div>
+
+  <div class="paso">
+    <div class="num">4</div>
+    <div class="cuerpo">
+      <h3>¿Datos propios o analogía?</h3>
+      <p>Dos suelos, y los dos son de confidencialidad. El de empresas impide que una
+      empresa se reconozca en el número; el de personas impide que la mediana de tres votos
+      <i>sea</i> el sueldo de alguien.</p>
+      <div class="diagrama">
+        <svg viewBox="0 0 700 250" role="img" aria-label="Bifurcación entre datos directos y respuesta por analogía">
+          <defs>
+            <marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7"
+                    markerHeight="7" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="var(--linea-fuerte)"/>
+            </marker>
+          </defs>
+          <g font-family="IBM Plex Mono, monospace" font-size="12">
+            <rect x="8" y="98" width="122" height="52" fill="var(--papel)"
+                  stroke="var(--linea-fuerte)"/>
+            <text x="69" y="120" text-anchor="middle" fill="var(--tinta)">celda del</text>
+            <text x="69" y="137" text-anchor="middle" fill="var(--tinta)">cargo</text>
+
+            <path d="M130,124 L188,124" stroke="var(--linea-fuerte)" fill="none"
+                  marker-end="url(#fl)"/>
+
+            <polygon points="262,80 344,124 262,168 180,124" fill="var(--papel)"
+                     stroke="var(--acento)"/>
+            <text x="262" y="118" text-anchor="middle" fill="var(--acento)">≥3 empresas</text>
+            <text x="262" y="134" text-anchor="middle" fill="var(--acento)">≥10 personas</text>
+
+            <path d="M262,80 L262,44 L392,44" stroke="var(--linea-fuerte)" fill="none"
+                  marker-end="url(#fl)"/>
+            <text x="272" y="62" fill="var(--sage)">sí</text>
+            <path d="M262,168 L262,204 L392,204" stroke="var(--linea-fuerte)" fill="none"
+                  marker-end="url(#fl)"/>
+            <text x="272" y="192" fill="var(--sage)">no</text>
+
+            <rect x="396" y="20" width="180" height="48" fill="var(--acento-suave)"
+                  stroke="var(--acento)"/>
+            <text x="486" y="40" text-anchor="middle" fill="var(--tinta)">datos directos</text>
+            <text x="486" y="57" text-anchor="middle" fill="var(--sage)">su propia mediana</text>
+
+            <rect x="396" y="180" width="180" height="48" fill="var(--papel)"
+                  stroke="var(--linea-fuerte)"/>
+            <text x="486" y="200" text-anchor="middle" fill="var(--tinta)">por analogía</text>
+            <text x="486" y="217" text-anchor="middle" fill="var(--sage)">25 vecinos pesados</text>
+
+            <path d="M576,44 L620,44 L620,116" stroke="var(--linea-fuerte)" fill="none"/>
+            <path d="M576,204 L620,204 L620,132" stroke="var(--linea-fuerte)" fill="none"
+                  marker-end="url(#fl)"/>
+            <path d="M620,116 L620,132" stroke="var(--linea-fuerte)" fill="none"
+                  marker-end="url(#fl)"/>
+            <text x="636" y="120" fill="var(--tinta)">banda</text>
+            <text x="636" y="137" fill="var(--tinta)">+ confianza</text>
+          </g>
+        </svg>
+      </div>
+      <p class="sage">Se responde <b>siempre</b> — un cliente sin referencia no se queda
+      quieto, inventa un número. Por eso la marca de confianza no es decorativa: es lo
+      único que separa «esto lo sé» de «esto lo supongo».</p>
+    </div>
+  </div>
+
+  <div class="paso">
+    <div class="num">5</div>
+    <div class="cuerpo">
+      <h3>Por analogía: el vecino cercano gana al popular</h3>
+      <p>Cada vecino se trata como una medición imperfecta del puesto preguntado, con dos
+      fuentes de error.</p>
+      <div class="dato">var_j = 1/W_j  +  λ_nivel · (1 − sim_j)
+        ^^^^^^     ^^^^^^^^^^^^^^^^^^^^^
+        su error   lo que se paga por no
+        de medida  ser el mismo puesto</div>
+      <p>Sin esa segunda parte, <span class="mono">OPERADOR DE PARQUEADERO</span> tenía
+      <span class="mono">OPERADOR DE PARQUEADEROS</span> delante a similitud 0,989 y le
+      hacía caso a <span class="mono">OPERADOR DE EXCAVADORA</span>, que tenía más datos.</p>
+      <p>Y las dos partes <b>no se promedian igual</b>: el error de medida es independiente
+      y se cancela (suma de <span class="mono">peso²</span>), la distancia semántica es un
+      <b>sesgo compartido</b> que no se cancela (suma de <span class="mono">peso</span>).
+      Tratarla como ruido hacía que <span class="mono">LOTERO</span> —sin vecindario real—
+      saliera con un intervalo estrecho por promediar mucha gente equivocada.</p>
+    </div>
+  </div>
+
+  <div class="paso">
+    <div class="num">6</div>
+    <div class="cuerpo">
+      <h3>La banda: dos, porque son dos preguntas</h3>
+      <p>Donde hay 10 o más empresas se reportan <b>cuantiles empíricos</b>, no una normal.
+      Ninguna curva describe a la vez un pico y una cola larga:</p>
+      <div class="dato">AUXILIAR DE LIMPIEZA   p25 $475   p50 $475   p75 $485      ← un pico
+GERENTE GENERAL        p05 $500              p95 $13.712   ← una cola</div>
+      <p>Y la unidad importa: la banda de <b>empresas</b> juzga a una empresa, la de
+      <b>personas</b> —que incluye además la dispersión dentro de cada nómina— va al lado
+      del sueldo de una persona. Medido, es hasta un 19% más ancha.</p>
+    </div>
+  </div>
+
+  <div class="paso">
+    <div class="num">7</div>
+    <div class="cuerpo">
+      <h3>La confianza mide el centro, no el ancho del mercado</h3>
+      <p>El ancho del mercado ya lo dice la banda. Lo que la etiqueta añade es si el número
+      del medio es fiable — y eso es la varianza de <i>nuestra</i> estimación.</p>
+      <div class="dato">directo       var_centro = 1/W
+por analogía  var_centro = Σ(peso²/W) + Σ(peso·dist) + penal_nivel
+
+ALTA  ≤5%     MEDIA  ≤15%     BAJA  el resto</div>
+      <p>Por eso <span class="mono">GERENTE GENERAL</span> sale con banda de <b>±95%</b> y
+      confianza <b>ALTA</b> a la vez, y no es contradicción: el mercado es amplísimo
+      <i>y</i> lo sabemos con 767 empresas.</p>
+    </div>
+  </div>
+
+  <div class="paso">
+    <div class="num">8</div>
+    <div class="cuerpo">
+      <h3>La lectura se hace contra la banda, no contra un porcentaje</h3>
+      <p>«En línea» significa <b>dentro del 50% central del mercado</b> — una frase que el
+      cliente puede comprobar.</p>
+      <div class="dato">GERENTE GENERAL      +15,4%   banda ±95,0%   →  en línea
+TRABAJADOR AGRICOLA  +15,5%   banda ± 0,2%   →  muy por encima</div>
+      <p>El mismo +15% no significa lo mismo en los dos sitios. Con cortes fijos, el
+      resumen que lee un gerente listaba <b>8 puestos fuera de línea donde hay 1</b>.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Los cuatro parámetros</h2>
+  <p>Ninguno se elige. Los tres primeros salen del mismo modelo por momentos; el cuarto, de
+  medir cuánto paga cada escalón dentro de la misma área.</p>
+  <div class="tabla-scroll"><table>
+    <thead><tr><th>Parámetro</th><th>Qué mide</th><th>¿Varía?</th><th>Test-retest</th><th>Cómo se usa</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">τ<sub>c</sub></td><td>Dispersión de pago entre empresas</td>
+        <td class="n">8,3×</td><td class="n">+0,780</td>
+        <td>Por celda, con encogimiento</td></tr>
+      <tr><td class="mono">σ<sub>c</sub></td><td>Dispersión dentro de la empresa</td>
+        <td class="n">sí</td><td class="n">+0,484</td>
+        <td>Por celda, con encogimiento</td></tr>
+      <tr><td class="mono">λ<sub>nivel</sub></td><td>Pago por unidad de distancia semántica</td>
+        <td class="n">18×</td><td class="n">+0,563</td>
+        <td>Por escalón léxico</td></tr>
+      <tr><td class="mono">efecto<sub>nivel</sub></td><td>Cuánto paga cada escalón</td>
+        <td class="n">2,37×</td><td class="n">ω² 0,288</td>
+        <td>Corrección al vecino de otro escalón</td></tr>
+    </tbody>
+  </table></div>
+  <p>Los tres primeros eran <b>un solo número global</b> hasta que se comprobaron, uno a
+  uno, con el mismo diseño: partir las empresas en dos mitades al azar y ver si las dos
+  estimaciones coinciden. Los tres variaban.</p>
+  <div class="dato">λ por escalón   1: 0,368    2: 1,038    3: 2,212    4: 3,340    5: 6,505
+                                                        global: 1,938</div>
+  <p class="sage">Con causa mecánica en los dos casos: abajo el salario mínimo comprime y
+  dos cargos parecidos pagan casi igual; arriba, <span class="mono">GERENTE DE
+  FINANZAS</span> y <span class="mono">GERENTE DE OPERACIONES</span> están pegados en el
+  texto y muy lejos en el sueldo.</p>
+</section>
+
+<section>
+  <h2>Las decisiones, con su evidencia</h2>
+  <div class="decisiones">
+
+    <div class="dec"><div class="id">D-015</div><div>
+      <h3>Fusión por enlace completo</h3>
+      <p>La primera medición dijo que fusionar <b>empeora</b>. Mirar los grupos concretos
+      cambió el sujeto de la frase: lo malo era el algoritmo, no la idea.</p>
+      <div class="ev">simple   >0,95   +0,0154  [+0,0095, +0,0206]   grupo mayor 1.758
+completo >0,95   −0,0030  [−0,0075, −0,0000]   grupo mayor    27
+cobertura directa   57,7% → 64,1%</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-016</div><div>
+      <h3>La banda habla de empresas, con τ por celda</h3>
+      <p>Con un τ único, la banda contenía entre el <b>18% y el 98%</b> según el cargo,
+      cuando debería contener el 50% siempre.</p>
+      <div class="ev">deformación entre quintiles   50,5 → 13,5 → 4,3 puntos
+pinball medio                 0,1290 → 0,1207
+GERENTE GENERAL  contenía 18,3%  →  47%</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-017</div><div>
+      <h3>La confianza mide el centro</h3>
+      <p>Era aritméticamente imposible salir de ALTA con 3 empresas o más. Medido:
+      <b>100,00%</b> de las celdas directas en ALTA.</p>
+      <div class="ev">                Spearman   ALTA    MEDIA    BAJA    y cuánto se mueven
+hoy (ancho)      +0,367   100,0%    0,0%    0,0%    18,0%
+nueva (1/W)      +0,576    17,6%   45,5%   37,0%     3,8% / 13,3% / 31,8%</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-018</div><div>
+      <h3>El tamaño de empresa: no para la banda, sí para el centro</h3>
+      <p>Segmentar no estrecha la banda —medido dos veces, con placebo— pero corrige un
+      sesgo enorme en el centro de los cargos altos. <b>Medido, no montado.</b></p>
+      <div class="ev">GERENTE GENERAL   pequeña −56,0%   grande +81,9%
+     segmentado   pequeña −12,1%   grande +17,9%
+placebo eligió MÁS cargos (118) que la señal real (93)</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-019</div><div>
+      <h3>Un suelo de personas, no sólo de empresas</h3>
+      <p>Tres empresas con una persona cada una son tres personas, y la mediana de sus tres
+      votos <i>es</i> el sueldo de una de ellas.</p>
+      <div class="ev">297 celdas directas (5,7%) tenían 3 o 4 personas
+suelo 10:  MAE sin cambio,  −1,4 pts de cobertura,  17.669 protegidas</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-020</div><div>
+      <h3>Dos bandas y una lectura relativa</h3>
+      <p>Cuatro de diez cargos marcados «muy por encima» estaban <b>dentro</b> de su propia
+      banda. Y el detalle comparaba una persona contra una banda de empresas.</p>
+      <div class="ev">resumen del gerente:  8 puestos fuera de línea  →  1
+ancho personas / ancho empresas, por gente por empresa:
+  ~1 → 1,00×    1,5-4 → 1,09×    4-20 → 1,14×    20+ → 1,19×</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-026</div><div>
+      <h3>Las grafías de género se fusionan</h3>
+      <p>El argumento <b>no es estadístico</b>: el título era un proxy de género dentro del
+      modelo, y qué celda te tocaba dependía de dónde cayó el coseno. La medición vino
+      después y salió a favor.</p>
+      <div class="ev">                        pinball   |sesgo|   ancho
+sin género               0,1417      5,7%    85,6%
+con género               0,1379      3,9%    81,4%
+PLACEBO (juntar al azar) 0,1690     24,5%   117,5%
+
+con género − sin género  −0,00386  [−0,00665, −0,00100]  MEJORA
+DISCRIMINANTE vs placebo −0,03134  [−0,03859, −0,02467]
+
+la banda se ESTRECHA manteniendo la cobertura en el nominal;
+el placebo la ensancha un 37%</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-025</div><div>
+      <h3>Fusión por errata — adoptada con evidencia débil</h3>
+      <p>La cobertura sube del 0% al 100% en los títulos afectados y el guardarraíl no
+      empeora, pero <b>el placebo no concluyó</b>: con 64 votos no hay potencia. No está
+      validada; está sin contradecir, y así queda escrito.</p>
+      <div class="ev">con erratas −0,01476  [−0,03307, +0,00958]  sin efecto
+PLACEBO     +0,01768  [−0,00172, +0,04537]  sin efecto
+              ↑ direcciones correctas, ningún IC excluye el cero</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-024</div><div>
+      <h3>El estimador de la escalera: hipótesis rechazada</h3>
+      <p><span class="mono">efecto_nivel</span> sale de promedios y se suma a una mediana.
+      Los dos estimadores difieren —recorrido 2,477× contra 2,277×— pero cambiarlo
+      <b>empeora</b>. El código no se tocó.</p>
+      <div class="ev">mediana − media  +0,00069  [+0,00049, +0,00086]  EMPEORA
+sin ajuste       +0,01059  ← el ajuste se gana su sitio
+PLACEBO          +0,01706  ← y el eje de nivel lleva señal real</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-023</div><div>
+      <h3>El rubro: lente de producto, no mejora del modelo</h3>
+      <p>Medido dos veces que <b>no ayuda</b> — el sector ya está en el título donde importa.
+      Se monta igual, opt-in, porque la objeción del cliente es de legitimidad y no de
+      precisión. El coste se declara.</p>
+      <div class="ev">para la banda   pinball 0,1289 vs 0,1255       PIERDE
+para el centro  indistinguible de un placebo    NULO
+
+con --rubro: respaldo 724 → 102 empresas, ALTA 81% → 59%
+45,8% de la gente tiene rubro con respaldo suficiente</div>
+    </div></div>
+
+    <div class="dec"><div class="id">D-021</div><div>
+      <h3>λ por escalón — y la métrica correcta</h3>
+      <p>Medido con MAE daba <b>0,5%</b>; con pinball da <b>6,0%</b>. λ actúa sobre el
+      ancho, y el MAE no ve el ancho.</p>
+      <div class="ev">por escalón − global  −0,00856  [−0,01083, −0,00589]  MEJORA
+PLACEBO     − global  +0,00032  [+0,00024, +0,00041]  no lo reproduce
+barajando escalones, los cinco λ colapsan al global (1,95 … 2,04)</div>
+    </div></div>
+
+  </div>
+</section>
+
+<section>
+  <h2>Lo que hay que declararle al cliente</h2>
+
+  <div class="limite">
+    <h3>El empleador es el 81% de lo impredecible</h3>
+    <p>Esto da el <b>mercado</b>, no la política salarial de una empresa concreta — salvo
+    que esa empresa entregue su nómina, que es lo que habilita la lectura de equidad
+    interna.</p>
+  </div>
+
+  <div class="limite">
+    <h3>La confianza es optimista</h3>
+    <p><span class="mono">1/W</span> se queda corto entre un 15% y un 40% según el tramo
+    (obs/pred va de <span class="mono">0,96</span> en el primer decil a
+    <span class="mono">1,42</span> en el último). Ordena bien —separa 8 a 1 lo fiable de la
+    conjetura— pero el número que declara es un suelo, no una cota.</p>
+  </div>
+
+  <div class="limite">
+    <h3>El sesgo por tamaño se corrige sólo si el cliente lo pide</h3>
+    <p>Sin <span class="mono">--segmento</span>, a una empresa pequeña se le dice que su
+    gerente general cobra un 56% por debajo del mercado cuando entre sus pares está bien.
+    La corrección existe (D-018) y está medida, pero <b>no se aplica por defecto</b>: su
+    criterio primario falló por 0,00005. En los cargos técnicos y de base no ocurre.</p>
+  </div>
+
+  <div class="limite">
+    <h3>La «brecha entre grafías» no es la brecha salarial</h3>
+    <p>Al unificar <span class="mono">ENFERMERA</span> con <span class="mono">ENFERMERO</span>
+    se reporta cuánto difería el centro de las dos celdas. Eso <b>no</b> mide discriminación:
+    son empleadores distintos —240 empresas contra 67, con poco solape— sin control por
+    empresa, sector, tamaño ni antigüedad. La brecha de verdad es la descomposición Oaxaca
+    (D-011), que usa la columna <span class="mono">sexo</span>. El informe lleva esa
+    advertencia junto a la cifra, no en una nota al pie.</p>
+  </div>
+
+  <div class="limite">
+    <h3>Con <span class="mono">--rubro</span> se compra comparabilidad, no precisión</h3>
+    <p>La referencia sectorial sale de <b>el 11% del respaldo</b>: en la nómina de demo,
+    724 empresas pasan a 102. La etiqueta de confianza lo refleja sola —ALTA cae del 81% al
+    59%— pero hay que decirlo al venderlo. Y está medido que el sector <b>no mejora</b> la
+    respuesta: el desplazamiento del centro tiene mediana exactamente cero.</p>
+  </div>
+
+  <div class="limite">
+    <h3>λ por escalón empeora los niveles 4 y 5</h3>
+    <p>Toda la ganancia viene del nivel 1. La sospecha es comprobable: λ sale de
+    diferencias <b>al cuadrado</b> y el nivel 5 tiene cola larguísima, así que unos pocos
+    pares extremos pueden inflar <span class="mono">λ₅</span>.</p>
+  </div>
+</section>
+
+<footer>
+  Todo lo medido corre sobre el 80% de train. El 20% de test no se ha tocado nunca y se
+  toca una sola vez, después de congelar el pre-registro.<br>
+  Última revisión: septiembre de 2026 · 26 decisiones registradas.<br>
+  Fuente: <span class="mono">docs/registro_decisiones.md</span> ·
+  <span class="mono">docs/mediciones.md</span> ·
+  <span class="mono">research/experimentos/</span>
+</footer>
+
+</div>
