@@ -610,3 +610,101 @@ def test_sin_columna_de_rubro_la_base_se_construye_igual():
     with pytest.warns(UserWarning, match="sin datos suficientes"):
         f = b.referenciar(["CONTADOR"], emb, rubro="C").iloc[0]
     assert f["rubro"] == ""
+
+
+# --------------------------------------------------------------------------
+# FUSION POR ERRATA (D-025). Los embeddings no ven las letras: `ASITENTE` puntua
+# 0,92-0,94 contra `ASISTENTE` y no llega al umbral de 0,95. Lo que estos tests
+# fijan sobre todo es lo que NO debe fusionarse — un falso positivo funde dos
+# oficios distintos y contamina la referencia de los dos.
+# --------------------------------------------------------------------------
+from benchmarking.producto.base_referencia import (_distancia1, _es_errata,
+                                                   _fusionar_erratas)
+
+
+def test_distancia1_reconoce_las_tres_formas():
+    assert _distancia1("ASISTENTE", "ASITENTE")      # borrado
+    assert _distancia1("VENDEDOR", "VENDERDOR")      # insercion
+    assert _distancia1("VENDEDOR", "VENDEDOL")       # sustitucion
+    assert not _distancia1("VENDEDOR", "VENDEDOR")   # identicas: distancia 0
+    assert not _distancia1("VENDEDOR", "VENDRDOL")   # dos cambios
+    assert not _distancia1("VENDEDOR", "CONTADOR")
+
+
+def test_lo_que_NO_es_errata_aunque_este_a_distancia_1():
+    # Escalon con numero o romano: fusionarlos borraria la escalera de antiguedad.
+    assert not _es_errata("OPERARIO 1", "OPERARIO 2")
+    assert not _es_errata("ANALISTA I", "ANALISTA II")
+    # Genero: es el mismo oficio, pero la decision es de equidad y va aparte.
+    assert not _es_errata("OPERARIO DE PLANTA", "OPERARIA DE PLANTA")
+    assert not _es_errata("VENDEDOR", "VENDEDORA")
+    assert not _es_errata("TRABAJADOR/A", "TRABAJADORA")
+    # ...y lo que si lo es
+    assert _es_errata("ASISTENTE CONTABLE", "ASITENTE CONTABLE")
+    assert _es_errata("TRABAJADOR AGRICOLA", "TRABAJAJOR AGRICOLA")
+
+
+def _marco_errata(n_comun=12, n_raro=1):
+    """`ASISTENTE CONTABLE` bien poblado y `ASITENTE CONTABLE` en una sola empresa."""
+    filas = [(f"E{i}", "ASISTENTE CONTABLE", 0.9 + 0.01 * i) for i in range(n_comun)]
+    filas += [(f"R{i}", "ASITENTE CONTABLE", 0.95) for i in range(n_raro)]
+    return _marco(filas)
+
+
+def _emb_errata():
+    # 0,93 de coseno: se parecen mucho pero NO llegan al umbral de fusion.
+    v = np.array([1.0, 0.0]);  w = np.array([0.93, np.sqrt(1 - 0.93 ** 2)])
+    return {"ASISTENTE CONTABLE": v, "ASITENTE CONTABLE": w}
+
+
+def test_el_dedazo_se_absorbe_en_el_titulo_comun():
+    emb = _emb_errata()
+    sem = BaseReferencia.construir(_marco_errata(), emb, _sbu, umbral_fusion=0.95)
+    i, j = sem.idx["ASISTENTE CONTABLE"], sem.idx["ASITENTE CONTABLE"]
+    assert sem.grupo[i] == sem.grupo[j], "la segunda pasada debe juntarlos"
+    # y el dedazo hereda el respaldo del comun: pasa de 1 empresa a 13
+    assert sem.emp[j] >= 12
+    f = sem.referenciar(["ASITENTE CONTABLE"], emb).iloc[0]
+    assert f["base"] == "datos directos", "ya no necesita contestarse por analogia"
+
+
+def test_sin_asimetria_no_se_fusiona():
+    # Dos titulos raros a distancia 1: ninguno cruza el suelo ni antes ni despues, y
+    # juntarlos solo anade riesgo de fundir dos oficios distintos.
+    emb = _emb_errata()
+    b = BaseReferencia.construir(_marco_errata(n_comun=2, n_raro=2), emb, _sbu,
+                                 umbral_fusion=0.95)
+    assert b.grupo[b.idx["ASISTENTE CONTABLE"]] != b.grupo[b.idx["ASITENTE CONTABLE"]]
+
+
+def test_un_titulo_tecleado_por_muchas_empresas_no_es_un_dedazo():
+    # 5 empresas escriben lo mismo: eso es una grafia en uso, no un error.
+    emb = _emb_errata()
+    b = BaseReferencia.construir(_marco_errata(n_comun=20, n_raro=5), emb, _sbu,
+                                 umbral_fusion=0.95)
+    assert b.grupo[b.idx["ASISTENTE CONTABLE"]] != b.grupo[b.idx["ASITENTE CONTABLE"]]
+
+
+def test_la_absorcion_no_encadena():
+    # Es de una sola direccion: el destino exige 10+ empresas y el absorbido <=2, asi
+    # que un grupo absorbido nunca puede ser a su vez destino.
+    celdas = ["ASISTENTE CONTABLE", "ASITENTE CONTABLE", "ASITENTE CONTABL"]
+    grupo = np.array([0, 1, 2])
+    niveles = np.array([1.0, 1.0, 1.0])
+    nuevo, k = _fusionar_erratas(celdas, grupo, niveles, {0: 40, 1: 1, 2: 1})
+    assert nuevo[0] == nuevo[1], "el dedazo entra en el comun"
+    assert nuevo[2] == 2, "el que solo toca a otro raro se queda donde estaba"
+
+
+def test_los_dos_falsos_positivos_que_encontro_la_base_real():
+    # Aparecieron al inspeccionar el efecto sobre las 65.181 celdas y habrian pasado
+    # como dedazos, fundiendo un escalafon y un par de genero.
+    assert not _es_errata("AYUDANTE B DE MANTENIMIENTO", "AYUDANTE C DE MANTENIMIENTO"), \
+        "una letra suelta es GRADO, no ortografia"
+    assert not _es_errata("SUPERVISOR C", "SUPERVISOR D")
+    assert not _es_errata("ENFERMERAS", "ENFERMEROS"), \
+        "genero en plural: la vocal va seguida de la S"
+    assert not _es_errata("OPERARIAS", "OPERARIOS")
+    # ...y siguen siendo erratas las que si lo son
+    assert _es_errata("ENFERMERAS", "ENFERMERAX")
+    assert _es_errata("SUPERVISOR DE CAJA", "SUPERVISOR DE CAJE")

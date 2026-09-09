@@ -55,7 +55,9 @@ puede predecir (tau = 0,29). Esto da el MERCADO, no la politica salarial de una 
 concreta. Dos personas identicas en empresas distintas cobran muy diferente y ningun
 metodo basado en el puesto arregla eso.
 """
+import re
 import warnings
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -112,6 +114,37 @@ MIN_PERSONAS = 10
 UMBRAL_FUSION = 0.95
 VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
 TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
+
+# SEGUNDA PASADA: LAS ERRATAS. Los embeddings NO ven las letras —codifican significado— y
+# por eso un dedazo se les escapa: `ASITENTE`/`ASISTENTE` puntua 0,92-0,94 y no llega al
+# umbral. Para un caracter cambiado, una distancia de edicion es trivialmente mejor que
+# cualquier modelo semantico, y es lo unico que el lexico hace mejor aqui.
+#
+# QUE NO ES UNA ERRATA, y por eso esto se inspecciono antes de montarse (2.887 pares
+# candidatos sobre la base de 65.181 titulos, ver `research/herramientas/erratas.py`):
+#
+#   OPERARIO I / OPERARIO II     1.570 pares   distancia 1, y son ESCALONES
+#   VENDEDOR / VENDEDORA           961 pares   distancia 1, y es GENERO
+#
+# Los primeros borrarian la escalera de antiguedad que §18 quiere medir. Los segundos son
+# el mismo oficio y fusionarlos es defendible, pero mueve el numero de ~468.000 personas y
+# el argumento es de equidad, no de ortografia: se decide aparte.
+#
+# EL UMBRAL DE ASIMETRIA SALE DE LOS DATOS, no de la intuicion. Medido sobre los 2.887
+# candidatos: el lado menor tiene UNA empresa en el 68% de los pares y dos o menos en el
+# 82%. Pero la razon mayor/menor mediana es solo 4,0x, porque hay DOS familias:
+#
+#   a) dedazo contra titulo comun     -> razon enorme. Es la que interesa.
+#   b) dos titulos raros a distancia 1 -> razon ~1. Ninguno llega al suelo de 3 empresas
+#      ni antes ni despues, asi que fusionarlos no cruza ninguna frontera y solo anade
+#      riesgo de juntar dos oficios raros distintos. Se deja fuera.
+#
+# De ahi la regla: el lado raro con <=2 empresas y el comun con >=10. Es exactamente el
+# caso con valor —la gente del dedazo pasa de contestarse por analogia a tener datos
+# propios— y deja fuera la familia (b), que no gana nada.
+MIN_LARGO_ERRATA = 8    # bajo esto un caracter cambia el significado: `SUB`/`SUR`
+MAX_EMPRESAS_ERRATA = 2     # el lado raro: un dedazo no lo teclean tres empresas
+MIN_EMPRESAS_ABSORBE = 10   # el lado comun, mismo suelo que la banda empirica
 
 # LA BANDA HABLA DE EMPRESAS: "la mitad de las EMPRESAS paga entre X e Y". Es la pregunta
 # coherente con el centro —que ya es la mediana de los votos por empresa— y la que le
@@ -690,6 +723,15 @@ class BaseReferencia:
         # empresa en el grupo es la mediana de TODA su gente en cualquiera de las grafias.
         grupo = _fusionar(Z, niv, umbral_fusion) if umbral_fusion else np.arange(n)
         if umbral_fusion:
+            # SEGUNDA PASADA POR ERRATA. Necesita saber cuantas empresas respalda cada
+            # grupo para decidir cual es el dedazo y cual el titulo comun, y eso solo se
+            # sabe DESPUES de la fusion semantica. Se cuenta aqui con un groupby barato,
+            # antes de los estadisticos, para no calcularlos dos veces.
+            g0 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
+            emp_g0 = marco.assign(_g=g0).groupby("_g")["empresa_ruc"].nunique().to_dict()
+            grupo, n_err = _fusionar_erratas(celdas, grupo, niv, emp_g0)
+            print(f"fusion por errata: {n_err:,} grupos absorbidos")
+
             g_por_etiqueta = dict(zip(celdas, grupo))
             d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
             m_g, W_g, emp_g, claves, tau2, sigma2, t2_serie, s2_serie = _stats(d, "_g")
@@ -1091,6 +1133,146 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO):
         miembros.pop(gj, None)
         de[A + B] = gi
     return de
+
+
+_ROMANO_ERR = re.compile(r"\b(I{1,3}|IV|V|VI{0,3}|IX|X)\b")
+_DIGITO_ERR = re.compile(r"\d")
+
+
+def _distancia1(a, b):
+    """True si `a` y `b` estan a distancia de edicion exactamente 1.
+
+    No es un Levenshtein general: a distancia 1 solo hay tres formas —sustituir, insertar
+    o borrar un caracter— y comprobarlas directamente evita la matriz de programacion
+    dinamica sobre 65.081 titulos.
+    """
+    la, lb = len(a), len(b)
+    if abs(la - lb) > 1:
+        return False
+    if la == lb:
+        dif = [i for i in range(la) if a[i] != b[i]]
+        return len(dif) == 1
+    if la > lb:
+        a, b, la = b, a, lb
+    i = 0
+    while i < la and a[i] == b[i]:
+        i += 1
+    return a[i:] == b[i + 1:]
+
+
+def _es_errata(a, b):
+    """.El par a distancia 1 es un DEDAZO, y no un escalon ni una variante de genero?
+
+    Devuelve False para todo lo que no sea claramente ortografico. Es deliberadamente
+    conservador: un falso positivo aqui funde dos oficios distintos en una sola celda y
+    contamina la referencia de las dos.
+    """
+    if _DIGITO_ERR.search(a) or _DIGITO_ERR.search(b):
+        return False                                    # OPERARIO 1 / OPERARIO 2
+    if set(_ROMANO_ERR.findall(a)) != set(_ROMANO_ERR.findall(b)):
+        return False                                    # OPERARIO I / OPERARIO II
+    if any(t in a or t in b for t in ("/A", "(A)")):
+        return False                                    # forma inclusiva: TRABAJADOR/A
+    # donde y como difieren
+    if len(a) == len(b):
+        i = next(k for k in range(len(a)) if a[k] != b[k])
+        # LETRA DE GRADO. `AYUDANTE B DE MANTENIMIENTO` / `AYUDANTE C DE MANTENIMIENTO`
+        # y `SUPERVISOR C`: una letra SUELTA es escalafon, no ortografia. Los dos casos
+        # aparecieron al inspeccionar la base real y habrian pasado como dedazos.
+        if _letra_suelta(a, i) and _letra_suelta(b, i):
+            return False
+        # GENERO, incluido en plural. La primera version exigia que la vocal fuera la
+        # ULTIMA del titulo, y por eso `ENFERMERAS`/`ENFERMEROS` se colaba como errata:
+        # la O/A va seguida de la S del plural.
+        if {a[i], b[i]} == {"O", "A"} and _fin_de_palabra(a, i):
+            return False                                # OPERARIO/OPERARIA, ENFERMER-AS/OS
+        return True
+    corta, larga = (a, b) if len(a) < len(b) else (b, a)
+    i = 0
+    while i < len(corta) and corta[i] == larga[i]:
+        i += 1
+    c = larga[i]
+    if c == "A" and _fin_de_palabra(larga, i) and i > 0 and corta[i - 1] in "RNL":
+        return False                                    # VENDEDOR / VENDEDORA
+    return True
+
+
+def _fin_de_palabra(s, i):
+    """El caracter `i` cierra su palabra, admitiendo una `S` de plural detras."""
+    resto = s[i + 1:]
+    j = 0
+    while j < len(resto) and resto[j] == "S":
+        j += 1
+    return j >= len(resto) or not resto[j].isalpha()
+
+
+def _letra_suelta(s, i):
+    """El caracter `i` es una palabra de una sola letra: `AYUDANTE B DE ...` -> grado."""
+    if not s[i].isalpha():
+        return False
+    antes = i == 0 or not s[i - 1].isalnum()
+    despues = i == len(s) - 1 or not s[i + 1].isalnum()
+    return antes and despues
+
+
+def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
+                      min_largo=MIN_LARGO_ERRATA, max_raro=MAX_EMPRESAS_ERRATA,
+                      min_comun=MIN_EMPRESAS_ABSORBE):
+    """Absorbe los grupos-dedazo dentro del grupo comun del que son errata.
+
+    Segunda pasada, DESPUES de la fusion semantica y por separado: asi no altera nada de
+    lo que `e2_nivel/07` midio. Y es de una sola direccion —lo raro entra en lo comun—,
+    asi que no encadena: el destino nunca es a su vez absorbido, porque para serlo tendria
+    que tener <=2 empresas y acaba de exigirsele >=10.
+
+    Los pares se buscan por VARIANTES DE BORRADO (SymSpell) y no todos contra todos:
+    65.081 titulos son 2.100 millones de pares, y dos cadenas a distancia <=1 comparten
+    siempre una variante con un caracter menos. Son ~1,8 millones de claves y segundos.
+    """
+    n = len(celdas)
+    idx = defaultdict(list)
+    for i, c in enumerate(celdas):
+        if len(c) < min_largo:
+            continue
+        idx[c].append(i)
+        for k in range(len(c)):
+            idx[c[:k] + c[k + 1:]].append(i)
+
+    destino, vistos, fusiones = {}, set(), 0
+    for lista in idx.values():
+        if len(lista) < 2:
+            continue
+        for x in range(len(lista)):
+            for y in range(x + 1, len(lista)):
+                i, j = lista[x], lista[y]
+                par = (i, j) if i < j else (j, i)
+                if par in vistos:
+                    continue
+                vistos.add(par)
+                gi, gj = int(grupo[par[0]]), int(grupo[par[1]])
+                if gi == gj:
+                    continue
+                ni, nj = niveles[par[0]], niveles[par[1]]
+                if np.isfinite(ni) and np.isfinite(nj) and ni != nj:
+                    continue
+                a, b = celdas[par[0]], celdas[par[1]]
+                if not _distancia1(a, b) or not _es_errata(a, b):
+                    continue
+                ei, ej = emp_por_grupo.get(gi, 0), emp_por_grupo.get(gj, 0)
+                raro, comun = (gi, gj) if ei <= ej else (gj, gi)
+                if emp_por_grupo.get(raro, 0) > max_raro:
+                    continue
+                if emp_por_grupo.get(comun, 0) < min_comun:
+                    continue
+                if raro in destino:            # ya absorbido por otro comun
+                    continue
+                destino[raro] = comun
+                fusiones += 1
+
+    if not destino:
+        return np.asarray(grupo), 0
+    nuevo = np.array([destino.get(int(g), int(g)) for g in grupo], dtype=np.int64)
+    return nuevo, fusiones
 
 
 def _vecinos(Q, B, k, excluir_propio):

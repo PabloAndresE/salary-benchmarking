@@ -2398,3 +2398,79 @@ encontrar un efecto del ajuste de nivel, no lo contrario — y aun así la media
 El pendiente de §18 sobre el **sesgo de una pasada** en `efecto_nivel` —centrar por empresa
 y luego por área deja sesgo con áreas desbalanceadas— **sigue vivo y es independiente**.
 Esta medición cambió el estimador, no el esquema de centrado.
+
+---
+
+## D-025 — Segunda pasada de fusión por **errata**, con la asimetría como criterio
+
+**Fecha:** 2026-09-09
+**Origen:** al explicar por qué el agrupamiento es semántico y no léxico apareció que hay
+**un** caso donde el léxico gana y lo estábamos perdiendo: los dedazos. `ASITENTE` puntúa
+0,92–0,94 contra `ASISTENTE` y no llega al umbral de 0,95.
+**Evidencia:** `research/herramientas/erratas.py` sobre la base de 65.181 títulos.
+**Estado:** implementado, activo por defecto. **Falta la medición pareada de pinball.**
+
+### Por qué el léxico aquí y no en el agrupamiento
+
+Los embeddings codifican significado y son ciegos a las letras; la distancia de edición es
+lo contrario. Para un carácter cambiado, la segunda gana trivialmente. Es el único eje
+donde eso pasa, y por eso entra como **segunda pasada** y no tocando `_fusionar`: así no
+altera nada de lo que `e2_nivel/07` midió.
+
+### Lo que la inspección evitó
+
+2.887 pares candidatos a distancia 1, y **la mayoría no son erratas**:
+
+| cubo | pares | ¿fusionar? |
+|---|---|---|
+| ya fusionados semánticamente | 3.909 | ya lo están |
+| **errata / plural / tilde / puntuación** | **2.887** | **sí** |
+| escalón por dígito (`OPERARIO 1`/`2`) | 1.570 | no — borraría la escalera de antigüedad |
+| género (`VENDEDOR`/`VENDEDORA`) | 961 | decisión aparte |
+| escalón romano (`ANALISTA I`/`II`) | 188 | no |
+
+### El umbral de asimetría sale de los datos
+
+Medido sobre los candidatos: el lado menor tiene **una** empresa en el 68% de los pares.
+Pero la razón mayor/menor mediana es solo **4,0×**, porque hay dos familias:
+
+- **dedazo contra título común** → razón enorme. Es la que interesa: su gente pasa de
+  contestarse por analogía a tener datos propios.
+- **dos títulos raros a distancia 1** → razón ~1. Ninguno cruza el suelo de 3 empresas ni
+  antes ni después, así que fusionarlos no gana nada y sí arriesga fundir dos oficios.
+
+De ahí: **lado raro ≤ 2 empresas, lado común ≥ 10**. Y la absorción es de una sola
+dirección, así que no encadena — el destino nunca puede ser absorbido.
+
+### Alcance medido sobre la base real
+
+```
+grupos absorbidos                            873
+etiquetas que cambian de grupo               956
+personas que pasan de ANALOGIA a DIRECTA   4.278
+respaldo que ganan, mediana         1 -> 60 empresas
+```
+
+### Dos falsos positivos que sólo aparecieron al mirar la base real
+
+Ambos habrían pasado silenciosamente y están fijados con test:
+
+1. **Letra de grado.** `AYUDANTE B DE MANTENIMIENTO` / `AYUDANTE C DE MANTENIMIENTO` y
+   `SUPERVISOR C`. Una letra suelta es escalafón, igual que un romano.
+2. **Género en plural.** `ENFERMERAS` / `ENFERMEROS`. La primera guarda exigía que la
+   vocal fuera la última del título y la S del plural la burlaba.
+
+### Un hallazgo que NO es de esta decisión
+
+`ENFERMERAS` y `ENFERMEROS` **ya estaban en el mismo grupo antes de esta pasada**: los
+embeddings los puntúan ≥0,95 y D-015 los fusionó. O sea que **el colapso de género ya
+ocurre en producción** para los pares que la semántica junta sola, y la decisión pendiente
+sobre género es más amplia de lo que parecía: no es sólo si fusionar los 961 pares
+sueltos, sino qué hacer con los que ya están fusionados.
+
+### Qué falta
+
+- **La medición pareada**: pinball sobre empresas apartadas, restringido a los votos donde
+  la absorción actúa, con placebo. La ganancia esperada es de cobertura, no de precisión
+  —igual que en D-015— pero hay que comprobarlo, no suponerlo.
+- La decisión sobre **género**, con su propio registro.
