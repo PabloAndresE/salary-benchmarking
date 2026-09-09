@@ -13,6 +13,9 @@ dependencies = [
 ]
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.6"]
+# El servicio HTTP es OPCIONAL a proposito: la ruta de investigacion y el CLI no deben
+# arrastrar un framework web, y la imagen del pipeline por lotes tampoco.
+servicio = ["fastapi>=0.110", "uvicorn[standard]>=0.27", "python-multipart>=0.0.9"]
 [project.scripts]
 benchmarking = "benchmarking.cli:main"
 [build-system]
