@@ -567,7 +567,8 @@ class BaseReferencia:
     def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
                  nivel=None, efecto=None, grupo=None,
                  tau2_c=None, sigma2_c=None, bandas=None, personas=None,
-                 bandas_per=None, lam_nivel=None, ajuste_seg=None, rubro=None):
+                 bandas_per=None, lam_nivel=None, ajuste_seg=None, rubro=None,
+                 brecha_gen=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -621,6 +622,12 @@ class BaseReferencia:
             np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0), np.zeros(0),
             np.zeros(0, np.int64), np.zeros(0, np.int64),
             np.zeros((0, len(CUANTILES))), np.zeros((0, len(CUANTILES))))
+        # Diferencia en log entre la grafia femenina y la masculina de la celda, para
+        # las que la pasada de genero unio. NaN en el resto. NO es la brecha salarial
+        # —son empleadores distintos y no hay controles—: es lo que habia entre las dos
+        # grafias antes de juntarlas, guardado para que fusionar no lo borre.
+        self.brecha_gen = (np.full(n, np.nan) if brecha_gen is None
+                           else np.asarray(brecha_gen, dtype=float))
         self.rubros = []
         if rubro is not None:
             (self.rub_cel, self.rub_cod, self.rub_m, self.rub_W, self.rub_emp,
@@ -651,13 +658,17 @@ class BaseReferencia:
 
     @classmethod
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
-                  umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None):
+                  umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
+                  genero=True):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
 
         `erratas=False` apaga la segunda pasada de D-025. Existe para poder medirla: la
         variante de control tiene que salir del MISMO codigo con una sola diferencia.
+
+        `genero=False` apaga la tercera pasada de D-026, que junta la grafia
+        masculina y la femenina del mismo oficio.
 
         `mapa_erratas` inyecta las absorciones en vez de calcularlas —un dict grupo_raro
         -> grupo_comun—. Lo usa el PLACEBO del experimento, que absorbe los mismos grupos
@@ -730,6 +741,7 @@ class BaseReferencia:
         # votan juntas. Se reagrega desde las filas, no sumando celdas: el voto de una
         # empresa en el grupo es la mediana de TODA su gente en cualquiera de las grafias.
         grupo = _fusionar(Z, niv, umbral_fusion) if umbral_fusion else np.arange(n)
+        brecha_gen = np.full(n, np.nan)
         if umbral_fusion:
             # SEGUNDA PASADA POR ERRATA. Necesita saber cuantas empresas respalda cada
             # grupo para decidir cual es el dedazo y cual el titulo comun, y eso solo se
@@ -745,6 +757,27 @@ class BaseReferencia:
                           .nunique().to_dict())
                 grupo, n_err = _fusionar_erratas(celdas, grupo, niv, emp_g0)
                 print(f"fusion por errata: {n_err:,} grupos absorbidos")
+            if genero:
+                # Recuento fresco: la pasada de erratas acaba de mover grupos y el
+                # superviviente de cada par de genero se elige por numero de empresas.
+                g1 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
+                emp_g1 = (marco.assign(_g=g1).groupby("_g")["empresa_ruc"]
+                          .nunique().to_dict())
+                antes_gen = grupo.copy()
+                grupo, fem_masc = _fusionar_genero(celdas, grupo, niv, emp_g1)
+                print(f"fusion por genero: {len(fem_masc):,} pares juntados")
+                # LA BRECHA NO DESAPARECE CON LA FUSION, SE HACE VISIBLE. Fusionar da una
+                # referencia justa, pero si el numero se limita a promediar las dos
+                # grafias, la diferencia que habia entre ellas deja de poder mirarse. Se
+                # calcula ANTES de que los estadisticos se recalculen sobre el grupo
+                # unido y se guarda por celda, para poder reportarla.
+                #
+                # OJO CON LEERLA: compara dos GRAFIAS, no dos personas. Las empresas que
+                # escriben `ENFERMERA` no son las que escriben `ENFERMERO`, y aqui no hay
+                # control por empresa, sector ni antiguedad. NO es la brecha salarial:
+                # esa es la descomposicion Oaxaca de D-011, que usa la columna `sexo`.
+                brecha_gen = _brecha_por_grafia(marco, col, celdas,
+                                                antes_gen, fem_masc, grupo)
 
             g_por_etiqueta = dict(zip(celdas, grupo))
             d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
@@ -807,7 +840,7 @@ class BaseReferencia:
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
                    tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel,
-                   ajuste_seg, rubro)
+                   ajuste_seg, rubro, brecha_gen)
 
     # -- persistencia ----------------------------------------------------------
 
@@ -832,6 +865,7 @@ class BaseReferencia:
             rub_per=self.rub_per, rub_bandas=self.rub_bandas,
             rub_bandas_per=self.rub_bandas_per,
             rubros=np.array(self.rubros, dtype=object),
+            brecha_gen=self.brecha_gen,
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
 
     @classmethod
@@ -858,7 +892,8 @@ class BaseReferencia:
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
                        opc["sigma2_c"], opc["bandas"], opc["personas"],
-                       opc["bandas_per"], lam_nivel, opc["ajuste_seg"], rubro)
+                       opc["bandas_per"], lam_nivel, opc["ajuste_seg"], rubro,
+                       z["brecha_gen"] if "brecha_gen" in z.files else None)
 
     # -- consulta --------------------------------------------------------------
 
@@ -1077,6 +1112,11 @@ class BaseReferencia:
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
                         "incert_centro": round(incert, 4),
                         "segmento": seg or "", "rubro": usado,
+                        # Diferencia que habia entre la grafia femenina y la masculina
+                        # antes de unirlas. Vacio donde no hubo fusion de genero.
+                        "brecha_grafia": (round(float(np.exp(self.brecha_gen[propio]) - 1), 4)
+                                          if propio is not None
+                                          and np.isfinite(self.brecha_gen[propio]) else ""),
                         "empresas": n_emp, "personas": n_per,
                         "similitud": round(mejor, 3)}
 
@@ -1287,6 +1327,141 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
         return np.asarray(grupo), 0
     nuevo = np.array([destino.get(int(g), int(g)) for g in grupo], dtype=np.int64)
     return nuevo, fusiones
+
+
+def _par_genero(a, b):
+    """(femenino, masculino) si el par a distancia 1 es INEQUIVOCAMENTE de genero.
+
+    Se exige que la vocal cierre su palabra —admitiendo la S del plural— y se excluyen
+    las formas inclusivas (`TRABAJADOR/A`, `CAJERO (A)`): esas no son un par sino una
+    tercera grafia, y la absorbe la fusion semantica o la de erratas, no esta.
+    """
+    if any(t in a or t in b for t in ("/", "(", ")")):
+        return None
+    if len(a) == len(b):
+        i = next((k for k in range(len(a)) if a[k] != b[k]), None)
+        if i is not None and {a[i], b[i]} == {"O", "A"} and _fin_de_palabra(a, i):
+            return (a, b) if a[i] == "A" else (b, a)
+        return None
+    corta, larga = (a, b) if len(a) < len(b) else (b, a)
+    i = 0
+    while i < len(corta) and corta[i] == larga[i]:
+        i += 1
+    if larga[i] == "A" and _fin_de_palabra(larga, i) and i > 0 and corta[i - 1] in "RNL":
+        return (larga, corta)
+    return None
+
+
+def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
+    """Junta las grafias masculina y femenina del mismo oficio. Tercera pasada.
+
+    POR QUE, y no es un argumento estadistico. Hoy el comportamiento es un ACCIDENTE:
+    para que `ENFERMERA` y `ENFERMERO` acaben en la misma celda tiene que superarse el
+    coseno de 0,95, y medido sobre las 65.181 celdas eso pasa en el 48% de los pares y
+    no pasa en el 52% — casi una moneda al aire, sin patron (ni siquiera singular contra
+    plural: 21% de plurales entre los fusionados y 17% entre los sueltos).
+
+    La consecuencia es que dos personas del mismo oficio reciben referencias distintas
+    segun como tecleo el titulo su empleador. Y como el titulo es un PROXY DE GENERO, el
+    modelo termina segmentando por genero sin que nadie lo haya decidido — justo lo que
+    la regla de "`sexo` nunca es una variable" existe para impedir. Fusionar no mete el
+    genero en el modelo: SACA el proxy que hoy esta dentro.
+
+    SIN REGLA DE ASIMETRIA, al reves que en las erratas. Alli el lado raro era un dedazo
+    y habia que absorberlo en el comun; aqui las dos grafias son legitimas y a menudo las
+    dos estan bien pobladas (`CONTADORA` 777 empresas, `CONTADOR` 865). Se juntan sin
+    mirar tamanos, y sobrevive como identificador el grupo con mas empresas.
+
+    Lo que esto NO corrige es la brecha salarial: las dos celdas son empleadores
+    distintos y aqui no hay control por empresa, sector ni antiguedad. Eso es D-011.
+    """
+    idx = defaultdict(list)
+    for i, c in enumerate(celdas):
+        if len(c) < 6:
+            continue
+        idx[c].append(i)
+        for k in range(len(c)):
+            idx[c[:k] + c[k + 1:]].append(i)
+
+    padre = {}
+
+    def raiz(x):
+        while padre.get(x, x) != x:
+            padre[x] = padre.get(padre[x], padre[x])
+            x = padre[x]
+        return x
+
+    vistos, fem_masc = set(), []
+    for lista in idx.values():
+        for x in range(len(lista)):
+            for y in range(x + 1, len(lista)):
+                i, j = lista[x], lista[y]
+                par = (i, j) if i < j else (j, i)
+                if par in vistos:
+                    continue
+                vistos.add(par)
+                gi, gj = int(grupo[par[0]]), int(grupo[par[1]])
+                if gi == gj:
+                    continue
+                ni, nj = niveles[par[0]], niveles[par[1]]
+                if np.isfinite(ni) and np.isfinite(nj) and ni != nj:
+                    continue
+                a, b = celdas[par[0]], celdas[par[1]]
+                g = _par_genero(a, b) if _distancia1(a, b) else None
+                if g is None:
+                    continue
+                ri, rj = raiz(gi), raiz(gj)
+                if ri == rj:
+                    continue
+                # cual de los dos grupos trae la grafia femenina
+                gf, gm = (gi, gj) if celdas[par[0]] == g[0] else (gj, gi)
+                fem_masc.append((gf, gm))
+                # sobrevive el que mas empresas respalda: identificador estable
+                if emp_por_grupo.get(ri, 0) >= emp_por_grupo.get(rj, 0):
+                    padre[rj] = ri
+                else:
+                    padre[ri] = rj
+
+    if not padre:
+        return np.asarray(grupo), []
+    nuevo = np.array([raiz(int(g)) for g in grupo], dtype=np.int64)
+    return nuevo, fem_masc
+
+
+def _brecha_por_grafia(marco, col, celdas, antes, pares_fem_masc, despues,
+                       min_emp=MIN_EMPRESAS_BANDA):
+    """Diferencia en log entre la grafia femenina y la masculina de cada celda fusionada.
+
+    `pares_fem_masc` son los (grupo_femenino, grupo_masculino) que `_fusionar_genero`
+    acaba de unir — quien los junta es quien sabe cual lado es cual, asi que se pasan en
+    vez de reconstruirlos. Se usa el mismo estimador que el centro, mediana de los votos
+    por empresa, para que la resta signifique algo. NaN donde no hubo fusion de genero.
+
+    CON SUELO EN LOS DOS LADOS. Sin el se publicaban cosas como `PERCHADORA +80,0%` y
+    `OPERARIA PRODUCCION +365,8%`, calculadas sobre UNA empresa: ruido presentado como
+    diagnostico, que es justo lo que el resto del paquete evita en todas partes. Se exige
+    el mismo minimo que la banda empirica; por debajo, la fusion se hace igual —esa es la
+    parte que corrige el proxy— pero no se reporta ninguna brecha.
+
+    ESTO NO ES LA BRECHA SALARIAL, y el nombre de la columna deberia recordarlo: compara
+    dos GRAFIAS escritas por empleadores distintos, sin control por empresa, sector,
+    tamano ni antiguedad. Es "cuanto difieren dos celdas que ahora son una", y existe para
+    que fusionar no BORRE lo que habia. La brecha de verdad es D-011, con la columna
+    `sexo` y sus controles.
+    """
+    salida = np.full(len(celdas), np.nan)
+    if not pares_fem_masc:
+        return salida
+    g_antes = marco[col].astype(str).map(dict(zip(celdas, antes)))
+    md = marco.assign(_ga=g_antes).dropna(subset=["y"])
+    v = (md.groupby(["_ga", "empresa_ruc"], sort=False)["y"].median()
+           .groupby(level=0).median())
+    n_emp = md.groupby("_ga")["empresa_ruc"].nunique()
+    for gf, gm in pares_fem_masc:
+        if (gf in v.index and gm in v.index
+                and n_emp.get(gf, 0) >= min_emp and n_emp.get(gm, 0) >= min_emp):
+            salida[despues == despues[np.flatnonzero(antes == gf)[0]]] =                 float(v[gf] - v[gm])
+    return salida
 
 
 def _vecinos(Q, B, k, excluir_propio):

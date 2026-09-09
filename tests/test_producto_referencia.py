@@ -708,3 +708,79 @@ def test_los_dos_falsos_positivos_que_encontro_la_base_real():
     # ...y siguen siendo erratas las que si lo son
     assert _es_errata("ENFERMERAS", "ENFERMERAX")
     assert _es_errata("SUPERVISOR DE CAJA", "SUPERVISOR DE CAJE")
+
+
+# --------------------------------------------------------------------------
+# FUSION POR GENERO (D-026). No es un cambio estadistico: hoy el comportamiento
+# es un ACCIDENTE —el 48% de los pares ya esta junto y el 52% no, segun donde
+# cayo el coseno— y el titulo actua como PROXY DE GENERO dentro del modelo.
+# --------------------------------------------------------------------------
+from benchmarking.producto.base_referencia import _par_genero
+
+
+def test_reconoce_el_par_de_genero_y_cual_es_cual():
+    assert _par_genero("ENFERMERA", "ENFERMERO") == ("ENFERMERA", "ENFERMERO")
+    assert _par_genero("ENFERMERO", "ENFERMERA") == ("ENFERMERA", "ENFERMERO")
+    assert _par_genero("VENDEDORA", "VENDEDOR") == ("VENDEDORA", "VENDEDOR")
+    assert _par_genero("ENFERMERAS", "ENFERMEROS") == ("ENFERMERAS", "ENFERMEROS")
+    # la forma inclusiva NO es un par: es una tercera grafia
+    assert _par_genero("TRABAJADOR/A", "TRABAJADORA") is None
+    # ni el escalon ni un dedazo
+    assert _par_genero("OPERARIO", "OPERARIB") is None
+    assert _par_genero("CONTADOR", "CONTAADOR") is None
+
+
+def _marco_genero():
+    """`ENFERMERA` y `ENFERMERO` en empresas distintas, y la femenina paga menos."""
+    filas = [(f"F{i}", "ENFERMERA", 1.00 + 0.01 * (i % 5)) for i in range(14)]
+    filas += [(f"M{i}", "ENFERMERO", 1.30 + 0.01 * (i % 5)) for i in range(12)]
+    return _marco(filas)
+
+
+def _emb_genero():
+    # 0,90 de coseno: NO llegan al umbral, asi que sin la tercera pasada quedan sueltos.
+    return {"ENFERMERA": np.array([1.0, 0.0]),
+            "ENFERMERO": np.array([0.90, np.sqrt(1 - 0.90 ** 2)])}
+
+
+def test_las_dos_grafias_acaban_en_la_misma_celda():
+    emb = _emb_genero()
+    sin = BaseReferencia.construir(_marco_genero(), emb, _sbu, genero=False)
+    con = BaseReferencia.construir(_marco_genero(), emb, _sbu, genero=True)
+    a, b = "ENFERMERA", "ENFERMERO"
+    assert sin.grupo[sin.idx[a]] != sin.grupo[sin.idx[b]], "sin la pasada quedan sueltas"
+    assert con.grupo[con.idx[a]] == con.grupo[con.idx[b]]
+    # y la referencia deja de depender de como escribio el titulo el empleador
+    r = con.referenciar([a, b], emb).set_index("cargo")
+    assert abs(r.loc[a, "referencia_log"] - r.loc[b, "referencia_log"]) < 1e-12
+    rs = sin.referenciar([a, b], emb).set_index("cargo")
+    assert abs(rs.loc[a, "referencia_log"] - rs.loc[b, "referencia_log"]) > 0.2
+
+
+def test_la_brecha_entre_grafias_no_se_borra_al_fusionar():
+    # Fusionar da una referencia justa; si el numero solo promediara, la diferencia que
+    # habia dejaria de poder mirarse. Se guarda.
+    emb = _emb_genero()
+    b = BaseReferencia.construir(_marco_genero(), emb, _sbu, genero=True)
+    f = b.referenciar(["ENFERMERA"], emb).iloc[0]
+    assert f["brecha_grafia"] != "", "la brecha tiene que viajar con la respuesta"
+    assert f["brecha_grafia"] < -0.2, "la grafia femenina pagaba ~26% menos"
+
+
+def test_sin_pares_de_genero_la_brecha_queda_vacia():
+    emb = _emb_errata()
+    b = BaseReferencia.construir(_marco_errata(), emb, _sbu)
+    assert b.referenciar(["ASISTENTE CONTABLE"], emb).iloc[0]["brecha_grafia"] == ""
+
+
+def test_la_brecha_no_se_publica_con_una_sola_empresa_detras():
+    # Sin suelo salian cosas como `PERCHADORA +80,0%` y `OPERARIA PRODUCCION +365,8%`
+    # calculadas sobre UNA empresa: ruido presentado como diagnostico. La fusion se hace
+    # igual —esa es la parte que corrige el proxy— pero la brecha se calla.
+    emb = _emb_genero()
+    filas = [(f"F{i}", "ENFERMERA", 1.0) for i in range(2)]          # 2 empresas
+    filas += [(f"M{i}", "ENFERMERO", 1.5 + 0.01 * i) for i in range(14)]
+    b = BaseReferencia.construir(_marco(filas), emb, _sbu, genero=True)
+    assert b.grupo[b.idx["ENFERMERA"]] == b.grupo[b.idx["ENFERMERO"]], "se fusiona igual"
+    assert b.referenciar(["ENFERMERA"], emb).iloc[0]["brecha_grafia"] == "", \
+        "pero no se publica una brecha de 2 empresas"
