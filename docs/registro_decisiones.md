@@ -2549,3 +2549,114 @@ Tres razones, y ninguna es que el resultado saliera bien:
   5 particiones son ~7 horas de máquina. Hasta entonces esto no está validado.
 - La decisión sobre **género**, con su propio registro — y ahora se sabe que es más amplia:
   incluye los pares que la fusión semántica ya junta sola.
+
+---
+
+## D-026 — Las grafías de género se fusionan, y la brecha queda visible
+
+**Fecha:** 2026-09-09
+**Origen:** al implementar D-025 apareció que `ENFERMERAS` y `ENFERMEROS` ya compartían
+grupo mientras `ENFERMERA` y `ENFERMERO` no. Al inventariarlo, la inconsistencia resultó
+ser general.
+**Evidencia:** `research/herramientas/genero.py`, y la medición del coste en
+`research/experimentos/e2_nivel/09_fusion_por_genero.py`.
+**Estado:** implementado y activo. La medición del coste está declarada y corriendo.
+
+### El argumento NO es estadístico, y conviene decirlo primero
+
+Una celda del modelo es una cadena de texto. Para que `ENFERMERA` y `ENFERMERO` acaben en
+la misma celda tiene que superarse el coseno de 0,95 — y medido sobre las 65.181 celdas:
+
+| | pares |
+|---|---|
+| ya fusionados por semántica | **690** (48%) |
+| sueltos, en celdas distintas | **738** (52%) |
+
+**Casi una moneda al aire, y sin patrón.** Ni siquiera es singular contra plural: 21% de
+plurales entre los fusionados y 17% entre los sueltos. El comportamiento de hoy no es una
+decisión; es dónde cayó el coseno.
+
+La consecuencia: **dos personas con el mismo oficio reciben referencias distintas según
+cómo tecleó el título su empleador.** Y como el título es un **proxy de género**, al ser la
+unidad de agrupamiento el modelo termina segmentando por género sin que nadie lo haya
+decidido — justo lo que la regla de *«`sexo` nunca es una variable»* existe para impedir.
+
+> **Fusionar no mete el género en el modelo: saca el proxy que ya estaba dentro.**
+
+### Cómo difieren las celdas que hoy están sueltas
+
+114 pares inequívocos con 10+ empresas en ambos lados:
+
+```
+mediana -3,3%   ·   p25/p75  -13,0% / +1,9%   ·   |desvío| mediano 7,5%
+el femenino paga menos en 76 de 114 (67%)
+
+ENFERMERA / ENFERMERO   -21,3%      SECRETARIA / SECRETARIO   -7,5%
+COCINERA  / COCINERO    -13,6%      ADMINISTRADORA / ...      +9,8%
+PSICOLOGA / PSICOLOGO   -12,8%      ASESORA COMERCIAL / ...  +16,5%
+```
+
+**No es uniforme**: en un tercio de los pares el femenino paga más. Lo constante es que
+son *distintas*.
+
+### Lo que estas cifras NO son
+
+**No son la brecha salarial.** Las dos celdas son empleadores distintos —`ENFERMERA` tiene
+240 empresas y `ENFERMERO` 67, con poco solape— y no hay control por empresa, tamaño,
+sector, provincia ni antigüedad. Podría ser enteramente composición. La brecha de verdad es
+la descomposición Oaxaca de **D-011**, que usa la columna `sexo` y sus controles.
+
+Lo que sí son, independientemente de la causa: la prueba de que **la celda a la que caes
+depende de una convención de redacción de RR.HH.**
+
+### El diseño
+
+Tercera pasada, después de la semántica y de las erratas. **Sin regla de asimetría**, al
+revés que D-025: allí el lado raro era un dedazo y había que absorberlo; aquí las dos
+grafías son legítimas y a menudo ambas pobladas (`CONTADORA` 777 empresas, `CONTADOR` 865).
+Sobrevive como identificador el grupo con más empresas.
+
+Alcance sobre la base real:
+
+```
+657 pares juntados · grupos 51.942 -> 51.285 · 921 etiquetas cambian de celda
+213.011 personas en alguna celda afectada
+344 etiquetas pasan de contestarse por analogía a tener datos propios
+```
+
+### La brecha se guarda, no se borra
+
+Fusionar da una referencia justa, pero si el número se limitara a promediar las dos
+grafías, la diferencia que había dejaría de poder mirarse. Se calcula **antes** de
+recalcular los estadísticos y viaja en la respuesta como `brecha_grafia`.
+
+**Con suelo de 10 empresas en los dos lados**, y ese suelo es un defecto que la inspección
+atrapó antes de que saliera: sin él se publicaban `PERCHADORA +80,0%` y `OPERARIA
+PRODUCCION +365,8%`, calculadas sobre **una** empresa. Ruido presentado como diagnóstico.
+Por debajo del suelo la fusión se hace igual —esa es la parte que corrige el proxy— pero no
+se reporta nada.
+
+### La medición mide el COSTE, no si conviene
+
+El verbo importa. La decisión ya está tomada y no la resuelve el pinball: aunque fusionar
+empeorara algo la precisión, el argumento del proxy seguiría en pie. Lo que la medición
+puede hacer es acotar lo que se paga, y —esto sí es decisivo— comprobar que la regla
+identifica **oficios equivalentes**: si juntar `ENFERMERA` con `ENFERMERO` costara lo mismo
+que juntar dos celdas al azar del mismo tamaño, no estaría reconociendo nada, estaría
+mezclando.
+
+De ahí el criterio declarado antes de correr:
+
+```
+PRIMARIA       pinball pareado sobre los votos donde la fusion actua. Aqui pinball SI es
+               la primaria correcta —al reves que en D-025— porque fusionar cambia el
+               CENTRO de gente que ya tenia respuesta directa.
+DISCRIMINANTE  contraste DIRECTO real contra placebo, que es lo que a D-025 le falto.
+
+SE REVISA si (a) el IC 95% del coste queda entero por encima de +0,005 —mas de lo que
+vale la fusion semantica entera (D-015: -0,0030)—, o (b) el real NO sale claramente mas
+barato que el placebo.
+```
+
+Y esta vez hay potencia: 114 pares con respaldo, frente a los 57 títulos y 64 votos que
+dejaron D-025 sin concluir.

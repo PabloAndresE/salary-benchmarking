@@ -659,7 +659,7 @@ class BaseReferencia:
     @classmethod
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
-                  genero=True):
+                  genero=True, mapa_genero=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
@@ -668,7 +668,10 @@ class BaseReferencia:
         variante de control tiene que salir del MISMO codigo con una sola diferencia.
 
         `genero=False` apaga la tercera pasada de D-026, que junta la grafia
-        masculina y la femenina del mismo oficio.
+        masculina y la femenina del mismo oficio. `mapa_genero` inyecta las uniones en
+        vez de calcularlas —lo usa el PLACEBO del experimento, que junta pares al azar
+        del mismo tamano: si fusionar al azar costara lo mismo, la regla de genero no
+        estaria identificando oficios equivalentes.
 
         `mapa_erratas` inyecta las absorciones en vez de calcularlas —un dict grupo_raro
         -> grupo_comun—. Lo usa el PLACEBO del experimento, que absorbe los mismos grupos
@@ -757,7 +760,12 @@ class BaseReferencia:
                           .nunique().to_dict())
                 grupo, n_err = _fusionar_erratas(celdas, grupo, niv, emp_g0)
                 print(f"fusion por errata: {n_err:,} grupos absorbidos")
-            if genero:
+            if mapa_genero is not None:
+                antes_gen = grupo.copy()
+                grupo = np.array([mapa_genero.get(int(g), int(g)) for g in grupo],
+                                 dtype=np.int64)
+                print(f"fusion por genero: {len(mapa_genero):,} uniones INYECTADAS")
+            elif genero:
                 # Recuento fresco: la pasada de erratas acaba de mover grupos y el
                 # superviviente de cada par de genero se elige por numero de empresas.
                 g1 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
