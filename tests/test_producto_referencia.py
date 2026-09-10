@@ -880,3 +880,51 @@ def test_el_enlace_RUC_padron_sobrevive_al_guardado(caso, tmp_path):
     b2 = BaseReferencia.cargar(ruta, _sbu)
     assert b2.pad_ruc == b.pad_ruc
     assert b2.grupos_de_empresa("EBODEGA00") == b.grupos_de_empresa("EBODEGA00")
+
+
+def test_el_padron_SCVS_cubre_al_pais_y_no_solo_a_la_base(caso):
+    # La razon de ser del cambio: llenar `meta_ruc` desde el marco solo conoce a quien
+    # aporto estudios —6.722 de 221.794 en produccion—, o sea que se le pedia el RUC al
+    # cliente para no poder decirle nada en 98 de cada 100 casos.
+    filas, emb, _ = caso
+    en_la_base = "EBODEGA00"
+    de_fuera = "9999999999001"
+    scvs = pd.DataFrame({
+        "ruc": [en_la_base, de_fuera],
+        "segmento": ["GRANDE", "PEQUEÑA"],
+        "ciiu_n6": ["C1071.01", "G4711.02"],
+        "n_empleados": [500, 12],
+    })
+    b = BaseReferencia.construir(_marco(filas), emb, _sbu, scvs=scvs)
+
+    # la que nunca aporto datos igual se resuelve
+    assert de_fuera in b.meta_ruc
+    g4, ne, seg = b.meta_ruc[de_fuera]
+    assert (g4, ne, seg) == ("G471", 12, "PEQUENA")
+    # ...pero NO esta en el padron: son dos preguntas distintas
+    assert de_fuera not in b.pad_ruc
+    assert b.grupos_de_empresa(de_fuera) == set()
+
+    # la que si aporto se resuelve Y esta en el padron
+    assert b.meta_ruc[en_la_base] == ("C107", 500, "GRANDE")
+    assert en_la_base in b.pad_ruc
+
+
+def test_el_tamano_del_MERCADO_solo_cuenta_a_quien_esta_en_el(caso):
+    # `tam`/`ciiu` alimentan la tarjeta de tamanos del informe, que describe el mercado
+    # comparado. Una empresa del registro que no aporto datos no puede engordarla.
+    filas, emb, _ = caso
+    scvs = pd.DataFrame({"ruc": ["EBODEGA00", "9999999999001"],
+                         "segmento": ["GRANDE", "GRANDE"],
+                         "ciiu_n6": ["C1071.01", "C1071.01"],
+                         "n_empleados": [500, 900]})
+    b = BaseReferencia.construir(_marco(filas), emb, _sbu, scvs=scvs)
+    assert 900 not in b.pad_tam.tolist(), "una empresa de fuera del padron no puede " \
+                                          "aparecer en los tamanos del mercado"
+    assert 500 in b.pad_tam.tolist()
+
+
+def test_sin_scvs_el_comportamiento_es_el_de_antes(caso):
+    filas, emb, _ = caso
+    b = BaseReferencia.construir(_marco(filas), emb, _sbu)
+    assert set(b.meta_ruc) <= set(b.pad_ruc), "sin padron externo, no se inventa nadie"
