@@ -145,3 +145,27 @@ def test_la_consulta_suelta_AVISA_de_que_no_es_el_producto(cliente):
     assert d["referencia"] > 0 and d["confianza"]
     assert "ancla" in d["aviso"] and "POST /informes" in d["aviso"]
     assert not any(str(k).endswith("_log") for k in d), "nada de escala logaritmica"
+
+
+def test_los_marcadores_de_swagger_NO_son_una_trampa(cliente):
+    # `/docs` deja la palabra "string" en los campos opcionales. Mandarla tal cual daba
+    # un 400 confuso —«segmento invalido: string»— en la primera prueba de cualquiera
+    # que abriera la interfaz. La pantalla de pruebas no puede ser una trampa.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    for datos in ({"segmento": "string", "rubro": "string", "columna_cargo": "string"},
+                  {"segmento": "  ", "rubro": "", "columna_sueldo": "  "},
+                  {}):
+        r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                         data=datos)
+        assert r.status_code == 202, f"{datos} -> {r.status_code} {r.text}"
+
+
+def test_un_rubro_desconocido_se_rechaza_en_vez_de_caer_al_global_en_silencio(cliente):
+    # Antes solo avisaba por `warnings` y devolvia el mercado entero: el cliente recibia
+    # un informe completo creyendo que era sectorial.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"rubro": "ZZZ"})
+    assert r.status_code == 400 and "ZZZ" in r.json()["detail"]
+    assert cliente.get("/referencia",
+                       params={"cargo": "CONTADOR", "rubro": "ZZZ"}).status_code == 400

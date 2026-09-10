@@ -68,6 +68,20 @@ UNIDADES = {
 }
 
 
+def _opt(v: str | None) -> str | None:
+    """Un campo de formulario vacio es AUSENCIA, no la cadena vacia.
+
+    Y `"string"` tambien: es el marcador que Swagger deja puesto en los campos
+    opcionales, y mandarlo tal cual daba un 400 confuso —«segmento invalido: string»—
+    en la primera prueba de cualquiera que abra `/docs`. La interfaz de pruebas no
+    deberia ser una trampa.
+    """
+    if v is None:
+        return None
+    t = v.strip()
+    return None if t == "" or t.lower() == "string" else t
+
+
 def _py(v):
     """De tipos de numpy/pandas a tipos de Python, y de NaN a None.
 
@@ -319,16 +333,31 @@ def salud(m: Motor = Depends(motor)):
 
 
 @app.post("/informes", status_code=202)
-def crear(tareas: BackgroundTasks, archivo: UploadFile = File(...),
-          anio: int = Form(2025), segmento: str | None = Form(None),
-          rubro: str | None = Form(None), columna_cargo: str | None = Form(None),
-          columna_sueldo: str | None = Form(None), m: Motor = Depends(motor)):
+def crear(tareas: BackgroundTasks,
+          archivo: UploadFile = File(..., description="Excel o CSV. Primera hoja, "
+                                                      "encabezados en la fila 1."),
+          anio: int = Form(2025, description="Ano del SBU con el que se dolariza."),
+          segmento: str | None = Form(
+              None, description="OPCIONAL. Tamano de la empresa del cliente: "
+                                "MICROEMPRESA, PEQUENA, MEDIANA o GRANDE. Corrige el "
+                                "sesgo de los cargos altos (D-018)."),
+          rubro: str | None = Form(
+              None, description="OPCIONAL. CIIU de primer nivel (una letra). Compara "
+                                "solo contra ese sector donde haya respaldo. NO mejora "
+                                "la precision: estrecha el respaldo (D-023)."),
+          columna_cargo: str | None = Form(
+              None, description="OPCIONAL. Solo si la columna no se autodetecta."),
+          columna_sueldo: str | None = Form(
+              None, description="OPCIONAL. Solo si la columna no se autodetecta."),
+          m: Motor = Depends(motor)):
     """Sube una nomina. Devuelve 202 y un id: el trabajo corre por detras.
 
     Se valida ANTES de encolar todo lo que se puede validar barato —el SBU del ano, el
     segmento, y que el archivo se deje leer y tenga columna de cargo—. Un 400 inmediato
     con el motivo es mucho mas util que un trabajo que falla treinta segundos despues.
     """
+    segmento, rubro = _opt(segmento), _opt(rubro)
+    columna_cargo, columna_sueldo = _opt(columna_cargo), _opt(columna_sueldo)
     try:
         m.settings.get_sbu(int(anio), estricto=True)
     except ValueError as e:
@@ -336,6 +365,11 @@ def crear(tareas: BackgroundTasks, archivo: UploadFile = File(...),
     if segmento and segmento.upper() not in SEGMENTOS:
         raise HTTPException(400, f"segmento invalido: {segmento}. "
                                  f"Validos: {list(SEGMENTOS)}")
+    # El rubro se valida igual que el segmento. Antes solo avisaba por `warnings` y caia
+    # al global: el cliente recibia un informe entero creyendo que era sectorial.
+    if rubro and rubro.upper() not in m.base.rubros:
+        raise HTTPException(400, f"rubro sin datos suficientes: {rubro}. "
+                                 f"Con respaldo en esta base: {list(m.base.rubros)}")
     contenido = archivo.file.read()
     if not contenido:
         raise HTTPException(400, "el archivo llego vacio")
@@ -352,7 +386,8 @@ def crear(tareas: BackgroundTasks, archivo: UploadFile = File(...),
         try:
             t.resultado, t.excel = procesar(m, df, col, int(anio),
                                             segmento.upper() if segmento else None,
-                                            rubro, columna_sueldo)
+                                            rubro.upper() if rubro else None,
+                                            columna_sueldo)
             t.estado = "listo"
         except Exception as e:                               # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"
@@ -388,6 +423,7 @@ def excel(tid: str):
 @app.get("/referencia")
 def referencia(cargo: str, anio: int = 2025, segmento: str | None = None,
                rubro: str | None = None, m: Motor = Depends(motor)):
+    # mismo saneado que en /informes: vacio y "string" son ausencia
     """Un titulo suelto, para explorar. NO es el producto.
 
     Sin la nomina completa no hay ancla de empresa, y sin ancla no hay lectura de equidad
@@ -398,6 +434,10 @@ def referencia(cargo: str, anio: int = 2025, segmento: str | None = None,
         m.settings.get_sbu(int(anio), estricto=True)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    segmento, rubro = _opt(segmento), _opt(rubro)
+    if rubro and rubro.upper() not in m.base.rubros:
+        raise HTTPException(400, f"rubro sin datos suficientes: {rubro}. "
+                                 f"Con respaldo: {list(m.base.rubros)}")
     t = cargo.strip().upper()
     if not t:
         raise HTTPException(400, "cargo vacio")
