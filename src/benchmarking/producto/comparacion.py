@@ -213,6 +213,12 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     # lee de `ref_df` con guarda porque las bases anteriores a D-026 no la traen.
     out["_brecha"] = (pd.Series(list(ref_df["brecha_grafia"]), index=df.index)
                       if "brecha_grafia" in ref_df.columns else "")
+    # .ESTA EL CLIENTE DENTRO DEL MERCADO CON QUE SE LE COMPARA? Tambien es propiedad del
+    # cargo y no de la persona. Con guarda: las bases anteriores a D-027 no lo traen.
+    out["_tuemp"] = (pd.Series(list(ref_df["tu_empresa"]), index=df.index)
+                     if "tu_empresa" in ref_df.columns else False)
+    out["_tuinf"] = (pd.Series(list(ref_df["tu_influencia"]), index=df.index)
+                     if "tu_influencia" in ref_df.columns else np.nan)
     f = float(sbu(int(anio)))
     out["_y"] = yv
     for q in ("p10", "p25", "p75", "p90"):
@@ -230,6 +236,8 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
                           vs_mercado=("vs_mercado", "median"),
                           confianza=("confianza", "first"),
                           brecha_grafia=("_brecha", "first"),
+                          tu_empresa=("_tuemp", "first"),
+                          tu_influencia=("_tuinf", "first"),
                           _voto=("_y", "median"), _p10=("_p10", "first"),
                           _p25=("_p25", "first"), _p75=("_p75", "first"),
                           _p90=("_p90", "first"))

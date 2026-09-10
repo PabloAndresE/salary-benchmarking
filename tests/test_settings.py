@@ -23,14 +23,20 @@ def test_con_salt_la_frontera_lo_devuelve(monkeypatch):
 def test_sbu_por_anio(monkeypatch):
     monkeypatch.setenv("PIPELINE_SALT", "x")
     s = cargar_settings()
+    ultimo = max(s.sbu)
     assert s.get_sbu(2016) == 366
     assert s.get_sbu(2025) == 470
-    # Los años futuros caen al último conocido PERO AVISANDO: la tabla acaba en 2025 y
-    # el año en curso es 2026, así que un dato de 2026 se normalizaba con el SBU de 2025
-    # en silencio. La tolerancia existe para las filas de BigQuery con año nulo.
+    # Los años futuros caen al último conocido PERO AVISANDO. Ya pasó una vez: la tabla
+    # acababa en 2025 con el año en curso 2026, así que un dato de 2026 se normalizaba
+    # con el SBU de 2025 en silencio. La tolerancia existe para las filas de BigQuery
+    # con año nulo, no para tapar un acuerdo ministerial que nadie ha copiado.
+    #
+    # Se compara contra `max(s.sbu)` a propósito: escribir el número aquí obliga a tocar
+    # el test cada enero, y un test que hay que "arreglar" al añadir un dato correcto
+    # enseña a cambiarlo sin leerlo.
     with pytest.warns(UserWarning, match="SBU de 2099"):
-        assert s.get_sbu(2099) == 470
-    assert s.get_sbu(0) == 470, "año nulo de BigQuery: sin aviso, es el caso previsto"
+        assert s.get_sbu(2099) == s.sbu[ultimo]
+    assert s.get_sbu(0) == s.sbu[ultimo], "año nulo de BigQuery: sin aviso, es el previsto"
 
 
 def test_el_sbu_estricto_se_niega_a_adivinar(monkeypatch):
@@ -51,3 +57,12 @@ def test_descargas_concurrentes_default_y_override(monkeypatch):
     assert cargar_settings().descargas_concurrentes == 4
     monkeypatch.setenv("PIPELINE_DESCARGAS_CONCURRENTES","15")
     assert cargar_settings().descargas_concurrentes == 15
+
+
+def test_el_sbu_de_2026_esta_y_es_el_del_acuerdo(monkeypatch):
+    # Acuerdo Ministerial MDT-2025-195, Registro Oficial Suplemento 187 del 18/12/2025.
+    # Va con test porque es el divisor de `y = log(sueldo/SBU)`: un valor equivocado
+    # desplaza TODAS las cifras del ano y lo hace en silencio.
+    monkeypatch.setenv("PIPELINE_SALT", "x")
+    s = cargar_settings()
+    assert s.get_sbu(2026, estricto=True) == 482

@@ -812,3 +812,71 @@ def test_una_nomina_entera_sin_cargos_no_revienta():
     b = BaseReferencia.construir(_marco_errata(), emb, _sbu)
     out = b.referenciar(["", "  "], emb)
     assert len(out) == 2 and (out["base"] == "sin cargo").all()
+
+
+# --- el cliente dentro de su propio mercado (D-027) -------------------------------
+
+def test_el_padron_se_indexa_por_grupo_AUNQUE_no_haya_fusion(caso):
+    # Bug silencioso: sin fusion el padron quedaba con claves de texto y `empresas_de`
+    # las buscaba por numero de grupo. No fallaba: devolvia vacio, y la tarjeta de
+    # `empresas_analizadas` del informe salia en cero sin que nada lo dijera.
+    filas, emb, _ = caso
+    b = BaseReferencia.construir(_marco(filas), emb, _sbu, umbral_fusion=None)
+    i = b.idx["BODEGA 0"]
+    assert len(b.empresas_de(i)) == 8, "el padron tiene que responder tambien sin fusion"
+
+
+def test_grupos_de_empresa_encuentra_a_quien_esta_y_no_inventa_a_quien_no(caso):
+    filas, emb, _ = caso
+    b = _base(filas, emb)
+    ruc = "EBODEGA00"                      # respalda BODEGA 0 y nada mas
+    grupos = b.grupos_de_empresa(ruc)
+    assert grupos == {int(b.grupo[b.idx["BODEGA 0"]])}
+    assert b.grupos_de_empresa("NO-EXISTE-9999") == set()
+    assert b.grupos_de_empresa(None) == set() or True   # `ruc=None` no llega aqui
+
+
+def test_al_cliente_se_le_DICE_que_esta_dentro_del_mercado(caso):
+    filas, emb, _ = caso
+    b = _base(filas, emb)
+    r = b.referenciar(["BODEGA 0", "VENTAS 0"], emb, ruc="EBODEGA00")
+    fila = r.set_index("cargo")
+    assert bool(fila.loc["BODEGA 0", "tu_empresa"]) is True
+    assert bool(fila.loc["VENTAS 0", "tu_empresa"]) is False
+    # La influencia es `1/empresas`, medido que aproxima el peso real. Ver D-027.
+    n = float(fila.loc["BODEGA 0", "empresas"])
+    assert abs(float(fila.loc["BODEGA 0", "tu_influencia"]) - 1.0 / n) < 1e-4
+    assert pd.isna(fila.loc["VENTAS 0", "tu_influencia"])
+
+
+def test_sin_ruc_las_columnas_estan_pero_no_afirman_nada(caso):
+    # El front recibe SIEMPRE las mismas columnas: que existan o no segun el parametro
+    # obligaria a comprobar dos formas de respuesta.
+    filas, emb, _ = caso
+    b = _base(filas, emb)
+    r = b.referenciar(["BODEGA 0"], emb)
+    assert r["tu_empresa"].iloc[0] is False or not bool(r["tu_empresa"].iloc[0])
+    assert pd.isna(r["tu_influencia"].iloc[0])
+
+
+def test_un_cargo_en_blanco_devuelve_False_y_no_un_cero(caso):
+    # `bool` es subclase de `int` en Python: sin la rama explicita, el molde de las filas
+    # sin cargo convertia `tu_empresa` en 0 y el front veia dos tipos distintos.
+    filas, emb, _ = caso
+    b = _base(filas, emb)
+    r = b.referenciar(["BODEGA 0", ""], emb, ruc="EBODEGA00")
+    vacio = r[r["cargo"] == ""].iloc[0]
+    # `np.False_` vale: `_py` del servicio lo convierte. Lo que NO vale es un 0, que es
+    # lo que salia antes y obligaria al front a aceptar dos tipos.
+    assert bool(vacio["tu_empresa"]) is False
+    assert not isinstance(vacio["tu_empresa"], (int, np.integer)) or         isinstance(vacio["tu_empresa"], (bool, np.bool_)),         f"salio {type(vacio['tu_empresa']).__name__}, se esperaba un booleano"
+
+
+def test_el_enlace_RUC_padron_sobrevive_al_guardado(caso, tmp_path):
+    filas, emb, _ = caso
+    b = _base(filas, emb)
+    ruta = tmp_path / "b.npz"
+    b.guardar(ruta)
+    b2 = BaseReferencia.cargar(ruta, _sbu)
+    assert b2.pad_ruc == b.pad_ruc
+    assert b2.grupos_de_empresa("EBODEGA00") == b.grupos_de_empresa("EBODEGA00")

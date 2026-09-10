@@ -2,8 +2,15 @@ import warnings
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Salario basico unificado por ano. Cada cifra es un acuerdo ministerial: NO se
+# interpola, NO se proyecta y NO se adivina. Es el divisor de `y = log(sueldo/SBU)`,
+# asi que un valor equivocado desplaza TODAS las cifras de TODOS los informes de ese
+# ano — y lo hace en silencio, porque el resultado sigue pareciendo razonable.
+#
+# 2026: USD 482, Acuerdo Ministerial MDT-2025-195 del 15/12/2025, publicado en el
+# Registro Oficial Suplemento 187 del 18/12/2025, vigente desde el 1 de enero de 2026.
 _SBU = {2016:366,2017:375,2018:386,2019:394,2020:400,
-        2021:400,2022:425,2023:450,2024:460,2025:470}
+        2021:400,2022:425,2023:450,2024:460,2025:470,2026:482}
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="PIPELINE_", extra="ignore")
@@ -54,8 +61,8 @@ class Settings(BaseSettings):
         La tolerancia existe para el camino de DATOS: en BigQuery hay filas con
         `anio_valoracion` nulo, que llegan aqui como 0, y tirar por eso seria peor.
 
-        Pero envejece mal y ya paso: la tabla acaba en 2025 y el ano en curso es 2026, asi
-        que un dato de 2026 se normalizaba con el SBU de 2025 SIN AVISAR. El objetivo es
+        Pero envejece mal y YA PASO: la tabla acababa en 2025 con el ano en curso 2026,
+        asi que un dato de 2026 se normalizaba con el SBU de 2025 SIN AVISAR. El objetivo es
         `log(sueldo/SBU)`, o sea que un SBU equivocado desplaza todo de forma sistematica,
         y al volver a dolares lo desplaza otra vez.
 

@@ -642,10 +642,19 @@ class BaseReferencia:
             np.zeros(1, np.int64), np.zeros(0, np.int32),
             np.zeros(0, np.int64), np.zeros(0, dtype=object))
         self.pad_fila = {}
+        # `meta_ruc`: RUC -> (grupo CIIU, n_empleados). Va por RUC y sin ninguna
+        # relacion con los indices del padron, que son una permutacion sembrada. Sirve
+        # para resolver la industria del cliente desde su RUC, no para reconstruir nada.
+        self.meta_ruc = {}
+        # `pad_ruc`: RUC -> el entero con que el padron indexa a esa empresa. Es lo que
+        # permite saber si el CLIENTE respalda la celda contra la que se le compara.
+        self.pad_ruc = {}
         if padron is not None:
             (self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu,
-             claves) = padron
+             claves, self.meta_ruc, self.pad_ruc) = padron
             self.pad_fila = {str(k): i for i, k in enumerate(claves)}
+        # Inverso de `pad_fila`, para ir de fila del padron al grupo de fusion
+        self._fila_grupo = {i: int(k) for k, i in self.pad_fila.items()}
 
         # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
         # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
@@ -844,7 +853,8 @@ class BaseReferencia:
         ).fillna(0).to_numpy(dtype=np.int64)
 
         # Padron de empresas por celda, para poder contar uniones sin duplicar.
-        pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves = _padron(d, colg, celdas, grupo)
+        (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves,
+         meta_ruc, pad_ruc) = _padron(d, colg, celdas, grupo)
         print(f"padron: {len(pad_idx):,} pares (celda, empresa) sobre "
               f"{len(pad_tam):,} empresas")
 
@@ -866,18 +876,39 @@ class BaseReferencia:
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
                    tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel,
                    ajuste_seg, rubro, brecha_gen,
-                   (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves))
+                   (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves,
+                    meta_ruc, pad_ruc))
 
     def empresas_de(self, i_celda: int) -> np.ndarray:
-        """Indices opacos de las empresas que respaldan la celda `i_celda`.
+        """Con que enteros indexa el padron a las empresas que respaldan `i_celda`.
 
         Se busca por GRUPO de fusion, no por etiqueta: las grafias de un mismo puesto
         comparten respaldo y contarlas por separado duplicaria.
+
+        No son identificadores opacos —ver `_padron`, que explica por que—: son la clave
+        interna del padron, y solo se usan para contar uniones sin duplicar.
         """
         f = self.pad_fila.get(str(int(self.grupo[i_celda])))
         if f is None:
             return np.zeros(0, dtype=np.int32)
         return self.pad_idx[self.pad_ptr[f]:self.pad_ptr[f + 1]]
+
+    def grupos_de_empresa(self, ruc) -> set[int]:
+        """Los grupos de fusion que la empresa `ruc` respalda. Vacio si no esta.
+
+        Sirve para saber si el cliente esta DENTRO del mercado contra el que se le
+        compara. Ver `MEDICION` en el docstring de `referenciar`.
+        """
+        pos = self.pad_ruc.get(str(ruc).strip())
+        if pos is None or len(self.pad_idx) == 0:
+            return set()
+        # Donde aparece esta empresa en el CSR, y a que fila pertenece cada aparicion.
+        hits = np.flatnonzero(self.pad_idx == pos)
+        if len(hits) == 0:
+            return set()
+        filas = np.searchsorted(self.pad_ptr, hits, side="right") - 1
+        return {self._fila_grupo[int(f)] for f in np.unique(filas)
+                if int(f) in self._fila_grupo}
 
     # -- persistencia ----------------------------------------------------------
 
@@ -906,6 +937,11 @@ class BaseReferencia:
             pad_ptr=self.pad_ptr, pad_idx=self.pad_idx, pad_tam=self.pad_tam,
             pad_ciiu=np.array(self.pad_ciiu, dtype=object),
             pad_claves=np.array(list(self.pad_fila), dtype=object),
+            ruc_lista=np.array(list(self.meta_ruc), dtype=object),
+            pad_ruc_lista=np.array(list(self.pad_ruc), dtype=object),
+            pad_ruc_idx=np.array(list(self.pad_ruc.values()), dtype=np.int64),
+            ruc_ciiu=np.array([v[0] for v in self.meta_ruc.values()], dtype=object),
+            ruc_tam=np.array([v[1] for v in self.meta_ruc.values()], dtype=np.int64),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
 
     @classmethod
@@ -935,12 +971,20 @@ class BaseReferencia:
                        opc["bandas_per"], lam_nivel, opc["ajuste_seg"], rubro,
                        z["brecha_gen"] if "brecha_gen" in z.files else None,
                        ((z["pad_ptr"], z["pad_idx"], z["pad_tam"], z["pad_ciiu"],
-                         list(z["pad_claves"])) if "pad_ptr" in z.files else None))
+                         list(z["pad_claves"]),
+                         dict(zip((str(r) for r in z["ruc_lista"]),
+                                  zip((str(c) for c in z["ruc_ciiu"]),
+                                      (int(t) for t in z["ruc_tam"]))))
+                         if "ruc_lista" in z.files else {},
+                         dict(zip((str(r) for r in z["pad_ruc_lista"]),
+                                  (int(i) for i in z["pad_ruc_idx"])))
+                         if "pad_ruc_lista" in z.files else {})
+                        if "pad_ptr" in z.files else None))
 
     # -- consulta --------------------------------------------------------------
 
     def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None,
-                    rubro=None):
+                    rubro=None, ruc=None):
         """Una fila por titulo: referencia, intervalo, confianza y en que se basa.
 
         `segmento` es el tamano de la empresa del CLIENTE —`GRANDE`, `MEDIANA`,
@@ -954,6 +998,34 @@ class BaseReferencia:
         ese rubro; donde no lo tiene, ese cargo cae al mercado entero. El fallback es POR
         CARGO, no por informe. Ver el bloque de `COL_RUBRO`: no mejora la precision y se
         monta por legitimidad, con el coste visible en `empresas` y en la confianza.
+
+        `ruc` es el de la empresa del CLIENTE, y sirve para decirle CUANDO se esta
+        comparando consigo mismo. Si su empresa participo en los estudios con que se
+        construyo la base, su propio sueldo entra en la mediana que le sirve de
+        referencia. Se devuelven dos columnas: `tu_empresa` —si respalda esa celda— y
+        `tu_influencia` —que fraccion del mercado es el—.
+
+        NO SE LE QUITA DE LA CELDA, y la razon esta medida (D-027,
+        `e4_producto/01`). El centro es una mediana ponderada de votos por empresa y de
+        una mediana no se resta un voto: haria falta guardar el sueldo mediano de CADA
+        empresa en CADA cargo, o sea convertir el artefacto en una tabla de "que paga la
+        empresa X por el cargo Y" —con el RUC recuperable, ver `_padron`—. Antes de pagar
+        ese precio se midio que se compraba: quitar una empresa mueve el centro un 1,2%
+        de la barra de error que el informe YA declara, en las celdas que pasan el suelo
+        de banda (mediana |Dm|/sd = 0,0118 sobre emp>=10; en dolares, 0,39%). Corregirlo
+        seria corregir ruido.
+
+        Donde SI importa es debajo del suelo: con 3 a 9 empresas el desplazamiento es del
+        16,8% de la barra —5,4% en dolares— y el cliente pesa entre un 15% y un 33% del
+        mercado. Por eso `tu_influencia` se reporta ahi con toda la letra en vez de
+        fingir una independencia que no hay.
+
+        `tu_influencia` se aproxima por `1/empresas`, y eso tambien esta medido: los
+        pesos inverso-varianza dentro de una celda salen casi uniformes, asi que `1/n`
+        reproduce el peso real con un 0,3%-4% de error mediano y predice el
+        desplazamiento igual de bien que el peso exacto (Spearman 0,593 contra 0,594).
+        La alternativa —guardar el numero de personas por empresa y celda— no compraba
+        nada.
         """
         titulos = [str(t) for t in titulos]
         # UN CARGO VACIO ES DATO, NO UN ERROR DE PROGRAMACION. Una nomina real trae filas
@@ -974,6 +1046,7 @@ class BaseReferencia:
                           "base": "sin cargo", "ancho_rel": np.nan,
                           "incert_centro": np.nan, "segmento": "", "rubro": "",
                           "brecha_grafia": "", "empresas": 0, "personas": 0,
+                          "tu_empresa": False, "tu_influencia": np.nan,
                           "similitud": 0.0}
             for q in CUANTILES:
                 for suf in ("_log", "per_log"):
@@ -986,6 +1059,8 @@ class BaseReferencia:
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None
+        # Una sola pasada por el padron para todo el informe, no una por cargo.
+        mis_grupos = self.grupos_de_empresa(ruc) if ruc else set()
         rub = _norm_rubro(rubro)
         if rub and rub not in self.rubros:
             # Un rubro que la base no conoce no es un error del cliente: puede ser un
@@ -1184,6 +1259,15 @@ class BaseReferencia:
                                           if propio is not None
                                           and np.isfinite(self.brecha_gen[propio]) else ""),
                         "empresas": n_emp, "personas": n_per,
+                        # .esta el cliente DENTRO del mercado con que se le compara?
+                        # `1/n_emp` como influencia: medido que aproxima el peso real
+                        # con 0,3%-4% de error. Ver el docstring y D-027.
+                        "tu_empresa": (propio is not None
+                                       and int(self.grupo[propio]) in mis_grupos),
+                        "tu_influencia": (round(1.0 / n_emp, 4)
+                                          if (propio is not None and n_emp > 0
+                                              and int(self.grupo[propio]) in mis_grupos)
+                                          else np.nan),
                         "similitud": round(mejor, 3)}
 
         # las filas con el cargo en blanco se abstienen, con las MISMAS claves que las
@@ -1191,7 +1275,11 @@ class BaseReferencia:
         if vacios:
             molde = next(iter(filas.values()))
             for t in vacios:
-                filas[t] = {k: ("" if isinstance(v, str) else
+                # `bool` ANTES que `int`, que en Python es su superclase: sin esta
+                # rama `tu_empresa` salia 0 en las filas sin cargo y `false` en las
+                # demas, y el front tendria que aceptar los dos tipos.
+                filas[t] = {k: (False if isinstance(v, bool) else
+                                "" if isinstance(v, str) else
                                 0 if isinstance(v, (int, np.integer)) else np.nan)
                             for k, v in molde.items()}
                 filas[t].update({"confianza": "BAJA", "base": "sin cargo",
@@ -1549,9 +1637,21 @@ def _padron(marco, colg, celdas, grupo):
     empresa respalda varios cargos del cliente y sumar los conteos da un numero inflado.
     Esa cifra va en la tarjeta mas visible del informe.
 
-    INDICES OPACOS, NO RUCS. Se guarda la POSICION de la empresa en una lista ordenada
-    que NO se persiste. Sirve para contar uniones e intersecciones y no identifica a
-    nadie; los suelos de confidencialidad siguen gobernando lo que se publica.
+    INDICES, NO RUCS, PERO NO SE LLAMEN OPACOS. El padron indexa empresas por un entero
+    y no por su RUC. Eso NO es un control de confidencialidad, y decir que lo era estuvo
+    mal escrito aqui durante un rato: el `.npz` guarda ademas `ruc_lista` —hace falta
+    para resolver la industria del cliente desde su RUC— y la permutacion de mas abajo
+    sale de una semilla que esta en este mismo archivo. Comprobado sobre la base real:
+    con el `.npz` y el repositorio se reconstruye el mapa RUC->indice para las 6.722
+    empresas, las 6.722. La permutacion solo estorba a quien mire el archivo sin el
+    codigo delante.
+
+    EL CONTROL DE VERDAD es otro, y conviene tenerlo escrito porque de el depende que se
+    puede meter aqui: el `.npz` vive del lado del servidor y no se entrega a nadie. Lo
+    que SI hace este modulo es no guardar sueldos por empresa. Con el mapa RUC->indice
+    recuperable, un `pad_voto` paralelo a `pad_idx` seria una tabla de "que paga la
+    empresa X por el cargo Y" con nombre y apellido. Es justo lo que los suelos de
+    confidencialidad existen para no producir. Ver D-027.
 
     Formato CSR sobre grupos —`indptr` + `indices`— porque son 161.049 pares sobre
     51.942 grupos: 0,6 MB, un 0,3% del `.npz`. Una matriz densa serian 10 GB.
@@ -1562,12 +1662,34 @@ def _padron(marco, colg, celdas, grupo):
       ciiu_grupo[i]  nivel GRUPO del CIIU, `C239`: los 4 primeros de `ciiu_n6`, que es
                      el nivel al que se habla de "industria" en un informe
     """
-    d = marco[[colg, "empresa_ruc"]].dropna()
+    # SIEMPRE SE INDEXA POR EL ID DE GRUPO, venga `colg` como venga. Con fusion, `colg`
+    # ya es la columna de grupo; sin ella es la del cargo, y entonces el padron quedaba
+    # con claves de texto mientras `empresas_de` las buscaba por numero de grupo: no
+    # fallaba, devolvia VACIO, y la tarjeta de empresas del informe salia en cero sin
+    # que nada lo dijera. Se normaliza aqui para que las dos puntas hablen el mismo
+    # idioma.
+    d = marco[[colg, "empresa_ruc"]].dropna().copy()
+    a_grupo = dict(zip((str(c) for c in celdas), (int(g) for g in grupo)))
+    if d[colg].astype(str).isin(a_grupo).any():
+        d["_gid"] = d[colg].astype(str).map(a_grupo)
+        d = d.dropna(subset=["_gid"])
+        d["_gid"] = d["_gid"].astype(np.int64)
+    else:
+        d["_gid"] = d[colg].astype(np.int64)
+    colg = "_gid"
     rucs = pd.Index(sorted(d["empresa_ruc"].astype(str).unique()))
-    pos_ruc = {r: i for i, r in enumerate(rucs)}
+    # Permutacion sembrada en vez de la posicion ordenada. Que quede claro lo que hace y
+    # lo que no: evita que ordenar el archivo revele el padron, y NO resiste a quien
+    # tenga tambien el codigo, porque la semilla esta aqui. Se mantiene porque no cuesta
+    # nada, no porque proteja algo. Ver el docstring.
+    perm = np.random.default_rng(20260805).permutation(len(rucs))
+    pos_ruc = {r: int(perm[i]) for i, r in enumerate(rucs)}
 
+    # `tam` y `ciiu` van indexados por el entero del padron
     tam = np.full(len(rucs), -1, dtype=np.int64)
     ciiu = np.full(len(rucs), "", dtype=object)
+    # ...y esta va por RUC. Es registro publico (SCVS): industria y tamano, sin sueldos.
+    meta_ruc = {}
     if "n_empleados" in marco.columns or "ciiu_n6" in marco.columns:
         cols = [c for c in ("n_empleados", "ciiu_n6") if c in marco.columns]
         por_emp = (marco[["empresa_ruc"] + cols].dropna(subset=["empresa_ruc"])
@@ -1581,6 +1703,11 @@ def _padron(marco, colg, celdas, grupo):
                 tam[i] = int(fila["n_empleados"])
             if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]):
                 ciiu[i] = str(fila["ciiu_n6"])[:4]
+            meta_ruc[r] = (str(fila["ciiu_n6"])[:4]
+                           if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]) else "",
+                           int(fila["n_empleados"])
+                           if "n_empleados" in cols and pd.notna(fila["n_empleados"])
+                           else -1)
 
     pares = (d.assign(_e=d["empresa_ruc"].astype(str).map(pos_ruc))
               .drop_duplicates([colg, "_e"]))
@@ -1589,7 +1716,8 @@ def _padron(marco, colg, celdas, grupo):
     clave, valores = clave.to_numpy()[orden], pares["_e"].to_numpy()[orden]
     claves_unicas, ini = np.unique(clave, return_index=True)
     indptr = np.append(ini, len(valores)).astype(np.int64)
-    return (indptr, valores.astype(np.int32), tam, ciiu, list(claves_unicas))
+    return (indptr, valores.astype(np.int32), tam, ciiu, list(claves_unicas),
+            meta_ruc, pos_ruc)
 
 
 def _vecinos(Q, B, k, excluir_propio):

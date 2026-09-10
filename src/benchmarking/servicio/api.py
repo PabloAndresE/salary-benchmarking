@@ -31,6 +31,7 @@ multi-tenencia y trazabilidad de accesos. Detras de una puerta, no en internet a
 """
 from __future__ import annotations
 
+import datetime as _dt
 import io
 import threading
 import time
@@ -325,13 +326,14 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
              segmento: str | None, rubro: str | None,
              col_sueldo: str | None, columnas_extra: list[str] | None = None,
              columnas_originales: bool = True,
-             informe_formato: dict | None = None) -> tuple[dict, bytes]:
+             informe_formato: dict | None = None,
+             ruc: str | None = None) -> tuple[dict, bytes]:
     """El informe completo. Es la misma cadena que el CLI, sin tocar el disco."""
     titulos = df[col_cargo].fillna("").astype(str).str.strip().str.upper()
     nuevos = motor.asegurar(titulos.tolist())
 
     ref = motor.base.referenciar(titulos.tolist(), motor.emb, anio=anio,
-                                 segmento=segmento, rubro=rubro)
+                                 segmento=segmento, rubro=rubro, ruc=ruc)
     salida = pd.concat([df.reset_index(drop=True),
                         ref.drop(columns=["cargo"]).reset_index(drop=True)], axis=1)
 
@@ -423,6 +425,33 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
             f"{n_sectoriales} de {len(vistos)} cargos se comparan contra empresas de "
             f"{rubro}; el resto no llega al suelo de respaldo en ese sector y se compara "
             f"contra el mercado entero. El fallback es por cargo.")
+    # .CUANTO SE ESTA MIRANDO EL CLIENTE AL ESPEJO? Si su empresa participo en los
+    # estudios, su propio sueldo entra en la mediana que le sirve de referencia. NO se le
+    # quita —de una mediana ponderada no se resta un voto sin guardar los votos, que
+    # seria guardar lo que paga cada empresa por cada cargo; ver D-027—, pero se dice.
+    #
+    # El umbral son 10 empresas y esta medido, no elegido: por encima, quitar una mueve
+    # el centro un 0,39% y corregirlo seria corregir ruido; por debajo lo mueve un 5,4%
+    # y el cliente pesa entre un 15% y un 33% del mercado.
+    if "tu_empresa" in ref.columns and ruc:
+        propio = ref[["cargo", "tu_empresa", "tu_influencia", "empresas"]].drop_duplicates("cargo")
+        dentro = propio[propio["tu_empresa"].astype(bool)]
+        finos = dentro[pd.to_numeric(dentro["empresas"], errors="coerce") < 10]
+        mercado["cargos_donde_tu_empresa_esta_en_el_mercado"] = int(len(dentro))
+        mercado["cargos_donde_eso_pesa"] = int(len(finos))
+        if len(finos):
+            peor = finos.sort_values("tu_influencia", ascending=False).iloc[0]
+            mercado["nota_espejo"] = (
+                f"Tu empresa respalda {len(dentro)} de los cargos que comparas, y en "
+                f"{len(finos)} el mercado es tan estrecho que tu propio sueldo pesa lo "
+                f"suyo dentro de la referencia — en {peor['cargo']}, un "
+                f"{100 * float(peor['tu_influencia']):.0f}%. Esas lecturas no son "
+                f"independientes: mira `tu_influencia` en `por_puesto`.")
+        elif len(dentro):
+            mercado["nota_espejo"] = (
+                f"Tu empresa respalda {len(dentro)} de los cargos que comparas, todos "
+                f"con 10 o mas empresas detras. Medido, quitarte moveria la referencia "
+                f"un 0,4%: la comparacion se sostiene.")
     if not con_padron:
         mercado["nota"] = ("Esta base se construyo sin padron de empresas: "
                            "`empresas_analizadas` no es calculable. Reconstruyela.")
@@ -529,7 +558,17 @@ def salud(m: Motor = Depends(motor)):
 def crear(tareas: BackgroundTasks,
           archivo: UploadFile = File(..., description="Excel o CSV. Primera hoja, "
                                                       "encabezados en la fila 1."),
-          anio: int = Form(2025, description="Ano del SBU con el que se dolariza."),
+          anio: int | None = Form(
+              None, description="Ano del SBU con el que se dolariza. Por defecto EL "
+                                "ACTUAL: un informe es del ano en que se emite, y "
+                                "fijarlo a mano es como se acaba entregando dolares del "
+                                "ano pasado sin que nadie lo note. Solo se pasa para "
+                                "rehacer un informe viejo."),
+          ruc: str | None = Form(
+              None, description="RUC de la empresa del cliente. Con el se resuelve su "
+                                "industria (CIIU) y su tamano sin que tenga que "
+                                "saberselos, y se detecta si su propia empresa esta en "
+                                "la base."),
           segmento: str | None = Form(
               None, description="OPCIONAL. Tamano de la empresa del cliente: "
                                 "MICROEMPRESA, PEQUENA, MEDIANA o GRANDE. Corrige el "
@@ -565,8 +604,29 @@ def crear(tareas: BackgroundTasks,
     segmento, y que el archivo se deje leer y tenga columna de cargo—. Un 400 inmediato
     con el motivo es mucho mas util que un trabajo que falla treinta segundos despues.
     """
+    # EL ANO POR DEFECTO ES EL ACTUAL. Estaba fijado a 2025 y eso envejece solo: en
+    # enero se seguirian emitiendo dolares del ano anterior sin que nadie lo note.
+    anio = int(anio) if anio else _dt.date.today().year
     segmento, rubro = _opt(segmento), _opt(rubro)
+    ruc = _opt(ruc)
     columna_cargo, columna_sueldo = _opt(columna_cargo), _opt(columna_sueldo)
+
+    # LA INDUSTRIA SE DERIVA DEL RUC. Un area de RR.HH. sabe su RUC y no sabe que es
+    # "seccion C". Si ademas pasan `rubro` a mano, manda el explicito y se avisa si no
+    # coinciden, en vez de elegir uno en silencio.
+    ficha = None
+    if ruc:
+        g6, tam_emp = m.base.meta_ruc.get(ruc.strip(), ("", -1))
+        ficha = {"ruc": ruc.strip(), "en_la_base": ruc.strip() in m.base.meta_ruc,
+                 "ciiu_grupo": g6 or None,
+                 "ciiu_seccion": (g6[:1] if g6 else None),
+                 "n_empleados": tam_emp if tam_emp > 0 else None}
+        if g6 and not rubro:
+            rubro = g6[:1]
+            ficha["rubro_derivado"] = rubro
+        elif g6 and rubro and rubro.upper() != g6[:1]:
+            ficha["aviso"] = (f"pediste rubro {rubro.upper()} y el RUC dice {g6[:1]}; "
+                              f"manda el que pediste")
     extra_pedidas = [t.strip() for t in (_opt(columnas_extra) or "").split(",")
                      if t.strip()]
     try:
@@ -630,14 +690,15 @@ def crear(tareas: BackgroundTasks,
                                             segmento.upper() if segmento else None,
                                             rubro.upper() if rubro else None,
                                             columna_sueldo, extra,
-                                            columnas_originales, informe_formato)
+                                            columnas_originales, informe_formato,
+                                            ruc)
             t.estado = "listo"
         except Exception as e:                               # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"
 
     tareas.add_task(correr)
     return {"id": t.id, "estado": t.estado, "filas": len(df), "columna_cargo": col,
-            "caduca_en_s": TTL_SEGUNDOS}
+            "anio": anio, "empresa": ficha, "caduca_en_s": TTL_SEGUNDOS}
 
 
 @app.get("/informes/{tid}")
@@ -664,17 +725,19 @@ def excel(tid: str):
 
 
 @app.get("/referencia")
-def referencia(cargo: str, anio: int = 2025, segmento: str | None = None,
+def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
                rubro: str | None = None, m: Motor = Depends(motor)):
-    # mismo saneado que en /informes: vacio y "string" son ausencia
     """Un titulo suelto, para explorar. NO es el producto.
 
     Sin la nomina completa no hay ancla de empresa, y sin ancla no hay lectura de equidad
     interna — que es la mitad util del informe. La respuesta lo dice para que nadie
     construya un front encima creyendo que esto basta.
     """
+    # mismo criterio que /informes: el ano por defecto es el ACTUAL, y vacio o
+    # "string" son ausencia
+    anio = int(anio) if anio else _dt.date.today().year
     try:
-        m.settings.get_sbu(int(anio), estricto=True)
+        m.settings.get_sbu(anio, estricto=True)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
     segmento, rubro = _opt(segmento), _opt(rubro)

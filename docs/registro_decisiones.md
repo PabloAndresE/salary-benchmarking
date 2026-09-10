@@ -2731,3 +2731,95 @@ salarial medida, y no lo es.
 sostenida de las tomadas hoy: el argumento de principio (sacar el proxy de género del
 modelo) y la medición apuntan en la misma dirección, cosa que no pasó ni con el rubro
 (D-023, medición nula) ni con las erratas (D-025, placebo sin potencia).
+
+
+---
+
+## D-027 — Al cliente NO se le quita de su propio mercado. Se le dice cuánto pesa
+
+**Fecha:** 2026-09-10
+**Origen:** petición directa — «excluir al cliente de su propio mercado». Si la empresa
+del cliente participó en los estudios con que se construyó la base, su propio sueldo
+entra en la mediana que le sirve de referencia: se está comparando contra sí mismo.
+**Evidencia:** `research/experimentos/e4_producto/01_influencia_del_cliente.py`, sobre
+train (863.656 filas, 5.770 empresas, 141.889 pares celda–empresa).
+**Estado:** implementado y activo, en la forma barata. La exclusión exacta queda
+**descartada por medición**, no por dificultad.
+
+### El problema es real y la petición era la correcta
+
+El caso extremo se ve sin estadística: un cargo respaldado por tres empresas, una de
+ellas el cliente. Le decimos «estás en la mediana» y lo está porque **él es** la mediana.
+Cuanto más estrecho el cargo, más circular la lectura.
+
+### Lo que bloquea la exclusión exacta
+
+El centro de cada celda es una **mediana ponderada de los votos por empresa**. De una
+mediana no se resta un voto: con `m` y `W` guardados no hay forma de recuperar `m` sin la
+empresa *f*. Haría falta guardar la lista de votos —el sueldo mediano de **cada** empresa
+en **cada** cargo, 141.889 pares—, y eso convierte el artefacto en una tabla de *«qué paga
+la empresa X por el cargo Y»*.
+
+Y sería identificable. Al implementar `meta_ruc` escribí en `_padron` que los índices del
+padrón eran opacos porque salían de una permutación sembrada. **Es falso, y lo comprobé:**
+con el `.npz` y el repositorio delante —la semilla está en el código— se reconstruye el
+mapa RUC→índice para las 6.722 empresas, las 6.722. La permutación solo estorba a quien
+mire el archivo sin el código. El control de verdad es que el `.npz` no sale del servidor;
+el corolario es que ahí dentro no pueden entrar sueldos por empresa.
+
+Antes de pagar ese precio había que saber qué se compraba.
+
+### La medición
+
+**Criterio declarado antes de correr:** se compara |Δm| contra `sd(centro) = √(τ²_c + 1/W)`,
+que es la barra de error que el informe **ya** muestra. Se construye la exclusión exacta
+si y solo si la mediana de |Δm|/sd supera **0,20** en las celdas que pasan el suelo de
+banda empírica (emp ≥ 10).
+
+| empresas en la celda | pares | mediana \|Δm\|/sd | p90 | peso del cliente (p50) |
+|---|---|---|---|---|
+| 3–5 | 990 | **0,247** | 0,903 | **33,2%** |
+| 5–10 | 1.930 | 0,150 | 0,478 | 14,7% |
+| 10–20 | 4.004 | 0,070 | 0,241 | 7,2% |
+| 20–50 | 9.031 | 0,026 | 0,112 | 3,2% |
+| 50–200 | 13.395 | 0,007 | 0,041 | 1,2% |
+| 200+ | 3.480 | 0,0005 | 0,011 | 0,3% |
+
+**Primaria: 0,0118 sobre emp ≥ 10.** El criterio era 0,20. No está cerca. En dólares,
+quitar una empresa mueve la referencia un **0,39%**. Corregir eso sería corregir ruido —y
+pagarlo con una tabla de sueldos por empresa.
+
+**Donde sí importa es debajo del suelo:** con 3 a 9 empresas el desplazamiento es del
+16,8% de la barra (**5,4% en dólares**) y el cliente pesa entre el 15% y el 33% del
+mercado.
+
+### Lo que se construyó
+
+1. **Pertenencia, exacta.** `grupos_de_empresa(ruc)` dice qué celdas respalda el cliente,
+   leyendo el padrón. Sin dato nuevo: el padrón ya estaba.
+2. **Influencia, `1/empresas`.** También medido: los pesos inverso-varianza dentro de una
+   celda salen casi uniformes, así que `1/n` reproduce el peso real con un 0,3%–4% de
+   error mediano y **predice el desplazamiento igual de bien que el peso exacto**
+   (Spearman 0,593 contra 0,594). La alternativa —guardar personas por empresa y celda—
+   no compraba nada.
+3. **Se dice, cargo por cargo y en la cabecera.** `tu_empresa` y `tu_influencia` en
+   `por_puesto`; en `mercado`, cuántos cargos están afectados y cuántos de ésos caen bajo
+   las 10 empresas, con el peor nombrado.
+
+El umbral de 10 de la nota no es elegido, es el de la tabla: por encima, 0,39%; por
+debajo, 5,4%.
+
+### Lo que esto NO es
+
+No es exclusión. El cliente sigue dentro de su referencia y el informe lo dice en vez de
+presentar la comparación como independiente. Si algún día se decide que la exclusión
+exacta vale el coste, la medición de arriba es el argumento en contra y hay que rebatirla
+con otra, no con una intuición.
+
+### Un defecto encontrado de paso
+
+Normalizar la clave del padrón destapó que, **sin fusión**, el padrón se indexaba por el
+nombre del cargo mientras `empresas_de` lo buscaba por número de grupo. No fallaba:
+devolvía vacío, y `empresas_analizadas` —la tarjeta más visible del informe— salía en cero
+sin que nada lo dijera. Producción siempre usa fusión, así que nunca mordió. Corregido y
+con test.

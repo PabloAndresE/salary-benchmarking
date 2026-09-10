@@ -3,6 +3,7 @@
 Nada de esto toca datos reales ni la red: se construye una base de juguete, se guarda a
 un `.npz` temporal y el motor la carga como cargaria la de produccion.
 """
+import datetime as _dt
 import io
 
 import numpy as np
@@ -15,8 +16,13 @@ from fastapi.testclient import TestClient  # noqa: E402
 from benchmarking.producto.base_referencia import BaseReferencia  # noqa: E402
 
 
+# El servicio dolariza con el ano ACTUAL por defecto, asi que el doble tiene que
+# conocerlo: si solo supiera 2025, los tests probarian un camino que produccion no usa.
+ANIO = _dt.date.today().year
+
+
 def _sbu(anio, estricto=False):
-    if anio != 2025:
+    if anio not in (2025, ANIO):
         if estricto:
             raise ValueError(f"No hay SBU para {anio}")
         return 470.0
@@ -43,7 +49,7 @@ def cliente(base_npz, monkeypatch):
     from benchmarking.servicio import api
 
     class _S:
-        sbu = {2025: 470}
+        sbu = {2025: 470, ANIO: 470}
         vertex_embedding_model = "x"
         bq_project = "p"
         vertex_location = "l"
@@ -108,11 +114,19 @@ def test_estado_explicito_en_vez_de_null(cliente):
     assert d["reparto_estado"]
 
 
+def test_el_anio_por_defecto_es_el_ACTUAL(cliente):
+    # Estaba fijado a 2025 y eso envejece solo: en enero se seguirian emitiendo dolares
+    # del ano anterior sin que nadie lo note.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    assert r.status_code == 202 and r.json()["anio"] == ANIO
+
+
 def test_un_anio_sin_SBU_se_rechaza_al_subir_y_no_treinta_segundos_despues(cliente):
     df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
     r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
-                     data={"anio": 2026})
-    assert r.status_code == 400 and "2026" in r.json()["detail"]
+                     data={"anio": 2099})
+    assert r.status_code == 400 and "2099" in r.json()["detail"]
 
 
 def test_una_nomina_ilegible_da_400_y_NO_mata_al_worker(cliente):
@@ -301,3 +315,43 @@ def test_con_rubro_se_cuentan_las_empresas_DE_ESE_RUBRO(cliente):
     sin = cliente.get(f"/informes/{cliente.post('/informes', files={'archivo': ('n.xlsx', _xlsx(df))}).json()['id']}").json()
     assert sin["mercado"]["cargos_comparados_contra_su_rubro"] == 0
     assert sin["mercado"]["empresas_analizadas"] == 28
+
+
+def test_al_cliente_se_le_dice_que_esta_dentro_de_su_propio_mercado(cliente):
+    # `E00` respalda CONTADOR en la base de juguete. No se le quita del mercado —de una
+    # mediana ponderada no se resta un voto sin guardar los votos, ver D-027—, pero el
+    # informe tiene que DECIRLO en vez de presentar la comparacion como independiente.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR"], "sueldo": ["1500", "1600"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"ruc": "E00"})
+    assert r.status_code == 202
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+
+    m = d["mercado"]
+    assert m["cargos_donde_tu_empresa_esta_en_el_mercado"] == 1
+    assert "nota_espejo" in m
+
+    pp = {f["cargo"]: f for f in d["por_puesto"]}
+    assert pp["CONTADOR"]["tu_empresa"] is True
+    assert pp["VENDEDOR"]["tu_empresa"] is False
+    # 14 empresas respaldan la celda, asi que la influencia es 1/14
+    assert abs(pp["CONTADOR"]["tu_influencia"] - 1 / 14) < 1e-3
+    assert pp["VENDEDOR"]["tu_influencia"] is None
+
+
+def test_sin_ruc_no_se_afirma_nada_sobre_el_espejo(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert "nota_espejo" not in d["mercado"]
+    assert d["por_puesto"][0]["tu_empresa"] is False
+
+
+def test_un_ruc_que_no_esta_en_la_base_no_inventa_pertenencia(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"ruc": "1790000000001"})
+    assert r.json()["empresa"]["en_la_base"] is False
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert d["mercado"]["cargos_donde_tu_empresa_esta_en_el_mercado"] == 0
+    assert d["por_puesto"][0]["tu_empresa"] is False
