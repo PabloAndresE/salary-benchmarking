@@ -43,6 +43,7 @@ import pandas as pd
 
 from ..config.settings import cargar_settings
 from ..evaluacion import embeddings
+from ..producto.antiguedad import antiguedad_anios, tramo
 from ..producto.base_referencia import SEGMENTOS, BaseReferencia
 from ..producto.comparacion import comparar, texto_resumen
 from ..producto.referenciar_nomina import _POSIBLES, _POSIBLES_SUELDO, _buscar_sueldo
@@ -65,6 +66,10 @@ UNIDADES = {
     "ancho_rel": {"unidad": "ratio"},
     "similitud": {"unidad": "coseno", "rango": [0, 1]},
     "empresas": {"unidad": "conteo"}, "personas": {"unidad": "conteo"},
+    "antiguedad_anios": {"unidad": "anios", "formato": "0.0"},
+    "antiguedad_tramo": {"unidad": "categoria",
+                         "valores": ["menos de 1", "1 a 3", "3 a 5", "5 a 10",
+                                     "10 a 20", "mas de 20"]},
 }
 
 
@@ -80,6 +85,54 @@ def _opt(v: str | None) -> str | None:
         return None
     t = v.strip()
     return None if t == "" or t.lower() == "string" else t
+
+
+# LO QUE EL MODELO PRODUCE, para poder ordenarlo primero en la respuesta.
+#
+# LAS COLUMNAS DEL CLIENTE VIAJAN POR DEFECTO. Lo intente al reves —devolver solo lo del
+# modelo, por minimizar el movimiento de dato personal— y estaba mal: el front necesita
+# el NOMBRE para decir a quien hay que subirle el sueldo, la ANTIGUEDAD para explicar por
+# que cobra lo que cobra, y el SEXO para el analisis de brecha. Sin eso el informe no se
+# puede pintar y obliga al front a rehacer el cruce por su cuenta.
+#
+# Se puede recortar con `columnas_originales=false`, para el front que ya tiene el
+# archivo y solo quiere los numeros.
+#
+# OJO: que `sexo` viaje al front NO contradice la regla de que `sexo` nunca es una
+# variable del modelo. No entra en ningun calculo de la referencia; sale para que se
+# pueda MEDIR la brecha, que es exactamente su uso previsto (D-011).
+#
+# `fila` es el indice 0-based de la nomina subida, para casar sin ambiguedad aunque haya
+# dos personas con el mismo nombre y cargo.
+SALIDA_MODELO = (
+    "fila", "cargo", "estado", "antiguedad_anios", "antiguedad_tramo",
+    "referencia", "sueldo_actual",
+    "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
+    "p10", "p25", "p75", "p90", "confianza", "incert_centro", "ancho_rel",
+    "base", "empresas", "personas", "similitud", "segmento", "rubro",
+)
+
+
+def _col(df, pedida: str | None) -> str | None:
+    """Casa el nombre de columna que pide el cliente con el real, tolerando espacios.
+
+    DOS COSAS QUE FALLABAN. `_opt` recorta los extremos, y hay columnas que TERMINAN en
+    espacio —la plantilla actuarial trae `'Ultimo sueldo/pension mensual '`—, asi que el
+    nombre recortado dejaba de coincidir. Y `_buscar_sueldo` devolvia None sin decir
+    nada: el cliente pedia una columna explicitamente, se le ignoraba, y recibia un
+    informe sin comparacion y sin saber por que.
+
+    Se compara normalizando los dos lados. Si aun asi no aparece, quien llama levanta un
+    400 con la lista: fallar en voz alta.
+    """
+    if not pedida:
+        return None
+    norm = lambda x: " ".join(str(x).split()).casefold()
+    objetivo = norm(pedida)
+    for c in df.columns:
+        if norm(c) == objetivo:
+            return c
+    return None
 
 
 def _py(v):
@@ -224,10 +277,11 @@ def leer_nomina_bytes(contenido: bytes, nombre: str, col_cargo: str | None = Non
     if df.empty:
         raise ValueError("el archivo no tiene filas")
     if col_cargo:
-        if col_cargo not in df.columns:
+        real = _col(df, col_cargo)
+        if real is None:
             raise ValueError(f"la columna '{col_cargo}' no esta en el archivo. "
                              f"Columnas: {list(df.columns)}")
-        return df, col_cargo
+        return df, real
     normal = {c.strip().lower().replace(" ", "_"): c for c in df.columns}
     for cand in _POSIBLES:
         if cand in normal:
@@ -238,7 +292,8 @@ def leer_nomina_bytes(contenido: bytes, nombre: str, col_cargo: str | None = Non
 
 def procesar(motor: Motor, df, col_cargo: str, anio: int,
              segmento: str | None, rubro: str | None,
-             col_sueldo: str | None) -> tuple[dict, bytes]:
+             col_sueldo: str | None, columnas_extra: list[str] | None = None,
+             columnas_originales: bool = True) -> tuple[dict, bytes]:
     """El informe completo. Es la misma cadena que el CLI, sin tocar el disco."""
     titulos = df[col_cargo].fillna("").astype(str).str.strip().str.upper()
     nuevos = motor.asegurar(titulos.tolist())
@@ -254,12 +309,17 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         salida, por_puesto, resumen = comparar(salida, cs, col_cargo, ref,
                                                motor.settings.get_sbu, anio)
     salida["estado"] = [_estado(f) for _, f in salida.iterrows()]
+    # ANTIGUEDAD, para el filtro del front y para explicar por que alguien cobra lo que
+    # cobra. Se calcula descontando los periodos fuera: ver `producto/antiguedad.py`.
+    salida["antiguedad_anios"] = antiguedad_anios(df, anio).to_numpy()
+    salida["antiguedad_tramo"] = tramo(salida["antiguedad_anios"]).to_numpy()
     # La hoja del cliente no lleva escala logaritmica ni la banda de empresas: esa va en
     # `por_puesto`, que es donde la unidad coincide. Mismo criterio que el CLI.
     salida = salida.drop(columns=[c for c in salida.columns
                                   if c.endswith("_log") or c.endswith("_emp")
                                   or c == "sd"], errors="ignore")
 
+    # EL EXCEL LLEVA TODO —es el entregable humano— y el JSON solo lo del modelo.
     xls = io.BytesIO()
     with pd.ExcelWriter(xls) as w:
         salida.to_excel(w, sheet_name="detalle", index=False)
@@ -268,6 +328,17 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
 
     limpio = lambda d: [{str(k): _py(v) for k, v in fila.items()}
                         for fila in d.to_dict("records")]
+
+    json_det = salida.copy()
+    json_det.insert(0, "fila", range(len(json_det)))
+    json_det["cargo"] = df[col_cargo].fillna("").astype(str).str.strip().to_numpy()
+    quedan = [c for c in SALIDA_MODELO if c in json_det.columns]
+    if columnas_originales:
+        quedan += [c for c in json_det.columns if c not in quedan]
+    else:
+        quedan += [c for c in (columnas_extra or []) if c in json_det.columns
+                   and c not in quedan]
+    json_det = json_det[quedan]
 
     cuerpo = {
         "esquema": ESQUEMA,
@@ -279,6 +350,15 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
             "tau": round(float(np.sqrt(motor.base.tau2)), 4),
             "sigma": round(float(np.sqrt(motor.base.sigma2)), 4),
             "unidades": UNIDADES,
+            "columnas_omitidas": ([] if columnas_originales else
+                                  [c for c in salida.columns
+                                   if c not in SALIDA_MODELO
+                                   and c not in (columnas_extra or [])]),
+            "nota_detalle": ("Cada fila trae lo del modelo primero y despues tus propias "
+                             "columnas. `fila` es el indice 0-based del archivo que "
+                             "subiste." if columnas_originales else
+                             "Solo viajan las columnas del modelo: usa `fila` para casar "
+                             "con tu copia del archivo."),
             "aviso": "La brecha_grafia compara dos GRAFIAS de titulo escritas por "
                      "empresas distintas, sin control por empresa, sector ni "
                      "antiguedad. NO es una brecha salarial medida.",
@@ -288,7 +368,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         "reparto_confianza": ({str(k): int(v) for k, v
                                in ref["confianza"].value_counts().items()}
                               if "confianza" in ref else {}),
-        "detalle": limpio(salida),
+        "detalle": limpio(json_det),
         "por_puesto": limpio(por_puesto) if por_puesto is not None else [],
         "resumen": {k: _py(v) for k, v in (resumen or {}).items()},
         "texto": texto_resumen(resumen, por_puesto) if resumen is not None else "",
@@ -351,6 +431,15 @@ def crear(tareas: BackgroundTasks,
               None, description="OPCIONAL. Solo si la columna no se autodetecta."),
           columna_sueldo: str | None = Form(
               None, description="OPCIONAL. Solo si la columna no se autodetecta."),
+          columnas_originales: bool = Form(
+              True, description="Por defecto el JSON devuelve TUS columnas —nombre, "
+                                "antiguedad, sexo, centro de costos— junto a los "
+                                "resultados. Ponlo en false si el front ya tiene el "
+                                "archivo y solo quiere los numeros."),
+          columnas_extra: str | None = Form(
+              None, description="OPCIONAL. Solo se usa con columnas_originales=false: "
+                                "que columnas tuyas rescatar igualmente, separadas por "
+                                "coma."),
           m: Motor = Depends(motor)):
     """Sube una nomina. Devuelve 202 y un id: el trabajo corre por detras.
 
@@ -360,6 +449,8 @@ def crear(tareas: BackgroundTasks,
     """
     segmento, rubro = _opt(segmento), _opt(rubro)
     columna_cargo, columna_sueldo = _opt(columna_cargo), _opt(columna_sueldo)
+    extra_pedidas = [t.strip() for t in (_opt(columnas_extra) or "").split(",")
+                     if t.strip()]
     try:
         m.settings.get_sbu(int(anio), estricto=True)
     except ValueError as e:
@@ -380,6 +471,23 @@ def crear(tareas: BackgroundTasks,
                                     columna_cargo)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    # Si el cliente NOMBRA la columna de sueldo, tiene que existir. Ignorarla en silencio
+    # le devuelve un informe sin comparacion y sin explicacion.
+    if columna_sueldo:
+        real = _col(df, columna_sueldo)
+        if real is None:
+            raise HTTPException(400, f"la columna de sueldo '{columna_sueldo}' no esta "
+                                     f"en el archivo. Columnas: {list(df.columns)}")
+        columna_sueldo = real
+
+    # se casan ahora, con el archivo ya leido, para poder avisar de las que no existen
+    extra, no_estan = [], []
+    for c in extra_pedidas:
+        real = _col(df, c)
+        (extra if real else no_estan).append(real or c)
+    if no_estan:
+        raise HTTPException(400, f"columnas_extra que no estan en el archivo: "
+                                 f"{no_estan}. Columnas: {list(df.columns)}")
 
     t = ALMACEN.nuevo()
 
@@ -389,7 +497,8 @@ def crear(tareas: BackgroundTasks,
             t.resultado, t.excel = procesar(m, df, col, int(anio),
                                             segmento.upper() if segmento else None,
                                             rubro.upper() if rubro else None,
-                                            columna_sueldo)
+                                            columna_sueldo, extra,
+                                            columnas_originales)
             t.estado = "listo"
         except Exception as e:                               # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"

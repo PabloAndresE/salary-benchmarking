@@ -169,3 +169,87 @@ def test_un_rubro_desconocido_se_rechaza_en_vez_de_caer_al_global_en_silencio(cl
     assert r.status_code == 400 and "ZZZ" in r.json()["detail"]
     assert cliente.get("/referencia",
                        params={"cargo": "CONTADOR", "rubro": "ZZZ"}).status_code == 400
+
+
+def test_una_columna_que_TERMINA_en_espacio_se_encuentra_igual(cliente):
+    # La plantilla actuarial real trae 'Ultimo sueldo/pension mensual ' con espacio al
+    # final. El saneado de los opcionales lo recortaba y dejaba de coincidir, asi que
+    # `_buscar_sueldo` devolvia None EN SILENCIO: informe sin comparacion y sin motivo.
+    df = pd.DataFrame({"Cargo ": ["CONTADOR"], "Ultimo sueldo/pension mensual ": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"columna_cargo": "Cargo",
+                           "columna_sueldo": "ultimo sueldo/pension mensual"})
+    assert r.status_code == 202, r.text
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert len(d["por_puesto"]) == 1, "la comparacion tiene que haberse hecho"
+    assert d["detalle"][0]["sueldo_actual"] == 1500.0
+
+
+def test_una_columna_de_sueldo_inventada_da_400_en_vez_de_ignorarse(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"columna_sueldo": "no_existe"})
+    assert r.status_code == 400 and "no_existe" in r.json()["detail"]
+
+
+def test_el_JSON_trae_las_columnas_del_cliente_por_defecto(cliente):
+    # El front necesita el NOMBRE para decir a quien subirle el sueldo, la ANTIGUEDAD
+    # para explicar por que cobra lo que cobra, y el SEXO para el analisis de brecha.
+    # Que `sexo` viaje NO contradice que nunca sea variable del modelo: no entra en
+    # ningun calculo, sale para poder MEDIR la brecha (D-011).
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"],
+                       "Nombres": ["Ana"], "Sexo": ["F"],
+                       "Fecha de primer ingreso": ["01/01/2015"]})
+    tid = cliente.post("/informes",
+                       files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    f = cliente.get(f"/informes/{tid}").json()["detalle"][0]
+    assert f["Nombres"] == "Ana" and f["Sexo"] == "F"
+    assert f["Fecha de primer ingreso"]
+    # y lo del modelo va primero, para que la fila se lea de un vistazo
+    assert list(f)[:3] == ["fila", "cargo", "estado"]
+
+
+def test_se_puede_recortar_a_solo_los_numeros(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"],
+                       "Centro de costos": ["Admin"], "Nombres": ["Ana"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                       data={"columnas_originales": "false",
+                             "columnas_extra": "centro de costos"}).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    f = d["detalle"][0]
+    assert f["Centro de costos"] == "Admin", "la pedida si"
+    assert "Nombres" not in f, "las demas no"
+    assert "Nombres" in d["meta"]["columnas_omitidas"]
+
+
+def test_una_columna_extra_inventada_da_400(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"columnas_originales": "false",
+                           "columnas_extra": "no_existe"})
+    assert r.status_code == 400 and "no_existe" in r.json()["detail"]
+
+
+def test_la_antiguedad_viaja_calculada_y_en_tramos(cliente):
+    # El front la necesita para el filtro de ANTIGUEDAD y para explicar por que alguien
+    # cobra lo que cobra. La plantilla no la trae: hay que calcularla de las fechas.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR"], "sueldo": ["1500", "1400"],
+                       "Fecha de primer ingreso": ["01/01/2010", "01/01/2024"],
+                       "Fecha de salida 1": ["01/01/2015", None],
+                       "Fecha de reingreso 1": ["01/01/2020", None]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                       data={"anio": 2025}).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    a, b = d["detalle"][0], d["detalle"][1]
+    assert abs(a["antiguedad_anios"] - 11.0) < 0.1, "no cuenta los 5 anios fuera"
+    assert a["antiguedad_tramo"] == "10 a 20"
+    assert b["antiguedad_tramo"] == "1 a 3"
+    assert d["meta"]["unidades"]["antiguedad_anios"]["unidad"] == "anios"
+
+
+def test_sin_fechas_la_antiguedad_es_null_y_no_cero(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    tid = cliente.post("/informes",
+                       files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    f = cliente.get(f"/informes/{tid}").json()["detalle"][0]
+    assert f["antiguedad_anios"] is None and f["antiguedad_tramo"] is None
