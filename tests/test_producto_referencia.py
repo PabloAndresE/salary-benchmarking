@@ -784,3 +784,31 @@ def test_la_brecha_no_se_publica_con_una_sola_empresa_detras():
     assert b.grupo[b.idx["ENFERMERA"]] == b.grupo[b.idx["ENFERMERO"]], "se fusiona igual"
     assert b.referenciar(["ENFERMERA"], emb).iloc[0]["brecha_grafia"] == "", \
         "pero no se publica una brecha de 2 empresas"
+
+
+def test_un_cargo_en_blanco_NO_tumba_el_informe_entero():
+    # Lo encontro una nomina real: una sola fila con la celda del cargo vacia hacia
+    # caer las 199 con `KeyError: ''`. Un cargo vacio es DATO, no un error de programa.
+    emb = _emb_errata()
+    b = BaseReferencia.construir(_marco_errata(), emb, _sbu)
+    out = b.referenciar(["ASISTENTE CONTABLE", "", "   ", "ASISTENTE CONTABLE"],
+                        emb).set_index("cargo", drop=False)
+    assert len(out) == 4
+    assert out["base"].tolist().count("sin cargo") == 2
+    ok = out[out["base"] == "datos directos"]
+    assert np.isfinite(ok["referencia_log"]).all(), "las demas se contestan igual"
+
+
+def test_un_titulo_SIN_embedding_si_es_error_y_lo_dice():
+    # Taparlo esconderia un fallo de quien llama: eso no es dato, es que no se embebio.
+    emb = _emb_errata()
+    b = BaseReferencia.construir(_marco_errata(), emb, _sbu)
+    with pytest.raises(KeyError, match="sin embedding"):
+        b.referenciar(["UN CARGO JAMAS VISTO"], emb)
+
+
+def test_una_nomina_entera_sin_cargos_no_revienta():
+    emb = _emb_errata()
+    b = BaseReferencia.construir(_marco_errata(), emb, _sbu)
+    out = b.referenciar(["", "  "], emb)
+    assert len(out) == 2 and (out["base"] == "sin cargo").all()

@@ -112,6 +112,8 @@ def _estado(fila) -> str:
     ilegible, la celda no llega al suelo— y cada una lleva a un mensaje distinto en la
     interfaz. Devolverlas todas como `null` obliga al front a reinventar la logica.
     """
+    if str(fila.get("base", "") or "") == "sin cargo":
+        return "cargo_vacio"
     lect = str(fila.get("lectura_mercado", "") or "")
     if lect == "sueldo ilegible":
         return "sueldo_ilegible"

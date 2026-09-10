@@ -922,7 +922,31 @@ class BaseReferencia:
         monta por legitimidad, con el coste visible en `empresas` y en la confianza.
         """
         titulos = [str(t) for t in titulos]
-        unicos = sorted(set(titulos))
+        # UN CARGO VACIO ES DATO, NO UN ERROR DE PROGRAMACION. Una nomina real trae filas
+        # con la celda del cargo en blanco, y hasta aqui eso tumbaba el informe ENTERO con
+        # un `KeyError: ''` — 199 filas perdidas por una. Se abstiene en esa fila y las
+        # demas se contestan.
+        #
+        # Un titulo NO vacio que falte en el diccionario si sigue siendo error: eso es que
+        # quien llama no lo embebio, y taparlo esconderia el fallo.
+        vacios = {t for t in titulos if not t.strip()}
+        unicos = sorted(set(titulos) - vacios)
+        faltan = [t for t in unicos if t not in X_por_etiqueta]
+        if faltan:
+            raise KeyError(f"sin embedding para {len(faltan)} titulo(s), p.ej. "
+                           f"{faltan[:3]}. Hay que embeberlos antes de referenciar.")
+        if not unicos:
+            fila_vacia = {"referencia_log": np.nan, "sd": np.nan, "confianza": "BAJA",
+                          "base": "sin cargo", "ancho_rel": np.nan,
+                          "incert_centro": np.nan, "segmento": "", "rubro": "",
+                          "brecha_grafia": "", "empresas": 0, "personas": 0,
+                          "similitud": 0.0}
+            for q in CUANTILES:
+                for suf in ("_log", "per_log"):
+                    fila_vacia[f"p{int(q * 100)}{suf}"] = np.nan
+            out = pd.DataFrame([dict(fila_vacia) for _ in titulos])
+            out.insert(0, "cargo", titulos)
+            return out
         Q = np.vstack([X_por_etiqueta[t] for t in unicos]).astype(float)
         Q /= np.linalg.norm(Q, axis=1, keepdims=True)
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
@@ -1127,6 +1151,17 @@ class BaseReferencia:
                                           and np.isfinite(self.brecha_gen[propio]) else ""),
                         "empresas": n_emp, "personas": n_per,
                         "similitud": round(mejor, 3)}
+
+        # las filas con el cargo en blanco se abstienen, con las MISMAS claves que las
+        # demas para que el DataFrame no invente columnas a medias
+        if vacios:
+            molde = next(iter(filas.values()))
+            for t in vacios:
+                filas[t] = {k: ("" if isinstance(v, str) else
+                                0 if isinstance(v, (int, np.integer)) else np.nan)
+                            for k, v in molde.items()}
+                filas[t].update({"confianza": "BAJA", "base": "sin cargo",
+                                 "similitud": 0.0})
 
         out = pd.DataFrame([filas[t] for t in titulos])
         out.insert(0, "cargo", titulos)
