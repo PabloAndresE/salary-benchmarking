@@ -160,6 +160,26 @@ def _lectura(y, p10, p25, p75, p90):
     return out
 
 
+def _grafia_mas_usada(s):
+    """La forma en que el CLIENTE escribe ese puesto, para mostrarla tal cual.
+
+    El agrupamiento va por el titulo normalizado —si no, el mismo puesto se parte en
+    varias filas— pero la etiqueta no puede ser el normalizado: el front acabaria
+    enseñando `CONTADOR` a quien escribio `Contador`. Se devuelve la grafia mas repetida
+    y, si empatan, la que aparece primero en la nomina: dos informes de la misma nomina
+    tienen que rotular igual.
+    """
+    t = s.fillna("").astype(str).str.strip()
+    if t.empty:
+        return ""
+    cuenta = t.value_counts()
+    empatadas = set(cuenta[cuenta == cuenta.max()].index)
+    for v in t:
+        if v in empatadas:
+            return v
+    return t.iloc[0]
+
+
 def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     """Anade al DataFrame del cliente las tres lecturas.
 
@@ -240,7 +260,8 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     # se unieron, para que juntar no sea silencioso.
     out["_cargo"] = out[col_cargo].fillna("").astype(str).str.strip().str.upper()
     por_puesto = (out.groupby("_cargo")
-                     .agg(personas=(col_sueldo, "size"),
+                     .agg(_etiqueta=(col_cargo, _grafia_mas_usada),
+                          personas=(col_sueldo, "size"),
                           grafias=(col_cargo, "nunique"),
                           sueldo_mediano=("sueldo_actual", "median"),
                           referencia=("referencia", "first"),
@@ -261,9 +282,16 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
         por_puesto["_voto"].to_numpy(float), por_puesto["_p10"].to_numpy(float),
         por_puesto["_p25"].to_numpy(float), por_puesto["_p75"].to_numpy(float),
         por_puesto["_p90"].to_numpy(float))
-    por_puesto = por_puesto.rename(columns={"_cargo": col_cargo})
+    # `cargo` es lo que escribio el cliente; `cargo_normalizado` es la clave con la que
+    # se agrupo Y la que el front necesita para unir esta tabla con el detalle — donde
+    # las filas conservan cada grafia original y por tanto NO casan con la etiqueta.
+    por_puesto[col_cargo] = por_puesto["_etiqueta"]
+    por_puesto["cargo_normalizado"] = por_puesto["_cargo"]
     por_puesto = por_puesto.drop(columns=[c for c in por_puesto.columns
                                           if c.startswith("_")])
+    orden = [col_cargo, "cargo_normalizado", "grafias"]
+    por_puesto = por_puesto[orden + [c for c in por_puesto.columns if c not in orden]]
+    out["cargo_normalizado"] = out["_cargo"]
     out = out.drop(columns=[c for c in out.columns if c.startswith("_")])
     out = out.drop(columns=["brecha_grafia"], errors="ignore")
 

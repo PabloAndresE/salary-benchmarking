@@ -220,8 +220,10 @@ def test_el_JSON_trae_las_columnas_del_cliente_por_defecto(cliente):
     f = cliente.get(f"/informes/{tid}").json()["detalle"][0]
     assert f["nombre"] == "Ana" and f["sexo"] == "F"
     assert f["fecha_ingreso"]
-    # y lo del modelo va primero, para que la fila se lea de un vistazo
-    assert list(f)[:3] == ["fila", "cargo", "estado"]
+    # y lo del modelo va primero, para que la fila se lea de un vistazo.
+    # `cargo_normalizado` es la clave con la que el front une el detalle con
+    # `por_puesto`, y va pegada a `cargo` porque es la misma cosa vista de otro modo.
+    assert list(f)[:4] == ["fila", "cargo", "cargo_normalizado", "estado"]
 
 
 def test_se_puede_recortar_a_solo_los_numeros(cliente):
@@ -370,19 +372,48 @@ def test_el_mismo_puesto_escrito_de_varias_formas_es_UN_puesto(cliente):
     # es lo que decide la lectura. Fragmentado, cada grafia votaba con la gente que le
     # tocara y el mismo puesto podia salir "en linea" en una fila y "muy por debajo" en
     # la de al lado, por como lo escribio quien lleno el Excel.
-    df = pd.DataFrame({"cargo": ["Contador", "CONTADOR", "contador ", " Contador"],
+    df = pd.DataFrame({"cargo": ["Contador", "CONTADOR", "contador ", "Contador"],
                        "sueldo": ["1200", "1500", "1800", "2100"]})
     r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
     d = cliente.get(f"/informes/{r.json()['id']}").json()
 
     assert len(d["por_puesto"]) == 1, d["por_puesto"]
     fila = d["por_puesto"][0]
-    assert fila["cargo"] == "CONTADOR"
+    # LA ETIQUETA ES LA DEL CLIENTE, no el normalizado: el front no puede enseñarle
+    # `CONTADOR` a quien escribio `Contador`. Se elige la grafia mas repetida.
+    assert fila["cargo"] == "Contador"
+    # ...y la clave con la que se agrupo viaja aparte, que es con la que el front une
+    # esta tabla con el detalle.
+    assert fila["cargo_normalizado"] == "CONTADOR"
     assert fila["personas"] == 4
     # juntar no puede ser silencioso
-    assert fila["grafias"] == 4
+    assert fila["grafias"] == 3
     # la mediana es la de las CUATRO personas, no la de una
     assert fila["sueldo_mediano"] == 1650.0
+
+
+def test_el_front_puede_unir_por_puesto_con_el_detalle(cliente):
+    # La etiqueta de un puesto es UNA grafia y el detalle trae todas, asi que unir por
+    # `cargo` dejaria filas huerfanas. `cargo_normalizado` esta en las dos tablas.
+    df = pd.DataFrame({"cargo": ["Contador", "CONTADOR", "VENDEDOR"],
+                       "sueldo": ["1200", "1500", "1600"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    claves_pp = {f["cargo_normalizado"] for f in d["por_puesto"]}
+    claves_det = {f["cargo_normalizado"] for f in d["detalle"]}
+    assert claves_det == claves_pp, "ninguna fila del detalle puede quedar huerfana"
+
+
+def test_la_etiqueta_no_depende_del_orden_de_las_filas(cliente):
+    # Dos nominas con las mismas grafias empatadas tienen que rotular igual, o el mismo
+    # informe cambia de nombre entre ejecuciones.
+    etiquetas = []
+    for orden in (["Contador", "CONTADOR"], ["Contador", "CONTADOR"]):
+        df = pd.DataFrame({"cargo": orden, "sueldo": ["1200", "1500"]})
+        r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+        d = cliente.get(f"/informes/{r.json()['id']}").json()
+        etiquetas.append(d["por_puesto"][0]["cargo"])
+    assert etiquetas[0] == etiquetas[1] == "Contador"
 
 
 def test_el_detalle_respeta_lo_que_escribio_el_cliente(cliente):

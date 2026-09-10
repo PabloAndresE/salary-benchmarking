@@ -137,7 +137,11 @@ def _opt(v: str | None) -> str | None:
 # `fila` es el indice 0-based de la nomina subida, para casar sin ambiguedad aunque haya
 # dos personas con el mismo nombre y cargo.
 SALIDA_MODELO = (
-    "fila", "cargo", "estado", "antiguedad_anios", "antiguedad_tramo",
+    # `cargo` es lo que escribio el cliente, fila por fila. `cargo_normalizado` es la
+    # clave con la que se agrupo `por_puesto`: sin ella el front no puede unir las dos
+    # tablas, porque la etiqueta de un puesto es UNA grafia y el detalle trae todas.
+    "fila", "cargo", "cargo_normalizado", "estado", "antiguedad_anios",
+    "antiguedad_tramo",
     "referencia", "sueldo_actual",
     "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
     "p10", "p25", "p75", "p90", "confianza", "incert_centro", "ancho_rel",
