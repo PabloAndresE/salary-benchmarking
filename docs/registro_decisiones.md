@@ -2823,3 +2823,71 @@ nombre del cargo mientras `empresas_de` lo buscaba por número de grupo. No fall
 devolvía vacío, y `empresas_analizadas` —la tarjeta más visible del informe— salía en cero
 sin que nada lo dijera. Producción siempre usa fusión, así que nunca mordió. Corregido y
 con test.
+
+
+---
+
+## D-028 — El RUC se resuelve contra el registro del país, no contra la base
+
+**Fecha:** 2026-09-10
+**Origen:** al confirmar el contrato del front —«el front te pasa RUC y tú sacas tamaño,
+sector y año»— salió que la tabla RUC→industria se llenaba desde el propio marco.
+**Evidencia:** conteos sobre `act-actuafast.actuafastv2.scvs_balances_anuales` y sobre
+`demo/base_v12.npz`.
+**Estado:** implementado y activo. Base reconstruida.
+
+### El defecto
+
+`meta_ruc` se llenaba desde el `marco`, o sea solo con empresas que aportaron estudios
+actuariales:
+
+| | RUCs | |
+|---|---|---|
+| registro SCVS (último balance por RUC) | 221.794 | |
+| en la base | 6.722 | 3,0% |
+| con CIIU utilizable | 4.735 | **2,1%** |
+
+Se le pedía el RUC al cliente para no poder decirle **ni su sector ni su tamaño en 98 de
+cada 100 casos**. Y el informe caía al mercado entero sin explicar por qué: el fallback
+por rubro está pensado para «este cargo no tiene respaldo sectorial», no para «no sé
+quién eres».
+
+Es además el cliente equivocado el que quedaba fuera. Quien ya aportó estudios es cliente
+viejo; quien llega nuevo —el que compra— es justo el que no está.
+
+### La corrección
+
+`construir` acepta `scvs`, el padrón de la Superintendencia que `leer_scvs` ya devolvía.
+De ahí sale `meta_ruc`. Resultado sobre `base_v12.npz`:
+
+| | |
+|---|---|
+| `meta_ruc` | **221.794** (segmento 100%, CIIU 99,99%) |
+| `pad_ruc` | 6.722 |
+| coste | +1,3 MB sobre 181, carga 2,0 s |
+
+**Son dos preguntas distintas y ahora las contestan dos tablas distintas.** `pad_ruc`
+dice *si aportaste datos* —y de ahí sale el aviso de espejo de D-027—; `meta_ruc` dice
+*quién eres*. Que estuvieran mezcladas fue lo que hizo pasar el defecto: la misma tabla
+servía para «¿estás en el mercado?» y para «¿cuál es tu industria?», y la primera pregunta
+imponía su cobertura a la segunda.
+
+`tam` y `ciiu` **no** se tocan: describen el mercado comparado y alimentan la tarjeta de
+tamaños del informe, así que una empresa del registro que no aportó datos no puede
+engordarla. Con test.
+
+### El segmento se propaga, no se calcula
+
+Viene ya clasificado de SCVS, que es la **misma** clasificación con la que se armaron las
+celdas. Derivarlo de `n_empleados` con cortes propios pondría al cliente en un segmento
+medido con otra regla que las celdas contra las que se lo compara, y el ajuste por
+segmento (D-018) dejaría de significar lo que dice. Los cuatro valores del registro
+—`MICROEMPRESA`, `PEQUEÑA`, `MEDIANA`, `GRANDE`— normalizan sin pérdida: 0 de 314.985
+filas se pierden.
+
+### Lo que sigue sin resolverse
+
+**1.987 de las 6.722 empresas de la base (30%) no están en el registro SCVS.** No es un
+problema de formato del join —se comprobó contra la tabla directamente—: no presentan
+balances ahí. Probablemente sector público, fundaciones y personas naturales. Para ésas
+el RUC sigue sin resolver sector ni tamaño, y ninguna fuente que tengamos lo arregla.
