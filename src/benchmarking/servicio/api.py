@@ -44,6 +44,7 @@ import pandas as pd
 
 from ..config.settings import cargar_settings
 from ..evaluacion import embeddings
+from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
 from ..producto.base_referencia import SEGMENTOS, BaseReferencia
 from ..producto.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
@@ -70,9 +71,10 @@ UNIDADES = {
     "similitud": {"unidad": "coseno", "rango": [0, 1]},
     "empresas": {"unidad": "conteo"}, "personas": {"unidad": "conteo"},
     "antiguedad_anios": {"unidad": "anios", "formato": "0.0"},
-    "antiguedad_tramo": {"unidad": "categoria",
-                         "valores": ["menos de 1", "1 a 3", "3 a 5", "5 a 10",
-                                     "10 a 20", "mas de 20"]},
+    # La lista sale de donde se calcula, no se copia: el front la necesita COMPLETA
+    # —una nomina joven no trae `mas de 20` y el filtro saldria sin esa opcion— y dos
+    # copias son dos cosas que hay que acordarse de cambiar juntas.
+    "antiguedad_tramo": {"unidad": "categoria", "valores": list(TRAMOS_ANTIGUEDAD)},
 }
 
 
@@ -483,6 +485,12 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
 
     cuerpo = {
         "esquema": ESQUEMA,
+        # ARRIBA, no dentro de `meta`. Estaba en `meta` aqui y en la raiz en
+        # `/referencia`: el mismo contrato en dos sitios segun el endpoint, asi que un
+        # front que leia `respuesta.unidades` recibia nada de este y lo daba por vacio.
+        # Es justo el fallo que `UNIDADES` existe para evitar —formatear un ratio como
+        # dolares da un numero creible y falso—, solo que en la capa de arriba.
+        "unidades": UNIDADES,
         "mercado": mercado,
         "industria": industria,
         "meta": {
@@ -492,7 +500,6 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
             "puestos_en_la_base": len(motor.base.celdas),
             "tau": round(float(np.sqrt(motor.base.tau2)), 4),
             "sigma": round(float(np.sqrt(motor.base.sigma2)), 4),
-            "unidades": UNIDADES,
             "columnas_omitidas": ([] if columnas_originales else
                                   [c for c in salida.columns
                                    if c not in SALIDA_MODELO

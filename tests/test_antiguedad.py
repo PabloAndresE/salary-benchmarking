@@ -113,3 +113,66 @@ def test_detecta_el_nombre_CANONICO_con_guion_bajo():
     assert ing == "fecha_ingreso"
     a = antiguedad_anios(pd.DataFrame({"fecha_ingreso": ["01/01/2020"]}), 2025)
     assert abs(a.iloc[0] - 6.0) < 0.02
+
+
+# --- el parseo de fechas ISO, que estaba roto -------------------------------------
+
+def test_una_fecha_ISO_NO_se_lee_con_el_dia_y_el_mes_cambiados():
+    # EL DEFECTO, medido sobre una nomina real de 303 filas: 195 se quedaron SIN
+    # antiguedad y 101 recibieron un numero equivocado. Solo 7 salieron bien, y de
+    # casualidad, porque su dia coincidia con su mes.
+    #
+    # `pd.to_datetime(s, dayfirst=True)` deduce UN formato de la primera fila. Si esa
+    # fila es ambigua —`2004-09-06`, donde 09 y 06 caben los dos como mes— deduce
+    # ano-DIA-mes y lo aplica a todas.
+    df = pd.DataFrame({"fecha_ingreso": ["2004-09-06", "2025-06-20", "2020-10-10"]})
+    a = antiguedad_anios(df, 2026)
+    # 6 de septiembre de 2004, no 9 de junio (que daria 22,56)
+    assert abs(a.iloc[0] - 22.32) < 0.01, f"salio {a.iloc[0]}"
+    # y el dia 20 no se pierde por no existir el mes 20
+    assert pd.notna(a.iloc[1]) and abs(a.iloc[1] - 1.53) < 0.01
+
+
+def test_el_formato_ecuatoriano_dd_mm_sigue_leyendose_como_siempre():
+    # Lo de arriba no puede haberse arreglado rompiendo esto: en una plantilla de RR.HH.
+    # ecuatoriana `03/04/2020` es 3 de abril, no 4 de marzo.
+    df = pd.DataFrame({"fecha_ingreso": ["06/09/2004", "20/06/2025", "03/04/2020"]})
+    a = antiguedad_anios(df, 2026)
+    assert abs(a.iloc[0] - 22.32) < 0.01
+    assert abs(a.iloc[1] - 1.53) < 0.01
+    # 3 de abril de 2020 -> hasta el 31/12/2026
+    assert abs(a.iloc[2] - 6.75) < 0.02, f"salio {a.iloc[2]}"
+
+
+def test_da_lo_MISMO_como_venga_escrita_la_misma_fecha():
+    # La antiguedad decide indemnizaciones. No puede depender de si RR.HH. exporto el
+    # Excel con fechas de verdad, con texto ISO o con texto latino.
+    import datetime as dt
+    formas = {
+        "ISO": ["2004-09-06"],
+        "ISO con hora": ["2004-09-06 00:00:00"],
+        "ISO con barras": ["2004/09/06"],
+        "latino": ["06/09/2004"],
+        "latino con guiones": ["06-09-2004"],
+        "fecha de Excel": [dt.date(2004, 9, 6)],
+    }
+    salidas = {n: float(antiguedad_anios(pd.DataFrame({"fecha_ingreso": v}), 2026).iloc[0])
+               for n, v in formas.items()}
+    assert len(set(round(v, 4) for v in salidas.values())) == 1, salidas
+    assert abs(next(iter(salidas.values())) - 22.32) < 0.01
+
+
+def test_una_fila_no_le_impone_su_formato_a_las_demas():
+    # El nucleo del defecto: pandas deducia el formato de la PRIMERA fila. Mezclando
+    # estilos, cada celda tiene que resolverse sola.
+    df = pd.DataFrame({"fecha_ingreso": ["2004-09-06", "20/06/2025", "2020/10/10",
+                                         "03-04-2020"]})
+    a = antiguedad_anios(df, 2026)
+    assert a.notna().all(), f"alguna se perdio: {a.tolist()}"
+    assert abs(a.iloc[0] - 22.32) < 0.01 and abs(a.iloc[1] - 1.53) < 0.01
+
+
+def test_lo_ilegible_sigue_quedando_vacio_y_no_inventa_un_cero():
+    df = pd.DataFrame({"fecha_ingreso": ["2004-09-06", None, "no es una fecha", ""]})
+    a = antiguedad_anios(df, 2026)
+    assert pd.notna(a.iloc[0]) and a.iloc[1:].isna().all()

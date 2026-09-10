@@ -97,10 +97,38 @@ def test_el_json_declara_UNIDADES_y_el_aviso_de_la_brecha(cliente):
     # Un front que formatee `vs_mercado` como dolares produce un numero creible y falso.
     df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
     tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
-    meta = cliente.get(f"/informes/{tid}").json()["meta"]
-    assert meta["unidades"]["vs_mercado"]["unidad"] == "ratio"
-    assert meta["unidades"]["referencia"]["unidad"] == "usd"
-    assert "NO es una brecha salarial" in meta["aviso"]
+    d = cliente.get(f"/informes/{tid}").json()
+    assert d["unidades"]["vs_mercado"]["unidad"] == "ratio"
+    assert d["unidades"]["referencia"]["unidad"] == "usd"
+    assert "NO es una brecha salarial" in d["meta"]["aviso"]
+
+
+def test_las_UNIDADES_estan_en_EL_MISMO_SITIO_en_los_dos_endpoints(cliente):
+    # Estaban en `meta` en /informes y en la raiz en /referencia. Un front que leia
+    # `respuesta.unidades` recibia nada del primero y lo daba por vacio: el mapa existia,
+    # se declaraba en el contrato y no llegaba nunca. Es el mismo fallo que UNIDADES
+    # existe para evitar, una capa mas arriba.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    inf = cliente.get(f"/informes/{tid}").json()
+    ref = cliente.get("/referencia", params={"cargo": "CONTADOR"}).json()
+    assert inf["unidades"] == ref["unidades"], "el mismo contrato en dos formas"
+    assert "unidades" not in inf["meta"], "y en un solo sitio, no en dos"
+
+
+def test_los_tramos_publicados_son_los_que_de_verdad_se_calculan(cliente):
+    # El front arma el filtro de antiguedad con esta lista. Si la deduce de los datos
+    # que le llegaron, una nomina joven le deja el filtro sin `mas de 20`. Y si la lista
+    # se copia a mano en dos archivos, se desincronizan.
+    from benchmarking.producto.antiguedad import TRAMOS
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"],
+                       "fecha_ingreso": ["01/01/2020"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    assert d["unidades"]["antiguedad_tramo"]["valores"] == list(TRAMOS)
+    # la nomina solo produce UN tramo, y aun asi se publican los seis
+    assert len({f["antiguedad_tramo"] for f in d["detalle"]}) == 1
+    assert len(d["unidades"]["antiguedad_tramo"]["valores"]) == 6
 
 
 def test_estado_explicito_en_vez_de_null(cliente):
@@ -259,7 +287,7 @@ def test_la_antiguedad_viaja_calculada_y_en_tramos(cliente):
     assert abs(a["antiguedad_anios"] - 12.0) < 0.1
     assert a["antiguedad_tramo"] == "10 a 20"
     assert b["antiguedad_tramo"] == "1 a 3"
-    assert d["meta"]["unidades"]["antiguedad_anios"]["unidad"] == "anios"
+    assert d["unidades"]["antiguedad_anios"]["unidad"] == "anios"
 
 
 def test_sin_fechas_la_antiguedad_es_null_y_no_cero(cliente):

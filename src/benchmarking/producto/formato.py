@@ -5,7 +5,7 @@
     id_empleado     identificador propio del cliente
     nombre          para el filtro de trabajador
     sexo            M / F
-    fecha_ingreso   dd/mm/aaaa
+    fecha_ingreso   dd/mm/aaaa (o aaaa-mm-dd: si el ano va primero se lee ISO)
     centro_costo    para agrupar por area
 
 EL SUELDO ES EL BASICO, y es lo que mas se presta a error. La base se construye sobre
@@ -110,11 +110,17 @@ def validar(df) -> tuple[pd.DataFrame, dict]:
         informe["sexo_no_reconocido"] = len(raros)
 
     if "fecha_ingreso" in out.columns:
-        f = pd.to_datetime(out["fecha_ingreso"], errors="coerce", dayfirst=True)
+        # EL MISMO parser que calcula la antiguedad, no uno parecido. Con dos criterios
+        # distintos este contador dice "0 fechas ilegibles" mientras el calculo deja la
+        # columna vacia, y el cliente recibe un informe sin antiguedad y un informe de
+        # formato diciendo que todo estaba bien.
+        from .antiguedad import _fechas
+        f = _fechas(out["fecha_ingreso"])
         malas = int(f.isna().sum() - out["fecha_ingreso"].isna().sum())
         if malas > 0:
             avisos.append(f"{malas} `fecha_ingreso` no se pudieron leer como fecha "
-                          f"(se espera dd/mm/aaaa); esas filas quedan sin antiguedad")
+                          f"(dd/mm/aaaa, o aaaa-mm-dd si el ano va primero); esas filas "
+                          f"quedan sin antiguedad")
         informe["fechas_ilegibles"] = malas
 
     if "sueldo" in out.columns:

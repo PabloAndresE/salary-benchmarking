@@ -52,13 +52,50 @@ def columnas_de_fecha(df) -> tuple[str | None, list[str], list[str]]:
     return ingreso, sorted(salidas, key=orden), sorted(reingresos, key=orden)
 
 
-def _fechas(s: pd.Series) -> pd.Series:
-    """dd/mm/aaaa, que es como lo escribe un area de RR.HH. en Ecuador.
+# Empieza por cuatro digitos y un separador: `2004-09-06`, `2025/06/20`. Cuando el ano
+# va primero el orden es ano-mes-dia en todas partes —ISO 8601 y sus variantes—, asi que
+# esas fechas NO son ambiguas y no deben tocarse con `dayfirst`.
+_RE_ANIO_PRIMERO = re.compile(r"^\s*\d{4}[-/.]")
 
-    `dayfirst=True` no es cosmetico: sin el, `03/04/2020` se lee como marzo y la
-    antiguedad sale con un mes de error en un tercio de las filas — silenciosamente.
+
+def _fechas(s: pd.Series) -> pd.Series:
+    """A fecha, mirando cada celda por separado y segun donde este el ano.
+
+    EL DEFECTO QUE ARREGLA, medido sobre una nomina real de 303 filas: 195 se quedaron
+    SIN antiguedad y 101 recibieron un numero equivocado — solo 7 salieron bien, y de
+    casualidad, porque su dia coincidia con su mes.
+
+    La version anterior era `pd.to_datetime(s, dayfirst=True)` a secas. Pandas deduce UN
+    formato mirando la primera fila y lo aplica a todas. Si esa primera fila es
+    `2004-09-06` —ambigua, 09 y 06 caben los dos como mes— y ademas se le ha pedido
+    `dayfirst`, deduce ano-DIA-mes. Desde ahi:
+
+      - toda fecha ISO se lee con el dia y el mes cambiados, en silencio;
+      - y si el dia real pasa de 12 no hay mes que le corresponda —no existe el mes 20—,
+        asi que `errors="coerce"` la deja vacia y tampoco avisa.
+
+    Un ingreso del 6 de septiembre de 2004 salia con 22,56 anios en vez de 22,32: la
+    antiguedad leida como 9 de junio. Los errores llegaban a ocho meses, y esta cifra es
+    la que decide indemnizaciones y escalafon.
+
+    LA REGLA: si el ano va primero, es ano-mes-dia; si no, dia-mes-ano, que es como lo
+    escribe un area de RR.HH. en Ecuador —`03/04/2020` es 3 de abril—. `format="mixed"`
+    para que cada celda se resuelva sola y una fila no le imponga su formato al resto.
     """
-    return pd.to_datetime(s, errors="coerce", dayfirst=True)
+    if pd.api.types.is_datetime64_any_dtype(s):
+        return s                      # ya viene resuelta de Excel: no se re-interpreta
+    t = s.astype(str).str.strip()
+    out = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
+    anio_primero = t.str.match(_RE_ANIO_PRIMERO)
+    if anio_primero.any():
+        out[anio_primero] = pd.to_datetime(t[anio_primero], errors="coerce",
+                                           yearfirst=True, dayfirst=False,
+                                           format="mixed")
+    resto = ~anio_primero
+    if resto.any():
+        out[resto] = pd.to_datetime(t[resto], errors="coerce", dayfirst=True,
+                                    format="mixed")
+    return out
 
 
 def antiguedad_anios(df, anio: int) -> pd.Series:
@@ -108,12 +145,19 @@ def antiguedad_anios(df, anio: int) -> pd.Series:
     return out.where(ini.notna())
 
 
+# Los tramos, en un solo sitio. El servicio los publica en `UNIDADES` para que el front
+# no tenga que deducir la lista de los datos que le llegaron —una nomina joven no trae
+# `mas de 20` y el filtro saldria sin esa opcion—, y estaban escritos a mano alla y aca:
+# dos listas que hay que acordarse de cambiar juntas son una que se va a desincronizar.
+TRAMOS = ("menos de 1", "1 a 3", "3 a 5", "5 a 10", "10 a 20", "mas de 20")
+
+
 def tramo(anios) -> pd.Series:
     """Cubos para el filtro de ANTIGUEDAD del front. Los cortes son los que usa la
     practica de compensaciones en Ecuador, no cuantiles: un filtro tiene que significar
     lo mismo entre dos informes distintos."""
     a = pd.to_numeric(pd.Series(anios), errors="coerce")
-    etiquetas = ["menos de 1", "1 a 3", "3 a 5", "5 a 10", "10 a 20", "mas de 20"]
+    etiquetas = list(TRAMOS)
     cortes = [-np.inf, 1, 3, 5, 10, 20, np.inf]
     out = pd.cut(a, bins=cortes, labels=etiquetas, right=False)
     return out.astype(object).where(a.notna(), None)
