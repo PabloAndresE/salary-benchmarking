@@ -325,6 +325,10 @@ def test_al_cliente_se_le_dice_que_esta_dentro_de_su_propio_mercado(cliente):
     r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
                      data={"ruc": "E00"})
     assert r.status_code == 202
+    # `en_la_base` mira el PADRON, no `meta_ruc`: este ultimo solo se puebla cuando el
+    # marco trae columnas de SCVS —esta base de juguete no las trae— y con la fuente
+    # equivocada se le decia a una empresa que no esta cuando si esta.
+    assert r.json()["empresa"]["en_la_base"] is True
     d = cliente.get(f"/informes/{r.json()['id']}").json()
 
     m = d["mercado"]

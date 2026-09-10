@@ -617,7 +617,11 @@ def crear(tareas: BackgroundTasks,
     ficha = None
     if ruc:
         g6, tam_emp = m.base.meta_ruc.get(ruc.strip(), ("", -1))
-        ficha = {"ruc": ruc.strip(), "en_la_base": ruc.strip() in m.base.meta_ruc,
+        # `en_la_base` sale de `pad_ruc` y NO de `meta_ruc`: el segundo solo se puebla
+        # cuando el marco trae las columnas de SCVS, asi que con una base construida sin
+        # ellas se le decia a una empresa que no esta cuando si esta. El padron lleva a
+        # TODAS las empresas que aportaron datos, que es justo la pregunta.
+        ficha = {"ruc": ruc.strip(), "en_la_base": ruc.strip() in m.base.pad_ruc,
                  "ciiu_grupo": g6 or None,
                  "ciiu_seccion": (g6[:1] if g6 else None),
                  "n_empleados": tam_emp if tam_emp > 0 else None}
