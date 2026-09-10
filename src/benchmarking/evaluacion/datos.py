@@ -18,7 +18,7 @@ SELECT id_hash, empresa_ruc, numero_proceso, anio_valoracion,
        cargo_norm, centro_de_costo, sueldo, total,
        pct_fijo, pct_comisiones, pct_extras, pct_otros,
        antiguedad_total, tiene_composicion, en_clean,
-       segmento, ciiu_n1, provincia, sexo
+       segmento, ciiu_n1, ciiu_n6, n_empleados, provincia, sexo
 FROM `{proyecto}.{dataset}.nomina_features`
 WHERE en_clean AND anio_valoracion IN ({anios})
 """

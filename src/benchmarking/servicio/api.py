@@ -370,43 +370,60 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
     json_det = json_det[quedan]
 
     # ---- TARJETAS DE CABECERA -------------------------------------------------
-    # `trabajadores_analizados` es EXACTO: las celdas son disjuntas —cada persona de la
-    # base esta en una sola— asi que sumar sobre las celdas DISTINTAS que toca el cliente
-    # no cuenta a nadie dos veces.
-    #
-    # `empresas` NO se puede deduplicar con lo que hay guardado. La base almacena cuantas
-    # empresas respaldan cada celda, no CUALES, y la misma empresa respalda varios cargos
-    # del cliente. Sumar daria un numero inflado y presentarlo como "empresas analizadas"
-    # seria mentir en la tarjeta mas visible del informe. Se declara la cota inferior —el
-    # cargo mejor respaldado— y se dice que es una cota.
+    # Todo EXACTO, sin cotas. `trabajadores` porque las celdas son disjuntas —cada
+    # persona esta en una sola— y `empresas` porque el padron guarda QUE empresas
+    # respaldan cada celda, no solo cuantas: la union se calcula de verdad en vez de
+    # sumar conteos, que contaria varias veces a la que respalda varios cargos.
     idx = [motor.base.idx[t] for t in set(titulos) if t in motor.base.idx]
-    grupos_unicos = {int(motor.base.grupo[i]) for i in idx}
-    vistos, trabajadores = set(), 0
+    vistos, trabajadores, empresas = set(), 0, set()
     for i in idx:
         g = int(motor.base.grupo[i])
-        if g not in vistos:
-            vistos.add(g)
-            trabajadores += int(motor.base.personas[i])
-    emps = [int(motor.base.emp[i]) for i in idx] or [0]
+        if g in vistos:
+            continue
+        vistos.add(g)
+        trabajadores += int(motor.base.personas[i])
+        empresas.update(motor.base.empresas_de(i).tolist())
+    con_padron = len(motor.base.pad_idx) > 0
+
+    tam = motor.base.pad_tam
+    tallas = [int(tam[e]) for e in empresas if e < len(tam) and tam[e] > 0]
     mercado = {
         "cargos_del_cliente": int(pd.Series(titulos).nunique()),
-        "cargos_con_datos_en_la_base": len(grupos_unicos),
+        "cargos_con_datos_en_la_base": len(vistos),
         "trabajadores_analizados": trabajadores,
-        "empresas_por_cargo": {"minimo": min(emps), "mediana": int(np.median(emps)),
-                               "maximo": max(emps)},
-        "empresas_distintas_cota_inferior": max(emps),
-        "nota_empresas": "La base guarda CUANTAS empresas respaldan cada cargo, no "
-                         "cuales, y la misma empresa respalda varios de tus cargos. El "
-                         "total sin duplicar no es calculable con lo guardado: "
-                         "`empresas_distintas_cota_inferior` es un minimo garantizado.",
+        "empresas_analizadas": len(empresas) if con_padron else None,
+        "tamano_de_las_empresas": ({"minimo": min(tallas), "maximo": max(tallas),
+                                    "mediana": int(np.median(tallas)),
+                                    "con_dato": len(tallas),
+                                    "sin_dato": len(empresas) - len(tallas)}
+                                   if tallas else None),
     }
+    if not con_padron:
+        mercado["nota"] = ("Esta base se construyo sin padron de empresas: "
+                           "`empresas_analizadas` no es calculable. Reconstruyela.")
+    elif tallas and len(tallas) < len(empresas):
+        # El 26% de las filas no cruza con SCVS. Decirlo evita que el front presente
+        # un rango calculado sobre tres cuartas partes como si fuera sobre el total.
+        mercado["nota_tamano"] = (f"{len(empresas) - len(tallas)} de {len(empresas)} "
+                                  f"empresas no tienen tamano registrado y quedan fuera "
+                                  f"del rango.")
+
     industria = None
     if rubro:
-        industria = {"ciiu_seccion": rubro,
-                     "nombre": CIIU_SECCION.get(rubro, "seccion desconocida"),
-                     "nivel": "seccion",
-                     "nota": "La base solo distingue la SECCION (una letra). El nivel de "
-                             "grupo (p.ej. C239) no esta disponible."}
+        grupos_ciiu = {}
+        for e in empresas:
+            if e < len(motor.base.pad_ciiu):
+                g6 = str(motor.base.pad_ciiu[e] or "")
+                if g6.startswith(rubro):
+                    grupos_ciiu[g6] = grupos_ciiu.get(g6, 0) + 1
+        top = sorted(grupos_ciiu.items(), key=lambda kv: -kv[1])[:5]
+        industria = {
+            "ciiu_seccion": rubro,
+            "nombre_seccion": CIIU_SECCION.get(rubro, "seccion desconocida"),
+            "grupos_ciiu": [{"codigo": c, "empresas": n} for c, n in top],
+            "nota": "El codigo de GRUPO (p.ej. C239) es exacto; su descripcion en "
+                    "palabras necesita la tabla CIIU del INEC, que no esta en la base.",
+        }
 
     cuerpo = {
         "esquema": ESQUEMA,

@@ -265,19 +265,26 @@ def test_las_tarjetas_de_cabecera(cliente):
     assert m["cargos_con_datos_en_la_base"] == 2
     # 14 personas por cargo en la base sintetica, y NO se cuenta CONTADOR dos veces
     assert m["trabajadores_analizados"] == 28
-    assert m["empresas_por_cargo"]["mediana"] == 14
+    assert m["empresas_analizadas"] == 28
 
 
-def test_las_empresas_no_se_suman_porque_se_contarian_dos_veces(cliente):
-    # Es la tarjeta mas visible del informe: dar un total inflado ahi seria mentir.
+def test_las_empresas_se_cuentan_SIN_DUPLICAR(cliente):
+    # Es la tarjeta mas visible del informe. La base sintetica usa empresas distintas
+    # por cargo (E0*, E1*, E2*), asi que la union son 42 y no 14.
     df = pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR", "GUARDIA"],
                        "sueldo": ["1500", "800", "600"]})
     tid = cliente.post("/informes",
                        files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
     m = cliente.get(f"/informes/{tid}").json()["mercado"]
-    assert m["empresas_distintas_cota_inferior"] == 14, "una cota, no una suma"
-    assert m["empresas_distintas_cota_inferior"] < 3 * 14
-    assert "no es calculable" in m["nota_empresas"]
+    assert m["empresas_analizadas"] == 42
+
+
+def test_el_mismo_cargo_dos_veces_no_infla_el_conteo(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"] * 5, "sueldo": ["1500"] * 5})
+    tid = cliente.post("/informes",
+                       files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    m = cliente.get(f"/informes/{tid}").json()["mercado"]
+    assert m["empresas_analizadas"] == 14 and m["trabajadores_analizados"] == 14
 
 
 def test_la_industria_solo_llega_a_seccion(cliente):

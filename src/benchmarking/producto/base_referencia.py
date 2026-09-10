@@ -568,7 +568,7 @@ class BaseReferencia:
                  nivel=None, efecto=None, grupo=None,
                  tau2_c=None, sigma2_c=None, bandas=None, personas=None,
                  bandas_per=None, lam_nivel=None, ajuste_seg=None, rubro=None,
-                 brecha_gen=None):
+                 brecha_gen=None, padron=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
@@ -635,6 +635,18 @@ class BaseReferencia:
             self.rubros = list(rr)
         self.rub = {(int(c), self.rubros[int(k)]): i
                     for i, (c, k) in enumerate(zip(self.rub_cel, self.rub_cod))}
+        # PADRON: que empresas respaldan cada celda, con indices OPACOS —posiciones en
+        # una lista de RUCs que no se guarda—. Permite contar uniones sin duplicar; no
+        # identifica a nadie. Vacio en bases anteriores, y ahi el servicio da cotas.
+        (self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu) = (
+            np.zeros(1, np.int64), np.zeros(0, np.int32),
+            np.zeros(0, np.int64), np.zeros(0, dtype=object))
+        self.pad_fila = {}
+        if padron is not None:
+            (self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu,
+             claves) = padron
+            self.pad_fila = {str(k): i for i, k in enumerate(claves)}
+
         # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
         # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
         # quien lee un informe: ".cuanta gente hay detras de este numero?".
@@ -831,6 +843,11 @@ class BaseReferencia:
             pd.Index(grupo) if umbral_fusion else pd.Index(celdas)
         ).fillna(0).to_numpy(dtype=np.int64)
 
+        # Padron de empresas por celda, para poder contar uniones sin duplicar.
+        pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves = _padron(d, colg, celdas, grupo)
+        print(f"padron: {len(pad_idx):,} pares (celda, empresa) sobre "
+              f"{len(pad_tam):,} empresas")
+
         ajuste_seg = _ajuste_segmento(marco, col, celdas, niv, tau2_c, sigma2_c)
 
         # Banda por rubro. Las varianzas van indexadas por la clave de `colg` y salen de
@@ -848,7 +865,19 @@ class BaseReferencia:
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
                    tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel,
-                   ajuste_seg, rubro, brecha_gen)
+                   ajuste_seg, rubro, brecha_gen,
+                   (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves))
+
+    def empresas_de(self, i_celda: int) -> np.ndarray:
+        """Indices opacos de las empresas que respaldan la celda `i_celda`.
+
+        Se busca por GRUPO de fusion, no por etiqueta: las grafias de un mismo puesto
+        comparten respaldo y contarlas por separado duplicaria.
+        """
+        f = self.pad_fila.get(str(int(self.grupo[i_celda])))
+        if f is None:
+            return np.zeros(0, dtype=np.int32)
+        return self.pad_idx[self.pad_ptr[f]:self.pad_ptr[f + 1]]
 
     # -- persistencia ----------------------------------------------------------
 
@@ -874,6 +903,9 @@ class BaseReferencia:
             rub_bandas_per=self.rub_bandas_per,
             rubros=np.array(self.rubros, dtype=object),
             brecha_gen=self.brecha_gen,
+            pad_ptr=self.pad_ptr, pad_idx=self.pad_idx, pad_tam=self.pad_tam,
+            pad_ciiu=np.array(self.pad_ciiu, dtype=object),
+            pad_claves=np.array(list(self.pad_fila), dtype=object),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
 
     @classmethod
@@ -901,7 +933,9 @@ class BaseReferencia:
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
                        opc["sigma2_c"], opc["bandas"], opc["personas"],
                        opc["bandas_per"], lam_nivel, opc["ajuste_seg"], rubro,
-                       z["brecha_gen"] if "brecha_gen" in z.files else None)
+                       z["brecha_gen"] if "brecha_gen" in z.files else None,
+                       ((z["pad_ptr"], z["pad_idx"], z["pad_tam"], z["pad_ciiu"],
+                         list(z["pad_claves"])) if "pad_ptr" in z.files else None))
 
     # -- consulta --------------------------------------------------------------
 
@@ -1505,6 +1539,57 @@ def _brecha_por_grafia(marco, col, celdas, antes, pares_fem_masc, despues,
                 and n_emp.get(gf, 0) >= min_emp and n_emp.get(gm, 0) >= min_emp):
             salida[despues == despues[np.flatnonzero(antes == gf)[0]]] =                 float(v[gf] - v[gm])
     return salida
+
+
+def _padron(marco, colg, celdas, grupo):
+    """Que EMPRESAS respaldan cada celda, con indices opacos, y su tamano y CIIU.
+
+    POR QUE HACE FALTA. La base guardaba cuantas empresas respaldan cada celda, no
+    cuales, y con eso el total sin duplicar de un informe no se puede calcular: la misma
+    empresa respalda varios cargos del cliente y sumar los conteos da un numero inflado.
+    Esa cifra va en la tarjeta mas visible del informe.
+
+    INDICES OPACOS, NO RUCS. Se guarda la POSICION de la empresa en una lista ordenada
+    que NO se persiste. Sirve para contar uniones e intersecciones y no identifica a
+    nadie; los suelos de confidencialidad siguen gobernando lo que se publica.
+
+    Formato CSR sobre grupos —`indptr` + `indices`— porque son 161.049 pares sobre
+    51.942 grupos: 0,6 MB, un 0,3% del `.npz`. Una matriz densa serian 10 GB.
+
+    Devuelve (indptr, indices, tamano, ciiu_grupo, n_empresas):
+      tamano[i]      n_empleados de la empresa i, o -1 si no se sabe (el 26% no cruza
+                     con SCVS; ver la medicion pendiente de la seccion 18)
+      ciiu_grupo[i]  nivel GRUPO del CIIU, `C239`: los 4 primeros de `ciiu_n6`, que es
+                     el nivel al que se habla de "industria" en un informe
+    """
+    d = marco[[colg, "empresa_ruc"]].dropna()
+    rucs = pd.Index(sorted(d["empresa_ruc"].astype(str).unique()))
+    pos_ruc = {r: i for i, r in enumerate(rucs)}
+
+    tam = np.full(len(rucs), -1, dtype=np.int64)
+    ciiu = np.full(len(rucs), "", dtype=object)
+    if "n_empleados" in marco.columns or "ciiu_n6" in marco.columns:
+        cols = [c for c in ("n_empleados", "ciiu_n6") if c in marco.columns]
+        por_emp = (marco[["empresa_ruc"] + cols].dropna(subset=["empresa_ruc"])
+                   .assign(_r=lambda x: x["empresa_ruc"].astype(str))
+                   .groupby("_r")[cols].first())
+        for r, fila in por_emp.iterrows():
+            i = pos_ruc.get(r)
+            if i is None:
+                continue
+            if "n_empleados" in cols and pd.notna(fila["n_empleados"]):
+                tam[i] = int(fila["n_empleados"])
+            if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]):
+                ciiu[i] = str(fila["ciiu_n6"])[:4]
+
+    pares = (d.assign(_e=d["empresa_ruc"].astype(str).map(pos_ruc))
+              .drop_duplicates([colg, "_e"]))
+    clave = pares[colg].astype(str)
+    orden = np.argsort(clave.to_numpy(), kind="stable")
+    clave, valores = clave.to_numpy()[orden], pares["_e"].to_numpy()[orden]
+    claves_unicas, ini = np.unique(clave, return_index=True)
+    indptr = np.append(ini, len(valores)).astype(np.int64)
+    return (indptr, valores.astype(np.int32), tam, ciiu, list(claves_unicas))
 
 
 def _vecinos(Q, B, k, excluir_propio):
