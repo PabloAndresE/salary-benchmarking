@@ -225,8 +225,23 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
         lg = col(q + "_log").to_numpy(float)
         out["_" + q] = lg
         out[q + "_emp"] = (np.exp(lg) * f).round(2)
-    por_puesto = (out.groupby(col_cargo)
+    # SE AGRUPA POR EL TITULO NORMALIZADO, no por el texto crudo del cliente. La
+    # referencia se pide en mayusculas y sin espacios de borde, asi que `Contador`,
+    # `CONTADOR` y `contador ` reciben LA MISMA respuesta del modelo — y agrupando por el
+    # crudo salian como tres puestos distintos, cada uno con `personas=1` y la misma
+    # referencia repetida.
+    #
+    # NO ES COSMETICO. `_voto` es la mediana de lo que la empresa paga por ese puesto, y
+    # es lo que decide la `lectura`. Fragmentado, cada grafia votaba por separado con la
+    # gente que le tocara: el mismo puesto podia salir "en linea" en una fila y "muy por
+    # debajo" en la de al lado, por como lo escribio quien lleno el Excel.
+    #
+    # Se muestra el titulo normalizado —es el que se consulto— y se dice cuantas grafias
+    # se unieron, para que juntar no sea silencioso.
+    out["_cargo"] = out[col_cargo].fillna("").astype(str).str.strip().str.upper()
+    por_puesto = (out.groupby("_cargo")
                      .agg(personas=(col_sueldo, "size"),
+                          grafias=(col_cargo, "nunique"),
                           sueldo_mediano=("sueldo_actual", "median"),
                           referencia=("referencia", "first"),
                           p10_emp=("p10_emp", "first"),
@@ -246,6 +261,7 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
         por_puesto["_voto"].to_numpy(float), por_puesto["_p10"].to_numpy(float),
         por_puesto["_p25"].to_numpy(float), por_puesto["_p75"].to_numpy(float),
         por_puesto["_p90"].to_numpy(float))
+    por_puesto = por_puesto.rename(columns={"_cargo": col_cargo})
     por_puesto = por_puesto.drop(columns=[c for c in por_puesto.columns
                                           if c.startswith("_")])
     out = out.drop(columns=[c for c in out.columns if c.startswith("_")])

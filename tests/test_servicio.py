@@ -359,3 +359,37 @@ def test_un_ruc_que_no_esta_en_la_base_no_inventa_pertenencia(cliente):
     d = cliente.get(f"/informes/{r.json()['id']}").json()
     assert d["mercado"]["cargos_donde_tu_empresa_esta_en_el_mercado"] == 0
     assert d["por_puesto"][0]["tu_empresa"] is False
+
+
+def test_el_mismo_puesto_escrito_de_varias_formas_es_UN_puesto(cliente):
+    # El modelo consulta en mayusculas y sin espacios de borde, asi que las cuatro
+    # grafias reciben la MISMA referencia. Agrupando por el texto crudo salian como
+    # cuatro puestos con `personas=1` y la referencia repetida.
+    #
+    # Y NO ES COSMETICO: `_voto` es la mediana de lo que la empresa paga por el puesto y
+    # es lo que decide la lectura. Fragmentado, cada grafia votaba con la gente que le
+    # tocara y el mismo puesto podia salir "en linea" en una fila y "muy por debajo" en
+    # la de al lado, por como lo escribio quien lleno el Excel.
+    df = pd.DataFrame({"cargo": ["Contador", "CONTADOR", "contador ", " Contador"],
+                       "sueldo": ["1200", "1500", "1800", "2100"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+
+    assert len(d["por_puesto"]) == 1, d["por_puesto"]
+    fila = d["por_puesto"][0]
+    assert fila["cargo"] == "CONTADOR"
+    assert fila["personas"] == 4
+    # juntar no puede ser silencioso
+    assert fila["grafias"] == 4
+    # la mediana es la de las CUATRO personas, no la de una
+    assert fila["sueldo_mediano"] == 1650.0
+
+
+def test_el_detalle_respeta_lo_que_escribio_el_cliente(cliente):
+    # En `por_puesto` se normaliza porque es un agregado; en el detalle NO, porque el
+    # cliente tiene que poder casar cada fila con su nomina. Lo unico que se le quita
+    # son los espacios de los bordes, que no son texto sino un caracter invisible.
+    df = pd.DataFrame({"cargo": ["Contador", " CONTADOR "], "sueldo": ["1200", "1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert [f["cargo"] for f in d["detalle"]] == ["Contador", "CONTADOR"]
