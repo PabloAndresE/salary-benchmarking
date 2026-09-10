@@ -652,6 +652,11 @@ class BaseReferencia:
         if padron is not None:
             (self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu,
              claves, self.meta_ruc, self.pad_ruc) = padron
+            # Las bases guardadas antes del segmento traen pares (ciiu, tam). Se
+            # completan aca, en el borde, para que ningun consumidor tenga que
+            # preguntarse de que largo es la tupla.
+            self.meta_ruc = {r: (tuple(v) + ("",))[:3] if len(v) < 3 else tuple(v)
+                             for r, v in self.meta_ruc.items()}
             self.pad_fila = {str(k): i for i, k in enumerate(claves)}
         # Inverso de `pad_fila`, para ir de fila del padron al grupo de fusion
         self._fila_grupo = {i: int(k) for k, i in self.pad_fila.items()}
@@ -680,7 +685,7 @@ class BaseReferencia:
     @classmethod
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
-                  genero=True, mapa_genero=None):
+                  genero=True, mapa_genero=None, scvs=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
@@ -854,7 +859,7 @@ class BaseReferencia:
 
         # Padron de empresas por celda, para poder contar uniones sin duplicar.
         (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves,
-         meta_ruc, pad_ruc) = _padron(d, colg, celdas, grupo)
+         meta_ruc, pad_ruc) = _padron(d, colg, celdas, grupo, scvs)
         print(f"padron: {len(pad_idx):,} pares (celda, empresa) sobre "
               f"{len(pad_tam):,} empresas")
 
@@ -942,6 +947,7 @@ class BaseReferencia:
             pad_ruc_idx=np.array(list(self.pad_ruc.values()), dtype=np.int64),
             ruc_ciiu=np.array([v[0] for v in self.meta_ruc.values()], dtype=object),
             ruc_tam=np.array([v[1] for v in self.meta_ruc.values()], dtype=np.int64),
+            ruc_seg=np.array([v[2] for v in self.meta_ruc.values()], dtype=object),
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
 
     @classmethod
@@ -974,7 +980,14 @@ class BaseReferencia:
                          list(z["pad_claves"]),
                          dict(zip((str(r) for r in z["ruc_lista"]),
                                   zip((str(c) for c in z["ruc_ciiu"]),
-                                      (int(t) for t in z["ruc_tam"]))))
+                                      (int(t) for t in z["ruc_tam"]),
+                                      # `ruc_seg` falta en las bases guardadas antes de
+                                      # esto: se rellena vacio y el segmento simplemente
+                                      # no se deriva, que es el comportamiento anterior.
+                                      # No hace falta reconstruir la base para cargarla.
+                                      (str(s) for s in z["ruc_seg"])
+                                      if "ruc_seg" in z.files
+                                      else ("" for _ in z["ruc_lista"]))))
                          if "ruc_lista" in z.files else {},
                          dict(zip((str(r) for r in z["pad_ruc_lista"]),
                                   (int(i) for i in z["pad_ruc_idx"])))
@@ -992,6 +1005,14 @@ class BaseReferencia:
         a una empresa pequena se le decia que su gerente general cobra un 56% por debajo
         del mercado cuando entre sus pares esta bien. Sin el, no se segmenta y el
         comportamiento es el de siempre. Ver `_ajuste_segmento`.
+
+        `scvs` es el padron de la Superintendencia —`ruc, segmento, ciiu_n6,
+        n_empleados`, lo que devuelve `adquisicion.bigquery_source.leer_scvs`—. Sin el,
+        la tabla RUC->industria se llena desde el propio marco y solo conoce a las
+        empresas que aportaron estudios: 6.722 de 221.794, y con CIIU utilizable 4.735.
+        O sea que se le pedia el RUC al cliente para no poder decirle nada en 98 de cada
+        100 casos. Con el padron entero, la derivacion funciona para cualquier empresa
+        del pais, este o no en la base.
 
         `rubro` es el CIIU de primer nivel del CLIENTE. Donde su celda tiene rubro con
         respaldo suficiente, la referencia y las dos bandas salen SOLO de las empresas de
@@ -1629,7 +1650,7 @@ def _brecha_por_grafia(marco, col, celdas, antes, pares_fem_masc, despues,
     return salida
 
 
-def _padron(marco, colg, celdas, grupo):
+def _padron(marco, colg, celdas, grupo, scvs=None):
     """Que EMPRESAS respaldan cada celda, con indices opacos, y su tamano y CIIU.
 
     POR QUE HACE FALTA. La base guardaba cuantas empresas respaldan cada celda, no
@@ -1688,26 +1709,52 @@ def _padron(marco, colg, celdas, grupo):
     # `tam` y `ciiu` van indexados por el entero del padron
     tam = np.full(len(rucs), -1, dtype=np.int64)
     ciiu = np.full(len(rucs), "", dtype=object)
-    # ...y esta va por RUC. Es registro publico (SCVS): industria y tamano, sin sueldos.
+    # ...y esta va por RUC. Es registro publico (SCVS): industria, tamano y segmento,
+    # sin sueldos.
+    #
+    # EL SEGMENTO SE PROPAGA, NO SE CALCULA. Viene ya clasificado de SCVS (`SQL_SCVS` lo
+    # trae junto a `ciiu_n6`), que es la MISMA clasificacion con la que se armaron las
+    # celdas de referencia. Derivarlo aca de `n_empleados` con cortes propios pondria al
+    # cliente en un segmento calculado con otra regla que la de las celdas contra las que
+    # se lo compara, y el ajuste por segmento dejaria de significar lo que dice.
+    #
+    # LA TABLA CUBRE EL PAIS, NO LA BASE, y esa es la diferencia que la hace servir. Si
+    # se llena desde el `marco` solo conoce a las empresas que aportaron estudios —6.722
+    # de 221.794, y con CIIU utilizable 4.735—, o sea que a 98 de cada 100 clientes se
+    # les pedia el RUC para no poder decirles nada. Con `scvs` se llena desde el registro
+    # completo de la Superintendencia y la derivacion funciona para cualquier empresa del
+    # pais, este o no en la base. Son dos preguntas distintas y ahora las contestan dos
+    # tablas distintas: `pad_ruc` dice si aportaste datos, `meta_ruc` dice quien eres.
     meta_ruc = {}
-    if "n_empleados" in marco.columns or "ciiu_n6" in marco.columns:
-        cols = [c for c in ("n_empleados", "ciiu_n6") if c in marco.columns]
-        por_emp = (marco[["empresa_ruc"] + cols].dropna(subset=["empresa_ruc"])
-                   .assign(_r=lambda x: x["empresa_ruc"].astype(str))
-                   .groupby("_r")[cols].first())
-        for r, fila in por_emp.iterrows():
+    fuente = None
+    if scvs is not None and len(scvs):
+        f = scvs.copy()
+        f["_r"] = f["ruc"].astype(str).str.strip()
+        fuente = f.drop_duplicates("_r").set_index("_r")
+    elif any(c in marco.columns for c in ("n_empleados", "ciiu_n6", "segmento")):
+        cols = [c for c in ("n_empleados", "ciiu_n6", "segmento") if c in marco.columns]
+        fuente = (marco[["empresa_ruc"] + cols].dropna(subset=["empresa_ruc"])
+                  .assign(_r=lambda x: x["empresa_ruc"].astype(str))
+                  .groupby("_r")[cols].first())
+    if fuente is not None:
+        cols = fuente.columns
+        for r, fila in fuente.iterrows():
+            g4 = (str(fila["ciiu_n6"])[:4]
+                  if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]) else "")
+            ne = (int(fila["n_empleados"])
+                  if "n_empleados" in cols and pd.notna(fila["n_empleados"]) else -1)
+            sg = ((_norm_segmento(fila["segmento"]) or "")
+                  if "segmento" in cols and pd.notna(fila["segmento"]) else "")
+            meta_ruc[r] = (g4, ne, sg)
+            # `tam` y `ciiu` solo describen a las empresas DEL MERCADO —alimentan la
+            # tarjeta de tamanos del informe—, asi que solo se llenan para las que estan
+            # en el padron. La tabla de arriba, en cambio, cubre a todo el pais.
             i = pos_ruc.get(r)
-            if i is None:
-                continue
-            if "n_empleados" in cols and pd.notna(fila["n_empleados"]):
-                tam[i] = int(fila["n_empleados"])
-            if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]):
-                ciiu[i] = str(fila["ciiu_n6"])[:4]
-            meta_ruc[r] = (str(fila["ciiu_n6"])[:4]
-                           if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]) else "",
-                           int(fila["n_empleados"])
-                           if "n_empleados" in cols and pd.notna(fila["n_empleados"])
-                           else -1)
+            if i is not None:
+                if ne > 0:
+                    tam[i] = ne
+                if g4:
+                    ciiu[i] = g4
 
     pares = (d.assign(_e=d["empresa_ruc"].astype(str).map(pos_ruc))
               .drop_duplicates([colg, "_e"]))

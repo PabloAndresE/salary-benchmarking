@@ -616,7 +616,7 @@ def crear(tareas: BackgroundTasks,
     # coinciden, en vez de elegir uno en silencio.
     ficha = None
     if ruc:
-        g6, tam_emp = m.base.meta_ruc.get(ruc.strip(), ("", -1))
+        g6, tam_emp, seg_ruc = m.base.meta_ruc.get(ruc.strip(), ("", -1, ""))
         # `en_la_base` sale de `pad_ruc` y NO de `meta_ruc`: el segundo solo se puebla
         # cuando el marco trae las columnas de SCVS, asi que con una base construida sin
         # ellas se le decia a una empresa que no esta cuando si esta. El padron lleva a
@@ -626,11 +626,35 @@ def crear(tareas: BackgroundTasks,
                  "ciiu_seccion": (g6[:1] if g6 else None),
                  "n_empleados": tam_emp if tam_emp > 0 else None}
         if g6 and not rubro:
-            rubro = g6[:1]
-            ficha["rubro_derivado"] = rubro
+            # UN DERIVADO NO PUEDE DAR 400. La validacion de mas abajo rechaza los rubros
+            # sin respaldo, y aplicada a un valor que el cliente no mando produce un error
+            # que no puede corregir. Si no hay respaldo, no se deriva: el informe sale
+            # global, igual que si no hubiera mandado el RUC, y la ficha lo dice.
+            if g6[:1] in m.base.rubros:
+                rubro = g6[:1]
+                ficha["rubro_derivado"] = rubro
+            else:
+                ficha["rubro_sin_respaldo"] = g6[:1]
         elif g6 and rubro and rubro.upper() != g6[:1]:
             ficha["aviso"] = (f"pediste rubro {rubro.upper()} y el RUC dice {g6[:1]}; "
                               f"manda el que pediste")
+
+        # EL SEGMENTO TAMBIEN SALE DEL RUC, y con la misma regla que el rubro: el
+        # explicito manda y se avisa si no coinciden. A diferencia del rubro, este SI
+        # mejora la precision -- corrige el sesgo de los cargos altos (D-018) -- asi que
+        # que el cliente no lo sepa no puede costarle el ajuste.
+        #
+        # Va en `aviso_segmento` y no en `aviso` para no pisar el del rubro cuando los dos
+        # discrepan en el mismo pedido.
+        if seg_ruc:
+            ficha["segmento_del_ruc"] = seg_ruc
+        if seg_ruc and not segmento and seg_ruc in SEGMENTOS:
+            segmento = seg_ruc
+            ficha["segmento_derivado"] = segmento
+        elif seg_ruc and segmento and segmento.upper() != seg_ruc:
+            ficha["aviso_segmento"] = (
+                f"pediste segmento {segmento.upper()} y el RUC dice {seg_ruc}; "
+                f"manda el que pediste")
     extra_pedidas = [t.strip() for t in (_opt(columnas_extra) or "").split(",")
                      if t.strip()]
     try:
