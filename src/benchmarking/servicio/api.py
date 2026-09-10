@@ -73,6 +73,35 @@ UNIDADES = {
 }
 
 
+# Secciones CIIU rev.4. La base solo guarda la LETRA, asi que el nivel de grupo
+# —`C239`, "Productos minerales no metalicos"— no se puede resolver aqui: haria falta
+# `ciiu_n6` en el marco y una tabla de descripciones. Se da la seccion y se dice que el
+# grupo no esta, en vez de dejar la tarjeta a medias sin explicacion.
+CIIU_SECCION = {
+    "A": "Agricultura, ganaderia, silvicultura y pesca",
+    "B": "Explotacion de minas y canteras",
+    "C": "Industrias manufactureras",
+    "D": "Suministro de electricidad, gas, vapor y aire acondicionado",
+    "E": "Distribucion de agua; alcantarillado y gestion de desechos",
+    "F": "Construccion",
+    "G": "Comercio al por mayor y al por menor; reparacion de vehiculos",
+    "H": "Transporte y almacenamiento",
+    "I": "Alojamiento y servicio de comidas",
+    "J": "Informacion y comunicacion",
+    "K": "Actividades financieras y de seguros",
+    "L": "Actividades inmobiliarias",
+    "M": "Actividades profesionales, cientificas y tecnicas",
+    "N": "Servicios administrativos y de apoyo",
+    "O": "Administracion publica y defensa; seguridad social",
+    "P": "Ensenanza",
+    "Q": "Salud humana y asistencia social",
+    "R": "Artes, entretenimiento y recreacion",
+    "S": "Otras actividades de servicios",
+    "T": "Hogares como empleadores",
+    "U": "Organizaciones y organos extraterritoriales",
+}
+
+
 def _opt(v: str | None) -> str | None:
     """Un campo de formulario vacio es AUSENCIA, no la cadena vacia.
 
@@ -340,8 +369,49 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
                    and c not in quedan]
     json_det = json_det[quedan]
 
+    # ---- TARJETAS DE CABECERA -------------------------------------------------
+    # `trabajadores_analizados` es EXACTO: las celdas son disjuntas —cada persona de la
+    # base esta en una sola— asi que sumar sobre las celdas DISTINTAS que toca el cliente
+    # no cuenta a nadie dos veces.
+    #
+    # `empresas` NO se puede deduplicar con lo que hay guardado. La base almacena cuantas
+    # empresas respaldan cada celda, no CUALES, y la misma empresa respalda varios cargos
+    # del cliente. Sumar daria un numero inflado y presentarlo como "empresas analizadas"
+    # seria mentir en la tarjeta mas visible del informe. Se declara la cota inferior —el
+    # cargo mejor respaldado— y se dice que es una cota.
+    idx = [motor.base.idx[t] for t in set(titulos) if t in motor.base.idx]
+    grupos_unicos = {int(motor.base.grupo[i]) for i in idx}
+    vistos, trabajadores = set(), 0
+    for i in idx:
+        g = int(motor.base.grupo[i])
+        if g not in vistos:
+            vistos.add(g)
+            trabajadores += int(motor.base.personas[i])
+    emps = [int(motor.base.emp[i]) for i in idx] or [0]
+    mercado = {
+        "cargos_del_cliente": int(pd.Series(titulos).nunique()),
+        "cargos_con_datos_en_la_base": len(grupos_unicos),
+        "trabajadores_analizados": trabajadores,
+        "empresas_por_cargo": {"minimo": min(emps), "mediana": int(np.median(emps)),
+                               "maximo": max(emps)},
+        "empresas_distintas_cota_inferior": max(emps),
+        "nota_empresas": "La base guarda CUANTAS empresas respaldan cada cargo, no "
+                         "cuales, y la misma empresa respalda varios de tus cargos. El "
+                         "total sin duplicar no es calculable con lo guardado: "
+                         "`empresas_distintas_cota_inferior` es un minimo garantizado.",
+    }
+    industria = None
+    if rubro:
+        industria = {"ciiu_seccion": rubro,
+                     "nombre": CIIU_SECCION.get(rubro, "seccion desconocida"),
+                     "nivel": "seccion",
+                     "nota": "La base solo distingue la SECCION (una letra). El nivel de "
+                             "grupo (p.ej. C239) no esta disponible."}
+
     cuerpo = {
         "esquema": ESQUEMA,
+        "mercado": mercado,
+        "industria": industria,
         "meta": {
             "anio": anio, "sbu": motor.settings.get_sbu(anio),
             "segmento": segmento, "rubro": rubro,

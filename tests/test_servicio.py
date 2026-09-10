@@ -253,3 +253,36 @@ def test_sin_fechas_la_antiguedad_es_null_y_no_cero(cliente):
                        files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
     f = cliente.get(f"/informes/{tid}").json()["detalle"][0]
     assert f["antiguedad_anios"] is None and f["antiguedad_tramo"] is None
+
+
+def test_las_tarjetas_de_cabecera(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR", "VENDEDOR"],
+                       "sueldo": ["1500", "1400", "800"]})
+    tid = cliente.post("/informes",
+                       files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    m = cliente.get(f"/informes/{tid}").json()["mercado"]
+    assert m["cargos_del_cliente"] == 2
+    assert m["cargos_con_datos_en_la_base"] == 2
+    # 14 personas por cargo en la base sintetica, y NO se cuenta CONTADOR dos veces
+    assert m["trabajadores_analizados"] == 28
+    assert m["empresas_por_cargo"]["mediana"] == 14
+
+
+def test_las_empresas_no_se_suman_porque_se_contarian_dos_veces(cliente):
+    # Es la tarjeta mas visible del informe: dar un total inflado ahi seria mentir.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR", "GUARDIA"],
+                       "sueldo": ["1500", "800", "600"]})
+    tid = cliente.post("/informes",
+                       files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    m = cliente.get(f"/informes/{tid}").json()["mercado"]
+    assert m["empresas_distintas_cota_inferior"] == 14, "una cota, no una suma"
+    assert m["empresas_distintas_cota_inferior"] < 3 * 14
+    assert "no es calculable" in m["nota_empresas"]
+
+
+def test_la_industria_solo_llega_a_seccion(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    sin = cliente.get(f"/informes/"
+                      f"{cliente.post('/informes', files={'archivo': ('n.xlsx', _xlsx(df))}).json()['id']}"
+                      ).json()
+    assert sin["industria"] is None, "sin rubro no hay tarjeta de industria"
