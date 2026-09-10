@@ -45,6 +45,8 @@ from ..config.settings import cargar_settings
 from ..evaluacion import embeddings
 from ..producto.antiguedad import antiguedad_anios, tramo
 from ..producto.base_referencia import SEGMENTOS, BaseReferencia
+from ..producto.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
+from ..producto.formato import validar as validar_formato
 from ..producto.comparacion import comparar, texto_resumen
 from ..producto.referenciar_nomina import _POSIBLES, _POSIBLES_SUELDO, _buscar_sueldo
 
@@ -322,7 +324,8 @@ def leer_nomina_bytes(contenido: bytes, nombre: str, col_cargo: str | None = Non
 def procesar(motor: Motor, df, col_cargo: str, anio: int,
              segmento: str | None, rubro: str | None,
              col_sueldo: str | None, columnas_extra: list[str] | None = None,
-             columnas_originales: bool = True) -> tuple[dict, bytes]:
+             columnas_originales: bool = True,
+             informe_formato: dict | None = None) -> tuple[dict, bytes]:
     """El informe completo. Es la misma cadena que el CLI, sin tocar el disco."""
     titulos = df[col_cargo].fillna("").astype(str).str.strip().str.upper()
     nuevos = motor.asegurar(titulos.tolist())
@@ -470,6 +473,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
                      "empresas distintas, sin control por empresa, sector ni "
                      "antiguedad. NO es una brecha salarial medida.",
         },
+        "formato": informe_formato,
         "reparto_estado": {str(k): int(v) for k, v
                            in salida["estado"].value_counts().items()},
         "reparto_confianza": ({str(k): int(v) for k, v
@@ -534,8 +538,15 @@ def crear(tareas: BackgroundTasks,
               None, description="OPCIONAL. CIIU de primer nivel (una letra). Compara "
                                 "solo contra ese sector donde haya respaldo. NO mejora "
                                 "la precision: estrecha el respaldo (D-023)."),
+          formato_libre: bool = Form(
+              False, description="Por defecto se exige el FORMATO del producto: "
+                                 "columna `cargo` obligatoria, y opcionales `sueldo`, "
+                                 "`id_empleado`, `nombre`, `sexo`, `fecha_ingreso`, "
+                                 "`centro_costo`. No se aceptan cedulas. Ponlo en true "
+                                 "para subir un archivo cualquiera indicando las "
+                                 "columnas a mano."),
           columna_cargo: str | None = Form(
-              None, description="OPCIONAL. Solo si la columna no se autodetecta."),
+              None, description="Solo con formato_libre=true."),
           columna_sueldo: str | None = Form(
               None, description="OPCIONAL. Solo si la columna no se autodetecta."),
           columnas_originales: bool = Form(
@@ -575,12 +586,26 @@ def crear(tareas: BackgroundTasks,
         raise HTTPException(400, "el archivo llego vacio")
     try:
         df, col = leer_nomina_bytes(contenido, archivo.filename or "n.xlsx",
-                                    columna_cargo)
+                                    columna_cargo if formato_libre else None)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
+    # FORMATO ESTRICTO por defecto: nombres canonicos, sin cedulas, y todos los
+    # problemas de una vez. `formato_libre` existe para el archivo que llega como
+    # llega, pero deja de ser un contrato y pasa a ser una conversion manual.
+    informe_formato = None
+    if not formato_libre:
+        try:
+            df, informe_formato = validar_formato(df)
+        except FormatoInvalido as e:
+            raise HTTPException(400, {"formato": "estricto",
+                                      "problemas": e.problemas,
+                                      "obligatorias": list(OBLIGATORIAS),
+                                      "aceptadas": list(CANONICAS)}) from e
+        col = "cargo"
+        columna_sueldo = "sueldo" if "sueldo" in df.columns else None
     # Si el cliente NOMBRA la columna de sueldo, tiene que existir. Ignorarla en silencio
     # le devuelve un informe sin comparacion y sin explicacion.
-    if columna_sueldo:
+    if columna_sueldo and formato_libre:
         real = _col(df, columna_sueldo)
         if real is None:
             raise HTTPException(400, f"la columna de sueldo '{columna_sueldo}' no esta "
@@ -605,7 +630,7 @@ def crear(tareas: BackgroundTasks,
                                             segmento.upper() if segmento else None,
                                             rubro.upper() if rubro else None,
                                             columna_sueldo, extra,
-                                            columnas_originales)
+                                            columnas_originales, informe_formato)
             t.estado = "listo"
         except Exception as e:                               # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"

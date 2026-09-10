@@ -103,3 +103,13 @@ def test_mas_columnas_de_salida_no_cambian_el_resultado():
                                         "Fecha de salida 2": [None],
                                         "Fecha de reingreso 1": [None]}), 2025).iloc[0]
     assert abs(a1 - a2) < 1e-9
+
+
+def test_detecta_el_nombre_CANONICO_con_guion_bajo():
+    # El formato del producto usa `fecha_ingreso`. La regex admitia espacios entre las
+    # palabras pero no el guion bajo, asi que la antiguedad salia vacia para TODAS las
+    # filas y en silencio — el peor modo de fallo.
+    ing, _, _ = columnas_de_fecha(pd.DataFrame(columns=["cargo", "fecha_ingreso"]))
+    assert ing == "fecha_ingreso"
+    a = antiguedad_anios(pd.DataFrame({"fecha_ingreso": ["01/01/2020"]}), 2025)
+    assert abs(a.iloc[0] - 6.0) < 0.02

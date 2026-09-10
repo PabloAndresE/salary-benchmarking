@@ -31,7 +31,10 @@ _RE_REINGRESO = re.compile(r"reingreso")
 
 
 def _norm(c) -> str:
-    return " ".join(str(c).split()).casefold()
+    """Guiones bajos como espacios: el formato canonico usa `fecha_ingreso` y la
+    plantilla de un cliente `Fecha de primer ingreso`. Sin esto la primera no se
+    detectaba y la antiguedad salia vacia para TODAS las filas, en silencio."""
+    return " ".join(str(c).replace("_", " ").split()).casefold()
 
 
 def columnas_de_fecha(df) -> tuple[str | None, list[str], list[str]]:

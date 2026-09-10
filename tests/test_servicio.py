@@ -121,7 +121,8 @@ def test_una_nomina_ilegible_da_400_y_NO_mata_al_worker(cliente):
     r = cliente.post("/informes", files={"archivo": ("n.xlsx", b"esto no es un excel")})
     assert r.status_code == 400
     df = pd.DataFrame({"otra_cosa": ["x"]})
-    r2 = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    r2 = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                      data={"formato_libre": "true"})
     assert r2.status_code == 400 and "columna de cargo" in r2.json()["detail"]
     assert cliente.get("/salud").json()["ok"], "el servicio sigue en pie"
 
@@ -177,7 +178,7 @@ def test_una_columna_que_TERMINA_en_espacio_se_encuentra_igual(cliente):
     # `_buscar_sueldo` devolvia None EN SILENCIO: informe sin comparacion y sin motivo.
     df = pd.DataFrame({"Cargo ": ["CONTADOR"], "Ultimo sueldo/pension mensual ": ["1500"]})
     r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
-                     data={"columna_cargo": "Cargo",
+                     data={"formato_libre": "true", "columna_cargo": "Cargo",
                            "columna_sueldo": "ultimo sueldo/pension mensual"})
     assert r.status_code == 202, r.text
     d = cliente.get(f"/informes/{r.json()['id']}").json()
@@ -188,7 +189,7 @@ def test_una_columna_que_TERMINA_en_espacio_se_encuentra_igual(cliente):
 def test_una_columna_de_sueldo_inventada_da_400_en_vez_de_ignorarse(cliente):
     df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
     r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
-                     data={"columna_sueldo": "no_existe"})
+                     data={"formato_libre": "true", "columna_sueldo": "no_existe"})
     assert r.status_code == 400 and "no_existe" in r.json()["detail"]
 
 
@@ -198,28 +199,28 @@ def test_el_JSON_trae_las_columnas_del_cliente_por_defecto(cliente):
     # Que `sexo` viaje NO contradice que nunca sea variable del modelo: no entra en
     # ningun calculo, sale para poder MEDIR la brecha (D-011).
     df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"],
-                       "Nombres": ["Ana"], "Sexo": ["F"],
-                       "Fecha de primer ingreso": ["01/01/2015"]})
+                       "nombre": ["Ana"], "sexo": ["F"],
+                       "fecha_ingreso": ["01/01/2015"]})
     tid = cliente.post("/informes",
                        files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
     f = cliente.get(f"/informes/{tid}").json()["detalle"][0]
-    assert f["Nombres"] == "Ana" and f["Sexo"] == "F"
-    assert f["Fecha de primer ingreso"]
+    assert f["nombre"] == "Ana" and f["sexo"] == "F"
+    assert f["fecha_ingreso"]
     # y lo del modelo va primero, para que la fila se lea de un vistazo
     assert list(f)[:3] == ["fila", "cargo", "estado"]
 
 
 def test_se_puede_recortar_a_solo_los_numeros(cliente):
     df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"],
-                       "Centro de costos": ["Admin"], "Nombres": ["Ana"]})
+                       "centro_costo": ["Admin"], "nombre": ["Ana"]})
     tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
                        data={"columnas_originales": "false",
-                             "columnas_extra": "centro de costos"}).json()["id"]
+                             "columnas_extra": "centro_costo"}).json()["id"]
     d = cliente.get(f"/informes/{tid}").json()
     f = d["detalle"][0]
-    assert f["Centro de costos"] == "Admin", "la pedida si"
+    assert f["centro_costo"] == "Admin", "la pedida si"
     assert "Nombres" not in f, "las demas no"
-    assert "Nombres" in d["meta"]["columnas_omitidas"]
+    assert "nombre" in d["meta"]["columnas_omitidas"]
 
 
 def test_una_columna_extra_inventada_da_400(cliente):
@@ -234,14 +235,12 @@ def test_la_antiguedad_viaja_calculada_y_en_tramos(cliente):
     # El front la necesita para el filtro de ANTIGUEDAD y para explicar por que alguien
     # cobra lo que cobra. La plantilla no la trae: hay que calcularla de las fechas.
     df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR"], "sueldo": ["1500", "1400"],
-                       "Fecha de primer ingreso": ["01/01/2010", "01/01/2024"],
-                       "Fecha de salida 1": ["01/01/2015", None],
-                       "Fecha de reingreso 1": ["01/01/2020", None]})
+                       "fecha_ingreso": ["01/01/2014", "01/01/2024"]})
     tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
                        data={"anio": 2025}).json()["id"]
     d = cliente.get(f"/informes/{tid}").json()
     a, b = d["detalle"][0], d["detalle"][1]
-    assert abs(a["antiguedad_anios"] - 11.0) < 0.1, "no cuenta los 5 anios fuera"
+    assert abs(a["antiguedad_anios"] - 12.0) < 0.1
     assert a["antiguedad_tramo"] == "10 a 20"
     assert b["antiguedad_tramo"] == "1 a 3"
     assert d["meta"]["unidades"]["antiguedad_anios"]["unidad"] == "anios"
