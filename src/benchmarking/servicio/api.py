@@ -374,15 +374,31 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
     # persona esta en una sola— y `empresas` porque el padron guarda QUE empresas
     # respaldan cada celda, no solo cuantas: la union se calcula de verdad en vez de
     # sumar conteos, que contaria varias veces a la que respalda varios cargos.
-    idx = [motor.base.idx[t] for t in set(titulos) if t in motor.base.idx]
+    # SE CUENTA LO QUE DE VERDAD SE USO, celda por celda. Con `--rubro`, las celdas
+    # que tenian respaldo sectorial se comparan contra empresas de ESE rubro y las que
+    # no, contra el mercado entero — el fallback es por cargo. Contar el padron entero
+    # daria 4.405 empresas cuando la comparacion de dos tercios de las filas se hizo
+    # contra un subconjunto: la tarjeta describiria algo que no paso.
+    usa_rubro = {}
+    if "rubro" in ref.columns:
+        usa_rubro = {t: str(r or "") for t, r in zip(ref["cargo"], ref["rubro"])}
+    idx = [(t, motor.base.idx[t]) for t in set(titulos) if t in motor.base.idx]
     vistos, trabajadores, empresas = set(), 0, set()
-    for i in idx:
+    n_sectoriales = 0
+    for t, i in idx:
         g = int(motor.base.grupo[i])
         if g in vistos:
             continue
         vistos.add(g)
         trabajadores += int(motor.base.personas[i])
-        empresas.update(motor.base.empresas_de(i).tolist())
+        del_celda = motor.base.empresas_de(i)
+        r = usa_rubro.get(t, "")
+        if r:
+            n_sectoriales += 1
+            del_celda = [e for e in del_celda.tolist()
+                         if e < len(motor.base.pad_ciiu)
+                         and str(motor.base.pad_ciiu[e] or "").startswith(r)]
+        empresas.update(int(e) for e in del_celda)
     con_padron = len(motor.base.pad_idx) > 0
 
     tam = motor.base.pad_tam
@@ -390,6 +406,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
     mercado = {
         "cargos_del_cliente": int(pd.Series(titulos).nunique()),
         "cargos_con_datos_en_la_base": len(vistos),
+        "cargos_comparados_contra_su_rubro": n_sectoriales,
         "trabajadores_analizados": trabajadores,
         "empresas_analizadas": len(empresas) if con_padron else None,
         "tamano_de_las_empresas": ({"minimo": min(tallas), "maximo": max(tallas),
@@ -398,12 +415,15 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
                                     "sin_dato": len(empresas) - len(tallas)}
                                    if tallas else None),
     }
+    if rubro and n_sectoriales < len(vistos):
+        mercado["nota_rubro"] = (
+            f"{n_sectoriales} de {len(vistos)} cargos se comparan contra empresas de "
+            f"{rubro}; el resto no llega al suelo de respaldo en ese sector y se compara "
+            f"contra el mercado entero. El fallback es por cargo.")
     if not con_padron:
         mercado["nota"] = ("Esta base se construyo sin padron de empresas: "
                            "`empresas_analizadas` no es calculable. Reconstruyela.")
     elif tallas and len(tallas) < len(empresas):
-        # El 26% de las filas no cruza con SCVS. Decirlo evita que el front presente
-        # un rango calculado sobre tres cuartas partes como si fuera sobre el total.
         mercado["nota_tamano"] = (f"{len(empresas) - len(tallas)} de {len(empresas)} "
                                   f"empresas no tienen tamano registrado y quedan fuera "
                                   f"del rango.")

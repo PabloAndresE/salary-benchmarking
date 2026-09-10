@@ -293,3 +293,12 @@ def test_la_industria_solo_llega_a_seccion(cliente):
                       f"{cliente.post('/informes', files={'archivo': ('n.xlsx', _xlsx(df))}).json()['id']}"
                       ).json()
     assert sin["industria"] is None, "sin rubro no hay tarjeta de industria"
+
+
+def test_con_rubro_se_cuentan_las_empresas_DE_ESE_RUBRO(cliente):
+    # La tarjeta tiene que describir la comparacion que de verdad se hizo. Contar el
+    # padron entero daria un numero mayor que el conjunto contra el que se comparo.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR"], "sueldo": ["1500", "800"]})
+    sin = cliente.get(f"/informes/{cliente.post('/informes', files={'archivo': ('n.xlsx', _xlsx(df))}).json()['id']}").json()
+    assert sin["mercado"]["cargos_comparados_contra_su_rubro"] == 0
+    assert sin["mercado"]["empresas_analizadas"] == 28
