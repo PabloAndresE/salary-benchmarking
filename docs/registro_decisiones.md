@@ -2955,7 +2955,11 @@ homogeneidad se pagan con muestra: de 46 empresas por celda a 16.
 una banda más ajustada, sino porque la recentra sobre 16 empresas apoyándose en 6 puntos
 de señal. Movimiento grande, información poca.
 
-### La decisión
+### La decisión (revisada — ver el apartado final)
+
+> **Nota:** lo que sigue describe la primera decisión, que fue *el veredicto sale siempre
+> de la sección*. Se revisó al medir una regla mejor: ver **«El veredicto sí baja de
+> nivel, con umbral de fiabilidad»** al final de esta entrada.
 
 Se separa **lo que se enseña** de **lo que se calcula**:
 
@@ -2990,3 +2994,68 @@ cambian de segmento entre sus dos últimas declaraciones, y 1.879 tienen caídas
 plantilla imposibles. El propio RUC que originó esta decisión declara 2 empleados en 2025
 y 193 en 2024, así que lo clasificamos MEDIANA cuando es GRANDE. Eso alimenta
 `ajuste_seg` (D-018). Sin resolver.
+
+
+### El veredicto sí baja de nivel, con umbral de fiabilidad
+
+**Lo que estaba mal en la decisión anterior.** Se midió la cascada usando
+`MIN_EMPRESAS_RUBRO = 10` como criterio para bajar de nivel. Ese es un suelo de
+**confidencialidad** —por debajo no se publica un dato sin identificar empresas— y se
+estaba usando como si fuera uno de **fiabilidad**. Son cosas distintas y confundirlas es
+lo que hizo perder a la cascada.
+
+**La regla correcta**, propuesta desde el negocio: bajar al nivel más fino que supere un
+umbral de respaldo, subiendo cuando no llegue. Clase → grupo → división → sección, y la
+sección solo como último recurso.
+
+**Exploración** (sobre los votos de `19`, nueve umbrales):
+
+| T | votos que bajan | diferencia vs sección | |
+|---|---|---|---|
+| 10 | 15,2% | +0,00094 [+0,00048, +0,00146] | peor |
+| 15 | 8,7% | +0,00034 [+0,00002, +0,00076] | peor |
+| 20 | 5,5% | +0,00011 [−0,00013, +0,00040] | nulo |
+| 30 | 2,6% | +0,00007 [−0,00004, +0,00018] | nulo |
+
+Elegir el umbral mirando el resultado es ajustar a ruido, así que se confirmó aparte.
+
+**Confirmación** (`e3/20`, partición nueva con semilla `20260915`, criterio y margen
+declarados antes de correr):
+
+```
+cascada con T>=30
+  votos que bajan de nivel   1.181 (5,4%)
+  diferencia vs hoy         -0,00002   IC95 [-0,00027, +0,00020]
+  criterio: techo < +0,00020            -> SE CONFIRMA
+  veredictos que cambian     83 (0,38%)
+```
+
+**Adoptado: `MIN_EMPRESAS_VEREDICTO = 30`.**
+
+**Qué NO es.** No es una mejora: el efecto es cero por construcción y ningún umbral lo
+vuelve positivo. Es la forma de que el veredicto salga del sector del cliente —cosa que
+el negocio pide y que es razonable pedir— sin pagar precisión por ello.
+
+**Dos honestidades sobre la confirmación.** El techo quedó en +0,00020 con un margen de
++0,00020: pasa por el canto. Y en la partición nueva **el suelo de 10 tampoco salió
+peor** (+0,00059, IC [−0,00007, +0,00121]), o sea que el efecto es más pequeño que la
+variación entre particiones. La lectura honesta es *«a partir de 20-30 no hace daño»*, no
+*«encontramos el punto exacto donde deja de doler»*.
+
+**Pendiente, medido como secundaria y sin confirmar.** El umbral sobre la incertidumbre
+(`1/W_fino <= 2 · 1/W_sección`) mueve el doble de votos —10,4% contra 5,4%— sin empeorar,
+y es el criterio correcto: 30 empresas no valen lo mismo en `AUXILIAR DE LIMPIEZA` que en
+`GERENTE GENERAL`, donde los sueldos van de $500 a $13.000. Se eligió después de ver los
+datos, así que necesita su propia confirmación antes de entrar.
+
+**Sobre la librería que originó todo esto** (`G4761.03`), 5 de sus 8 cargos pasan a
+compararse contra su división y 3 se quedan en sección porque su división no llega a 30
+empresas:
+
+```
+CONTADOR                  $1.296 -> $1.478   division  49 empresas  +14,0%
+GERENTE GENERAL           $3.110 -> $3.382   division  34           +8,7%
+VENDEDOR                  $  524 -> $  500   division  65           -4,5%
+AUXILIAR DE LIMPIEZA      $  487 -> $  487   seccion   92            0,0%   (division: 12)
+CAJERO                    $  513 -> $  513   seccion  112            0,0%   (division: 16)
+```

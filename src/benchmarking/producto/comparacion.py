@@ -242,7 +242,8 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     # SU SECTOR, informativo. Va en `por_puesto` y no en el detalle: es propiedad del
     # cargo. En dolares, como el resto de lo que el cliente lee, y con el numero de
     # empresas AL LADO — sin eso, un numero de 16 empresas parece uno de 46.
-    for c, d_ in (("sector_codigo", ""), ("sector_nivel", ""), ("sector_empresas", 0)):
+    for c, d_ in (("sector_codigo", ""), ("sector_nivel", ""), ("sector_empresas", 0),
+                  ("rubro", ""), ("rubro_nivel", "")):
         out["_" + c] = (pd.Series(list(ref_df[c]), index=df.index)
                         if c in ref_df.columns else d_)
     out["_secref"] = (
@@ -284,6 +285,8 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
                           brecha_grafia=("_brecha", "first"),
                           tu_empresa=("_tuemp", "first"),
                           tu_influencia=("_tuinf", "first"),
+                          rubro=("_rubro", "first"),
+                          rubro_nivel=("_rubro_nivel", "first"),
                           sector_codigo=("_sector_codigo", "first"),
                           sector_nivel=("_sector_nivel", "first"),
                           sector_referencia=("_secref", "first"),

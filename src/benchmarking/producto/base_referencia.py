@@ -217,23 +217,34 @@ COL_RUBRO = "ciiu_n1"
 NIVELES_RUBRO = (5, 4, 3, 1)
 NOMBRE_NIVEL = {5: "clase", 4: "grupo", 3: "division", 1: "seccion"}
 
-# DE QUE NIVEL SALE EL VEREDICTO. Seccion, y esta MEDIDO, no elegido por prudencia:
+# DE QUE NIVEL SALE EL VEREDICTO. Del mas fino que aguante `MIN_EMPRESAS_VEREDICTO`
+# empresas, subiendo de nivel cuando no llega: clase -> grupo -> division -> seccion.
 #
-#   D-023  el rubro (seccion) no mejora la precision; se monto por legitimidad
-#   e3/18  cascada division -> seccion:            +0,42% de pinball, IC sobre cero
-#   e3/19  cascada clase -> grupo -> division:     +0,67%, y peor cuanto mas fino
+# EL SUELO DE 10 NO SERVIA PARA ESTO, y esa fue la confusion. `MIN_EMPRESAS_RUBRO` es un
+# suelo de CONFIDENCIALIDAD —por debajo no se publica— y se estaba usando como si fuera
+# uno de FIABILIDAD. Medido (`e3/19`), bajar de nivel con solo 10 empresas detras pierde:
+# +0,00094 de pinball, IC [+0,00048, +0,00146], y cambia el veredicto del 1,8% de los
+# cargos hacia el lado equivocado.
 #
-# El porque: de la diferencia de pago ENTRE EMPRESAS por un mismo cargo, la division
-# explica 6 puntos netos —0,389 crudo contra 0,325 barajando, o sea que casi todo es
-# inflacion mecanica de partir en grupos chicos—. Se compran 6 puntos de homogeneidad
-# y se paga con la muestra: de 46 empresas por celda a 16.
+# Con 30 el efecto desaparece. Confirmado en una particion distinta de la que eligio el
+# umbral (`e3/20`, semilla 20260915): -0,00002, IC [-0,00027, +0,00020], con el 5,4% de
+# los votos bajando de nivel y el 0,38% de los veredictos cambiando.
 #
-# En terminos de producto: cambia el veredicto del 1,8% de los cargos —2,7 de cada 150—
-# y en esos, la seccion acierta MAS (+9,2% de pinball, IC [+0,0005, +0,0116]).
+# QUE ESTO NO ES. No es una mejora: el efecto es cero por construccion, y ningun umbral
+# lo vuelve positivo. Es la forma de que el veredicto salga del sector del cliente
+# —cosa que el negocio pide y que es razonable pedir— sin pagar precision por ello.
 #
-# Si algun dia se decide pagar ese precio, cambiar esto a 3 es todo lo que hace falta:
-# las tablas finas YA se guardan. Pero que se decida sabiendo el precio.
-NIVEL_VEREDICTO = 1
+# LO QUE LA CONFIRMACION NO DIJO, y conviene no olvidarlo: en la particion nueva el suelo
+# de 10 tampoco salio peor (+0,00059, IC [-0,00007, +0,00121]). O sea que el efecto es
+# mas chico que la variacion entre particiones. La lectura honesta es "a partir de 20-30
+# no hace dano", no "encontramos el punto exacto donde deja de doler".
+#
+# PENDIENTE, medido como secundaria y sin confirmar: el umbral sobre la INCERTIDUMBRE
+# (`1/W_fino <= 2 * 1/W_seccion`) mueve el doble de votos —10,4% contra 5,4%— sin
+# empeorar, y es el criterio correcto, porque 30 empresas no valen lo mismo en
+# `AUXILIAR DE LIMPIEZA` que en `GERENTE GENERAL`. Se eligio despues de ver los datos,
+# asi que necesita su propia confirmacion antes de entrar.
+MIN_EMPRESAS_VEREDICTO = 30
 MIN_EMPRESAS_RUBRO = MIN_EMPRESAS_BANDA     # mismo suelo que la banda global
 MIN_PERSONAS_RUBRO = MIN_PERSONAS
 _RUBRO_NULO = {"", "NAN", "NONE", "NA", "NULL"}
@@ -994,6 +1005,31 @@ class BaseReferencia:
         return {self._fila_grupo[int(f)] for f in np.unique(filas)
                 if int(f) in self._fila_grupo}
 
+    def rubro_del_veredicto(self, i_celda: int, ciiu: str, seccion: str):
+        """De que rubro sale la referencia: el mas fino con respaldo, o la seccion.
+
+        Baja clase -> grupo -> division -> seccion y se queda en el PRIMERO que tenga al
+        menos `MIN_EMPRESAS_VEREDICTO` empresas. Si la clase no llega, prueba el grupo;
+        si tampoco, la division; la seccion es el ultimo recurso.
+
+        EL UMBRAL NO ES EL SUELO DE PUBLICACION. `MIN_EMPRESAS_RUBRO` (10) dice a partir
+        de cuando un dato se puede enseñar sin identificar a nadie; esto dice a partir de
+        cuando se puede DECIDIR con el. Medido: con 10 el veredicto empeora, con 30 no.
+        Ver `MIN_EMPRESAS_VEREDICTO`.
+
+        Devuelve (codigo, nombre_del_nivel) y nunca None: si ni la seccion tiene banda,
+        devuelve la seccion igual y quien llama cae al mercado entero como siempre.
+        """
+        c6 = str(ciiu or "").strip().upper()
+        if i_celda is not None and c6:
+            for k in NIVELES_RUBRO:
+                if k == 1 or k >= len(c6):
+                    continue
+                fr = self.rub.get((int(i_celda), c6[:k]))
+                if fr is not None and int(self.rub_emp[fr]) >= MIN_EMPRESAS_VEREDICTO:
+                    return c6[:k], NOMBRE_NIVEL.get(k, str(k))
+        return seccion, "seccion"
+
     def sector_fino(self, i_celda: int, ciiu: str):
         """El nivel CIIU mas fino que tiene banda para esta celda. None si ninguno.
 
@@ -1176,6 +1212,7 @@ class BaseReferencia:
                           "base": "sin cargo", "ancho_rel": np.nan,
                           "incert_centro": np.nan, "segmento": "", "rubro": "",
                           "brecha_grafia": "", "empresas": 0, "personas": 0,
+                          "rubro_nivel": "",
                           **_cols_sector(None),
                           "tu_empresa": False, "tu_influencia": np.nan,
                           "similitud": 0.0}
@@ -1213,7 +1250,12 @@ class BaseReferencia:
                 # .HAY RUBRO PARA ESTE CARGO? El fallback es por cargo: un cliente de
                 # manufactura tendra rubro en `CONTADOR` y mercado entero en
                 # `SOLDADOR DE PRECISION`, porque el suelo es de confidencialidad.
-                fr = self.rub.get((propio, rub)) if rub else None
+                # EL RUBRO SE ELIGE POR CARGO, no por informe. Un cliente puede
+                # tener respaldo de su clase en `VENDEDOR` —donde hay cientos de
+                # empresas— y solo de su seccion en `JEFE DE SEGURIDAD PATRIMONIAL`.
+                rub_v, niv_v = (self.rubro_del_veredicto(propio, c6_cliente, rub)
+                                if rub else (None, ""))
+                fr = self.rub.get((propio, rub_v)) if rub_v else None
                 if fr is not None:
                     # Centro y banda salen de los MISMOS votos —los del rubro— o el
                     # centro podria caer fuera de su propio p25-p75.
@@ -1221,7 +1263,7 @@ class BaseReferencia:
                     W_i = float(self.rub_W[fr])
                     n_emp, n_per = int(self.rub_emp[fr]), int(self.rub_per[fr])
                     q, qp = self.rub_bandas[fr], self.rub_bandas_per[fr]
-                    base, usado = f"rubro {rub}", rub
+                    base, usado, nivel_usado = f"rubro {rub_v}", rub_v, niv_v
                 else:
                     mu = self.m[propio]
                     W_i = float(self.W[propio])
@@ -1230,7 +1272,7 @@ class BaseReferencia:
                          else np.full(len(CUANTILES), np.nan))
                     qp = (self.bandas_per[propio] if self.emp[propio] >= MIN_EMPRESAS_BANDA
                           else np.full(len(CUANTILES), np.nan))
-                    base, usado = "datos directos", ""
+                    base, usado, nivel_usado = "datos directos", "", ""
                 # `tau_c` y `sigma_c` son SIEMPRE los de la celda entera, tambien con
                 # rubro: con 10-90 empresas se estimarian pesimo y ya vienen encogidas.
                 # La banda habla de EMPRESAS, asi que NO lleva `sigma`: la dispersion
@@ -1343,7 +1385,9 @@ class BaseReferencia:
                 # puesto, y lo que no se sabe de su escalon.
                 var_centro = var - tau2_v
                 var_per = var + float((peso * self.sigma2_c[j]).sum())
-                base, usado = "por analogia", ""
+                # La rama de ANALOGIA no usa rubro: la referencia sale de los vecinos
+                # semanticos del titulo, no de las empresas de un sector.
+                base, usado, nivel_usado = "por analogia", "", ""
                 # SIN CONTAR DOS VECES. Los vecinos que comparten grupo de fusion
                 # comparten estadisticos, asi que sumarlos multiplicaria el respaldo por
                 # el numero de grafias. `ANALISTA DE RIESGO CREDITICIO` declaraba 194
@@ -1385,6 +1429,9 @@ class BaseReferencia:
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
                         "incert_centro": round(incert, 4),
                         "segmento": seg or "", "rubro": usado,
+                        # A QUE NIVEL se comparo: el front tiene que poder decir
+                        # "contra tu division" y no "contra tu rubro" a secas.
+                        "rubro_nivel": nivel_usado,
                         # Diferencia que habia entre la grafia femenina y la masculina
                         # antes de unirlas. Vacio donde no hubo fusion de genero.
                         "brecha_grafia": (round(float(np.exp(self.brecha_gen[propio]) - 1), 4)

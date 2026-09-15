@@ -1,0 +1,159 @@
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\vertexai\_model_garden\_model_garden_models.py:278: UserWarning: This feature is deprecated as of June 24, 2025 and will be removed on June 24, 2026. For details, see https://cloud.google.com/vertex-ai/generative-ai/docs/deprecations/genai-vertexai-sdk.
+  warning_logs.show_deprecation_warning()
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'S' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'D' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'E' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\src\benchmarking\producto\base_referencia.py:1201: UserWarning: rubro 'R' sin datos suficientes en la base; todo el informe cae al mercado entero
+  warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
+PARTICION NUEVA (semilla 20260915, distinta de la de 18 y 19)
+construir 4,328   evaluar 1,442
+embebiendo 57,772 titulos...
+construyendo la base (ya guarda los cuatro niveles)...
+fusion por errata: 533 grupos absorbidos
+fusion por genero: 431 pares juntados
+padron: 102,592 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 13,089 pares (celda, rubro) sobre 111 rubros de 4 niveles
+votos apartados: 22,043 sobre 927 empresas
+
+==============================================================================
+PRIMARIA  cascada con T>=30 empresas, contra hoy
+==============================================================================
+  votos que bajan de nivel: 1,181 (5.4%)
+  pinball hoy     0.13442
+  pinball cascada 0.13445
+  diferencia      -0.00002   IC95 [-0.00027, +0.00020]
+  CRITERIO: se adopta si el limite superior < +0.00020
+  VEREDICTO: SE CONFIRMA
+  veredictos que cambian: 83 (0.38%)
+  ...y en esos, +0.00327 IC [-0.00182,+0.00797] -> empate
+
+==============================================================================
+SECUNDARIA (no decide)  umbral sobre la INCERTIDUMBRE 1/W
+==============================================================================
+    k          bajan   diferencia                     IC95
+  1.0      353 (1.6%)     -0.00000 [-0.00000,+0.00000]
+  1.5    1,527 (6.9%)     +0.00012 [-0.00006,+0.00034]
+  2.0    2,296 (10.4%)     +0.00017 [-0.00013,+0.00049]
+  3.0    2,555 (11.6%)     +0.00018 [-0.00027,+0.00057]
+  5.0    2,810 (12.7%)     +0.00026 [-0.00018,+0.00073]
+
+==============================================================================
+SECUNDARIA  el conteo, a varios umbrales (replica de la exploracion)
+==============================================================================
+    T          bajan   diferencia                     IC95
+   10    3,211 (14.6%)     +0.00059 [-0.00007,+0.00121]
+   15    2,334 (10.6%)     -0.00001 [-0.00037,+0.00034]
+   20    1,871 (8.5%)     +0.00013 [-0.00017,+0.00043]
+   25    1,468 (6.7%)     +0.00011 [-0.00017,+0.00035]
+   30    1,181 (5.4%)     -0.00002 [-0.00026,+0.00019]
+   40      733 (3.3%)     -0.00001 [-0.00023,+0.00018]
+   60      463 (2.1%)     +0.00005 [-0.00001,+0.00012]
+
+guardado en salidas/20_confirmar_umbral.parquet

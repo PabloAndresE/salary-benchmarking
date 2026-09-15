@@ -148,6 +148,9 @@ SALIDA_MODELO = (
     "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
     "p10", "p25", "p75", "p90", "confianza", "incert_centro", "ancho_rel",
     "base", "empresas", "personas", "similitud", "segmento", "rubro",
+    # A QUE NIVEL se comparo ese cargo. Sin esto, `rubro: "G47"` obliga al front a
+    # deducir del largo del codigo si eso es una division o una clase.
+    "rubro_nivel",
 )
 
 

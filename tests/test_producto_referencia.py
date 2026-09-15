@@ -997,3 +997,61 @@ def test_las_entradas_de_SECCION_no_cambian_al_anadir_los_niveles_finos():
     c = b0.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
     for col in ("referencia_log", "p25_log", "p75_log", "empresas", "personas"):
         assert a[col] == c[col], f"{col} cambio: {a[col]} vs {c[col]}"
+
+
+# --- el veredicto baja de nivel, con umbral de fiabilidad (D-029) ------------------
+
+def _marco_niveles(n_clase_a=40, n_clase_b=12):
+    """Dos clases de la misma seccion, una con respaldo de sobra y otra sin el."""
+    filas, emb = [], {}
+    v = np.zeros(3); v[0] = 1.0
+    emb["VENDEDOR"] = v
+    for clase, paga, n in (("G4761.03", 1.0, n_clase_a), ("G4762.01", 1.6, n_clase_b)):
+        for i in range(n):
+            for _ in range(3):
+                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i,
+                              "G", clase))
+    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y",
+                                        "ciiu_n1", "ciiu_n6"]), emb
+
+
+def test_el_veredicto_baja_a_la_clase_cuando_hay_respaldo():
+    marco, emb = _marco_niveles()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
+    assert r["rubro"] == "G4761", "40 empresas dan de sobra para el umbral de 30"
+    assert r["rubro_nivel"] == "clase"
+
+
+def test_y_SUBE_UN_NIVEL_cuando_no_llega_al_umbral():
+    # La regla no es "clase o seccion": si la clase no aguanta, se prueba el grupo, y
+    # solo en el peor caso se cae a la seccion.
+    marco, emb = _marco_niveles()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4762.01").iloc[0]
+    assert r["rubro"] != "G4762", "12 empresas no alcanzan para decidir"
+    assert r["rubro_nivel"] in ("grupo", "division"), r["rubro_nivel"]
+    assert r["rubro"] != "G", "y no hacia falta caer hasta la seccion"
+
+
+def test_el_suelo_de_PUBLICACION_y_el_de_DECISION_son_distintos():
+    # `MIN_EMPRESAS_RUBRO` (10) dice cuando un dato se puede enseñar sin identificar a
+    # nadie. `MIN_EMPRESAS_VEREDICTO` (30) dice cuando se puede DECIDIR con el. Que se
+    # usara el primero para lo segundo es el defecto que midio e3/19.
+    from benchmarking.producto.base_referencia import (MIN_EMPRESAS_RUBRO,
+                                                       MIN_EMPRESAS_VEREDICTO)
+    assert MIN_EMPRESAS_VEREDICTO > MIN_EMPRESAS_RUBRO
+    marco, emb = _marco_niveles(n_clase_a=15)      # pasa el de publicacion, no el otro
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
+    assert r["rubro"] != "G4761", "15 empresas se pueden enseñar pero no decidir"
+    # ...y sin embargo el dato SI se le enseña, en la columna informativa
+    assert r["sector_codigo"] == "G4761" and r["sector_empresas"] == 15
+
+
+def test_sin_ciiu_el_veredicto_sigue_saliendo_de_la_seccion():
+    # Compatibilidad: quien llame como antes tiene que recibir lo de antes.
+    marco, emb = _marco_niveles()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
+    assert r["rubro"] == "G" and r["rubro_nivel"] == "seccion"
