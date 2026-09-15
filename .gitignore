@@ -13,6 +13,9 @@ __pycache__/
 *.xlsx
 *.csv
 *.parquet
+# Listados de RUC extraidos del registro. Son dato publico, pero un extracto de 221.794
+# empresas en el repo es un fichero de datos, no codigo, y aqui no pinta nada.
+demo/rucs_*.txt
 data/
 clean/
 cuarentena/
