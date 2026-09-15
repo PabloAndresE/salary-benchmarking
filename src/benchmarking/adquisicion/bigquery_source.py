@@ -31,11 +31,62 @@ WHERE es_ultima_version AND numero_proceso IS NOT NULL
   AND id_version IS NOT NULL AND identificacion_persona IS NOT NULL
 """
 
+# EL ULTIMO ANO DECLARADO NO SIEMPRE ES EL BUENO. Hay balances presentados a medio
+# llenar: la plantilla se desploma respecto al ano anterior y a veces ni se declaran
+# activos. Tomando el ultimo a secas, esas empresas entran con el segmento equivocado, y
+# el segmento alimenta `ajuste_seg` —la correccion que mas pesa justo en los cargos
+# altos—. El caso que lo destapo declara 2 empleados en 2025 y 193 en 2024.
+#
+# MEDIDO sobre las 221.794 filas del registro, por caida de plantilla entre las dos
+# ultimas declaraciones:
+#
+#   caida      empresas   cambia segmento   sin activos declarados
+#   >90%            891            61,3%                    37,0%   <- declaracion rota
+#   50-90%       10.193            23,1%                    18,1%
+#   10-50%       37.581            12,4%                    13,3%
+#   estable      90.005             8,8%                    16,6%
+#
+# El tramo de >90% destaca en las dos columnas: 61% cambia de segmento y el 37% no
+# declara activos, el doble que el resto. Eso es un formulario incompleto, no una empresa
+# que encogio.
+#
+# LO QUE **NO** SE CORRIGE, y es deliberado: el 8,8% con plantilla ESTABLE que aun asi
+# cambia de segmento. Esas oscilan alrededor del umbral por facturacion y cualquiera de
+# las dos clasificaciones es defendible. Suavizarlo seria inventar una estabilidad que el
+# registro no tiene.
+#
+# EFECTO: 942 empresas (0,42%) pasan a un ano anterior, y casi todas SUBEN de segmento
+# —MICROEMPRESA->PEQUENA 278, MICROEMPRESA->MEDIANA 129—, que es lo que se espera si lo
+# corregido son declaraciones que subestiman. Si metiera ruido, iria en las dos
+# direcciones.
+#
+# Y SE PARTICIONA POR EL RUC YA RELLENADO. La misma empresa aparece con y sin el cero
+# inicial —40 casos—, asi que particionar por el `ruc` crudo devolvia dos filas para
+# ella. `meta_ruc` es un diccionario: una de las dos ganaba, la ultima, sin criterio.
 SQL_SCVS = f"""
-WITH b AS (SELECT ruc, segmento, ciiu_n1, ciiu_n6, n_empleados,
-             ROW_NUMBER() OVER(PARTITION BY ruc ORDER BY anio DESC) rn
-           FROM {_BAL} WHERE segmento IS NOT NULL)
-SELECT LPAD(CAST(ruc AS STRING), 13, '0') ruc, segmento, ciiu_n1, ciiu_n6, n_empleados
+WITH x AS (
+  SELECT LPAD(CAST(ruc AS STRING), 13, '0') ruc, anio, segmento, ciiu_n1, ciiu_n6,
+         n_empleados
+  FROM {_BAL}
+  -- Sin RUC no sirve de nada: la tabla se usa SOLO para cruzar por RUC. Una fila asi
+  -- entraba a `meta_ruc` como una clave basura, y el diccionario no avisa de eso.
+  WHERE segmento IS NOT NULL AND ruc IS NOT NULL),
+m AS (
+  SELECT *, LEAD(n_empleados) OVER(PARTITION BY ruc ORDER BY anio DESC) n_prev
+  FROM x),
+s AS (
+  SELECT *, IFNULL(n_empleados = 0 OR (n_prev >= 10 AND n_empleados < 0.10 * n_prev),
+                   FALSE) AS sospechosa
+  FROM m),
+b AS (
+  -- El ano mas reciente NO sospechoso. Si todos lo son, gana el mas reciente igual:
+  -- mejor un dato dudoso que ninguno, y no hay forma de saber cual es menos malo.
+  --
+  -- IFNULL arriba: la declaracion mas antigua no tiene ano previo con que compararse y
+  -- su NULL ordenaria PRIMERO en BigQuery, ganando siempre. Se da por buena.
+  SELECT *, ROW_NUMBER() OVER(PARTITION BY ruc ORDER BY sospechosa, anio DESC) rn
+  FROM s)
+SELECT ruc, segmento, ciiu_n1, ciiu_n6, n_empleados
 FROM b WHERE rn = 1
 """
 # EL LPAD NO ES COSMETICO, y el comentario que habia aqui daba el problema por resuelto
