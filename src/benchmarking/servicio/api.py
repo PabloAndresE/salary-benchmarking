@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import io
+import pathlib
 import threading
 import time
 import uuid
@@ -259,6 +260,67 @@ class Almacen:
             return self._d.get(tid)
 
 
+# QUE SABE HACER UNA BASE, y que deja de funcionar si no lo trae. Existe porque una
+# base vieja NO falla: responde igual, con menos, y en silencio. El servicio arrancaba
+# con `demo/base_v8.npz` escrito a mano mientras el RUC, el padron y la cascada vivian en
+# la v13 — o sea que tres funciones enteras estaban muertas y nada lo decia.
+#
+# Cada entrada es (nombre, como se comprueba, que se pierde si falta).
+CAPACIDADES = (
+    ("padron",
+     lambda b: len(b.pad_idx) > 0,
+     "`empresas_analizadas` no es calculable y no se detecta si el cliente esta "
+     "dentro de su propio mercado"),
+    ("ruc_a_industria",
+     lambda b: len(b.meta_ruc) > 0,
+     "el RUC no resuelve ni el rubro ni el segmento: el informe cae al mercado "
+     "entero sin decir por que"),
+    ("rubro_multinivel",
+     lambda b: any(len(str(r)) > 1 for r in b.rubros),
+     "el veredicto no puede bajar al sector del cliente; se compara todo contra la "
+     "seccion"),
+    ("segmento_del_ruc",
+     lambda b: any(v[2] for v in b.meta_ruc.values()),
+     "el tamano de la empresa hay que pedirlo a mano o no se corrige el sesgo de "
+     "los cargos altos"),
+    ("brecha_grafia",
+     lambda b: bool(np.isfinite(b.brecha_gen).any()),
+     "no se reporta la diferencia entre grafias femenina y masculina"),
+)
+
+
+def capacidades_de(base) -> dict:
+    """Que puede y que no puede hacer esta base. Nunca revienta por una capacidad."""
+    out = {}
+    for nombre, prueba, _ in CAPACIDADES:
+        try:
+            out[nombre] = bool(prueba(base))
+        except Exception:                                    # noqa: BLE001
+            out[nombre] = False
+    return out
+
+
+def _ruta_base_por_defecto() -> str:
+    """La base mas nueva de `demo/`, por numero de version.
+
+    NO por fecha de modificacion: copiar un fichero viejo lo volveria el mas nuevo. Y no
+    una constante escrita a mano, que es como se llego a servir la v8 durante una semana
+    mientras se construian la v9 a la v13.
+    """
+    import re
+    d = pathlib.Path("demo")
+    if not d.is_dir():
+        return "demo/base_referencia.npz"
+    cand = []
+    for f in d.glob("base_v*.npz"):
+        m = re.fullmatch(r"base_v(\d+)", f.stem)
+        if m:
+            cand.append((int(m.group(1)), f))
+    if not cand:
+        return "demo/base_referencia.npz"
+    return str(max(cand)[1]).replace("\\", "/")
+
+
 class Motor:
     """La base cargada una vez, y el cache de embeddings de titulos nuevos."""
 
@@ -271,6 +333,15 @@ class Motor:
         self.emb = {c: self.base.Z[i] for i, c in enumerate(self.base.celdas)}
         self._lock = threading.Lock()
         self._cli = None
+        self.ruta_base = str(ruta_base)
+        self.capacidades = capacidades_de(self.base)
+        faltan = [(n, p) for n, _, p in CAPACIDADES if not self.capacidades[n]]
+        print(f"[base] {ruta_base}  {len(self.base.celdas):,} puestos  "
+              f"{self.carga_s}s", flush=True)
+        for n, porque in faltan:
+            # EN VOZ ALTA. Una base a la que le falta algo contesta igual que una
+            # completa, solo que peor, y eso no se nota mirando una respuesta.
+            print(f"[base] SIN {n}: {porque}", flush=True)
 
     def _vertex(self):
         if self._cli is None:
@@ -547,8 +618,8 @@ ALMACEN = Almacen()
 async def ciclo(app: FastAPI):
     import os
     s = cargar_settings()
-    _estado_app["motor"] = Motor(os.environ.get("BASE_REFERENCIA",
-                                                "demo/base_v8.npz"), s)
+    _estado_app["motor"] = Motor(
+        os.environ.get("BASE_REFERENCIA") or _ruta_base_por_defecto(), s)
     yield
     _estado_app.clear()
 
@@ -565,9 +636,18 @@ def motor() -> Motor:
 
 @app.get("/salud")
 def salud(m: Motor = Depends(motor)):
+    faltan = [n for n, ok in m.capacidades.items() if not ok]
     return {"ok": True, "esquema": ESQUEMA,
             "puestos": len(m.base.celdas), "carga_s": m.carga_s,
-            "anios_con_sbu": sorted(m.settings.sbu)}
+            "anios_con_sbu": sorted(m.settings.sbu),
+            # QUE SABE HACER ESTA BASE. Un front que reciba `ruc_a_industria: false`
+            # sabe que no tiene sentido pedir el RUC; sin esto, lo pide y no pasa nada.
+            "base": m.ruta_base,
+            "capacidades": m.capacidades,
+            "degradado": faltan or None,
+            "aviso": (None if not faltan else
+                      f"esta base no soporta {faltan}; el servicio responde igual pero "
+                      f"con menos. Reconstruyela o apunta BASE_REFERENCIA a una nueva")}
 
 
 @app.post("/informes", status_code=202)

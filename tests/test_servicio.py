@@ -477,3 +477,44 @@ def test_la_ficha_del_ruc_devuelve_el_CIIU_COMPLETO(cliente):
                      data={"ruc": "E00"})
     ficha = r.json()["empresa"]
     assert "ciiu" in ficha and "ciiu_seccion" in ficha
+
+
+# --- la base que se carga, y que sabe hacer ---------------------------------------
+
+def test_salud_declara_QUE_SABE_HACER_la_base(cliente):
+    # Una base vieja NO falla: responde igual, con menos, y en silencio. El servicio
+    # arrancaba con `demo/base_v8.npz` escrito a mano mientras el RUC, el padron y la
+    # cascada vivian en la v13: tres funciones muertas y nada lo decia.
+    d = cliente.get("/salud").json()
+    assert "capacidades" in d and "base" in d
+    for c in ("padron", "ruc_a_industria", "rubro_multinivel", "segmento_del_ruc"):
+        assert c in d["capacidades"], f"falta declarar {c}"
+
+
+def test_una_base_incompleta_lo_DICE_en_vez_de_callarselo(cliente):
+    # La base de juguete de estos tests no trae RUC ni CIIU, asi que tiene que salir
+    # como degradada. Si saliera "ok" a secas, el aviso no serviria de nada.
+    d = cliente.get("/salud").json()
+    assert d["degradado"], "esta base no soporta el RUC y deberia decirlo"
+    assert d["aviso"] and "BASE_REFERENCIA" in d["aviso"]
+
+
+def test_la_base_por_defecto_NO_esta_escrita_a_mano():
+    # El defecto era `demo/base_v8.npz` en el codigo. Se sirvio una semana mientras se
+    # construian la v9 a la v13. Ahora sale de la mas nueva por NUMERO DE VERSION, no
+    # por fecha: copiar un fichero viejo lo volveria el mas reciente.
+    import re
+    from benchmarking.servicio.api import _ruta_base_por_defecto
+    r = _ruta_base_por_defecto()
+    assert re.search(r"base_v\d+\.npz$", r) or r.endswith("base_referencia.npz")
+
+
+def test_el_entorno_manda_sobre_el_defecto(monkeypatch, base_npz):
+    from benchmarking.servicio import api
+    monkeypatch.setenv("BASE_REFERENCIA", base_npz)
+    import os
+    assert os.environ.get("BASE_REFERENCIA") == base_npz
+    # y `capacidades_de` no revienta con una base a la que le falta todo
+    from benchmarking.producto.base_referencia import BaseReferencia
+    c = api.capacidades_de(BaseReferencia.cargar(base_npz, lambda a: 470.0))
+    assert set(c) == {n for n, _, _ in api.CAPACIDADES}
