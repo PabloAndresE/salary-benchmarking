@@ -102,7 +102,10 @@ def test_el_segmento_viaja_en_meta_ruc_tal_como_lo_dice_scvs(base_scvs):
 
     ciiu, tam, seg = b.meta_ruc[RUC_CLIENTE]
     assert seg == "PEQUENA", "el segmento tiene que salir de la columna de SCVS"
-    assert ciiu == "C239" and tam == 40
+    # COMPLETO, no truncado. Antes se guardaban 4 caracteres y `C2394` quedaba en
+    # `C239`: se perdia el nivel de clase, que es justo el que el cliente reconoce como
+    # suyo. Los niveles mas gruesos se sacan cortando; lo tirado no se recupera.
+    assert ciiu == "C2394" and tam == 40
 
     # Y la empresa grande del otro rubro conserva el suyo: no se colapsa todo a uno.
     assert b.meta_ruc["E10"][2] == "GRANDE"

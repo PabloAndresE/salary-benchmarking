@@ -900,13 +900,15 @@ def test_el_padron_SCVS_cubre_al_pais_y_no_solo_a_la_base(caso):
     # la que nunca aporto datos igual se resuelve
     assert de_fuera in b.meta_ruc
     g4, ne, seg = b.meta_ruc[de_fuera]
-    assert (g4, ne, seg) == ("G471", 12, "PEQUENA")
+    # El CIIU va COMPLETO: `G4711.02`, no `G471`. La clase es el nivel que el cliente
+    # reconoce como suyo y truncar lo perdia para siempre.
+    assert (g4, ne, seg) == ("G4711.02", 12, "PEQUENA")
     # ...pero NO esta en el padron: son dos preguntas distintas
     assert de_fuera not in b.pad_ruc
     assert b.grupos_de_empresa(de_fuera) == set()
 
     # la que si aporto se resuelve Y esta en el padron
-    assert b.meta_ruc[en_la_base] == ("C107", 500, "GRANDE")
+    assert b.meta_ruc[en_la_base] == ("C1071.01", 500, "GRANDE")
     assert en_la_base in b.pad_ruc
 
 
@@ -928,3 +930,70 @@ def test_sin_scvs_el_comportamiento_es_el_de_antes(caso):
     filas, emb, _ = caso
     b = BaseReferencia.construir(_marco(filas), emb, _sbu)
     assert set(b.meta_ruc) <= set(b.pad_ruc), "sin padron externo, no se inventa nadie"
+
+
+# --- el sector fino, informativo (D-029) -----------------------------------------
+
+def _marco_ciiu(n_por_clase=14):
+    """Dos clases CIIU dentro de la misma seccion G, pagando distinto."""
+    filas, emb = [], {}
+    v = np.zeros(3); v[0] = 1.0
+    emb["VENDEDOR"] = v
+    for clase, paga in (("G4761.03", 1.0), ("G4762.01", 1.6)):
+        for i in range(n_por_clase):
+            for _ in range(3):
+                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i,
+                              "G", clase))
+    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y",
+                                        "ciiu_n1", "ciiu_n6"]), emb
+
+
+def test_el_sector_fino_se_REPORTA_pero_no_cambia_la_referencia():
+    # Es la decision de D-029: el ejecutivo ve lo que paga SU sector, y el veredicto se
+    # sigue calculando sobre la seccion, donde hay muestra. Medido: con la cascada
+    # cambia el veredicto del 1,8% de los cargos y en esos la seccion acierta mas.
+    marco, emb = _marco_ciiu()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
+
+    assert r["sector_codigo"] == "G4761", "el nivel mas fino que tiene banda"
+    assert r["sector_nivel"] == "clase"
+    assert r["sector_empresas"] == 14, "y con su muestra al lado, que es el punto"
+
+    # la referencia que decide NO es la del sector fino
+    sin = b.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
+    assert r["referencia_log"] == sin["referencia_log"]
+    assert r["p25_log"] == sin["p25_log"] and r["p75_log"] == sin["p75_log"]
+    # ...y el dato del sector es DISTINTO del que decide: si no, no informaria de nada
+    assert abs(r["sector_ref_log"] - r["referencia_log"]) > 0.1
+
+
+def test_baja_de_nivel_hasta_donde_haya_datos():
+    # Con pocas empresas por clase, la clase no aguanta el suelo y hay que subir. El
+    # cliente no tiene por que saber a que nivel alcanzo: se le dice.
+    marco, emb = _marco_ciiu(n_por_clase=4)     # 4 por clase, 8 en la seccion
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
+    assert r["sector_codigo"] != "G4761", "4 empresas no pueden sostener una banda"
+
+
+def test_sin_ciiu_las_columnas_estan_y_no_afirman_nada():
+    marco, emb = _marco_ciiu()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
+    assert r["sector_codigo"] == "" and r["sector_empresas"] == 0
+    assert pd.isna(r["sector_ref_log"])
+
+
+def test_las_entradas_de_SECCION_no_cambian_al_anadir_los_niveles_finos():
+    # La tabla multinivel mete codigos de varias longitudes en el mismo indice. Si eso
+    # alterase las entradas de seccion, cambiaria en silencio el veredicto de todos los
+    # informes ya emitidos.
+    marco, emb = _marco_ciiu()
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    solo_sec = marco.drop(columns=["ciiu_n6"])
+    b0 = BaseReferencia.construir(solo_sec, emb, _sbu)
+    a = b.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
+    c = b0.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
+    for col in ("referencia_log", "p25_log", "p75_log", "empresas", "personas"):
+        assert a[col] == c[col], f"{col} cambio: {a[col]} vs {c[col]}"

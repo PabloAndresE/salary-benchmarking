@@ -333,13 +333,15 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
              col_sueldo: str | None, columnas_extra: list[str] | None = None,
              columnas_originales: bool = True,
              informe_formato: dict | None = None,
-             ruc: str | None = None) -> tuple[dict, bytes]:
+             ruc: str | None = None,
+             ciiu: str | None = None) -> tuple[dict, bytes]:
     """El informe completo. Es la misma cadena que el CLI, sin tocar el disco."""
     titulos = df[col_cargo].fillna("").astype(str).str.strip().str.upper()
     nuevos = motor.asegurar(titulos.tolist())
 
     ref = motor.base.referenciar(titulos.tolist(), motor.emb, anio=anio,
-                                 segmento=segmento, rubro=rubro, ruc=ruc)
+                                 segmento=segmento, rubro=rubro, ruc=ruc,
+                                 ciiu=ciiu)
     salida = pd.concat([df.reset_index(drop=True),
                         ref.drop(columns=["cargo"]).reset_index(drop=True)], axis=1)
 
@@ -626,6 +628,7 @@ def crear(tareas: BackgroundTasks,
     # "seccion C". Si ademas pasan `rubro` a mano, manda el explicito y se avisa si no
     # coinciden, en vez de elegir uno en silencio.
     ficha = None
+    ciiu_cliente = None
     if ruc:
         g6, tam_emp, seg_ruc = m.base.meta_ruc.get(ruc.strip(), ("", -1, ""))
         # `en_la_base` sale de `pad_ruc` y NO de `meta_ruc`: el segundo solo se puebla
@@ -633,7 +636,10 @@ def crear(tareas: BackgroundTasks,
         # ellas se le decia a una empresa que no esta cuando si esta. El padron lleva a
         # TODAS las empresas que aportaron datos, que es justo la pregunta.
         ficha = {"ruc": ruc.strip(), "en_la_base": ruc.strip() in m.base.pad_ruc,
-                 "ciiu_grupo": g6 or None,
+                 # COMPLETO. `ciiu_grupo` se queda por compatibilidad, pero lo que el
+                 # cliente reconoce como suyo es `ciiu` entero: `G4761.03`, no `G476`.
+                 "ciiu": g6 or None,
+                 "ciiu_grupo": (g6[:4] if g6 else None),
                  "ciiu_seccion": (g6[:1] if g6 else None),
                  "n_empleados": tam_emp if tam_emp > 0 else None}
         if g6 and not rubro:
@@ -730,7 +736,7 @@ def crear(tareas: BackgroundTasks,
                                             rubro.upper() if rubro else None,
                                             columna_sueldo, extra,
                                             columnas_originales, informe_formato,
-                                            ruc)
+                                            ruc, ciiu_cliente)
             t.estado = "listo"
         except Exception as e:                               # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"

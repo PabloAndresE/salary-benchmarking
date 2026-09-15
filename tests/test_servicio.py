@@ -452,3 +452,28 @@ def test_el_detalle_respeta_lo_que_escribio_el_cliente(cliente):
     r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
     d = cliente.get(f"/informes/{r.json()['id']}").json()
     assert [f["cargo"] for f in d["detalle"]] == ["Contador", "CONTADOR"]
+
+
+def test_el_informe_trae_el_sector_del_cliente_SIN_meterlo_en_el_veredicto(cliente):
+    # Lo que piden los ejecutivos: ver lo que paga SU sector. Lo que NO se les da: que
+    # el veredicto salga de ahi. Medido (D-029): con la cascada cambia el veredicto del
+    # 1,8% de los cargos y en esos la seccion acierta mas (+9,2% de pinball).
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    f = d["por_puesto"][0]
+    # las columnas viajan SIEMPRE, con dato o sin el: un front no puede tener que
+    # programar dos formas de respuesta
+    for c in ("sector_codigo", "sector_nivel", "sector_referencia", "sector_empresas"):
+        assert c in f, f"falta {c}"
+
+
+def test_la_ficha_del_ruc_devuelve_el_CIIU_COMPLETO(cliente):
+    # `G4761.03` es lo que el cliente reconoce como suyo. `G476` no le dice nada, y la
+    # seccion —"comercio al por mayor y al por menor; reparacion de vehiculos"— le dice
+    # algo FALSO si vende libros.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"ruc": "E00"})
+    ficha = r.json()["empresa"]
+    assert "ciiu" in ficha and "ciiu_seccion" in ficha

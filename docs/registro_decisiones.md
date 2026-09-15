@@ -2891,3 +2891,102 @@ filas se pierden.
 problema de formato del join —se comprobó contra la tabla directamente—: no presentan
 balances ahí. Probablemente sector público, fundaciones y personas naturales. Para ésas
 el RUC sigue sin resolver sector ni tamaño, y ninguna fuente que tengamos lo arregla.
+
+
+---
+
+## D-029 — El sector se **enseña** al nivel fino y se **compara** al nivel de sección
+
+**Fecha:** 2026-09-15
+**Origen:** un cliente con CIIU `G4761.03` (librería y papelería) veía en el front
+«Comercio al por mayor y al por menor; reparación de vehículos» y, con razón, no se
+reconocía.
+**Evidencia:** `research/experimentos/e3_varianza/18_rubro_a_division.py` y
+`19_cascada_ciiu_completa.py`, más la descomposición de varianza de abajo.
+**Estado:** implementado y activo. Base `base_v13.npz`.
+
+### El diagnóstico no era el que parecía
+
+No había ningún código equivocado. `G4761.03` y «comercio… reparación de vehículos» son
+la misma cosa: lo segundo es el nombre oficial de la **sección** G, y el producto compara
+a nivel de sección. El front mostraba *contra qué te comparamos* con la etiqueta de
+*quién eres*. Son dos hechos distintos y estaban fundidos en uno.
+
+### Entonces, ¿por qué no comparar más fino?
+
+Se midió la escalera entera. Métrica: pinball en q=0,25 y q=0,75 sobre la banda de
+empresas, pareado por empresa apartada.
+
+| | diferencia | IC 95% | |
+|---|---|---|---|
+| cascada división → sección (`18`) | +0,00059 | [+0,00017, +0,00098] | peor, +0,42% |
+| cascada clase → grupo → división (`19`) | +0,00094 | [+0,00048, +0,00146] | **peor, +0,67%** |
+
+Monótono: cuanto más fino, peor. Y en `19` la cascada solo baja cuando el nivel fino
+aguanta el suelo por sí mismo, así que la sospecha de que `18` fuera un contraste injusto
+—comparar en votos donde la división siempre tiene menos empresas— queda descartada.
+
+### El mecanismo, que es lo que lo hace creíble
+
+De la varianza **entre empresas** del pago por un mismo cargo, ¿cuánto explica la
+división CIIU? Sobre las 237 celdas más favorables (≥40 empresas, ≥3 divisiones):
+
+```
+explicado por la division   0,389
+lo mismo, barajada          0,325   <- inflacion mecanica de partir en grupos chicos
+señal neta                 +0,064
+```
+
+**Seis puntos.** Lo que una empresa paga por un contador depende de la empresa —tamaño,
+política, margen— mucho más que de si vende libros o repuestos. Y esos 6 puntos de
+homogeneidad se pagan con muestra: de 46 empresas por celda a 16.
+
+### En términos de producto
+
+| | |
+|---|---|
+| cargos cuyo veredicto cambia de lado | 415 de 23.241 = **1,79%** |
+| para un cliente de 150 cargos | 2,7 cargos |
+| en esos 415, ¿quién acierta? | la **sección**, +9,2% de pinball, IC [+0,0005, +0,0116] |
+| alarmas nuevas / alarmas que se apagan | 226 / 189 |
+| ancho de banda | 47,3% → 47,0% (se estrecha en el 49%: moneda al aire) |
+
+**La banda no se estrecha: se desplaza.** Los veredictos no cambian porque el sector dé
+una banda más ajustada, sino porque la recentra sobre 16 empresas apoyándose en 6 puntos
+de señal. Movimiento grande, información poca.
+
+### La decisión
+
+Se separa **lo que se enseña** de **lo que se calcula**:
+
+```
+Tu industria:  G4761.03
+Referencia:    $1.296   ← seccion G, 323 empresas   (de aqui sale el veredicto)
+Tu sector:     $1.478   ← division G47, 49 empresas  (+14,0%, informativo)
+```
+
+El ejecutivo ve el número de su sector —que es lo que pedía— **con su muestra al lado**,
+que es la información que hoy no tiene y que con la cascada tampoco tendría. El veredicto
+se sigue calculando donde hay con qué.
+
+Es más honesto que las dos alternativas puras: hoy se le escondía su sector, y con la
+cascada se le daría un número de 16 empresas sin decirle que son 16.
+
+### Cómo queda montado, y por qué así
+
+Las tablas de banda por rubro se guardan a **cuatro niveles** (clase, grupo, división,
+sección) en un solo índice: el código lleva su nivel en la longitud, así que las claves
+no chocan. **Las entradas de sección salen idénticas a las de antes** —hay test— o sea
+que ningún informe ya emitido cambia en silencio.
+
+`NIVEL_VEREDICTO = 1` es la única línea que decide de dónde sale el diagnóstico. Si algún
+día se decide pagar el 0,67%, cambiarla a `3` es todo: las tablas finas ya están. Pero la
+constante lleva al lado el precio medido, para que esa decisión se tome sabiéndolo.
+
+### Lo que sigue abierto
+
+El **segmento del último año declarado es inestable**: 23.923 de 188.562 empresas (12,7%)
+cambian de segmento entre sus dos últimas declaraciones, y 1.879 tienen caídas de
+plantilla imposibles. El propio RUC que originó esta decisión declara 2 empleados en 2025
+y 193 en 2024, así que lo clasificamos MEDIANA cuando es GRANDE. Eso alimenta
+`ajuste_seg` (D-018). Sin resolver.

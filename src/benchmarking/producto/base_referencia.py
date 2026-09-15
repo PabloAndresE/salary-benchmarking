@@ -212,6 +212,28 @@ Z_NORMAL = {0.10: -1.2816, 0.25: -0.6745, 0.75: 0.6745, 0.90: 1.2816}
 # `SOLDADOR DE PRECISION` (3). Es lo unico coherente con un suelo que es de
 # confidencialidad y no de gusto.
 COL_RUBRO = "ciiu_n1"
+# Longitudes de `ciiu_n6` que se guardan como rubro, de la mas fina a la mas gruesa:
+# `G4761` clase, `G476` grupo, `G47` division, `G` seccion.
+NIVELES_RUBRO = (5, 4, 3, 1)
+NOMBRE_NIVEL = {5: "clase", 4: "grupo", 3: "division", 1: "seccion"}
+
+# DE QUE NIVEL SALE EL VEREDICTO. Seccion, y esta MEDIDO, no elegido por prudencia:
+#
+#   D-023  el rubro (seccion) no mejora la precision; se monto por legitimidad
+#   e3/18  cascada division -> seccion:            +0,42% de pinball, IC sobre cero
+#   e3/19  cascada clase -> grupo -> division:     +0,67%, y peor cuanto mas fino
+#
+# El porque: de la diferencia de pago ENTRE EMPRESAS por un mismo cargo, la division
+# explica 6 puntos netos —0,389 crudo contra 0,325 barajando, o sea que casi todo es
+# inflacion mecanica de partir en grupos chicos—. Se compran 6 puntos de homogeneidad
+# y se paga con la muestra: de 46 empresas por celda a 16.
+#
+# En terminos de producto: cambia el veredicto del 1,8% de los cargos —2,7 de cada 150—
+# y en esos, la seccion acierta MAS (+9,2% de pinball, IC [+0,0005, +0,0116]).
+#
+# Si algun dia se decide pagar ese precio, cambiar esto a 3 es todo lo que hace falta:
+# las tablas finas YA se guardan. Pero que se decida sabiendo el precio.
+NIVEL_VEREDICTO = 1
 MIN_EMPRESAS_RUBRO = MIN_EMPRESAS_BANDA     # mismo suelo que la banda global
 MIN_PERSONAS_RUBRO = MIN_PERSONAS
 _RUBRO_NULO = {"", "NAN", "NONE", "NA", "NULL"}
@@ -491,6 +513,63 @@ def _ajuste_segmento(marco, col, celdas, niveles, tau2_c, sigma2_c,
             if len(gs) >= min_emp:
                 fuera[i, k] = mediana(gs) - base
     return fuera
+
+
+def _cols_sector(hallazgo):
+    """Las cuatro columnas del sector fino, siempre presentes.
+
+    SIEMPRE, tambien cuando no hay dato: un front que reciba las columnas segun el caso
+    tiene que programar dos formas de respuesta, y la que casi nunca ocurre es la que
+    nadie prueba.
+    """
+    if hallazgo is None:
+        return {"sector_codigo": "", "sector_nivel": "", "sector_ref_log": np.nan,
+                "sector_empresas": 0}
+    cod, niv, mu, emp = hallazgo
+    return {"sector_codigo": cod, "sector_nivel": niv, "sector_ref_log": mu,
+            "sector_empresas": emp}
+
+
+def _bandas_multinivel(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave,
+                       niveles=NIVELES_RUBRO):
+    """La misma tabla de `_bandas_por_rubro`, pero a VARIOS niveles de CIIU a la vez.
+
+    POR QUE UNA SOLA TABLA Y NO CUATRO. El codigo lleva su nivel en la longitud —`G`,
+    `G47`, `G476`, `G4761`— asi que las claves de distintos niveles no chocan y caben en
+    el mismo indice `(celda, codigo)`. Las entradas de SECCION salen identicas a las de
+    antes, byte por byte: lo de hoy no cambia, solo se le anaden vecinos mas finos.
+
+    PARA QUE SIRVE, y para que NO. Sirve para ENSEÑARLE al cliente el dato de su sector
+    especifico —`tu division paga X, con 16 empresas detras`— junto a la referencia de
+    verdad. NO alimenta el veredicto, y eso esta medido, no supuesto: ver
+    `NIVEL_VEREDICTO`.
+    """
+    cel, cod, m, W, emp, per, ban, banp, rubros = [], [], [], [], [], [], [], [], []
+    for k in niveles:
+        dd = d.copy()
+        # k=1 usa la columna de seccion tal cual, para que esas entradas salgan
+        # EXACTAMENTE como salian antes de que esto existiera.
+        if k > 1:
+            if "ciiu_n6" not in dd.columns:
+                continue
+            c6 = dd["ciiu_n6"].astype(str)
+            dd[COL_RUBRO] = c6.str[:k].where(c6.str.match(r"^[A-Za-z]\d{3}"), np.nan)
+        t = _bandas_por_rubro(dd, colg, clave_etiqueta, t2_por_clave, s2_por_clave)
+        if len(t[0]) == 0:
+            continue
+        cel.append(t[0])
+        cod.append(np.asarray(t[1]) + len(rubros))     # los codigos se desplazan
+        m.append(t[2]); W.append(t[3]); emp.append(t[4]); per.append(t[5])
+        ban.append(t[6]); banp.append(t[7])
+        rubros.extend(t[8])
+        del dd
+    if not cel:
+        return (np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0), np.zeros(0),
+                np.zeros(0, np.int64), np.zeros(0, np.int64),
+                np.zeros((0, len(CUANTILES))), np.zeros((0, len(CUANTILES))), [])
+    return (np.concatenate(cel), np.concatenate(cod), np.concatenate(m),
+            np.concatenate(W), np.concatenate(emp), np.concatenate(per),
+            np.vstack(ban), np.vstack(banp), rubros)
 
 
 def _lambda_por_nivel(m, W, vec, sim, niveles, lam_global, minimo=200):
@@ -873,9 +952,9 @@ class BaseReferencia:
         s2_cl = pd.Series(sigma2_c, index=clave_et)
         t2_cl = t2_cl[~t2_cl.index.duplicated()]
         s2_cl = s2_cl[~s2_cl.index.duplicated()]
-        rubro = _bandas_por_rubro(d, colg, clave_et, t2_cl, s2_cl)
+        rubro = _bandas_multinivel(d, colg, clave_et, t2_cl, s2_cl)
         print(f"banda por rubro: {len(rubro[0]):,} pares (celda, rubro) sobre "
-              f"{len(rubro[8])} rubros")
+              f"{len(rubro[8])} rubros de {len(NIVELES_RUBRO)} niveles")
 
         ef = efecto_nivel(marco, col=col)
         return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
@@ -914,6 +993,36 @@ class BaseReferencia:
         filas = np.searchsorted(self.pad_ptr, hits, side="right") - 1
         return {self._fila_grupo[int(f)] for f in np.unique(filas)
                 if int(f) in self._fila_grupo}
+
+    def sector_fino(self, i_celda: int, ciiu: str):
+        """El nivel CIIU mas fino que tiene banda para esta celda. None si ninguno.
+
+        ES INFORMATIVO Y NO ENTRA EN EL VEREDICTO. Un ejecutivo quiere ver lo que paga SU
+        sector, no la seccion entera —una libreria no se reconoce en "comercio al por
+        mayor y al por menor; reparacion de vehiculos"—, y esa peticion es razonable. Lo
+        que no es razonable es calcular su diagnostico sobre las 16 empresas de su
+        division en vez de las 46 de su seccion: esta medido que acierta menos (ver
+        `NIVEL_VEREDICTO`).
+
+        Asi que se le da el dato, CON SU NUMERO DE EMPRESAS AL LADO, y el veredicto se
+        sigue calculando donde hay con que. Es mas honesto que las dos alternativas
+        puras: hoy se le esconde su sector, y con la cascada se le daria un numero de 16
+        empresas sin decirle que son 16.
+
+        Devuelve (codigo, nombre_del_nivel, centro_log, n_empresas).
+        """
+        c6 = str(ciiu or "").strip().upper()
+        if i_celda is None or not c6:
+            return None
+        for k in NIVELES_RUBRO:
+            if k >= len(c6) and k != 1:
+                continue
+            cod = c6[:k]
+            fr = self.rub.get((int(i_celda), cod))
+            if fr is not None:
+                return (cod, NOMBRE_NIVEL.get(k, str(k)),
+                        float(self.rub_m[fr]), int(self.rub_emp[fr]))
+        return None
 
     # -- persistencia ----------------------------------------------------------
 
@@ -997,7 +1106,7 @@ class BaseReferencia:
     # -- consulta --------------------------------------------------------------
 
     def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None,
-                    rubro=None, ruc=None):
+                    rubro=None, ruc=None, ciiu=None):
         """Una fila por titulo: referencia, intervalo, confianza y en que se basa.
 
         `segmento` es el tamano de la empresa del CLIENTE —`GRANDE`, `MEDIANA`,
@@ -1067,6 +1176,7 @@ class BaseReferencia:
                           "base": "sin cargo", "ancho_rel": np.nan,
                           "incert_centro": np.nan, "segmento": "", "rubro": "",
                           "brecha_grafia": "", "empresas": 0, "personas": 0,
+                          **_cols_sector(None),
                           "tu_empresa": False, "tu_influencia": np.nan,
                           "similitud": 0.0}
             for q in CUANTILES:
@@ -1082,6 +1192,7 @@ class BaseReferencia:
         k_seg = SEGMENTOS.index(seg) if seg else None
         # Una sola pasada por el padron para todo el informe, no una por cargo.
         mis_grupos = self.grupos_de_empresa(ruc) if ruc else set()
+        c6_cliente = str(ciiu or "").strip().upper()
         rub = _norm_rubro(rubro)
         if rub and rub not in self.rubros:
             # Un rubro que la base no conoce no es un error del cliente: puede ser un
@@ -1280,6 +1391,9 @@ class BaseReferencia:
                                           if propio is not None
                                           and np.isfinite(self.brecha_gen[propio]) else ""),
                         "empresas": n_emp, "personas": n_per,
+                        # SU sector, al nivel mas fino que tenga datos. INFORMATIVO: no
+                        # entra en la lectura ni en la banda. Ver `sector_fino`.
+                        **_cols_sector(self.sector_fino(propio, c6_cliente)),
                         # .esta el cliente DENTRO del mercado con que se le compara?
                         # `1/n_emp` como influencia: medido que aproxima el peso real
                         # con 0,3%-4% de error. Ver el docstring y D-027.
@@ -1739,7 +1853,11 @@ def _padron(marco, colg, celdas, grupo, scvs=None):
     if fuente is not None:
         cols = fuente.columns
         for r, fila in fuente.iterrows():
-            g4 = (str(fila["ciiu_n6"])[:4]
+            # COMPLETO, no truncado a 4. `G4761.03` es lo que el cliente reconoce
+            # como suyo; `G476` no le dice nada. La seccion y los niveles intermedios
+            # se sacan cortando, que es barato; lo que no se puede es recuperar lo que
+            # se tiro al guardar.
+            g4 = (str(fila["ciiu_n6"])
                   if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]) else "")
             ne = (int(fila["n_empleados"])
                   if "n_empleados" in cols and pd.notna(fila["n_empleados"]) else -1)
@@ -1754,7 +1872,7 @@ def _padron(marco, colg, celdas, grupo, scvs=None):
                 if ne > 0:
                     tam[i] = ne
                 if g4:
-                    ciiu[i] = g4
+                    ciiu[i] = g4[:4]      # la tarjeta de industria agrupa a nivel grupo
 
     pares = (d.assign(_e=d["empresa_ruc"].astype(str).map(pos_ruc))
               .drop_duplicates([colg, "_e"]))

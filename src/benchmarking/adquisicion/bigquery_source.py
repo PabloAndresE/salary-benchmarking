@@ -35,11 +35,19 @@ SQL_SCVS = f"""
 WITH b AS (SELECT ruc, segmento, ciiu_n1, ciiu_n6, n_empleados,
              ROW_NUMBER() OVER(PARTITION BY ruc ORDER BY anio DESC) rn
            FROM {_BAL} WHERE segmento IS NOT NULL)
-SELECT CAST(ruc AS STRING) ruc, segmento, ciiu_n1, ciiu_n6, n_empleados
+SELECT LPAD(CAST(ruc AS STRING), 13, '0') ruc, segmento, ciiu_n1, ciiu_n6, n_empleados
 FROM b WHERE rn = 1
 """
-# ruc se castea a STRING para que el join con empresa_ruc (tambien STRING en
-# SQL_PERSONAS) no falle en RUCs con provincia 01-09 por desajuste de dtype.
+# EL LPAD NO ES COSMETICO, y el comentario que habia aqui daba el problema por resuelto
+# cuando no lo estaba. `ruc` YA es STRING en origen, asi que el CAST no quitaba ningun
+# cero: los ceros ya venian perdidos en la tabla. 49.796 de 221.794 filas (22%) estan
+# guardadas con 12 caracteres.
+#
+# Un RUC ecuatoriano tiene 13 y los dos primeros son la provincia, asi que los que
+# empiezan por cero —01 Azuay, 07 El Oro, 08 Esmeraldas, 09 GUAYAS...— quedaban
+# inalcanzables para cualquiera que mandase el RUC bien escrito. Medido contra nuestras
+# propias empresas: cruzaban 5.003 de 7.105 y con el LPAD cruzan 6.074. Eran 1.071
+# empresas sin sector ni tamano por un cero.
 
 def listar_estudios(runner, limite=None):
     sql = SQL_ESTUDIOS + (f"\nLIMIT {int(limite)}" if limite else "")

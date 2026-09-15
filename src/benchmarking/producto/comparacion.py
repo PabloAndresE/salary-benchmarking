@@ -239,6 +239,16 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
                      if "tu_empresa" in ref_df.columns else False)
     out["_tuinf"] = (pd.Series(list(ref_df["tu_influencia"]), index=df.index)
                      if "tu_influencia" in ref_df.columns else np.nan)
+    # SU SECTOR, informativo. Va en `por_puesto` y no en el detalle: es propiedad del
+    # cargo. En dolares, como el resto de lo que el cliente lee, y con el numero de
+    # empresas AL LADO — sin eso, un numero de 16 empresas parece uno de 46.
+    for c, d_ in (("sector_codigo", ""), ("sector_nivel", ""), ("sector_empresas", 0)):
+        out["_" + c] = (pd.Series(list(ref_df[c]), index=df.index)
+                        if c in ref_df.columns else d_)
+    out["_secref"] = (
+        (np.exp(pd.Series(np.asarray(ref_df["sector_ref_log"], dtype=float),
+                          index=df.index)) * float(sbu(int(anio)))).round(2)
+        if "sector_ref_log" in ref_df.columns else np.nan)
     f = float(sbu(int(anio)))
     out["_y"] = yv
     for q in ("p10", "p25", "p75", "p90"):
@@ -274,6 +284,10 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
                           brecha_grafia=("_brecha", "first"),
                           tu_empresa=("_tuemp", "first"),
                           tu_influencia=("_tuinf", "first"),
+                          sector_codigo=("_sector_codigo", "first"),
+                          sector_nivel=("_sector_nivel", "first"),
+                          sector_referencia=("_secref", "first"),
+                          sector_empresas=("_sector_empresas", "first"),
                           _voto=("_y", "median"), _p10=("_p10", "first"),
                           _p25=("_p25", "first"), _p75=("_p75", "first"),
                           _p90=("_p90", "first"))
