@@ -47,7 +47,8 @@ from ..config.settings import cargar_settings
 from ..evaluacion import embeddings
 from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
-from ..producto.base_referencia import SEGMENTOS, BaseReferencia
+from ..producto.base_referencia import (MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
+                                        BaseReferencia)
 from ..producto.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
 from ..producto.formato import validar as validar_formato
 from ..producto.comparacion import comparar, texto_resumen
@@ -402,6 +403,30 @@ def leer_nomina_bytes(contenido: bytes, nombre: str, col_cargo: str | None = Non
                      f"Indicala con el parametro `columna_cargo`.")
 
 
+def _anidar_sector(filas: list) -> list:
+    """`sector_*` plano -> un bloque `sector_mas_fino`, o `null`.
+
+    POR QUE ANIDADO. Las tres columnas planas se leen como "datos del sector" y el front
+    las pinta al lado de la referencia. Juntas en un bloque con nombre se leen como lo
+    que son: la EXPLICACION de por que el veredicto uso el nivel que uso. Y `null` dice
+    "no hay nada que explicar" mucho mejor que tres cadenas vacias.
+
+    `umbral` viaja dentro a proposito, en vez de estar escrito en el front: si algun dia
+    se cambia `MIN_EMPRESAS_VEREDICTO`, el texto del informe sigue siendo cierto solo.
+    """
+    out = []
+    for f in filas:
+        g = {k: v for k, v in f.items() if not k.startswith("sector_")}
+        cod = f.get("sector_codigo") or ""
+        g["sector_mas_fino"] = ({"codigo": cod,
+                                 "nivel": f.get("sector_nivel") or "",
+                                 "empresas": int(f.get("sector_empresas") or 0),
+                                 "umbral": MIN_EMPRESAS_VEREDICTO}
+                                if cod else None)
+        out.append(g)
+    return out
+
+
 def procesar(motor: Motor, df, col_cargo: str, anio: int,
              segmento: str | None, rubro: str | None,
              col_sueldo: str | None, columnas_extra: list[str] | None = None,
@@ -596,7 +621,8 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
                                in ref["confianza"].value_counts().items()}
                               if "confianza" in ref else {}),
         "detalle": limpio(json_det),
-        "por_puesto": limpio(por_puesto) if por_puesto is not None else [],
+        "por_puesto": (_anidar_sector(limpio(por_puesto))
+                       if por_puesto is not None else []),
         "resumen": {k: _py(v) for k, v in (resumen or {}).items()},
         "texto": texto_resumen(resumen, por_puesto) if resumen is not None else "",
     }
@@ -725,6 +751,11 @@ def crear(tareas: BackgroundTasks,
                  "ciiu_grupo": (g6[:4] if g6 else None),
                  "ciiu_seccion": (g6[:1] if g6 else None),
                  "n_empleados": tam_emp if tam_emp > 0 else None}
+        # EL CIIU COMPLETO VIAJA AL MODELO, no solo su primera letra. De el sale el
+        # nivel al que se compara cada cargo: sin esto `rubro_del_veredicto` no tiene
+        # con que bajar y todo se compara contra la seccion — o sea que la cascada
+        # entera queda muerta sin que nada falle.
+        ciiu_cliente = g6 or None
         if g6 and not rubro:
             # UN DERIVADO NO PUEDE DAR 400. La validacion de mas abajo rechaza los rubros
             # sin respaldo, y aplicada a un valor que el cliente no mando produce un error

@@ -464,8 +464,15 @@ def test_el_informe_trae_el_sector_del_cliente_SIN_meterlo_en_el_veredicto(clien
     f = d["por_puesto"][0]
     # las columnas viajan SIEMPRE, con dato o sin el: un front no puede tener que
     # programar dos formas de respuesta
-    for c in ("sector_codigo", "sector_nivel", "sector_referencia", "sector_empresas"):
-        assert c in f, f"falta {c}"
+    # El bloque viaja SIEMPRE, con contenido o en `null`: si apareciera solo a veces,
+    # el front tendria que programar dos formas de respuesta y la rara no se prueba.
+    assert "sector_mas_fino" in f
+    # `null` aqui porque esta base de juguete no tiene CIIU, asi que no hay nada que
+    # explicar. Lo que NO puede haber es una cifra de sueldo del sector: competiria con
+    # la referencia y ganaria, porque es la de menos empresas y suele ser la mas grande.
+    assert f["sector_mas_fino"] is None or "referencia" not in f["sector_mas_fino"]
+    planas = [c for c in f if c.startswith("sector_") and c != "sector_mas_fino"]
+    assert not planas, f"las columnas planas se anidan en el bloque: {planas}"
 
 
 def test_la_ficha_del_ruc_devuelve_el_CIIU_COMPLETO(cliente):
@@ -518,3 +525,80 @@ def test_el_entorno_manda_sobre_el_defecto(monkeypatch, base_npz):
     from benchmarking.producto.base_referencia import BaseReferencia
     c = api.capacidades_de(BaseReferencia.cargar(base_npz, lambda a: 470.0))
     assert set(c) == {n for n, _, _ in api.CAPACIDADES}
+
+
+# --- la cascada, DE PUNTA A PUNTA por HTTP ----------------------------------------
+
+@pytest.fixture
+def cliente_ciiu(tmp_path, monkeypatch):
+    """Un servicio sobre una base CON CIIU, que es lo que ninguna prueba cubria.
+
+    El defecto que motiva esto: `ciiu_cliente` se inicializaba a None y se pasaba a
+    `procesar` sin asignarle nunca el valor. Sin CIIU, `rubro_del_veredicto` no tiene con
+    que bajar y TODO se compara contra la seccion: la cascada entera muerta, sin que nada
+    fallara. La base de juguete de los demas tests no trae CIIU, asi que no podia verlo.
+    """
+    filas, emb = [], {}
+    v = np.zeros(3); v[0] = 1.0
+    emb["VENDEDOR"] = v
+    # G4761 con 40 empresas (pasa el umbral de 30) y G4762 con 12 (no pasa)
+    for clase, paga, n in (("G4761.03", 1.0, 40), ("G4762.01", 1.6, 12)):
+        for i in range(n):
+            for _ in range(3):
+                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i,
+                              "G", clase))
+    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y",
+                                         "ciiu_n1", "ciiu_n6"])
+    scvs = pd.DataFrame({"ruc": ["EG476100", "EG476200"],
+                         "segmento": ["MEDIANA", "MEDIANA"],
+                         "ciiu_n6": ["G4761.03", "G4762.01"],
+                         "n_empleados": [50, 50]})
+    b = BaseReferencia.construir(marco, emb, lambda a: 470.0, scvs=scvs)
+    ruta = tmp_path / "b.npz"
+    b.guardar(ruta)
+
+    from benchmarking.servicio import api
+
+    class _S:
+        sbu = {2025: 470, ANIO: 470}
+        vertex_embedding_model = "x"; bq_project = "p"; vertex_location = "l"
+        gcs_cache_embeddings = ""
+        def get_sbu(self, a, estricto=False):
+            return _sbu(a, estricto)
+
+    m = api.Motor.__new__(api.Motor)
+    m.base = BaseReferencia.cargar(str(ruta), lambda a: 470.0)
+    m.emb = {c: m.base.Z[i] for i, c in enumerate(m.base.celdas)}
+    m.settings = _S(); m.carga_s = 0.0; m.asegurar = lambda t: 0
+    m.ruta_base = str(ruta); m.capacidades = api.capacidades_de(m.base)
+    api.app.dependency_overrides[api.motor] = lambda: m
+    yield TestClient(api.app)
+    api.app.dependency_overrides.clear()
+
+
+def test_el_veredicto_BAJA_a_la_division_pasando_por_HTTP(cliente_ciiu):
+    df = pd.DataFrame({"cargo": ["VENDEDOR"], "sueldo": ["500"]})
+    r = cliente_ciiu.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                          data={"ruc": "EG476100"})
+    assert r.json()["empresa"]["ciiu"] == "G4761.03"
+    d = cliente_ciiu.get(f"/informes/{r.json()['id']}").json()
+    f = d["por_puesto"][0]
+    assert f["rubro"] == "G4761", f"se comparo contra {f['rubro']!r}"
+    assert f["rubro_nivel"] == "clase"
+    # el veredicto ya usa el nivel mas fino: no hay nada que explicar
+    assert f["sector_mas_fino"] is None
+
+
+def test_y_cuando_no_alcanza_el_umbral_lo_EXPLICA_por_HTTP(cliente_ciiu):
+    df = pd.DataFrame({"cargo": ["VENDEDOR"], "sueldo": ["500"]})
+    r = cliente_ciiu.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                          data={"ruc": "EG476200"})
+    d = cliente_ciiu.get(f"/informes/{r.json()['id']}").json()
+    f = d["por_puesto"][0]
+    assert f["rubro"] != "G4762", "12 empresas no alcanzan para decidir"
+    s = f["sector_mas_fino"]
+    assert s and s["codigo"] == "G4762" and s["empresas"] == 12
+    # el umbral viaja en la respuesta: si se cambia, el texto del front sigue siendo
+    # cierto sin tocarlo
+    assert s["umbral"] == 30
+    assert "referencia" not in s, "la explicacion no lleva sueldo"

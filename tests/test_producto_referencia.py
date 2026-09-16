@@ -948,24 +948,28 @@ def _marco_ciiu(n_por_clase=14):
                                         "ciiu_n1", "ciiu_n6"]), emb
 
 
-def test_el_sector_fino_se_REPORTA_pero_no_cambia_la_referencia():
-    # Es la decision de D-029: el ejecutivo ve lo que paga SU sector, y el veredicto se
-    # sigue calculando sobre la seccion, donde hay muestra. Medido: con la cascada
-    # cambia el veredicto del 1,8% de los cargos y en esos la seccion acierta mas.
-    marco, emb = _marco_ciiu()
+def test_el_sector_mas_fino_EXPLICA_la_eleccion_y_no_trae_sueldo():
+    # Antes esto devolvia el centro del sector fino y el informe llevaba DOS cifras. Sobre
+    # la base real discrepaban en 25.702 casos, con cola hasta +107%: un GERENTE agricola
+    # veia $1.256 de su seccion (41 empresas) junto a $2.604 de su division (19). Nadie
+    # juzga eso de un vistazo y gana el numero grande, que es el de menos empresas.
+    marco, emb = _marco_ciiu()               # 14 empresas por clase: pasan 10, no 30
     b = BaseReferencia.construir(marco, emb, _sbu)
     r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
 
-    assert r["sector_codigo"] == "G4761", "el nivel mas fino que tiene banda"
-    assert r["sector_nivel"] == "clase"
-    assert r["sector_empresas"] == 14, "y con su muestra al lado, que es el punto"
+    # el veredicto NO baja a la clase (14 < 30), asi que se explica por que
+    assert r["rubro"] != "G4761"
+    assert r["sector_codigo"] == "G4761" and r["sector_empresas"] == 14
+    # ...y lo que viaja es la MUESTRA, no una cifra que compita con la referencia
+    assert not [c for c in r.index if c.startswith("sector_") and "ref" in c],         "el sector no puede traer sueldo: competiria con el veredicto"
 
-    # la referencia que decide NO es la del sector fino
-    sin = b.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
-    assert r["referencia_log"] == sin["referencia_log"]
-    assert r["p25_log"] == sin["p25_log"] and r["p75_log"] == sin["p75_log"]
-    # ...y el dato del sector es DISTINTO del que decide: si no, no informaria de nada
-    assert abs(r["sector_ref_log"] - r["referencia_log"]) > 0.1
+
+def test_cuando_el_veredicto_YA_usa_el_nivel_mas_fino_no_hay_nada_que_explicar():
+    marco, emb = _marco_ciiu(n_por_clase=40)     # 40 por clase: el veredicto baja
+    b = BaseReferencia.construir(marco, emb, _sbu)
+    r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
+    assert r["rubro"] == "G4761"
+    assert r["sector_codigo"] == "", "no hay nivel mas fino sin usar: no se explica nada"
 
 
 def test_baja_de_nivel_hasta_donde_haya_datos():
@@ -981,8 +985,8 @@ def test_sin_ciiu_las_columnas_estan_y_no_afirman_nada():
     marco, emb = _marco_ciiu()
     b = BaseReferencia.construir(marco, emb, _sbu)
     r = b.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
-    assert r["sector_codigo"] == "" and r["sector_empresas"] == 0
-    assert pd.isna(r["sector_ref_log"])
+    assert r["sector_codigo"] == "" and r["sector_nivel"] == ""
+    assert r["sector_empresas"] == 0
 
 
 def test_las_entradas_de_SECCION_no_cambian_al_anadir_los_niveles_finos():

@@ -527,18 +527,18 @@ def _ajuste_segmento(marco, col, celdas, niveles, tau2_c, sigma2_c,
 
 
 def _cols_sector(hallazgo):
-    """Las cuatro columnas del sector fino, siempre presentes.
+    """Las tres columnas del sector mas fino, siempre presentes y SIN sueldo.
 
-    SIEMPRE, tambien cuando no hay dato: un front que reciba las columnas segun el caso
-    tiene que programar dos formas de respuesta, y la que casi nunca ocurre es la que
-    nadie prueba.
+    Siempre, tambien vacias: un front que reciba las columnas segun el caso tiene que
+    programar dos formas de respuesta, y la que casi nunca ocurre es la que nadie prueba.
+
+    Sin sueldo a proposito: ver `sector_mas_fino`. Lo que viaja es la MUESTRA, que es lo
+    que explica la decision; una cifra aqui volveria a competir con la referencia.
     """
     if hallazgo is None:
-        return {"sector_codigo": "", "sector_nivel": "", "sector_ref_log": np.nan,
-                "sector_empresas": 0}
-    cod, niv, mu, emp = hallazgo
-    return {"sector_codigo": cod, "sector_nivel": niv, "sector_ref_log": mu,
-            "sector_empresas": emp}
+        return {"sector_codigo": "", "sector_nivel": "", "sector_empresas": 0}
+    cod, niv, emp = hallazgo
+    return {"sector_codigo": cod, "sector_nivel": niv, "sector_empresas": emp}
 
 
 def _bandas_multinivel(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave,
@@ -1030,34 +1030,40 @@ class BaseReferencia:
                     return c6[:k], NOMBRE_NIVEL.get(k, str(k))
         return seccion, "seccion"
 
-    def sector_fino(self, i_celda: int, ciiu: str):
-        """El nivel CIIU mas fino que tiene banda para esta celda. None si ninguno.
+    def sector_mas_fino(self, i_celda: int, ciiu: str, ya_usado: str):
+        """El nivel CIIU mas fino que existe para este cliente, SI no es el que se uso.
 
-        ES INFORMATIVO Y NO ENTRA EN EL VEREDICTO. Un ejecutivo quiere ver lo que paga SU
-        sector, no la seccion entera —una libreria no se reconoce en "comercio al por
-        mayor y al por menor; reparacion de vehiculos"—, y esa peticion es razonable. Lo
-        que no es razonable es calcular su diagnostico sobre las 16 empresas de su
-        division en vez de las 46 de su seccion: esta medido que acierta menos (ver
-        `NIVEL_VEREDICTO`).
+        DEVUELVE MUESTRA, NO SUELDO, y esa es toda la idea. Antes esto devolvia tambien
+        el centro del sector fino y el informe llevaba DOS cifras: la del veredicto y
+        esta. Medido sobre la base: discrepan en 25.702 casos (cargo x cliente), con
+        mediana del 2,7% pero cola hasta +107% —un `GERENTE` agricola veia $1.256 de su
+        seccion (41 empresas) junto a $2.604 de su division (19)—. Nadie juzga eso de un
+        vistazo, y el numero grande gana siempre.
 
-        Asi que se le da el dato, CON SU NUMERO DE EMPRESAS AL LADO, y el veredicto se
-        sigue calculando donde hay con que. Es mas honesto que las dos alternativas
-        puras: hoy se le esconde su sector, y con la cascada se le daria un numero de 16
-        empresas sin decirle que son 16.
+        Peor: ese segundo numero salia del nivel mas fino con 10 empresas, o sea de una
+        muestra MENOR que la del veredicto, que exige 30. Le poniamos al cliente la cifra
+        menos fiable al lado de la fiable, sin decirlo.
 
-        Devuelve (codigo, nombre_del_nivel, centro_log, n_empresas).
+        Ahora esto solo explica POR QUE el veredicto usa el nivel que usa: "tu division
+        tiene 19 empresas, por debajo de 30". Es una respuesta a la pregunta del
+        ejecutivo —.y mi sector?— que no se puede confundir con una referencia.
+
+        `None` cuando el veredicto YA usa el nivel mas fino del cliente, que es el caso
+        normal: entonces no hay nada que explicar.
+
+        Devuelve (codigo, nombre_del_nivel, n_empresas).
         """
         c6 = str(ciiu or "").strip().upper()
         if i_celda is None or not c6:
             return None
         for k in NIVELES_RUBRO:
-            if k >= len(c6) and k != 1:
+            if k == 1 or k >= len(c6):
                 continue
-            cod = c6[:k]
-            fr = self.rub.get((int(i_celda), cod))
+            fr = self.rub.get((int(i_celda), c6[:k]))
             if fr is not None:
-                return (cod, NOMBRE_NIVEL.get(k, str(k)),
-                        float(self.rub_m[fr]), int(self.rub_emp[fr]))
+                if c6[:k] == str(ya_usado):
+                    return None          # el veredicto ya baja hasta aqui
+                return (c6[:k], NOMBRE_NIVEL.get(k, str(k)), int(self.rub_emp[fr]))
         return None
 
     # -- persistencia ----------------------------------------------------------
@@ -1438,9 +1444,9 @@ class BaseReferencia:
                                           if propio is not None
                                           and np.isfinite(self.brecha_gen[propio]) else ""),
                         "empresas": n_emp, "personas": n_per,
-                        # SU sector, al nivel mas fino que tenga datos. INFORMATIVO: no
-                        # entra en la lectura ni en la banda. Ver `sector_fino`.
-                        **_cols_sector(self.sector_fino(propio, c6_cliente)),
+                        # POR QUE el veredicto usa el nivel que usa. Vacio cuando ya
+                        # baja al mas fino del cliente. Ver `sector_mas_fino`.
+                        **_cols_sector(self.sector_mas_fino(propio, c6_cliente, usado)),
                         # .esta el cliente DENTRO del mercado con que se le compara?
                         # `1/n_emp` como influencia: medido que aproxima el peso real
                         # con 0,3%-4% de error. Ver el docstring y D-027.
