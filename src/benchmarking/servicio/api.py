@@ -33,6 +33,8 @@ from __future__ import annotations
 
 import datetime as _dt
 import io
+import json
+import os
 import pathlib
 import threading
 import time
@@ -84,29 +86,48 @@ UNIDADES = {
 # —`C239`, "Productos minerales no metalicos"— no se puede resolver aqui: haria falta
 # `ciiu_n6` en el marco y una tabla de descripciones. Se da la seccion y se dice que el
 # grupo no esta, en vez de dejar la tarjeta a medias sin explicacion.
-CIIU_SECCION = {
-    "A": "Agricultura, ganaderia, silvicultura y pesca",
-    "B": "Explotacion de minas y canteras",
-    "C": "Industrias manufactureras",
-    "D": "Suministro de electricidad, gas, vapor y aire acondicionado",
-    "E": "Distribucion de agua; alcantarillado y gestion de desechos",
-    "F": "Construccion",
-    "G": "Comercio al por mayor y al por menor; reparacion de vehiculos",
-    "H": "Transporte y almacenamiento",
-    "I": "Alojamiento y servicio de comidas",
-    "J": "Informacion y comunicacion",
-    "K": "Actividades financieras y de seguros",
-    "L": "Actividades inmobiliarias",
-    "M": "Actividades profesionales, cientificas y tecnicas",
-    "N": "Servicios administrativos y de apoyo",
-    "O": "Administracion publica y defensa; seguridad social",
-    "P": "Ensenanza",
-    "Q": "Salud humana y asistencia social",
-    "R": "Artes, entretenimiento y recreacion",
-    "S": "Otras actividades de servicios",
-    "T": "Hogares como empleadores",
-    "U": "Organizaciones y organos extraterritoriales",
-}
+# NOMBRES CIIU DE TODOS LOS NIVELES, del catalogo de la Superintendencia (`scvs_ciiu`),
+# volcado al repo: 770 entradas —22 secciones, 88 divisiones, 238 grupos, 422 clases—
+# en 49 KB. Es un estandar publico, no dato de cliente, y vive aqui para que pintar una
+# etiqueta no dependa de una consulta a BigQuery.
+#
+# Antes habia aqui un diccionario de 22 secciones escrito a mano, y no daba para mas: con
+# la cascada el informe se compara contra divisiones y clases —`G47`, `G4761`— y esas no
+# tenian nombre. La `nota` de `industria` lo confesaba: "su descripcion en palabras
+# necesita la tabla CIIU del INEC, que no esta en la base". Ya esta.
+_CIIU = json.loads((pathlib.Path(__file__).parent.parent / "datos" / "ciiu.json")
+                   .read_text(encoding="utf-8"))
+
+
+def nombre_ciiu(codigo: str) -> str:
+    """El nombre de un codigo CIIU a cualquier nivel. Cae al nivel superior si falta.
+
+    SE CORTA EN EL PUNTO Y COMA. En CIIU el `;` separa actividades que comparten codigo
+    por convencion, y la primera es la que nombra el rubro:
+
+        D352  "Fabricacion de gas; distribucion de combustibles gaseosos por tuberias"
+        M71   "Actividades de arquitectura e ingenieria; ensayos y analisis tecnicos"
+        O84   "Administracion publica y defensa; planes de seguridad social..."
+
+    Afecta a 20 de 769 nombres (3%) y no crea ni una ambiguedad: comprobado, ningun par
+    de codigos del mismo nivel queda con el mismo nombre al cortar.
+
+    LA COMA NO SE CORTA, y es deliberado: ahi no separa actividades, ENUMERA. Cortarla
+    dejaria el primer elemento de una lista haciendose pasar por el todo —`K65` quedaria
+    en "Seguros" perdiendo reaseguros y fondos de pensiones, y `G4741` en "Venta al por
+    menor de computadores" perdiendo periferico, programas y telecomunicaciones—. Si el
+    texto no cabe en la pantalla, se trunca por longitud con puntos suspensivos: eso al
+    menos avisa de que hay mas.
+    """
+    c = str(codigo or "").strip().upper()
+    while c:
+        if c in _CIIU:
+            return _CIIU[c].split(";")[0].strip()
+        c = c[:-1]
+    return "sin clasificar"
+
+
+CIIU_SECCION = {k: v for k, v in _CIIU.items() if len(k) == 1}
 
 
 def _opt(v: str | None) -> str | None:
@@ -576,12 +597,47 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
                 if g6.startswith(rubro):
                     grupos_ciiu[g6] = grupos_ciiu.get(g6, 0) + 1
         top = sorted(grupos_ciiu.items(), key=lambda kv: -kv[1])[:5]
+        # CONTRA QUE SE COMPARO, que con la cascada ya no es una sola cosa: unos cargos
+        # bajan a la division del cliente y otros se quedan en su seccion.
+        #
+        # `nombre` es el nivel MAS FINO al que se llego, no el que cubre mas cargos. Es
+        # decision de producto: la etiqueta contesta "hasta donde supimos afinar contigo",
+        # y una libreria prefiere leer "comercio al por menor" antes que "comercio al por
+        # mayor y al por menor; reparacion de vehiculos".
+        #
+        # EL PRECIO, para que quede escrito: el nivel mas fino puede cubrir UN solo cargo
+        # de veinte, y la etiqueta describira igual el informe entero. Por eso viajan
+        # `cargos_en_ese_nivel` —cuantos cubre de verdad— y `niveles` con el reparto
+        # completo. Si esa cifra es 1 de 20, la etiqueta es cierta y engañosa a la vez, y
+        # quien pinte la pantalla tiene con que matizarlo.
+        usados = {}
+        if "rubro" in ref.columns and "rubro_nivel" in ref.columns:
+            vistos = set()
+            for t, cod, niv in zip(ref["cargo"], ref["rubro"], ref["rubro_nivel"]):
+                if t in vistos or not str(cod):
+                    continue
+                vistos.add(t)
+                k = (str(cod), str(niv))
+                usados[k] = usados.get(k, 0) + 1
+        # el mas fino primero: codigo mas largo. Empate -> el que cubra mas cargos.
+        orden = sorted(usados.items(), key=lambda kv: (-len(kv[0][0]), -kv[1]))
+        (cod_pre, niv_pre), n_pre = orden[0] if orden else ((rubro, "seccion"), 0)
         industria = {
+            # lo que el front rotula como "el mercado". Es el nivel predominante.
+            "codigo": cod_pre,
+            "nivel": niv_pre,
+            "nombre": nombre_ciiu(cod_pre),
+            "cargos_en_ese_nivel": n_pre,
+            "niveles": [{"codigo": c, "nivel": n, "cargos": v, "nombre": nombre_ciiu(c)}
+                        for (c, n), v in orden],
+            # LA SECCION, y solo la seccion. Lo que el front rotula como "el mercado"
+            # es `nombre` —el nivel mas fino al que llego la cascada—; esto se queda
+            # aparte y con su nombre honesto, para que dentro de seis meses nadie lea
+            # "nombre_seccion" y reciba una division.
             "ciiu_seccion": rubro,
-            "nombre_seccion": CIIU_SECCION.get(rubro, "seccion desconocida"),
-            "grupos_ciiu": [{"codigo": c, "empresas": n} for c, n in top],
-            "nota": "El codigo de GRUPO (p.ej. C239) es exacto; su descripcion en "
-                    "palabras necesita la tabla CIIU del INEC, que no esta en la base.",
+            "nombre_seccion": nombre_ciiu(rubro),
+            "grupos_ciiu": [{"codigo": c, "empresas": n, "nombre": nombre_ciiu(c)}
+                            for c, n in top],
         }
 
     cuerpo = {
@@ -632,6 +688,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
 # ============================== capa HTTP ==============================
 from contextlib import asynccontextmanager  # noqa: E402
 
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi import (BackgroundTasks, Depends, FastAPI, File, Form,  # noqa: E402
                      HTTPException, UploadFile)
 from fastapi.responses import Response  # noqa: E402
@@ -651,6 +708,22 @@ async def ciclo(app: FastAPI):
 
 
 app = FastAPI(title="Referenciador salarial", version=ESQUEMA, lifespan=ciclo)
+
+# CORS PARA DESARROLLO LOCAL. Sin esto, un front en `localhost:5173` pidiendo a
+# `localhost:8000` recibe un bloqueo del navegador y no llega ni una peticion.
+#
+# NO SE ABRE A `*`, y no es celo: este servicio devuelve referencias salariales
+# construidas sobre 6.722 empresas. `*` mas un despliegue publico es un volcado de datos
+# de compensacion a quien pase por ahi. Los origenes por defecto son los puertos tipicos
+# de desarrollo en la propia maquina; para cualquier otra cosa, `CORS_ORIGINS` con la
+# lista explicita. El docstring del modulo ya lo dice: detras de una puerta.
+_ORIGENES = [o.strip() for o in os.environ.get(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://localhost:5173,http://localhost:4200,"
+    "http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173"
+).split(",") if o.strip()]
+app.add_middleware(CORSMiddleware, allow_origins=_ORIGENES,
+                   allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 
 def motor() -> Motor:
