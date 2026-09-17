@@ -23,6 +23,8 @@ cuarentena/
 # Secretos / credenciales
 .env
 *.json
+# intermedios de experimentos (Zref y compania): centenares de MB
+*.npy
 # ...pero el catalogo CIIU SI se versiona: es estandar publico, 49 KB, y el servicio no
 # arranca sin el. Con `*.json` a secas se quedaba fuera y rompia en cualquier otra
 # maquina sin que nadie lo notara aqui.

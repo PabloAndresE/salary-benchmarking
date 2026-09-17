@@ -3059,3 +3059,81 @@ VENDEDOR                  $  524 -> $  500   division  65           -4,5%
 AUXILIAR DE LIMPIEZA      $  487 -> $  487   seccion   92            0,0%   (division: 12)
 CAJERO                    $  513 -> $  513   seccion  112            0,0%   (division: 16)
 ```
+
+---
+
+## D-030 — El contexto en el embedding se midió y **no se adopta**
+
+**Fecha:** 2026-09-17
+**Origen:** buscar `TECNICO DE DIALISIS` en `/puestos` sugería `ASISTENTE EN DISEÑO`.
+**Evidencia:** `research/experimentos/e1_premisa/10_contexto_en_el_embedding.py`.
+**Estado:** medido, **negativo en la primaria**. El modelo se queda como está.
+
+### El diagnóstico, que sí es sólido
+
+Sobre los 65.181 títulos de la base:
+
+| | p50 | p90 | p99 | max |
+|---|---|---|---|---|
+| pares **al azar** | 0,588 | 0,693 | **0,780** | 0,955 |
+| mismo puesto (fusión) | 0,970 | 0,991 | 0,997 | 1,000 |
+
+Dos cargos **sin ninguna relación** llegan a 0,78 en el percentil 99, y el 8,6% de los
+pares al azar pasan de 0,70. Los candidatos malos puntuaban 0,74–0,79: están dentro del
+rango del azar. Con títulos de una a tres palabras en español,
+`text-multilingual-embedding-002` no separa el sinónimo de la rima — `DENTISTA` puntúa
+0,752 con `TELEFONISTA` y 0,763 con `ODONTOLOGA`.
+
+### La hipótesis y su medición
+
+Embeber el título dentro de una frase en vez de desnudo. Dos plantillas declaradas antes
+de correr, `T1_larga` (funciones y responsabilidad) y `T2_corta` (`"Cargo: {}"`, como
+control).
+
+**Primaria** — pinball q=0,25/0,75 sobre la banda de empresas, pareado por empresa
+apartada, 38.450 votos sobre 1.442 empresas:
+
+```
+pinball desnudo   0,13683
+T1_larga   dif -0,00057   IC95 [-0,00126, +0,00014]   sin diferencia
+T2_corta   dif -0,00031   IC95 [-0,00081, +0,00021]   sin diferencia
+```
+
+**Ninguna se adopta.** Los dos intervalos cruzan el cero.
+
+**Secundaria** (no decide): aciertos en pares sinónimo/rima — desnudo **2/5**, T1 **4/5**,
+T2 **3/5**. `DENTISTA`–`ODONTOLOGA` pasa de 0,763 a 0,943.
+
+### El confundido que hubo que neutralizar
+
+Con contexto **todos** los cosenos suben, así que `UMBRAL_FUSION = 0,95` deja de
+significar lo mismo. Sin corregirlo, la variante nueva fusionaría mucho más y se estaría
+midiendo la agresividad de la fusión disfrazada de calidad del embedding. Se igualó por
+**cuantil**: 0,95 → 0,9804 (T1) y 0,9634 (T2), con grupos casi idénticos (33.836 / 33.284
+/ 33.781).
+
+### Qué se aprende
+
+**El contexto ayuda al vecindario y no mueve las bandas.** Tiene sentido: la banda de un
+cargo depende de cuántas empresas lo respaldan mucho más que de cuál es su vecino más
+cercano.
+
+**Y el control hizo su trabajo.** `T2_corta` también mejora los pares y también da nulo en
+pinball, así que el efecto **no vive en la redacción concreta** de la plantilla. Si solo
+`T1_larga` hubiera funcionado, habría que sospechar ajuste a los cinco pares.
+
+**`CHOFER`/`CHEF` falla en las tres variantes.** Ese no es un problema de contexto.
+
+### Lo que queda abierto
+
+Usar contexto **solo en `/puestos`**, manteniendo dos juegos de embeddings: el buscador
+mejoraría y el producto no se tocaría. No está medido así y no se propone todavía.
+
+### Un error de método que casi se publica al revés
+
+La primera versión de `juntar()` emparejaba los tres vectores de pinball **por posición**.
+Cada variante corre en su propio proceso y consulta BigQuery por separado, y **BigQuery no
+garantiza el orden de las filas entre consultas**: se estaba comparando el voto de una
+empresa contra el de otra. La salida decía `T1_larga PEOR +0,00641` donde la unión por
+`(empresa, cargo)` da `-0,00057 sin diferencia` — **signo opuesto**. Corregido y anotado
+en el código.

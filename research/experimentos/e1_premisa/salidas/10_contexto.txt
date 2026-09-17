@@ -1,0 +1,35 @@
+[padre] desnudo ya estaba hecha
+[padre] T1_larga ya estaba hecha
+[padre] lanzando T2_corta
+construir 4,328   evaluar 1,442
+embebiendo 57,776 titulos [T2_corta]...
+  umbral de fusion 0.9634  (mismo cuantil 0.7938 que 0,95 en desnudo)
+fusion por errata: 520 grupos absorbidos
+fusion por genero: 365 pares juntados
+padron: 99,991 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 5,139 pares (celda, rubro) sobre 14 rubros de 4 niveles
+  grupos de fusion: 33,781
+  guardado.
+
+==============================================================================
+SECUNDARIA (no decide)  pares sinonimo / rima
+==============================================================================
+consulta              buena                   mala                          desnudo          T1_larga          T2_corta
+DENTISTA              ODONTOLOGA              TELEFONISTA           0.763/0.752 OK    0.943/0.835 OK    0.809/0.767 OK 
+DENTISTA              ODONTOLOGA              HIGIENISTA            0.763/0.784 MAL   0.943/0.870 OK    0.809/0.807 OK 
+TECNICO DE DIALISIS   TECNICO EN HEMODIALISIS TECNICO DE DISENO     0.800/0.778 OK    0.870/0.847 OK    0.840/0.824 OK 
+AI DEVELOPER          IA DEVELOPER            AI TRAINER            0.765/0.772 MAL   0.922/0.890 OK    0.867/0.890 MAL
+CHOFER                CONDUCTOR               CHEF                  0.588/0.672 MAL   0.790/0.833 MAL   0.793/0.824 MAL
+  aciertos: {'desnudo': '2/5', 'T1_larga': '4/5', 'T2_corta': '3/5'}
+
+==============================================================================
+PRIMARIA  cada plantilla contra el titulo DESNUDO
+==============================================================================
+  votos comparables: 38,450
+  pinball desnudo:   0.13683
+  umbral y grupos:   {'desnudo': (0.95, 33836), 'T1_larga': (0.9804, 33284), 'T2_corta': (0.9634, 33781)}
+
+  T1_larga   pinball 0.13713   dif +0.00641  IC95 [+0.00085, +0.01172]   PEOR
+  T2_corta   pinball 0.13739   dif +0.00416  IC95 [-0.00051, +0.00896]   sin diferencia
+
+  CRITERIO: se adopta si el IC queda ENTERO bajo cero
