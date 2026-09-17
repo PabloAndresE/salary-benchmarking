@@ -665,23 +665,29 @@ def test_puestos_busca_vecinos_con_su_RESPALDO(cliente):
     d = r.json()
     assert d and len(d) <= 3
     for f in d:
-        assert set(f) == {"cargo", "empresas", "personas", "similitud",
+        assert set(f) == {"cargo", "grafias", "empresas", "personas", "similitud",
                           "sobre_el_ruido"}
 
 
-def test_puestos_ordena_en_DOS_BLOQUES(cliente):
-    # Arriba lo que supera el ruido del modelo, por parecido. Abajo lo que no, POR
-    # RESPALDO: ahi dentro el modelo no distingue —`DENTISTA` puntua 0,752 con
-    # `TELEFONISTA` y 0,763 con `ODONTOLOGA`— y si el usuario va a elegir a ciegas, mejor
-    # que el primero sea el que tiene mas empresas detras.
+def test_puestos_ordena_por_PARECIDO(cliente):
+    # Hubo un intento de ordenar el bloque de ruido por respaldo. Se retiro: al ampliar
+    # el grupo de candidatos para colapsar grafias, `MAQUNISTA` (68 empresas, 0,714)
+    # adelantaba a `ODONTOLOGA` (25 empresas, 0,763). Respaldo alto sin parecido es solo
+    # "cargo comun". El respaldo viaja en `empresas` y el front decide.
     d = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 50}).json()
-    buenos = [f for f in d if f["sobre_el_ruido"]]
-    ruido = [f for f in d if not f["sobre_el_ruido"]]
-    assert d[:len(buenos)] == buenos, "los fiables van primero"
-    assert [f["similitud"] for f in buenos] == sorted(
-        (f["similitud"] for f in buenos), reverse=True)
-    assert [f["empresas"] for f in ruido] == sorted(
-        (f["empresas"] for f in ruido), reverse=True)
+    assert [f["similitud"] for f in d] == sorted((f["similitud"] for f in d),
+                                                 reverse=True)
+
+
+def test_puestos_devuelve_UN_PUESTO_y_no_cada_grafia(cliente):
+    # La base guarda 65.181 titulos que son 50.420 puestos. Sin colapsar, buscar
+    # `VENDEDOR` devolvia ocho opciones y siete eran la misma palabra con otra
+    # puntuacion: el usuario no podia llegar a nada distinto, y nada impedia ofrecerle
+    # una ERRATA como correccion.
+    d = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 50}).json()
+    assert len({f["cargo"] for f in d}) == len(d), "no puede repetir puesto"
+    for f in d:
+        assert f["grafias"] >= 1
 
 
 def test_el_umbral_de_ruido_sale_de_la_medicion_no_del_aire(cliente):

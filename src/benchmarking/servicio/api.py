@@ -482,6 +482,22 @@ def _leer_mapeo(crudo: str | None, n_filas: int) -> dict[int, str]:
     return out
 
 
+def _representante(grafias) -> str:
+    """De varias grafias del MISMO puesto, la que se le enseña al usuario.
+
+    Menos signos raros, luego mas corta, luego alfabetica. Es una heuristica de
+    presentacion y no toca ningun calculo: elige `VENDEDOR` de entre `VEENDEDOR`,
+    `VENDEDOR.`, `VENDERDOR`, `VENDEROR`... y `TRABAJADOR AGRICOLA` de entre seis, con
+    `TRABAJAJOR AGRICOLA` incluida.
+
+    NO SE USA EL CONTEO DE PERSONAS, que seria lo natural: `personas` esta agregada POR
+    GRUPO, asi que todas las grafias del mismo puesto traen el mismo numero y ordenar por
+    ahi es un empate que resuelve el azar. Asi salia `VEENDEDOR` de etiqueta.
+    """
+    return min(grafias, key=lambda t: (sum(1 for c in t if not (c.isalnum() or c == " ")),
+                                       len(t), t))
+
+
 def _anidar_sector(filas: list) -> list:
     """`sector_*` plano -> un bloque `sector_mas_fino`, o `null`.
 
@@ -1071,29 +1087,59 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
         raise HTTPException(503, "no se pudo embeber el texto; reintenta")
     Q = np.vstack([m.emb[t]]).astype(float)
     Q /= np.linalg.norm(Q, axis=1, keepdims=True)
-    vec, sim = _vecinos(Q, m.base.Z, limite, excluir_propio=False)
-    out = []
-    for j, sj in zip(vec[0], sim[0]):
-        j = int(j)
-        sj = float(sj)
-        out.append({"cargo": str(m.base.celdas[j]),
-                    "empresas": int(m.base.emp[j]),
-                    "personas": int(m.base.personas[j]),
-                    "similitud": round(sj, 3),
-                    # .esta el parecido por encima del ruido del modelo? Ver UMBRAL_RUIDO
-                    "sobre_el_ruido": sj >= UMBRAL_RUIDO})
-    # ORDEN EN DOS BLOQUES. Arriba los que superan el ruido, por parecido. Abajo los que
-    # no lo superan, POR RESPALDO.
+    vec, sim = _vecinos(Q, m.base.Z, min(limite * 6, len(m.base.celdas)),
+                        excluir_propio=False)
+    # UNA FILA POR PUESTO, NO POR GRAFIA. La base guarda 65.181 titulos que son 50.420
+    # puestos: `VENDEDOR`, `VENDEDOR.`, `VENDEDORA`, `VEENDEDOR` y `VENDERDOR` son el
+    # mismo, y la fusion ya lo sabe. Sin colapsar, buscar `VENDEDOR` devolvia ocho
+    # opciones y siete eran la misma palabra con otra puntuacion: el usuario no podia
+    # llegar a nada distinto, y nada impedia ofrecerle una ERRATA como correccion.
     #
-    # El segundo bloque no es una afirmacion sobre parecido —ahi dentro el modelo no
-    # distingue: `DENTISTA` puntua 0,752 con `TELEFONISTA` y 0,763 con `ODONTOLOGA`, once
-    # milesimas entre una terminacion compartida y un sinonimo—. Es que si el usuario va a
-    # elegir entre candidatos indistinguibles, mejor que el primero sea el que tiene 25
-    # empresas detras y no el que tiene 1: la referencia que se lleve sera mas fiable.
-    out.sort(key=lambda r: ((0, -r["similitud"], -r["empresas"])
-                            if r["sobre_el_ruido"] else
-                            (1, -r["empresas"], -r["similitud"])))
-    return out
+    # Se pide `limite * 6` vecinos para tener de donde colapsar, porque un puesto muy
+    # repetido se lleva muchos de los primeros puestos. Sin ese margen, buscar `VENDEDOR`
+    # devolveria un solo resultado.
+    por_grupo = {}
+    for j, sj in zip(vec[0], sim[0]):
+        j, sj = int(j), float(sj)
+        g = int(m.base.grupo[j])
+        prev = por_grupo.get(g)
+        if prev is None:
+            por_grupo[g] = {"grafias": [str(m.base.celdas[j])],
+                            "empresas": int(m.base.emp[j]),
+                            "personas": int(m.base.personas[j]),
+                            "similitud": sj}
+        else:
+            prev["grafias"].append(str(m.base.celdas[j]))
+            prev["similitud"] = max(prev["similitud"], sj)
+    out = []
+    for g, d in por_grupo.items():
+        out.append({"cargo": _representante(d["grafias"]),
+                    # cuantas formas de escribirlo hay detras. El front puede enseñarlas
+                    # si el usuario no reconoce la etiqueta elegida.
+                    "grafias": len(d["grafias"]),
+                    "empresas": d["empresas"],
+                    "personas": d["personas"],
+                    "similitud": round(d["similitud"], 3),
+                    # .esta el parecido por encima del ruido del modelo? Ver UMBRAL_RUIDO
+                    "sobre_el_ruido": d["similitud"] >= UMBRAL_RUIDO})
+    # ORDEN POR PARECIDO, a secas. Lo de arriba es lo mas parecido.
+    #
+    # HUBO UN INTENTO de ordenar el bloque de ruido POR RESPALDO, con el argumento de que
+    # ahi dentro el modelo no distingue —`DENTISTA` puntua 0,752 con `TELEFONISTA` y
+    # 0,763 con `ODONTOLOGA`— y que si el usuario elige a ciegas, mejor el de 25 empresas
+    # que el de 1. Se retira, medido sobre los propios casos:
+    #
+    #   - arreglaba `DENTISTA` y empeoraba `TECNICO DE DIALISIS`, subiendo `ASISTENTE DE
+    #     DISENO` (30 empresas) por encima de `TECNICO EN HEMODIALISIS` (1);
+    #   - y al ampliar el grupo de candidatos para poder colapsar por grafia, se volvio
+    #     claramente malo: `MAQUNISTA` (68 empresas, 0,714) adelantaba a `ODONTOLOGA`
+    #     (25 empresas, 0,763). El respaldo alto sin parecido es solo "cargo comun".
+    #
+    # El respaldo viaja en `empresas` y la fiabilidad en `sobre_el_ruido`: con eso el
+    # front decide que pinta y como. Ordenar aqui por algo que no es parecido era meter
+    # un criterio que no se puede validar.
+    out.sort(key=lambda r: -r["similitud"])
+    return out[:limite]
 
 
 @app.get("/referencia")
