@@ -665,10 +665,31 @@ def test_puestos_busca_vecinos_con_su_RESPALDO(cliente):
     d = r.json()
     assert d and len(d) <= 3
     for f in d:
-        assert set(f) == {"cargo", "empresas", "personas", "similitud"}
-    # ordenado por similitud descendente
-    assert [f["similitud"] for f in d] == sorted((f["similitud"] for f in d),
-                                                 reverse=True)
+        assert set(f) == {"cargo", "empresas", "personas", "similitud",
+                          "sobre_el_ruido"}
+
+
+def test_puestos_ordena_en_DOS_BLOQUES(cliente):
+    # Arriba lo que supera el ruido del modelo, por parecido. Abajo lo que no, POR
+    # RESPALDO: ahi dentro el modelo no distingue —`DENTISTA` puntua 0,752 con
+    # `TELEFONISTA` y 0,763 con `ODONTOLOGA`— y si el usuario va a elegir a ciegas, mejor
+    # que el primero sea el que tiene mas empresas detras.
+    d = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 50}).json()
+    buenos = [f for f in d if f["sobre_el_ruido"]]
+    ruido = [f for f in d if not f["sobre_el_ruido"]]
+    assert d[:len(buenos)] == buenos, "los fiables van primero"
+    assert [f["similitud"] for f in buenos] == sorted(
+        (f["similitud"] for f in buenos), reverse=True)
+    assert [f["empresas"] for f in ruido] == sorted(
+        (f["empresas"] for f in ruido), reverse=True)
+
+
+def test_el_umbral_de_ruido_sale_de_la_medicion_no_del_aire(cliente):
+    # Pares al azar de la base llegan a 0,780 en el percentil 99; los del mismo puesto
+    # viven por encima de 0,95. 0,85 deja pasar el 0,08% del azar y conserva el 97,9% de
+    # los pares que de verdad son el mismo puesto.
+    from benchmarking.servicio.api import UMBRAL_RUIDO
+    assert 0.80 <= UMBRAL_RUIDO <= 0.95
 
 
 def test_puestos_NO_esconde_los_de_poco_respaldo(cliente):

@@ -58,7 +58,25 @@ from ..producto.referenciar_nomina import _POSIBLES, _POSIBLES_SUELDO, _buscar_s
 
 ESQUEMA = "1.0"
 TTL_SEGUNDOS = 60 * 60          # el informe caduca en una hora: no es un almacen
-TOPE_EMBEDDINGS_NUEVOS = 50_000  # techo del cache caliente de titulos no vistos
+TOPE_EMBEDDINGS_NUEVOS = 50_000
+
+# POR ENCIMA DE ESTO, EL PARECIDO SIGNIFICA ALGO. Medido sobre la base de 65.181 titulos:
+#
+#                            p50     p90     p99     max
+#   pares AL AZAR          0,588   0,693   0,780   0,955
+#   mismo puesto (fusion)  0,970   0,991   0,997   1,000
+#
+#   superan 0,80: el 0,53% de los pares al azar y el 99,1% de los del mismo puesto
+#   superan 0,85: el 0,08%                  y el 97,9%
+#
+# Dos cargos SIN NINGUNA RELACION llegan a 0,78 en el percentil 99, asi que un candidato
+# a 0,74 no es una sugerencia: es ruido con nombre. Con 65.181 titulos, siempre habra
+# alguno que caiga alto por casualidad. 0,85 deja pasar al 0,08% del azar y conserva al
+# 97,9% de los pares que de verdad son el mismo puesto.
+#
+# NO SE FILTRA CON ESTO, SE ETIQUETA: esconder candidatos dejaria al usuario eligiendo
+# sin saber que habia mas, que es el problema que `/puestos` viene a resolver.
+UMBRAL_RUIDO = 0.85  # techo del cache caliente de titulos no vistos
 
 # UNIDADES DECLARADAS. Un front que formatee `vs_mercado` como dolares produce un numero
 # creible y falso, que es peor que un error. Viaja con cada respuesta.
@@ -1038,8 +1056,9 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
     con la misma similitud y 2 contra 25 empresas detras no valen lo mismo, y esa
     diferencia no se ve en el coseno.
 
-    NO SE FILTRA POR RESPALDO MINIMO. Se devuelve el conteo y que el front decida que
-    pinta y como: esconder aqui los de poco respaldo dejaria al usuario eligiendo entre
+    NO SE FILTRA NADA, NI POR RESPALDO NI POR PARECIDO. Se devuelve todo con lo que hace
+    falta para juzgarlo —`empresas`, `personas`, `similitud`, `sobre_el_ruido`— y el front
+    decide que pinta y como: esconder candidatos dejaria al usuario eligiendo entre
     opciones sin saber que habia mas, que es el problema que este endpoint viene a
     resolver, no a repetir.
     """
@@ -1056,10 +1075,24 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
     out = []
     for j, sj in zip(vec[0], sim[0]):
         j = int(j)
+        sj = float(sj)
         out.append({"cargo": str(m.base.celdas[j]),
                     "empresas": int(m.base.emp[j]),
                     "personas": int(m.base.personas[j]),
-                    "similitud": round(float(sj), 3)})
+                    "similitud": round(sj, 3),
+                    # .esta el parecido por encima del ruido del modelo? Ver UMBRAL_RUIDO
+                    "sobre_el_ruido": sj >= UMBRAL_RUIDO})
+    # ORDEN EN DOS BLOQUES. Arriba los que superan el ruido, por parecido. Abajo los que
+    # no lo superan, POR RESPALDO.
+    #
+    # El segundo bloque no es una afirmacion sobre parecido —ahi dentro el modelo no
+    # distingue: `DENTISTA` puntua 0,752 con `TELEFONISTA` y 0,763 con `ODONTOLOGA`, once
+    # milesimas entre una terminacion compartida y un sinonimo—. Es que si el usuario va a
+    # elegir entre candidatos indistinguibles, mejor que el primero sea el que tiene 25
+    # empresas detras y no el que tiene 1: la referencia que se lleve sera mas fiable.
+    out.sort(key=lambda r: ((0, -r["similitud"], -r["empresas"])
+                            if r["sobre_el_ruido"] else
+                            (1, -r["empresas"], -r["similitud"])))
     return out
 
 
