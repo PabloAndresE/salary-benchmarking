@@ -602,3 +602,96 @@ def test_y_cuando_no_alcanza_el_umbral_lo_EXPLICA_por_HTTP(cliente_ciiu):
     # cierto sin tocarlo
     assert s["umbral"] == 30
     assert "referencia" not in s, "la explicacion no lleva sueldo"
+
+
+# --- correcciones del usuario y buscador de puestos -------------------------------
+
+def test_el_mapeo_corrige_LA_FILA_y_no_todas_las_que_dicen_lo_mismo(cliente):
+    # El nucleo del diseno: el usuario corrige PERSONAS, no cadenas. Si tres filas dicen
+    # ASISTENTE DE LIMPIEZA y una es en realidad supervisora, un mapeo texto->texto
+    # moveria a las tres.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR", "VENDEDOR"],
+                       "sueldo": ["1200", "1300", "520"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"mapeo": '{"1": "VENDEDOR"}'})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    filas = {f["fila"]: f["cargo"] for f in d["detalle"]}
+    assert filas == {0: "CONTADOR", 1: "VENDEDOR", 2: "VENDEDOR"}
+
+
+def test_el_mapeo_ACUSA_RECIBO(cliente):
+    # Sin el contador, el front no puede distinguir "se aplico" de "se ignoro": FastAPI
+    # descarta EN SILENCIO un campo de formulario no declarado, asi que mandar `mapeo` a
+    # una version que no lo entiende devuelve 202 y un informe identico.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR"], "sueldo": ["1200", "1300"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"mapeo": '{"0": "VENDEDOR", "1": "GUARDIA"}'})
+    assert r.json()["mapeo_aplicado"] == 2
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert d["meta"]["mapeo_aplicado"] == 2
+
+
+def test_sin_mapeo_el_acuse_es_cero_y_no_falta(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1200"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    assert r.json()["mapeo_aplicado"] == 0
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert d["meta"]["mapeo_aplicado"] == 0
+
+
+@pytest.mark.parametrize("malo, trozo", [
+    ("no soy json", "JSON valido"),
+    ('["CONTADOR"]', "tiene que ser un objeto"),
+    ('{"99": "CONTADOR"}', "fuera de rango"),
+    ('{"0": "   "}', "vacio"),
+    ('{"ab": "CONTADOR"}', "no es un numero de fila"),
+])
+def test_un_mapeo_invalido_da_400_con_el_motivo(cliente, malo, trozo):
+    # Falla en voz alta: si se ignorase, el cliente corregiria cuatro cargos, leeria
+    # "cambios aplicados" y estaria viendo exactamente los mismos numeros.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1200"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))},
+                     data={"mapeo": malo})
+    assert r.status_code == 400, r.text
+    assert trozo in r.json()["detail"]
+
+
+def test_puestos_busca_vecinos_con_su_RESPALDO(cliente):
+    # `empresas` no es un extra: es lo que decide si la sugerencia sirve. Dos candidatos
+    # con la misma similitud y 2 contra 25 empresas detras no valen lo mismo, y esa
+    # diferencia no se ve en el coseno.
+    r = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 3})
+    assert r.status_code == 200
+    d = r.json()
+    assert d and len(d) <= 3
+    for f in d:
+        assert set(f) == {"cargo", "empresas", "personas", "similitud"}
+    # ordenado por similitud descendente
+    assert [f["similitud"] for f in d] == sorted((f["similitud"] for f in d),
+                                                 reverse=True)
+
+
+def test_puestos_NO_esconde_los_de_poco_respaldo(cliente):
+    # Filtrar aqui dejaria al usuario eligiendo entre opciones sin saber que habia mas,
+    # que es justo el problema que este endpoint viene a resolver. Se comprueba pidiendo
+    # mas de los que hay: tienen que venir TODOS los puestos de la base, sin descartar
+    # ninguno por poco respaldo.
+    total = cliente.get("/salud").json()["puestos"]
+    r = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 50}).json()
+    assert len(r) == total, f"devolvio {len(r)} de {total} puestos: algo se filtro"
+
+
+def test_puestos_respeta_el_limite(cliente):
+    r = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 2}).json()
+    assert len(r) == 2
+
+
+def test_puestos_rechaza_una_busqueda_vacia(cliente):
+    assert cliente.get("/puestos", params={"q": "  "}).status_code == 400
+
+
+def test_salud_declara_mapeo_y_puestos(cliente):
+    # El front las usa de interruptor: mientras no lleguen, la pantalla de correccion se
+    # esconde en vez de fingir que funciona.
+    c = cliente.get("/salud").json()["capacidades"]
+    assert c["mapeo"] is True and c["puestos"] is True

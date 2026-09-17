@@ -50,7 +50,7 @@ from ..evaluacion import embeddings
 from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
 from ..producto.base_referencia import (MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
-                                        BaseReferencia)
+                                        BaseReferencia, _vecinos)
 from ..producto.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
 from ..producto.formato import validar as validar_formato
 from ..producto.comparacion import comparar, texto_resumen
@@ -424,6 +424,46 @@ def leer_nomina_bytes(contenido: bytes, nombre: str, col_cargo: str | None = Non
                      f"Indicala con el parametro `columna_cargo`.")
 
 
+def _leer_mapeo(crudo: str | None, n_filas: int) -> dict[int, str]:
+    """Las correcciones del usuario: `{"7": "ODONTOLOGA"}`. Vacio si no manda nada.
+
+    LA CLAVE ES LA FILA, NO EL TEXTO, y ahi esta todo el diseno. El mismo titulo aparece
+    en muchas filas y el usuario corrige PERSONAS, no cadenas: si tres dicen `ASISTENTE
+    DE LIMPIEZA` y una es en realidad supervisora, un mapeo texto->texto moveria a las
+    tres. `fila` es el indice 0-based del archivo subido, el mismo que ya viaja en el
+    detalle.
+
+    FALLA EN VOZ ALTA. Una fila fuera de rango o un JSON roto dan 400 con el motivo: si
+    se ignorasen, el cliente corregiria cuatro cargos, leeria "cambios aplicados" y
+    estaria viendo exactamente los mismos numeros.
+    """
+    if not crudo or not str(crudo).strip():
+        return {}
+    try:
+        d = json.loads(crudo)
+    except json.JSONDecodeError as e:
+        raise HTTPException(400, f"`mapeo` no es JSON valido: {e}") from e
+    if not isinstance(d, dict):
+        raise HTTPException(400, '`mapeo` tiene que ser un objeto {"fila": "cargo"}, '
+                                 f'y llego {type(d).__name__}')
+    out, malas = {}, []
+    for k, v in d.items():
+        try:
+            i = int(k)
+        except (TypeError, ValueError):
+            malas.append(f"clave {k!r} no es un numero de fila")
+            continue
+        if not 0 <= i < n_filas:
+            malas.append(f"fila {i} fuera de rango (el archivo tiene {n_filas})")
+        elif not isinstance(v, str) or not v.strip():
+            malas.append(f"fila {i}: el cargo corregido esta vacio")
+        else:
+            out[i] = v.strip()
+    if malas:
+        raise HTTPException(400, "`mapeo` invalido: " + "; ".join(malas[:5]))
+    return out
+
+
 def _anidar_sector(filas: list) -> list:
     """`sector_*` plano -> un bloque `sector_mas_fino`, o `null`.
 
@@ -454,8 +494,16 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
              columnas_originales: bool = True,
              informe_formato: dict | None = None,
              ruc: str | None = None,
-             ciiu: str | None = None) -> tuple[dict, bytes]:
+             ciiu: str | None = None,
+             mapeo: dict[int, str] | None = None) -> tuple[dict, bytes]:
     """El informe completo. Es la misma cadena que el CLI, sin tocar el disco."""
+    # LAS CORRECCIONES DEL USUARIO, ANTES DE NORMALIZAR. De aqui en adelante el flujo es
+    # identico: el titulo corregido se embebe y se busca como cualquier otro.
+    if mapeo:
+        df = df.copy()
+        j = df.columns.get_loc(col_cargo)
+        for i, txt in mapeo.items():
+            df.iat[i, j] = txt
     titulos = df[col_cargo].fillna("").astype(str).str.strip().str.upper()
     nuevos = motor.asegurar(titulos.tolist())
 
@@ -653,6 +701,11 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         "meta": {
             "anio": anio, "sbu": motor.settings.get_sbu(anio),
             "segmento": segmento, "rubro": rubro,
+            # ACUSE DE RECIBO. Sin esto el front no puede distinguir "se aplico" de "se
+            # ignoro": FastAPI descarta EN SILENCIO un campo de formulario que no esta
+            # declarado, asi que mandar `mapeo` a una version que no lo entiende devuelve
+            # 202 y un informe identico.
+            "mapeo_aplicado": len(mapeo or {}),
             "titulos_nuevos_embebidos": nuevos,
             "puestos_en_la_base": len(motor.base.celdas),
             "tau": round(float(np.sqrt(motor.base.tau2)), 4),
@@ -735,6 +788,10 @@ def motor() -> Motor:
 
 @app.get("/salud")
 def salud(m: Motor = Depends(motor)):
+    # Las de la BASE mas las del SERVICIO. Estas ultimas son siempre ciertas en esta
+    # version y estan para que el front las use de interruptor: mientras no lleguen, la
+    # pantalla de correccion se esconde en vez de fingir que funciona.
+    caps = dict(m.capacidades, mapeo=True, puestos=True)
     faltan = [n for n, ok in m.capacidades.items() if not ok]
     return {"ok": True, "esquema": ESQUEMA,
             "puestos": len(m.base.celdas), "carga_s": m.carga_s,
@@ -742,7 +799,7 @@ def salud(m: Motor = Depends(motor)):
             # QUE SABE HACER ESTA BASE. Un front que reciba `ruc_a_industria: false`
             # sabe que no tiene sentido pedir el RUC; sin esto, lo pide y no pasa nada.
             "base": m.ruta_base,
-            "capacidades": m.capacidades,
+            "capacidades": caps,
             "degradado": faltan or None,
             "aviso": (None if not faltan else
                       f"esta base no soporta {faltan}; el servicio responde igual pero "
@@ -759,6 +816,14 @@ def crear(tareas: BackgroundTasks,
                                 "fijarlo a mano es como se acaba entregando dolares del "
                                 "ano pasado sin que nadie lo note. Solo se pasa para "
                                 "rehacer un informe viejo."),
+          mapeo: str | None = Form(
+              None, description='JSON {"<fila>": "<cargo>"} con las correcciones del '
+                                'usuario, SOLO las filas corregidas. Ej: {"7": '
+                                '"ODONTOLOGA"}. La clave es el indice 0-based de la fila '
+                                'del archivo —el mismo `fila` del detalle—, no el texto '
+                                'del cargo: el usuario corrige PERSONAS, no cadenas. La '
+                                'respuesta trae `meta.mapeo_aplicado` con cuantas se '
+                                'cambiaron.'),
           ruc: str | None = Form(
               None, description="RUC de la empresa del cliente. Con el se resuelve su "
                                 "industria (CIIU) y su tamano sin que tenga que "
@@ -913,6 +978,8 @@ def crear(tareas: BackgroundTasks,
         raise HTTPException(400, f"columnas_extra que no estan en el archivo: "
                                  f"{no_estan}. Columnas: {list(df.columns)}")
 
+    correcciones = _leer_mapeo(_opt(mapeo), len(df))
+
     t = ALMACEN.nuevo()
 
     def correr():
@@ -923,14 +990,16 @@ def crear(tareas: BackgroundTasks,
                                             rubro.upper() if rubro else None,
                                             columna_sueldo, extra,
                                             columnas_originales, informe_formato,
-                                            ruc, ciiu_cliente)
+                                            ruc, ciiu_cliente, correcciones)
             t.estado = "listo"
         except Exception as e:                               # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"
 
     tareas.add_task(correr)
     return {"id": t.id, "estado": t.estado, "filas": len(df), "columna_cargo": col,
-            "anio": anio, "empresa": ficha, "caduca_en_s": TTL_SEGUNDOS}
+            "anio": anio, "empresa": ficha,
+            # tambien en el 202: el front sabe que se acepto sin esperar al informe
+            "mapeo_aplicado": len(correcciones), "caduca_en_s": TTL_SEGUNDOS}
 
 
 @app.get("/informes/{tid}")
@@ -954,6 +1023,44 @@ def excel(tid: str):
         t.excel,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="informe_{tid[:8]}.xlsx"'})
+
+
+@app.get("/puestos")
+def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
+    """Que puestos de la base se parecen a `q`. Para el buscador de correcciones.
+
+    PARA QUE EXISTE. `DENTISTA` no esta en la base y se resuelve por analogia contra
+    `HIGIENISTA`, que tiene 2 empresas detras, mientras `ODONTOLOGA` —25 empresas— esta
+    ahi al lado. Sin una forma de VER el vecindario, el cliente no puede corregirlo:
+    recibe una referencia construida sobre dos empresas y no sabe ni que paso.
+
+    `empresas` NO ES UN EXTRA, es lo que decide si la sugerencia sirve. Dos candidatos
+    con la misma similitud y 2 contra 25 empresas detras no valen lo mismo, y esa
+    diferencia no se ve en el coseno.
+
+    NO SE FILTRA POR RESPALDO MINIMO. Se devuelve el conteo y que el front decida que
+    pinta y como: esconder aqui los de poco respaldo dejaria al usuario eligiendo entre
+    opciones sin saber que habia mas, que es el problema que este endpoint viene a
+    resolver, no a repetir.
+    """
+    t = str(q or "").strip().upper()
+    if not t:
+        raise HTTPException(400, "`q` vacio")
+    limite = max(1, min(int(limite), 50))
+    m.asegurar([t])
+    if t not in m.emb:
+        raise HTTPException(503, "no se pudo embeber el texto; reintenta")
+    Q = np.vstack([m.emb[t]]).astype(float)
+    Q /= np.linalg.norm(Q, axis=1, keepdims=True)
+    vec, sim = _vecinos(Q, m.base.Z, limite, excluir_propio=False)
+    out = []
+    for j, sj in zip(vec[0], sim[0]):
+        j = int(j)
+        out.append({"cargo": str(m.base.celdas[j]),
+                    "empresas": int(m.base.emp[j]),
+                    "personas": int(m.base.personas[j]),
+                    "similitud": round(float(sj), 3)})
+    return out
 
 
 @app.get("/referencia")
