@@ -1,0 +1,60 @@
+[padre] lanzando hoy
+fusion por errata: 528 grupos absorbidos
+fusion por genero: 429 pares juntados
+padron: 100,066 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 4,561 pares (celda, rubro) sobre 14 rubros de 4 niveles
+  absorciones: {'absorciones': 528}   guardado.
+[padre] lanzando A_transp
+fusion por errata: 567 grupos absorbidos
+fusion por genero: 429 pares juntados
+padron: 100,045 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 4,653 pares (celda, rubro) sobre 14 rubros de 4 niveles
+  absorciones: {'absorciones': 567}   guardado.
+[padre] lanzando B_largo
+fusion por errata: 534 grupos absorbidos
+fusion por genero: 429 pares juntados
+padron: 100,063 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 4,582 pares (celda, rubro) sobre 14 rubros de 4 niveles
+  absorciones: {'absorciones': 534}   guardado.
+[padre] lanzando C_cadena
+[padre] hoy ya estaba hecha
+[padre] A_transp ya estaba hecha
+[padre] B_largo ya estaba hecha
+[padre] lanzando C_cadena
+fusion por errata: 546 grupos absorbidos
+fusion por genero: 429 pares juntados
+padron: 100,061 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 4,601 pares (celda, rubro) sobre 14 rubros de 4 niveles
+  absorciones: {'absorciones': 546}   guardado.
+[padre] lanzando ABC
+fusion por errata: 592 grupos absorbidos
+fusion por genero: 429 pares juntados
+padron: 100,037 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 4,721 pares (celda, rubro) sobre 14 rubros de 4 niveles
+  absorciones: {'absorciones': 592}   guardado.
+[padre] lanzando ABC_plac
+fusion por errata: 592 grupos absorbidos
+fusion por genero: 434 pares juntados
+padron: 100,233 pares (celda, empresa) sobre 4,328 empresas
+banda por rubro: 4,270 pares (celda, rubro) sobre 14 rubros de 4 niveles
+  absorciones: {'absorciones': 592, 'absorciones_plac': 641}   guardado.
+votos emparejados: 38,450
+absorciones por variante: {'hoy': {'absorciones': 528}, 'A_transp': {'absorciones': 567}, 'B_largo': {'absorciones': 534}, 'C_cadena': {'absorciones': 546}, 'ABC': {'absorciones': 592}, 'ABC_plac': {'absorciones': 592, 'absorciones_plac': 641}}
+
+==============================================================================
+COBERTURA DIRECTA y GUARDARRAIL, contra la regla de hoy
+==============================================================================
+  cobertura directa hoy: 52.3511%
+
+  A_transp  cobertura 52.3615% (+0.0104%)   votos donde actua 36,084
+            pinball -0.00001  IC95 [-0.00004, +0.00001]   no empeora
+  B_largo   cobertura 52.3537% (+0.0026%)   votos donde actua 35,188
+            pinball -0.00001  IC95 [-0.00003, +0.00000]   no empeora
+  C_cadena  cobertura 52.3589% (+0.0078%)   votos donde actua 36,112
+            pinball +0.00001  IC95 [+0.00000, +0.00001]   EMPEORA
+  ABC       cobertura 52.3719% (+0.0208%)   votos donde actua 36,240
+            pinball -0.00001  IC95 [-0.00004, +0.00002]   no empeora
+  ABC_plac  cobertura 52.3719% (+0.0208%)   votos donde actua 37,193
+            pinball +0.00130  IC95 [+0.00081, +0.00180]   EMPEORA
+
+  CRITERIO: sube cobertura + no empeora + el PLACEBO si empeora

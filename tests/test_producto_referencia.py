@@ -685,15 +685,29 @@ def test_un_titulo_tecleado_por_muchas_empresas_no_es_un_dedazo():
     assert b.grupo[b.idx["ASISTENTE CONTABLE"]] != b.grupo[b.idx["ASITENTE CONTABLE"]]
 
 
-def test_la_absorcion_no_encadena():
-    # Es de una sola direccion: el destino exige 10+ empresas y el absorbido <=2, asi
-    # que un grupo absorbido nunca puede ser a su vez destino.
+def test_la_absorcion_SI_encadena_pero_solo_hacia_un_grupo_grande():
+    # CAMBIO DE D-031. Antes era de una sola pasada y la errata DE una errata quedaba
+    # huerfana por orden de ejecucion: al evaluar (ASITENTE CONTABLE, ASITENTE CONTABL)
+    # el primero todavia estaba en su grupito de una empresa y fallaba el suelo del lado
+    # comun; cuando se absorbia, ya era tarde. Es el caso `VENDEROA` del front.
     celdas = ["ASISTENTE CONTABLE", "ASITENTE CONTABLE", "ASITENTE CONTABL"]
     grupo = np.array([0, 1, 2])
     niveles = np.array([1.0, 1.0, 1.0])
     nuevo, k = _fusionar_erratas(celdas, grupo, niveles, {0: 40, 1: 1, 2: 1})
-    assert nuevo[0] == nuevo[1], "el dedazo entra en el comun"
-    assert nuevo[2] == 2, "el que solo toca a otro raro se queda donde estaba"
+    assert nuevo[0] == nuevo[1] == nuevo[2], "la cadena de dedazos llega al comun"
+
+
+def test_la_cadena_NO_pasa_por_un_grupo_raro():
+    # El freno que impide la percolacion: el destino exige `MIN_EMPRESAS_ABSORBE` EN CADA
+    # VUELTA. Sin un grupo grande al final, una cadena de dedazos no arrastra a nadie —
+    # que es como `e2_nivel/06` acabo metiendo ASISTENTE CONTABLE y AUXILIAR DE LIMPIEZA
+    # en el mismo grupo con enlace simple.
+    celdas = ["ASISTENTE CONTABLE", "ASITENTE CONTABLE", "ASITENTE CONTABL"]
+    grupo = np.array([0, 1, 2])
+    niveles = np.array([1.0, 1.0, 1.0])
+    # NINGUNO llega al suelo de 10 empresas
+    nuevo, k = _fusionar_erratas(celdas, grupo, niveles, {0: 3, 1: 1, 2: 1})
+    assert k == 0 and nuevo.tolist() == [0, 1, 2], "sin un comun grande, no se absorbe"
 
 
 def test_los_dos_falsos_positivos_que_encontro_la_base_real():

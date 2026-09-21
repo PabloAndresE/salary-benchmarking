@@ -145,6 +145,9 @@ TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la 
 MIN_LARGO_ERRATA = 8    # bajo esto un caracter cambia el significado: `SUB`/`SUR`
 MAX_EMPRESAS_ERRATA = 2     # el lado raro: un dedazo no lo teclean tres empresas
 MIN_EMPRESAS_ABSORBE = 10   # el lado comun, mismo suelo que la banda empirica
+# Vueltas de absorcion. >1 para la errata DE una errata: `VENDEROA` viene de `VENDERORA`,
+# que viene de `VENDEDORA`. Ver `_fusionar_erratas` y D-031.
+PASADAS_ERRATA = 5
 
 # LA BANDA HABLA DE EMPRESAS: "la mitad de las EMPRESAS paga entre X e Y". Es la pregunta
 # coherente con el centro —que ya es la mediana de los votos por empresa— y la que le
@@ -1546,19 +1549,29 @@ _ROMANO_ERR = re.compile(r"\b(I{1,3}|IV|V|VI{0,3}|IX|X)\b")
 _DIGITO_ERR = re.compile(r"\d")
 
 
-def _distancia1(a, b):
+def _distancia1(a, b, transposicion=False):
     """True si `a` y `b` estan a distancia de edicion exactamente 1.
 
     No es un Levenshtein general: a distancia 1 solo hay tres formas —sustituir, insertar
     o borrar un caracter— y comprobarlas directamente evita la matriz de programacion
     dinamica sobre 65.081 titulos.
+
+    Con `transposicion`, cuenta ademas el INTERCAMBIO de dos letras contiguas como un
+    solo error (distancia de Damerau). Es el dedazo mas comun al teclear y Levenshtein lo
+    ve como dos: `VENDEDOR`/`VENDEDRO` sale a 2 y se escapaba de la fusion, quedandose
+    como una celda de una empresa al lado de otra de 767.
     """
     la, lb = len(a), len(b)
     if abs(la - lb) > 1:
         return False
     if la == lb:
         dif = [i for i in range(la) if a[i] != b[i]]
-        return len(dif) == 1
+        if len(dif) == 1:
+            return True
+        if (transposicion and len(dif) == 2 and dif[1] == dif[0] + 1
+                and a[dif[0]] == b[dif[1]] and a[dif[1]] == b[dif[0]]):
+            return True
+        return False
     if la > lb:
         a, b, la = b, a, lb
     i = 0
@@ -1624,7 +1637,8 @@ def _letra_suelta(s, i):
 
 def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
                       min_largo=MIN_LARGO_ERRATA, max_raro=MAX_EMPRESAS_ERRATA,
-                      min_comun=MIN_EMPRESAS_ABSORBE):
+                      min_comun=MIN_EMPRESAS_ABSORBE, transposicion=True,
+                      largo_en_comun=True, pasadas=PASADAS_ERRATA):
     """Absorbe los grupos-dedazo dentro del grupo comun del que son errata.
 
     Segunda pasada, DESPUES de la fusion semantica y por separado: asi no altera nada de
@@ -1635,11 +1649,74 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
     Los pares se buscan por VARIANTES DE BORRADO (SymSpell) y no todos contra todos:
     65.081 titulos son 2.100 millones de pares, y dos cadenas a distancia <=1 comparten
     siempre una variante con un caracter menos. Son ~1,8 millones de claves y segundos.
+
+    TRES RELAJACIONES sobre la version de D-025, medidas en `e2_nivel/10` y adoptadas
+    juntas (D-031). Salieron de un caso del front: escribir `Vendedo` en el desplegable
+    ofrecia `VENDEDRO`, `VENDEROA`, `VEDEDOR` y `VENEDOR` —una empresa cada una— ENCIMA
+    de `VENDEDOR`, que tiene 767.
+
+      transposicion    el dedazo mas comun es intercambiar dos letras contiguas, y
+                       Levenshtein lo cuenta como DOS errores. Damerau como uno.
+      largo_en_comun   el suelo de largo se le exige a la grafia COMUN y no a la rara:
+                       `VEDEDOR` tiene 7 letras y 2 empresas, y su comun `VENDEDOR`
+                       tiene 8 y 767. El riesgo de `SUB`/`SUR` esta en que las DOS sean
+                       cortas y frecuentes, y de eso ya se ocupa el suelo de empresas.
+      pasadas          la errata DE una errata. En una vuelta, el par
+                       (VENDERORA, VENDEROA) se evalua leyendo el grupo ORIGINAL de
+                       VENDERORA —su grupito de una empresa—, falla el suelo del lado
+                       comun, y cuando VENDERORA se absorbe ya es tarde.
+
+    MEDIDO (592 absorciones contra 528, +0,021% de cobertura directa):
+
+        ABC        pinball -0,00001  IC95 [-0,00004, +0,00002]   no empeora
+        ABC_plac   pinball +0,00130  IC95 [+0,00081, +0,00180]   EMPEORA
+
+    EL PLACEBO DISCRIMINA, que es lo que D-025 no consiguio: mandar las MISMAS
+    absorciones a destinos al azar cuesta cien veces mas que la regla real. La distancia
+    de edicion esta eligiendo bien el destino, no da lo mismo donde caiga la gente.
+
+    LA LETRA PEQUENA: `pasadas` por si sola salio EMPEORA (+0,00001, IC [+0,00000,
+    +0,00001]) — la quinta cifra decimal, pero el intervalo excluye el cero. Se adopta
+    dentro del conjunto por decision de producto, pagando ese 0,007% a cambio de cazar
+    la familia de `VENDEROA`. Queda escrito para que nadie lo lea como validado.
     """
+    # VARIAS PASADAS, para la errata DE una errata. `VENDEROA` viene de `VENDERORA`, que
+    # a su vez viene de `VENDEDORA`. En una sola pasada el par (VENDERORA, VENDEROA) se
+    # evalua leyendo el grupo ORIGINAL de VENDERORA —todavia su grupito de una empresa—,
+    # falla el suelo de 10 del lado comun, y cuando VENDERORA por fin se absorbe ya es
+    # tarde: `VENDEROA` queda huerfana por orden de ejecucion, no por la regla.
+    #
+    # NO ES ENCADENAR A CIEGAS, que es lo que el diseno de una pasada evitaba y con razon:
+    # una cadena de dedazos puede arrastrar cosas lejanas al grupo grande sin que nadie
+    # compruebe que el extremo se parece al origen —la percolacion que midio `e2_nivel/06`
+    # con el enlace simple—. Aqui el destino sigue exigiendo `min_comun` empresas EN CADA
+    # VUELTA, asi que nunca se pasa por un grupo raro: solo se descubre que un raro estaba
+    # a un dedazo de un grupo que YA era grande.
+    total = 0
+    grupo = np.asarray(grupo)
+    for _ in range(max(1, int(pasadas))):
+        grupo, n_paso = _una_pasada_erratas(
+            celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro, min_comun,
+            transposicion, largo_en_comun)
+        total += n_paso
+        if not n_paso:
+            break
+    return grupo, total
+
+
+def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro,
+                        min_comun, transposicion, largo_en_comun):
+    """Una vuelta de absorcion. La separa de `_fusionar_erratas` para poder repetirla."""
     n = len(celdas)
     idx = defaultdict(list)
     for i, c in enumerate(celdas):
-        if len(c) < min_largo:
+        # EL SUELO DE LARGO, y a cual de las dos se le aplica. Existe porque con palabras
+        # cortas un caracter cambia el significado (`SUB`/`SUR`). Pero aplicarselo a la
+        # grafia RARA descarta pares seguros: `VEDEDOR` tiene 7 letras y 2 empresas, y su
+        # comun `VENDEDOR` tiene 8 y 767. El riesgo esta en que las DOS sean cortas y
+        # frecuentes, y de eso ya se ocupa el suelo de 10 empresas del lado que absorbe.
+        # Con `largo_en_comun` el suelo se comprueba mas abajo, sobre la comun.
+        if not largo_en_comun and len(c) < min_largo:
             continue
         idx[c].append(i)
         for k in range(len(c)):
@@ -1663,10 +1740,14 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
                 if np.isfinite(ni) and np.isfinite(nj) and ni != nj:
                     continue
                 a, b = celdas[par[0]], celdas[par[1]]
-                if not _distancia1(a, b) or not _es_errata(a, b):
+                if not _distancia1(a, b, transposicion) or not _es_errata(a, b):
                     continue
                 ei, ej = emp_por_grupo.get(gi, 0), emp_por_grupo.get(gj, 0)
                 raro, comun = (gi, gj) if ei <= ej else (gj, gi)
+                if largo_en_comun and len(a if comun == gi else b) < min_largo:
+                    # El suelo se le exige a la COMUN, que es la que presta el
+                    # significado. `a` es el titulo de `par[0]`, cuyo grupo es `gi`.
+                    continue
                 if emp_por_grupo.get(raro, 0) > max_raro:
                     continue
                 if emp_por_grupo.get(comun, 0) < min_comun:
@@ -1679,6 +1760,11 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
     if not destino:
         return np.asarray(grupo), 0
     nuevo = np.array([destino.get(int(g), int(g)) for g in grupo], dtype=np.int64)
+    # El grupo absorbido desaparece; el que absorbe conserva su conteo, que ya cumplia
+    # `min_comun` y solo puede crecer. Sin esto, la vuelta siguiente leeria conteos de
+    # grupos que ya no existen.
+    for raro, comun in destino.items():
+        emp_por_grupo.pop(raro, None)
     return nuevo, fusiones
 
 

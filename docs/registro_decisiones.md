@@ -3137,3 +3137,86 @@ garantiza el orden de las filas entre consultas**: se estaba comparando el voto 
 empresa contra el de otra. La salida decía `T1_larga PEOR +0,00641` donde la unión por
 `(empresa, cargo)` da `-0,00057 sin diferencia` — **signo opuesto**. Corregido y anotado
 en el código.
+
+---
+
+## D-031 — Tres relajaciones de la fusión por errata, y el placebo que D-025 no tuvo
+
+**Fecha:** 2026-09-21
+**Origen:** en el desplegable del front, escribir `Vendedo` ofrecía `VENDEDRO`, `VENDEROA`,
+`VEDEDOR` y `VENEDOR` —una empresa cada una— **encima** de `VENDEDOR`, que tiene 767.
+**Evidencia:** `research/experimentos/e2_nivel/10_erratas_transposicion_y_largo.py`.
+**Estado:** adoptado. Base `base_v15.npz`.
+
+### El diagnóstico: tres causas distintas, no una
+
+| grafía | emp | largo | lev | damerau | por qué se escapó |
+|---|---|---|---|---|---|
+| `VENDEDRO` | 1 | 8 | 2 | 1 | **transposición**: Levenshtein la cuenta como dos |
+| `VEDEDOR` | 2 | 7 | 1 | 1 | **largo 7 < 8** |
+| `VENEDOR` | 1 | 7 | 1 | 1 | largo 7 < 8 |
+| `VENDEROA` | 1 | 8 | 2 | 2 | **errata DE una errata** (`VENDERORA`) |
+
+Las tres relajaciones:
+
+- **A, transposición.** Intercambiar dos letras contiguas es el dedazo más común y
+  Levenshtein lo ve como dos errores. Damerau como uno.
+- **B, el suelo de largo sobre la grafía COMÚN.** Existe porque con palabras cortas un
+  carácter cambia el significado (`SUB`/`SUR`), pero aplicárselo a la **rara** descarta
+  pares seguros: `VEDEDOR` tiene 7 letras y 2 empresas, su común `VENDEDOR` tiene 8 y 767.
+  El riesgo está en que las **dos** sean cortas y frecuentes, y de eso ya se ocupa el
+  suelo de 10 empresas del lado que absorbe.
+- **C, varias pasadas.** En una sola, el par `(VENDERORA, VENDEROA)` se evalúa leyendo el
+  grupo *original* de `VENDERORA` —su grupito de una empresa—, falla el suelo del lado
+  común, y cuando `VENDERORA` se absorbe ya es tarde. Queda huérfana **por orden de
+  ejecución, no por la regla**. No es encadenar a ciegas: el destino sigue exigiendo 10
+  empresas *en cada vuelta*, así que nunca se pasa por un grupo raro.
+
+### La medición
+
+Criterio de D-025: sube la cobertura, no empeora el guardarrail, **y el placebo sí lo
+empeora**.
+
+| variante | absorciones | cobertura | pinball | IC 95% | |
+|---|---|---|---|---|---|
+| hoy | 528 | 52,3511% | | | |
+| A_transp | 567 | +0,0104% | −0,00001 | [−0,00004, +0,00001] | no empeora |
+| B_largo | 534 | +0,0026% | −0,00001 | [−0,00003, +0,00000] | no empeora |
+| C_cadena | 546 | +0,0078% | +0,00001 | [+0,00000, +0,00001] | **EMPEORA** |
+| **ABC** | **592** | **+0,0208%** | **−0,00001** | [−0,00004, +0,00002] | **no empeora** |
+| ABC_plac | 641 | +0,0208% | +0,00130 | [+0,00081, +0,00180] | **EMPEORA** |
+
+**El placebo discrimina, que es lo que D-025 no consiguió.** Mandar las *mismas*
+absorciones a destinos al azar cuesta **+0,00130**, cien veces más que la regla real. La
+distancia de edición está eligiendo bien el destino: no da lo mismo dónde caiga la gente.
+
+### Lo que esto NO es
+
+**No es una mejora del modelo.** 592 absorciones contra 528 sobre 65.181 títulos, y el
+pinball no se mueve. Esas celdas tienen una o dos empresas: pesan casi nada en el agregado.
+Es un arreglo del **desplegable** —la lista que ve el usuario— y como tal el listón
+correcto no era «demuestra que mejora» sino «demuestra que no estropea».
+
+### La letra pequeña, para que nadie la lea como validada
+
+**`C_cadena` por sí sola sale EMPEORA**: +0,00001 con IC [+0,00000, +0,00001]. Es la
+quinta cifra decimal —un 0,007% sobre un pinball de 0,137— pero el intervalo excluye el
+cero y **el criterio declarado era por variante**. Se adopta dentro del conjunto por
+decisión de producto, pagando ese coste a cambio de cazar la familia de `VENDEROA`.
+Juzgarlo «por el conjunto» después de ver que el conjunto sale mejor habría sido mover la
+portería.
+
+### Un hallazgo lateral que reordena prioridades
+
+Ninguna de esas grafías llega al umbral **semántico**:
+
+```
+VENDEROR  vs VENDEDOR   coseno 0,7177
+VENDERDOR vs VENDEDOR   coseno 0,6966
+VENDERORA vs VENDEDORA  coseno 0,8670     (umbral de fusion: 0,95)
+```
+
+**El embedding no reconoce una errata de una letra.** Las nueve grafías de ese grupo las
+unió la regla ortográfica, no el modelo. Para este tipo de ruido la distancia de edición
+hace todo el trabajo — lo contrario de lo que uno supondría, y coherente con D-030: el
+embedding importa menos de lo que parece.
