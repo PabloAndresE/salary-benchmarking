@@ -4,19 +4,17 @@
 %  COMPILAR:  pdflatex presentacion.tex   (dos veces, para el indice)
 %
 %  AUDIENCIA: companeros de ActuaLab, que YA CONOCEN EL PRODUCTO. La baraja no
-%  explica que entrega el sistema ni para que sirve: va sobre COMO SE AGRUPA y
-%  SOBRE LO QUE SE MIDIO.
+%  explica que entrega el sistema ni para que sirve: EXPLICA COMO SE AGRUPA,
+%  regla por regla y con el algoritmo a la vista, y que se midio de cada una.
 %
 %  NO se citan codigos de decision (D-013, D-022...). Son referencias internas
 %  de `docs/registro_decisiones.md` y fuera de ese fichero no significan nada.
-%  Cuando una cifra viene de un experimento, se dice el experimento, no su
-%  codigo.
 %
-%  ESTILO: tema `Madrid` de beamer, de serie. Sin tema de color, sin paquetes de
-%  terceros y sin un solo color definido a mano.
+%  Las constantes citadas salen de `src/benchmarking/producto/base_referencia.py`
+%  —UMBRAL_FUSION, VECINOS_FUSION, MAX_EMPRESAS_ERRATA, MIN_EMPRESAS_ABSORBE,
+%  MIN_LARGO_ERRATA, PASADAS_ERRATA— y las cifras medidas de `docs/mediciones.md`.
 %
-%  Cifras: `docs/mediciones.md` y `docs/registro_decisiones.md`. Las figuras las
-%  genera `figuras.py`.
+%  ESTILO: tema `Madrid` de beamer, de serie.
 % ============================================================================
 \documentclass[11pt]{beamer}
 
@@ -59,15 +57,15 @@
 \begin{itemize}
 \item La referencia de mercado es una mediana. Eso no tiene dificultad.
 \item Toda la dificultad está en decidir \alert{qué observaciones entran} en
-ella: qué puestos se consideran el mismo puesto.
-\item Esa decisión es el modelo. Todo lo que sigue son las reglas con las que se
-toma, y lo que costó medir cada una.
+ella: qué títulos de cargo son el mismo puesto.
+\item Esa decisión \emph{es} el modelo. Todo lo que sigue son las reglas con las
+que se toma, y lo que costó medir cada una.
 \end{itemize}
 \medskip
 \begin{block}{La restricción de partida}
-La etiqueta de cargo es texto libre escrito por el cliente. No hay taxonomía a
-la que apoyarse, y construir una obligaría a mapear a mano, que es justo lo que
-se quiere evitar.
+La etiqueta de cargo es texto libre escrito por el cliente. No hay taxonomía a la
+que apoyarse, y construir una obligaría a mapear a mano, que es justo lo que se
+quiere evitar.
 \end{block}
 \end{frame}
 
@@ -120,37 +118,132 @@ recuperar. El resto lo genera el empleador.}
 \end{frame}
 
 % ############################################################################
-\section{Cómo se agrupa}
+\section{Consolidar las grafías}
 % ############################################################################
 
-\begin{frame}{Primero se juntan las grafías del mismo puesto}
-Tres reglas, en orden y por separado para que cada una sea auditable:
+\begin{frame}{Tres pasadas, y una regla que las gobierna}
+De 65.181 títulos a \alert{50.420} puestos, en tres pasadas separadas y en este
+orden, para que cada una sea auditable y medible por su cuenta:
 \begin{enumerate}
-\item \textbf{Semántica.} Enlace completo sobre el grafo de similitud, umbral
-0,95.
-\item \textbf{Ortográfica.} Indexado por variantes de borrado, con absorción
-asimétrica: el grupo raro con $\le 2$ empresas entra en el común con $\ge 10$.
-\item \textbf{Flexión de género}, conservando la diferencia medida antes de
-unir.
+\item \textbf{Semántica}: enlace completo sobre el grafo de similitud del
+\textit{embedding}.
+\item \textbf{Ortográfica}: absorción de erratas por distancia de edición.
+\item \textbf{Flexión de género}: \texttt{ENFERMERA} y \texttt{ENFERMERO} se
+unen, conservando y reportando la brecha medida \emph{antes} de unirlos.
 \end{enumerate}
 \medskip
-Cobertura directa: del 57,7\,\% al \alert{64,1\,\%}, sin coste en precisión.
+\begin{block}{La regla que las gobierna}
+El \alert{sueldo nunca entra en la agrupación}. Los grupos se construyen, se
+congelan, y solo entonces aparece el sueldo para calificarlos. Si la métrica
+decidiera la granularidad, acabaríamos con bandas salariales disfrazadas de
+puestos.
+\end{block}
 \end{frame}
 
-\begin{frame}{Por qué esas dos reglas, y no una sola}
-\begin{block}{Enlace completo, y no simple}
-El enlace simple percolaba: encadenando saltos individualmente razonables se
-formaba una componente de \alert{1.758} títulos con \texttt{ASISTENTE CONTABLE}
-y \texttt{AUXILIAR DE LIMPIEZA} dentro. Exigir todos contra todos por encima del
-umbral lo corta.
-\end{block}
-\begin{block}{Regla ortográfica además de la semántica}
-El embedding no distingue una errata de una letra:
-$s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = \alert{0{,}7177}$, frente al umbral de
-0,95. Las trece grafías de \texttt{VENDEDOR} las une la distancia de edición, y
-por eso la regla ortográfica es una pasada aparte.
-\end{block}
+\begin{frame}{Pasada 1: enlace completo sobre el grafo de similitud}
+\begin{enumerate}
+\item Cada título es un vector de \texttt{text-multilingual-embedding-002}. De
+cada uno se toman sus \alert{10} vecinos más próximos y se conservan las aristas
+con coseno $\ge \alert{0{,}95}$.
+\item Las aristas se recorren \alert{de más a menos similares}, uniendo grupos de
+forma voraz.
+\item Dos grupos se unen solo si \alert{el par peor entre ellos} aguanta el
+umbral: $\min\,(Z_A Z_B^{\top}) \ge 0{,}95$, todos contra todos.
+\end{enumerate}
+\medskip
+Ese tercer paso es toda la diferencia con un \textit{union-find}, que uniría en
+cuanto existiese \emph{una} arista.
+\medskip
+
+Además, un \alert{candado de escalón}: dos títulos de nivel jerárquico distinto
+no se unen aunque el coseno lo permita.
 \end{frame}
+
+\begin{frame}{Por qué el par peor, y no cualquiera}
+\begin{block}{Con enlace simple basta una cadena}
+Cada salto es individualmente razonable y el resultado no lo es. Medido: una
+componente de \alert{1.758} títulos que contiene a la vez
+\texttt{ASISTENTE CONTABLE} y \texttt{AUXILIAR DE LIMPIEZA}. Ninguna arista de
+esa cadena es absurda; la componente sí.
+\end{block}
+\medskip
+Con enlace completo el daño desaparece. Y se ve de dónde venía: una vez puesto el
+enlace completo, el candado de escalón solo rechaza \alert{18 uniones de 15.870}.
+\medskip
+
+El daño nunca vino de pares malos, sino de \alert{la cadena que los conectaba}.
+\end{frame}
+
+\begin{frame}{Pasada 2: encontrar las erratas sin comparar todo con todo}
+65.181 títulos son \alert{2.100 millones} de pares. Comparar todos no es una
+opción.
+\begin{block}{Indexado por variantes de borrado}
+De cada título se generan todas las cadenas con \alert{un carácter menos} y se
+indexan. Dos cadenas a distancia $\le 1$ comparten siempre una de esas variantes,
+así que basta mirar las que caen en la misma clave: \alert{1,8 millones} de
+claves, y segundos.
+\end{block}
+\medskip
+La comprobación final es distancia de edición \alert{exactamente 1}: sustituir,
+insertar o borrar un carácter ---o \alert{intercambiar dos letras contiguas},
+que es el dedazo más común al teclear y que Levenshtein contaría como dos
+errores.
+\end{frame}
+
+\begin{frame}{Pasada 2: cuándo se absorbe, y en qué dirección}
+\begin{itemize}
+\item \textbf{Lo raro entra en lo común, nunca al revés}: el lado raro con
+$\le \alert{2}$ empresas, el común con $\ge \alert{10}$.
+\item Por eso \alert{no encadena}: el destino no puede ser absorbido a su vez,
+porque para serlo tendría que tener $\le 2$ empresas y acaba de exigírsele
+$\ge 10$.
+\item El suelo de longitud ---8 letras--- se le exige a la grafía \alert{común},
+no a la rara. \texttt{VEDEDOR} tiene 7 letras y 2 empresas; su común
+\texttt{VENDEDOR} tiene 8 y 767. El riesgo de \texttt{SUB}/\texttt{SUR} está en
+que \emph{las dos} sean cortas y frecuentes, y de eso ya se ocupa el suelo de
+empresas.
+\item \textbf{Cinco vueltas}, por la errata \emph{de} una errata:
+\texttt{VENDEROA} viene de \texttt{VENDERORA}, que viene de \texttt{VENDEDORA}.
+En una sola vuelta ese par se evalúa leyendo el grupo original de
+\texttt{VENDERORA}, que todavía tiene una empresa, y falla el suelo.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{El caso que lo motivó, y lo que costó}
+Escribiendo \texttt{Vendedo} en el buscador del front salían \texttt{VENDEDRO},
+\texttt{VENDEROA}, \texttt{VEDEDOR} y \texttt{VENEDOR} ---una empresa cada
+una--- por encima de \texttt{VENDEDOR}, que tiene \alert{767}.
+\medskip
+\begin{block}{Las tres relajaciones, medidas juntas}
+Transposición, suelo de longitud sobre la común, y cinco vueltas. Resultado:
+\alert{592} absorciones contra 528, y $+$0{,}021\,\% de cobertura directa.
+\end{block}
+\medskip
+No es encadenar a ciegas, que es justo lo que el diseño de una sola vuelta
+evitaba: el destino sigue exigiendo 10 empresas \alert{en cada vuelta}. Nunca se
+pasa por un grupo raro; solo se descubre que un raro estaba a un dedazo de un
+grupo que \emph{ya} era grande.
+\end{frame}
+
+\begin{frame}{Por qué hacen falta las dos pasadas, y no una}
+\begin{block}{El \textit{embedding} no distingue una errata de una letra}
+$s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = \alert{0{,}7177}$, frente al umbral
+de fusión de 0,95. Las trece grafías de \texttt{VENDEDOR} las une la distancia de
+edición, no el modelo semántico.
+\end{block}
+\medskip
+\begin{block}{Y la distancia de edición no ve un sinónimo}
+\texttt{ODONTOLOGA} y \texttt{DENTISTA} no comparten ni una letra en el mismo
+sitio. Eso solo lo une el \textit{embedding}.
+\end{block}
+\medskip
+Son dos señales ortogonales. Cada una cubre el punto ciego de la otra, y por eso
+van en pasadas separadas y no en un único criterio mezclado.
+\end{frame}
+
+% ############################################################################
+\section{Estimar dentro y fuera de la celda}
+% ############################################################################
 
 \begin{frame}{Dentro de la celda: cada empresa vota según su precisión}
 El voto de la empresa $f$ es la mediana de sus $n_f$ personas; la referencia, el
@@ -196,14 +289,22 @@ lo corrige tratando cada vecino como una medición con error.
 \end{equation*}
 \begin{itemize}
 \item Un vecino lejano se descuenta aunque esté perfectamente medido.
-\item $\lambda$ \alert{se estima de los datos}, no se elige: es cuánto difieren
-de verdad dos celdas por unidad de distancia semántica. Se estima por escalón
-jerárquico, porque varía un factor 18 entre ellos.
 \item El caso degenerado se resuelve solo: si todos los vecinos están lejos, el
 segundo término domina, el intervalo se dispara y la confianza cae, sin
 programar ninguna excepción.
 \end{itemize}
+\medskip
+\begin{block}{$\lambda$ no se elige: se estima por momentos}
+La diferencia observada entre dos celdas al cuadrado tiene dos partes, y una se
+conoce: $(m_i - m_j)^2 - (1/W_i + 1/W_j)$ es lo que sobra tras descontar el ruido
+de medición de ambas. Eso se ajusta contra $1 - s_j$ por mínimos cuadrados por el
+origen. Se estima \alert{por escalón jerárquico}, porque varía un factor 18.
+\end{block}
 \end{frame}
+
+% ############################################################################
+\section{Los otros dos ejes}
+% ############################################################################
 
 \begin{frame}{El nivel jerárquico, como segundo eje de agrupación}
 \begin{itemize}
@@ -213,6 +314,8 @@ separa es el nivel: $\omega^2 = \alert{0{,}2462}$.
 bajo ---ayudante, auxiliar, operario--- y el más alto ---gerente, director.
 \item La escalera se estima \alert{dentro de empresa y área}, así que no arrastra
 el efecto empleador ni la composición sectorial.
+\item El escalón sale de la propia etiqueta, por palabra de rango, y es lo que
+cierra el candado de la pasada semántica.
 \end{itemize}
 \end{frame}
 
@@ -229,10 +332,10 @@ y área.}
 \begin{itemize}
 \item Segmentar el mercado por tamaño \alert{no} estrecha la banda: la
 incertidumbre del centro sube más de lo que baja el ancho.
-\item Pero sí corrige un sesgo de nivel grande en los cargos altos, y ahí entra
-como \alert{desplazamiento del centro}.
-\item El rango de error del centro pasa de $-$56,0\,\%/$+$81,9\,\% a
-$-$12,1\,\%/$+$17,9\,\%.
+\item Pero el centro está sesgado, y cada vez más cuanto más alto el escalón. Ahí
+entra, como \alert{desplazamiento de la banda entera}, no como reestimación.
+\item Por escalón y no cargo a cargo: la selección automática cargo a cargo está
+medida y es ruido ---el placebo eligió más cargos que la señal real.
 \end{itemize}
 \medskip
 \emph{Segmentar para estrechar} y \emph{segmentar para corregir el centro} son
@@ -273,14 +376,24 @@ Cualquier reagrupación mejora la cobertura \alert{por construcción}: se juntan
 celdas, hay más respaldo, las cifras se ven mejor. Eso no demuestra nada.
 \medskip
 \begin{block}{El contraste}
-Se repite el experimento mandando \alert{las mismas fusiones a destinos al
-azar}. Si el placebo mejora igual, la ganancia era mecánica.
+Se repite el experimento mandando \alert{las mismas fusiones a destinos al azar}.
+Si el placebo mejora igual, la ganancia era mecánica.
 \end{block}
 \medskip
-En la fusión por errata, permutar los destinos cuesta $+0{,}00130$ de pinball
-frente a $-0{,}00001$ de la regla real: \alert{cien veces peor}. Eso es lo que
-demuestra que la distancia de edición elige bien el destino, y no que juntar
-celdas ayude sin más.
+\begin{table}
+\centering
+\small
+\begin{tabular}{lrl}
+\toprule
+Fusión por errata & pinball & IC 95\,\% \\
+\midrule
+Regla real & $-0{,}00001$ & $[-0{,}00004,\ +0{,}00002]$ \\
+Placebo & \alert{$+0{,}00130$} & $[+0{,}00081,\ +0{,}00180]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+Cien veces peor. La distancia de edición está eligiendo bien el destino; no da
+igual dónde caiga la gente.
 \end{frame}
 
 \begin{frame}{Resultados medidos}
@@ -292,8 +405,10 @@ celdas ayude sin más.
 Efecto empleador sobre la varianza residual & 81\,\% \\
 Techo de mejora por reagrupar & 12,1\,\% \\
 \midrule
-Cobertura directa, antes de consolidar grafías & 57,7\,\% \\
-Cobertura directa, después & \alert{64,1\,\%} \\
+Títulos distintos en el catálogo & 65.181 \\
+Puestos tras consolidar grafías & \alert{50.420} \\
+Cobertura directa, antes y después de consolidar &
+57,7\,\% $\rightarrow$ \alert{64,1\,\%} \\
 Títulos de una nómina nueva resueltos por analogía & 35,9\,\% \\
 \midrule
 Varianza de nivel explicada por el escalón jerárquico & $\omega^2 = 0{,}2462$ \\
