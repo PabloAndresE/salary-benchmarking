@@ -566,11 +566,12 @@ def cliente_ciiu(tmp_path, monkeypatch):
         def get_sbu(self, a, estricto=False):
             return _sbu(a, estricto)
 
-    m = api.Motor.__new__(api.Motor)
-    m.base = BaseReferencia.cargar(str(ruta), lambda a: 470.0)
-    m.emb = {c: m.base.Z[i] for i, c in enumerate(m.base.celdas)}
-    m.settings = _S(); m.carga_s = 0.0; m.asegurar = lambda t: 0
-    m.ruta_base = str(ruta); m.capacidades = api.capacidades_de(m.base)
+    # EL CONSTRUCTOR DE VERDAD, no `__new__` con los atributos puestos a mano. Copiarlos
+    # uno a uno deja el doble desincronizado en cuanto `Motor.__init__` aprende algo
+    # nuevo, y el test falla por el andamio en vez de por el codigo: paso al añadir
+    # `etiqueta`. Lo unico que se sustituye es `asegurar`, que llamaria a Vertex.
+    m = api.Motor(str(ruta), _S())
+    m.asegurar = lambda t: 0
     api.app.dependency_overrides[api.motor] = lambda: m
     yield TestClient(api.app)
     api.app.dependency_overrides.clear()
@@ -722,3 +723,33 @@ def test_salud_declara_mapeo_y_puestos(cliente):
     # esconde en vez de fingir que funciona.
     c = cliente.get("/salud").json()["capacidades"]
     assert c["mapeo"] is True and c["puestos"] is True
+
+
+def test_la_etiqueta_del_puesto_no_es_una_ERRATA(cliente_ciiu):
+    # Tres heuristicas fallaron antes de esta, y las tres salieron en pantalla:
+    #   por PERSONAS  -> `personas` esta agregada por grupo, todas las grafias traen el
+    #                    mismo numero y el desempate lo resolvia el azar: salio VEENDEDOR
+    #   por MAS CORTA -> `VEDEDOR` (7) le gana a `VENDEDOR` (8): salio la errata
+    #   por FRECUENCIA pero eligiendo entre las grafias que ENTRARON en la busqueda ->
+    #                    con `Vendedo` solo entraban 5 de 13 y `VENDEDOR` no estaba
+    # Ahora se precalcula por grupo, sobre TODAS sus grafias, con la frecuencia de cada
+    # palabra en la base: una errata es rara por definicion.
+    from benchmarking.servicio.api import _representante
+    frec = {"VENDEDOR": 462, "VENDEDORA": 40, "VEDEDOR": 3, "VEENDEDOR": 1,
+            "TRABAJADOR": 200, "AGRICOLA": 158, "TRABAJAJOR": 1}
+    assert _representante(["VEENDEDOR", "VENDEDOR", "VEDEDOR", "VENDEDOR."], frec) \
+        == "VENDEDOR"
+    # un dedazo en CUALQUIER palabra delata al titulo, no solo en la primera
+    assert _representante(["TRABAJAJOR AGRICOLA", "TRABAJADOR AGRICOLA"], frec) \
+        == "TRABAJADOR AGRICOLA"
+
+
+def test_la_etiqueta_NO_depende_del_limite_de_la_busqueda(cliente_ciiu):
+    # Se elegia entre las grafias que casualmente entraban en los vecinos pedidos, asi
+    # que la misma consulta con otro `limite` daba otra etiqueta y otro conteo.
+    a = cliente_ciiu.get("/puestos", params={"q": "VENDEDOR", "limite": 2}).json()
+    b = cliente_ciiu.get("/puestos", params={"q": "VENDEDOR", "limite": 20}).json()
+    por_cargo = {f["cargo"]: f["grafias"] for f in b}
+    for f in a:
+        assert f["cargo"] in por_cargo, f"{f['cargo']} desaparece al subir el limite"
+        assert f["grafias"] == por_cargo[f["cargo"]], "el conteo cambia con el limite"

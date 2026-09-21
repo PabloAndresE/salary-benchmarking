@@ -32,6 +32,8 @@ multi-tenencia y trazabilidad de accesos. Detras de una puerta, no en internet a
 from __future__ import annotations
 
 import datetime as _dt
+from collections import Counter
+
 import io
 import json
 import os
@@ -374,6 +376,22 @@ class Motor:
         self._lock = threading.Lock()
         self._cli = None
         self.ruta_base = str(ruta_base)
+        # Frecuencia de cada palabra en los titulos de la base. Se calcula una vez al
+        # arrancar —65.181 titulos, decimas de segundo— y la usa `_representante` para
+        # distinguir una errata de una palabra bien escrita.
+        frec = Counter()
+        for c in self.base.celdas:
+            for w in str(c).split():
+                frec[w] += 1
+        # EL REPRESENTANTE SE PRECALCULA POR GRUPO, sobre TODAS sus grafias. Elegirlo
+        # entre las que casualmente entraron en una busqueda daba etiquetas distintas
+        # segun la consulta y el limite: buscando `Vendedo` solo entraban 5 de las 13
+        # grafias del grupo, `VENDEDOR` no estaba entre ellas, y salia `VEDEDOR`.
+        porgrupo = {}
+        for i, c in enumerate(self.base.celdas):
+            porgrupo.setdefault(int(self.base.grupo[i]), []).append(str(c))
+        self.etiqueta = {g: _representante(v, frec) for g, v in porgrupo.items()}
+        self.n_grafias = {g: len(v) for g, v in porgrupo.items()}
         self.capacidades = capacidades_de(self.base)
         faltan = [(n, p) for n, _, p in CAPACIDADES if not self.capacidades[n]]
         print(f"[base] {ruta_base}  {len(self.base.celdas):,} puestos  "
@@ -482,20 +500,33 @@ def _leer_mapeo(crudo: str | None, n_filas: int) -> dict[int, str]:
     return out
 
 
-def _representante(grafias) -> str:
+def _representante(grafias, frec) -> str:
     """De varias grafias del MISMO puesto, la que se le enseña al usuario.
 
-    Menos signos raros, luego mas corta, luego alfabetica. Es una heuristica de
-    presentacion y no toca ningun calculo: elige `VENDEDOR` de entre `VEENDEDOR`,
-    `VENDEDOR.`, `VENDERDOR`, `VENDEROR`... y `TRABAJADOR AGRICOLA` de entre seis, con
-    `TRABAJAJOR AGRICOLA` incluida.
+    LA REGLA ES LA FRECUENCIA DE SUS PALABRAS en toda la base, y sale de que una errata
+    es rara POR DEFINICION. En el grupo de vendedor:
 
-    NO SE USA EL CONTEO DE PERSONAS, que seria lo natural: `personas` esta agregada POR
-    GRUPO, asi que todas las grafias del mismo puesto traen el mismo numero y ordenar por
-    ahi es un empate que resuelve el azar. Asi salia `VEENDEDOR` de etiqueta.
+        VENDEDOR    462 apariciones      VENDEDRO      1
+        VENDEDORA    40                  VENDEROA      1
+        VEDEDOR       3                  VEENDEDOR     1
+
+    Se puntua por la palabra MENOS frecuente del titulo, porque un dedazo en cualquier
+    palabra lo delata: `TRABAJAJOR AGRICOLA` puntua por `TRABAJAJOR`, no por `AGRICOLA`.
+    Desempata con menos signos raros y mas corto.
+
+    LAS DOS HEURISTICAS ANTERIORES FALLARON, y conviene que quede escrito:
+
+      - por PERSONAS: `personas` esta agregada POR GRUPO, asi que las trece grafias
+        traen el mismo numero y el desempate lo resolvia el azar. Salia `VEENDEDOR`.
+      - por MAS CORTA: `VEDEDOR` tiene 7 letras y `VENDEDOR` 8, asi que la errata ganaba.
+
+    Es presentacion pura y no toca ningun calculo.
     """
-    return min(grafias, key=lambda t: (sum(1 for c in t if not (c.isalnum() or c == " ")),
-                                       len(t), t))
+    def clave(t):
+        palabras = t.split()
+        raro = min((frec.get(w, 0) for w in palabras), default=0)
+        return (-raro, sum(1 for c in t if not (c.isalnum() or c == " ")), len(t), t)
+    return min(grafias, key=clave)
 
 
 def _anidar_sector(filas: list) -> list:
@@ -1113,10 +1144,10 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
             prev["similitud"] = max(prev["similitud"], sj)
     out = []
     for g, d in por_grupo.items():
-        out.append({"cargo": _representante(d["grafias"]),
-                    # cuantas formas de escribirlo hay detras. El front puede enseñarlas
-                    # si el usuario no reconoce la etiqueta elegida.
-                    "grafias": len(d["grafias"]),
+        out.append({"cargo": m.etiqueta.get(g, d["grafias"][0]),
+                    # TODAS las del grupo, no solo las que entraron en esta busqueda:
+                    # antes el numero cambiaba con el `limite` de la consulta.
+                    "grafias": m.n_grafias.get(g, len(d["grafias"])),
                     "empresas": d["empresas"],
                     "personas": d["personas"],
                     "similitud": round(d["similitud"], 3),
