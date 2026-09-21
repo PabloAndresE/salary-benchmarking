@@ -3,7 +3,8 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **Presentación de defensa** (Beamer, tema `default`, 24 láminas). Tres secciones: el problema, el método, los resultados medidos |
+| `presentacion.tex` | **Presentación de defensa** (12 láminas + cierre). El problema, el método y los resultados medidos |
+| `presentation.sty` | La plantilla, vendorizada sin modificar. Ver abajo |
 | `figuras.py` | Genera las cuatro figuras que usan los dos |
 
 ```
@@ -32,16 +33,35 @@ primera vez que los ve. Si aparece una consola pidiendo permiso para instalar
 `beamer` o `beamertheme-metropolis`, es eso.
 
 Estado: `tesis.pdf` 20 páginas sin un solo desbordamiento; `presentacion.pdf`
-24 láminas con un desbordamiento horizontal de 1,4 pt, que no se ve.
+13 páginas con un desbordamiento vertical de 4,2 pt, que no se ve.
 
-La presentación usa el tema `default` de beamer a propósito: sin tema de color ni
-paquetes de terceros, compila con una instalación básica de LaTeX en cualquier
-máquina.
+## La plantilla de la presentación
 
-Dos cosas que costaron y conviene no repetir:
+`presentation.sty` es [pmichaillat/latex-presentation](https://github.com/pmichaillat/latex-presentation),
+copiado sin modificar, con su licencia MIT en `presentation-LICENSE.md`. La
+plantilla espera las figuras en un único PDF multipágina; aquí se usan los cuatro
+PDF sueltos que ya emite `figuras.py`, y eso es lo único que se aparta de ella.
 
-- **`\usepackage{lmodern}` no es opcional.** Sin él, `microtype` pide expansión
-  de fuente sobre las Computer Modern de mapa de bits y aborta la compilación.
+Usa Source Sans 3, `MnSymbol` y `mathastext`, y en MiKTeX **no compila de fábrica**:
+`sourcesanspro.sty` resuelve hoy a Source Sans 3, pero `updmap.cfg` solo registra
+`SourceSansPro.map`. Sin la entrada de Source Sans 3, pdfTeX no encuentra la
+fuente, cae a las Computer Modern de mapa de bits y `microtype` aborta con
+`auto expansion is only possible with scalable fonts` —un error que no nombra la
+fuente culpable—. En una máquina nueva:
+
+```
+mpm --install=sourcesans --install=sourcesanspro --install=sourcecodepro
+mpm --install=mnsymbol --install=mathalpha --install=mathastext
+echo 'Map SourceSansThree.map' >> <raiz-miktex>/miktex/config/updmap.cfg
+miktex fontmaps configure
+```
+
+Cosas que costaron y conviene no repetir:
+
+- **`\usepackage{lmodern}` no es opcional en `tesis.tex`.** Sin él, `microtype`
+  pide expansión de fuente sobre las Computer Modern de mapa de bits y aborta la
+  compilación. La presentación no lo necesita porque trae su propia fuente
+  escalable —una vez registrado el mapa.
 - **El porcentaje no va dentro de `$...$`.** `babel-spanish` decide el espacio
   antes del `%` mirando `\lastskip`, que en modo matemático mide en `mu` y no en
   `pt`; mezcla unidades y TeX aborta. Se escribe `$-$6{,}0\,\%`, con solo el
