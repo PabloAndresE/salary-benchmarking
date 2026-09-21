@@ -3,7 +3,7 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **Presentación interna de ActuaLab**, 24 láminas: la metodología de agrupación, regla por regla, y los resultados medidos |
+| `presentacion.tex` | **Presentación interna de ActuaLab**, 19 láminas: la metodología de agrupación y los resultados medidos |
 | `figuras.py` | Genera las cuatro figuras que usan los dos |
 
 ```
@@ -49,11 +49,15 @@ Dos exclusiones deliberadas:
   `tesis.tex`, que es donde un catálogo de resultados negativos es una
   contribución y no una digresión.
 
-Y una obligación: las reglas se **explican**, no se nombran. Decir «enlace
-completo, umbral 0,95» es una etiqueta; lo que hay que contar es cómo se
-construye el grafo, por qué manda el par peor y qué pasaba con el enlace simple.
-Las constantes citadas salen de `src/benchmarking/producto/base_referencia.py`,
-no de la memoria.
+Y dos obligaciones que tiran en direcciones opuestas:
+
+- Las reglas se **explican**, no se nombran. «Enlace completo, umbral 0,95» es
+  una etiqueta; hay que decir por qué manda el par peor y qué pasaba con el
+  enlace simple. Las constantes salen de
+  `src/benchmarking/producto/base_referencia.py`, no de la memoria.
+- Pero **la consolidación cabe en dos láminas**. Se explica cada decisión y se
+  deja fuera lo que solo la ilustra. Quien quiera el detalle tiene el código, que
+  está comentado justo para eso.
 
 Si hiciera falta una versión para el tribunal, es ese material el que hay que
 volver a meter: está en `docs/registro_decisiones.md` y en el historial de git.

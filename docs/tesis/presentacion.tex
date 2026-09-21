@@ -121,124 +121,42 @@ recuperar. El resto lo genera el empleador.}
 \section{Consolidar las grafías}
 % ############################################################################
 
-\begin{frame}{Tres pasadas, y una regla que las gobierna}
-De 65.181 títulos a \alert{50.420} puestos, en tres pasadas separadas y en este
-orden, para que cada una sea auditable y medible por su cuenta:
+\begin{frame}{Tres pasadas, y el sueldo fuera de todas}
+De 65.181 títulos a \alert{50.420} puestos. Separadas y en este orden, para que
+cada una sea auditable y medible por su cuenta:
 \begin{enumerate}
-\item \textbf{Semántica}: enlace completo sobre el grafo de similitud del
-\textit{embedding}.
-\item \textbf{Ortográfica}: absorción de erratas por distancia de edición.
-\item \textbf{Flexión de género}: \texttt{ENFERMERA} y \texttt{ENFERMERO} se
-unen, conservando y reportando la brecha medida \emph{antes} de unirlos.
+\item \textbf{Semántica.} Grafo de similitud del \textit{embedding} con umbral
+0,95, agrupado por \alert{enlace completo}: dos grupos se unen solo si aguanta
+\emph{el par peor} entre ellos, no basta una arista.
+\item \textbf{Ortográfica.} Distancia de edición 1 ---contando el intercambio de
+dos letras contiguas como \emph{un} error---, buscada por variantes de borrado:
+2.100 millones de pares se resuelven en 1,8 millones de claves. Lo raro
+($\le 2$ empresas) entra en lo común ($\ge 10$), \alert{en una sola dirección} y
+en cinco vueltas, para cazar la errata \emph{de} una errata.
+\item \textbf{Flexión de género}, conservando la brecha medida antes de unir.
 \end{enumerate}
 \medskip
 \begin{block}{La regla que las gobierna}
 El \alert{sueldo nunca entra en la agrupación}. Los grupos se construyen, se
-congelan, y solo entonces aparece el sueldo para calificarlos. Si la métrica
-decidiera la granularidad, acabaríamos con bandas salariales disfrazadas de
-puestos.
+congelan, y solo entonces aparece el sueldo para calificarlos.
 \end{block}
 \end{frame}
 
-\begin{frame}{Pasada 1: enlace completo sobre el grafo de similitud}
-\begin{enumerate}
-\item Cada título es un vector de \texttt{text-multilingual-embedding-002}. De
-cada uno se toman sus \alert{10} vecinos más próximos y se conservan las aristas
-con coseno $\ge \alert{0{,}95}$.
-\item Las aristas se recorren \alert{de más a menos similares}, uniendo grupos de
-forma voraz.
-\item Dos grupos se unen solo si \alert{el par peor entre ellos} aguanta el
-umbral: $\min\,(Z_A Z_B^{\top}) \ge 0{,}95$, todos contra todos.
-\end{enumerate}
-\medskip
-Ese tercer paso es toda la diferencia con un \textit{union-find}, que uniría en
-cuanto existiese \emph{una} arista.
-\medskip
-
-Además, un \alert{candado de escalón}: dos títulos de nivel jerárquico distinto
-no se unen aunque el coseno lo permita.
-\end{frame}
-
-\begin{frame}{Por qué el par peor, y no cualquiera}
-\begin{block}{Con enlace simple basta una cadena}
-Cada salto es individualmente razonable y el resultado no lo es. Medido: una
-componente de \alert{1.758} títulos que contiene a la vez
-\texttt{ASISTENTE CONTABLE} y \texttt{AUXILIAR DE LIMPIEZA}. Ninguna arista de
-esa cadena es absurda; la componente sí.
+\begin{frame}{Las dos decisiones que no son obvias}
+\begin{block}{Por qué el par peor, y no cualquiera}
+Con enlace simple basta \emph{una} cadena de saltos individualmente razonables:
+se formaba una componente de \alert{1.758} títulos con
+\texttt{ASISTENTE CONTABLE} y \texttt{AUXILIAR DE LIMPIEZA} dentro. El daño nunca
+vino de pares malos, sino de la cadena que los conectaba.
+\end{block}
+\begin{block}{Por qué dos pasadas, y no un solo criterio}
+El \textit{embedding} no distingue una errata de una letra:
+$s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = \alert{0{,}7177}$, frente al umbral de
+0,95. Y la distancia de edición no ve un sinónimo: \texttt{ODONTOLOGA} y
+\texttt{DENTISTA} no comparten ni una letra en el mismo sitio.
 \end{block}
 \medskip
-Con enlace completo el daño desaparece. Y se ve de dónde venía: una vez puesto el
-enlace completo, el candado de escalón solo rechaza \alert{18 uniones de 15.870}.
-\medskip
-
-El daño nunca vino de pares malos, sino de \alert{la cadena que los conectaba}.
-\end{frame}
-
-\begin{frame}{Pasada 2: encontrar las erratas sin comparar todo con todo}
-65.181 títulos son \alert{2.100 millones} de pares. Comparar todos no es una
-opción.
-\begin{block}{Indexado por variantes de borrado}
-De cada título se generan todas las cadenas con \alert{un carácter menos} y se
-indexan. Dos cadenas a distancia $\le 1$ comparten siempre una de esas variantes,
-así que basta mirar las que caen en la misma clave: \alert{1,8 millones} de
-claves, y segundos.
-\end{block}
-\medskip
-La comprobación final es distancia de edición \alert{exactamente 1}: sustituir,
-insertar o borrar un carácter ---o \alert{intercambiar dos letras contiguas},
-que es el dedazo más común al teclear y que Levenshtein contaría como dos
-errores.
-\end{frame}
-
-\begin{frame}{Pasada 2: cuándo se absorbe, y en qué dirección}
-\begin{itemize}
-\item \textbf{Lo raro entra en lo común, nunca al revés}: el lado raro con
-$\le \alert{2}$ empresas, el común con $\ge \alert{10}$.
-\item Por eso \alert{no encadena}: el destino no puede ser absorbido a su vez,
-porque para serlo tendría que tener $\le 2$ empresas y acaba de exigírsele
-$\ge 10$.
-\item El suelo de longitud ---8 letras--- se le exige a la grafía \alert{común},
-no a la rara. \texttt{VEDEDOR} tiene 7 letras y 2 empresas; su común
-\texttt{VENDEDOR} tiene 8 y 767. El riesgo de \texttt{SUB}/\texttt{SUR} está en
-que \emph{las dos} sean cortas y frecuentes, y de eso ya se ocupa el suelo de
-empresas.
-\item \textbf{Cinco vueltas}, por la errata \emph{de} una errata:
-\texttt{VENDEROA} viene de \texttt{VENDERORA}, que viene de \texttt{VENDEDORA}.
-En una sola vuelta ese par se evalúa leyendo el grupo original de
-\texttt{VENDERORA}, que todavía tiene una empresa, y falla el suelo.
-\end{itemize}
-\end{frame}
-
-\begin{frame}{El caso que lo motivó, y lo que costó}
-Escribiendo \texttt{Vendedo} en el buscador del front salían \texttt{VENDEDRO},
-\texttt{VENDEROA}, \texttt{VEDEDOR} y \texttt{VENEDOR} ---una empresa cada
-una--- por encima de \texttt{VENDEDOR}, que tiene \alert{767}.
-\medskip
-\begin{block}{Las tres relajaciones, medidas juntas}
-Transposición, suelo de longitud sobre la común, y cinco vueltas. Resultado:
-\alert{592} absorciones contra 528, y $+$0{,}021\,\% de cobertura directa.
-\end{block}
-\medskip
-No es encadenar a ciegas, que es justo lo que el diseño de una sola vuelta
-evitaba: el destino sigue exigiendo 10 empresas \alert{en cada vuelta}. Nunca se
-pasa por un grupo raro; solo se descubre que un raro estaba a un dedazo de un
-grupo que \emph{ya} era grande.
-\end{frame}
-
-\begin{frame}{Por qué hacen falta las dos pasadas, y no una}
-\begin{block}{El \textit{embedding} no distingue una errata de una letra}
-$s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = \alert{0{,}7177}$, frente al umbral
-de fusión de 0,95. Las trece grafías de \texttt{VENDEDOR} las une la distancia de
-edición, no el modelo semántico.
-\end{block}
-\medskip
-\begin{block}{Y la distancia de edición no ve un sinónimo}
-\texttt{ODONTOLOGA} y \texttt{DENTISTA} no comparten ni una letra en el mismo
-sitio. Eso solo lo une el \textit{embedding}.
-\end{block}
-\medskip
-Son dos señales ortogonales. Cada una cubre el punto ciego de la otra, y por eso
-van en pasadas separadas y no en un único criterio mezclado.
+Son señales ortogonales: cada una cubre el punto ciego de la otra.
 \end{frame}
 
 % ############################################################################
