@@ -3,9 +3,8 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **Presentación de defensa**: 11 láminas de texto, 4 de figura y 3 de sección. El problema, el método, los resultados medidos |
-| `presentation.sty` | La plantilla, vendorizada sin modificar. Ver abajo |
-| `figuras.py` | Las cuatro figuras, sueltas para la tesis y combinadas para la presentación |
+| `presentacion.tex` | **Presentación de defensa**, 17 láminas: el problema, el método, los resultados medidos |
+| `figuras.py` | Genera las cuatro figuras que usan los dos |
 
 ```
 pdflatex tesis.tex          # dos veces
@@ -30,45 +29,33 @@ pdflatex presentacion.tex   # dos veces, para la numeración de láminas
 Compilan los dos. La máquina tiene MiKTeX 25.12 (`winget install --id
 MiKTeX.MiKTeX --scope user`); el resto de paquetes los instala MiKTeX solo la
 primera vez que los ve. Si aparece una consola pidiendo permiso para instalar
-`beamer` o `beamertheme-metropolis`, es eso.
+`beamer`, es eso.
 
 Estado: los dos sin un solo desbordamiento. `tesis.pdf` 20 páginas,
-`presentacion.pdf` 20.
+`presentacion.pdf` 17.
 
-## La plantilla de la presentación
+## El estilo de la presentación
 
-`presentation.sty` es [pmichaillat/latex-presentation](https://github.com/pmichaillat/latex-presentation),
-copiado sin modificar, con su licencia MIT en `presentation-LICENSE.md`. La
-presentación sigue sus convenciones sin apartarse: figuras en un único PDF
-multipágina citadas por número de página, láminas de sección con `\heading`,
-énfasis con `\al` y `\textsb`, cierre con `\lastslide`. **Sin `\vspace` a mano,
-sin `columns` y sin cambios de cuerpo de letra**: si algo no cabe, sobra texto.
-Lo único que se añade es `babel` para la partición silábica del castellano.
+Beamer por defecto: `\usetheme{default}`, sin tema de color, sin paquetes de
+terceros y sin un solo color definido a mano. Compila con una instalación básica
+de LaTeX en cualquier máquina.
 
-El orden de las páginas de `figuras.pdf` es un contrato con `presentacion.tex`,
-que las cita por número (`page=2`). Está declarado en `PAGINAS`, en `figuras.py`:
-cambiarlo mueve las figuras de lámina sin que nada falle.
-
-Usa Source Sans 3, `MnSymbol` y `mathastext`, y en MiKTeX **no compila de fábrica**:
-`sourcesanspro.sty` resuelve hoy a Source Sans 3, pero `updmap.cfg` solo registra
-`SourceSansPro.map`. Sin la entrada de Source Sans 3, pdfTeX no encuentra la
-fuente, cae a las Computer Modern de mapa de bits y `microtype` aborta con
-`auto expansion is only possible with scalable fonts` —un error que no nombra la
-fuente culpable—. En una máquina nueva:
-
-```
-mpm --install=sourcesans --install=sourcesanspro --install=sourcecodepro
-mpm --install=mnsymbol --install=mathalpha --install=mathastext
-echo 'Map SourceSansThree.map' >> <raiz-miktex>/miktex/config/updmap.cfg
-miktex fontmaps configure
-```
+Se probó una plantilla externa ([pmichaillat/latex-presentation](https://github.com/pmichaillat/latex-presentation))
+y se descartó. Queda anotado lo que costó, porque el síntoma no señalaba la
+causa: usa Source Sans 3, y `sourcesanspro.sty` resuelve hoy a esa familia
+mientras que el `updmap.cfg` de MiKTeX solo registra `SourceSansPro.map`. Sin la
+entrada de Source Sans 3, pdfTeX no encuentra la fuente, cae a las Computer
+Modern de mapa de bits y `microtype` aborta con `auto expansion is only possible
+with scalable fonts`, un error que no nombra la fuente culpable. Se arregla con
+`echo 'Map SourceSansThree.map' >> <raiz-miktex>/miktex/config/updmap.cfg` y
+`miktex fontmaps configure`; queda hecho en esta máquina.
 
 Cosas que costaron y conviene no repetir:
 
-- **`\usepackage{lmodern}` no es opcional en `tesis.tex`.** Sin él, `microtype`
-  pide expansión de fuente sobre las Computer Modern de mapa de bits y aborta la
-  compilación. La presentación no lo necesita porque trae su propia fuente
-  escalable —una vez registrado el mapa.
+- **`\usepackage{lmodern}` no es opcional**, en ninguno de los dos. Sin él,
+  `microtype` pide expansión de fuente sobre las Computer Modern de mapa de bits
+  y aborta la compilación; y el PDF saldría con texto que no se puede buscar ni
+  copiar.
 - **El porcentaje no va dentro de `$...$`.** `babel-spanish` decide el espacio
   antes del `%` mirando `\lastskip`, que en modo matemático mide en `mu` y no en
   `pt`; mezcla unidades y TeX aborta. Se escribe `$-$6{,}0\,\%`, con solo el

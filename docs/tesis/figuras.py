@@ -72,8 +72,6 @@ plt.rcParams.update({
 })
 
 
-# Las figuras se quedan vivas hasta el final: `combina()` las vuelca en un solo
-# PDF y solo entonces se cierran.
 _VIVAS = {}
 
 
@@ -266,33 +264,11 @@ def fig_sesgo_tamano():
             % (es(sin[0], 1), es(sin[2], 1), es(con[0], 1), es(con[2], 1)))
 
 
-# Orden de las paginas del PDF combinado. La presentacion las cita por numero
-# —`\includegraphics[page=2]{\pdf}`— asi que este orden es parte del contrato:
-# cambiarlo mueve las figuras de lamina sin que nada falle.
-PAGINAS = ("espesor_catalogo", "descomposicion_error", "escalera_niveles",
-           "sesgo_tamano")
-
-
-def combina():
-    """Un solo PDF, una figura por pagina, como espera la plantilla de beamer.
-
-    La tesis usa los ficheros sueltos y la presentacion el combinado.
-    """
-    from matplotlib.backends.backend_pdf import PdfPages
-
-    destino = SALIDA.parent / "figuras.pdf"
-    with PdfPages(destino) as pdf:
-        for nombre in PAGINAS:
-            pdf.savefig(_VIVAS[nombre], bbox_inches="tight", pad_inches=0.02)
-    for fig in _VIVAS.values():
-        plt.close(fig)
-    return "combinado: %s (%d paginas)" % (destino.name, len(PAGINAS))
-
-
 if __name__ == "__main__":
     SALIDA.mkdir(parents=True, exist_ok=True)
     for f in (fig_escalera, fig_descomposicion, fig_espesor,
               fig_sesgo_tamano):
         print(" ", f(), flush=True)
-    print(" ", combina())
+    for fig in _VIVAS.values():
+        plt.close(fig)
     print("\nPDFs en", SALIDA)
