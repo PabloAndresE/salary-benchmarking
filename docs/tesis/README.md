@@ -3,7 +3,7 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **Presentación de defensa**, 17 láminas: el problema, el método, los resultados medidos |
+| `presentacion.tex` | **Presentación interna de ActuaLab**, 17 láminas: qué resuelve, cómo funciona, qué entrega |
 | `figuras.py` | Genera las cuatro figuras que usan los dos |
 
 ```
@@ -33,6 +33,19 @@ primera vez que los ve. Si aparece una consola pidiendo permiso para instalar
 
 Estado: los dos sin un solo desbordamiento. `tesis.pdf` 20 páginas,
 `presentacion.pdf` 17.
+
+## Qué entra en la presentación y qué no
+
+El destinatario son los compañeros de ActuaLab, así que la presentación enseña
+**el producto final**: qué resuelve, cómo funciona y qué entrega. Deliberadamente
+**no** entran las hipótesis que se midieron y se descartaron, los ejes que se
+probaron y no se quedaron, ni el recorrido del proyecto. Todo eso está en
+`tesis.tex`, que es el documento donde ese material sí cuenta —y donde un
+catálogo de resultados negativos es una contribución, no una digresión.
+
+Si hiciera falta una versión para el tribunal, es ese mismo material el que hay
+que volver a meter: está en `docs/registro_decisiones.md` y en el historial de
+git.
 
 ## El estilo de la presentación
 

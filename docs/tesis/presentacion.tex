@@ -1,14 +1,18 @@
 % ============================================================================
-%  Benchmarking salarial - presentacion de defensa
+%  Benchmarking salarial - presentacion interna de ActuaLab
 %
 %  COMPILAR:  pdflatex presentacion.tex   (dos veces, para el indice)
 %
-%  ESTILO: tema `Madrid` de beamer, de serie. Sin tema de color, sin paquetes de
-%  terceros y sin un solo color definido a mano. Compila con una instalacion
-%  basica de LaTeX en cualquier maquina.
+%  AUDIENCIA: companeros de ActuaLab. Solo el producto final: que resuelve, como
+%  funciona y que entrega. NO entran las hipotesis medidas y descartadas, el
+%  recorrido del proyecto ni los ejes que se probaron y no se quedaron; eso esta
+%  en `tesis.tex`, que es el documento donde ese material si cuenta.
 %
-%  Cifras: `docs/mediciones.md` y `docs/registro_decisiones.md`. Las mismas que
-%  las de `tesis.tex`. Las figuras las genera `figuras.py`.
+%  ESTILO: tema `Madrid` de beamer, de serie. Sin tema de color, sin paquetes de
+%  terceros y sin un solo color definido a mano.
+%
+%  Cifras: `docs/mediciones.md` y `docs/registro_decisiones.md`. Las figuras las
+%  genera `figuras.py`.
 % ============================================================================
 \documentclass[11pt]{beamer}
 
@@ -27,11 +31,10 @@
 
 % Las versiones entre corchetes son las que van al pie de pagina, que en Madrid
 % es estrecho: ahi no cabe el titulo entero.
-\title[Benchmarking salarial]{Benchmarking salarial con etiquetas de puesto
-delgadas}
-\subtitle{Cuánto error es reducible por elegir mejor el grupo de comparación}
+\title[Benchmarking salarial]{Benchmarking salarial para Ecuador}
+\subtitle{Qué resuelve, cómo funciona y qué entrega}
 \author[P. A. Encalada]{Pablo Andrés Encalada}
-\institute[USFQ]{Maestría en Inteligencia Artificial --- USFQ}
+\institute[ActuaLab]{ActuaLab}
 \date{\today}
 
 \begin{document}
@@ -45,32 +48,31 @@ delgadas}
 \end{frame}
 
 % ############################################################################
-\section{El problema}
+\section{Qué resuelve}
 % ############################################################################
 
 \begin{frame}{El problema es el denominador}
 \begin{itemize}
-\item Un benchmark salarial estima cuantiles de la distribución de sueldos
-condicionada al puesto.
-\item El estimador es una mediana ponderada. La especificación del condicionante
-es el problema abierto.
-\item La práctica establecida impone una taxonomía cerrada y traslada el mapeo al
-cliente: manual, no reproducible entre codificadores, sin tasa de acuerdo
-publicada.
-\item Aquí el condicionante es la etiqueta declarada por el empleador, en texto
-libre.
+\item Un benchmark salarial responde a una pregunta simple: cuánto paga el
+mercado por este puesto. El cálculo es una mediana.
+\item Toda la dificultad está en decidir \alert{qué observaciones entran} en esa
+mediana.
+\item La industria lo resuelve con catálogos cerrados a los que el cliente mapea
+su nómina a mano: caro, lento, y dos personas mapean el mismo puesto distinto.
+\item Aquí se usa la etiqueta de cargo que la empresa \alert{ya escribió}, en
+texto libre. Sin mapeo manual y sin catálogo que aprenderse.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{El catálogo está en régimen de área pequeña}
+\begin{frame}{El catálogo real está en régimen de área pequeña}
 \begin{itemize}
 \item 65.181 títulos distintos, con mediana de 2 personas y \alert{1 empresa}
 por título.
-\item El 78\,\% de los títulos tiene una sola empresa detrás y cubre el 21\,\%
-de las personas.
-\item El 1\,\% con 30 o más empresas cubre el 46\,\%.
-\item La mayoría de las celdas no admite estimación directa: el problema es de
-estimación en áreas pequeñas, no de clasificación.
+\item El 78\,\% de los títulos tiene una sola empresa detrás, y entre todos
+cubren el 21\,\% de las personas.
+\item El 1\,\% de los títulos con 30 o más empresas cubre el 46\,\%.
+\item La mayoría de las celdas no admite estimación directa. La cola larga se
+resuelve tomando fuerza prestada de un vecindario, no con más modelo.
 \end{itemize}
 \end{frame}
 
@@ -83,18 +85,23 @@ estimación en áreas pequeñas, no de clasificación.
 el registro de la Superintendencia de Compañías.}
 \end{frame}
 
-\begin{frame}{El error irreducible acota la ganancia}
+% ############################################################################
+\section{Cómo funciona}
+% ############################################################################
+
+\begin{frame}{El modelo, y cuánto se puede ganar}
 Con $y = \log(\text{sueldo}/\text{SBU})$, dentro de cada celda de cargo $c$:
 \begin{equation*}
 y_{fi} = \mu_c + u_f + e_{fi}, \qquad
 u_f \sim (0, \tau^2), \qquad e_{fi} \sim (0, \sigma^2).
 \end{equation*}
 \begin{itemize}
-\item Sobre el ajuste, $\tau = 0{,}2917$ y $\sigma = 0{,}1423$: el efecto
-empleador explica el \alert{81\,\%} de la varianza residual.
-\item Contra ese suelo, el techo de mejora por reagrupar es del
-\alert{12,1\,\%}, y del 13,2\,\% sin la censura del salario básico.
-\item Es la referencia contra la que se reporta, no el cero.
+\item Medido: $\tau = 0{,}2917$ y $\sigma = 0{,}1423$. El efecto empleador
+explica el \alert{81\,\%} de la varianza residual.
+\item Lo que se entrega es el \alert{mercado}, no la política salarial de una
+empresa concreta: esa frontera no la cruza ningún método basado en el puesto.
+\item El margen disponible por agrupar mejor es del \alert{12,1\,\%}. Todo el
+diseño se calibra contra ese techo.
 \end{itemize}
 \end{frame}
 
@@ -103,135 +110,91 @@ empleador explica el \alert{81\,\%} de la varianza residual.
 \centering
 \includegraphics[width=0.90\linewidth]{descomposicion_error.pdf}
 \end{figure}
-{\footnotesize En color, la fracción del error atribuible a agrupar mal. El
-resto lo genera el empleador y ningún estimador condicionado al puesto lo
-recupera.}
+{\footnotesize En color, la fracción del error que una agrupación mejor puede
+recuperar. El resto lo genera el empleador.}
 \end{frame}
 
-% ############################################################################
-\section{El método}
-% ############################################################################
-
-\begin{frame}{Cuantil ponderado por inverso de varianza}
+\begin{frame}{El estimador: cada empresa vota según su precisión}
 El voto de la empresa $f$ es la mediana de sus $n_f$ personas en la celda; la
 referencia, el cuantil ponderado al 50\,\% de los votos, con
 \begin{equation*}
 w_f = \frac{1}{\tau_c^2 + \sigma_c^2/n_f}.
 \end{equation*}
 \begin{itemize}
-\item Los regímenes límite son las dos convenciones del campo:
-$n_f \to \infty$ da un voto por empresa; $\tau_c^2 \to 0$, un voto por persona.
-\item El ratio de pesos lo acota la razón de varianzas,
-$w_{\max}/w_{\min} \le 1 + \sigma_c^2/\tau_c^2 \approx \alert{1{,}24}$, no el
-tamaño relativo de las empresas.
-\item $\tau_c$ y $\sigma_c$ se estiman por celda: el estimador no tiene
-hiperparámetros.
+\item El ratio entre pesos lo acota la razón de varianzas,
+$w_{\max}/w_{\min} \le 1 + \sigma_c^2/\tau_c^2 \approx \alert{1{,}24}$: una
+empresa de 3.000 personas \alert{no puede dominar la celda}, y no hace falta
+descartar el voto de las pequeñas para conseguirlo.
+\item $\tau_c$ y $\sigma_c$ se estiman por celda. El estimador no tiene
+hiperparámetros que ajustar a mano.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{La similitud no es el peso del vecino}
-Ponderar por similitud $\times$ precisión invierte el orden correcto:
-\begin{table}
-\centering
-\small
-\begin{tabular}{lrr}
-\toprule
-Vecinos de \texttt{OPERADOR DE PARQUEADERO} & Similitud & Peso \\
-\midrule
-\texttt{OPERADOR DE PARQUEADEROS} & 0,989 & 8\,\% \\
-\texttt{OPERADOR DE EXCAVADORA} & 0,825 & \alert{46\,\%} \\
-\bottomrule
-\end{tabular}
-\end{table}
-Cada vecino $j$ se trata como observación ruidosa del puesto objetivo:
+\begin{frame}{Un puesto que no está en la base se coloca entre sus vecinos}
+El \alert{35,9\,\%} de las personas de una nómina nueva tiene un título que no
+está en la base. Cada vecino se trata como observación ruidosa del puesto
+objetivo:
 \begin{equation*}
 \mathrm{var}_j = 1/W_j + \lambda\,(1-s_j), \qquad w_j = 1/\mathrm{var}_j.
 \end{equation*}
-$\lambda$ se estima por escalón jerárquico, donde varía un factor 18. Si todos
-los vecinos están lejos, el segundo término domina: el intervalo se ensancha y la
-confianza cae, sin regla ad hoc.
+\begin{itemize}
+\item $\lambda$ se estima de los datos, no se elige: es cuánto difieren dos
+celdas por unidad de distancia semántica.
+\item Si todos los vecinos están lejos, el intervalo se ensancha y la confianza
+cae a BAJA, sin programar ninguna excepción.
+\item El sistema \alert{siempre responde}, y por eso la marca de confianza no es
+decorativa: separa lo que se sabe de lo que se estima.
+\end{itemize}
 \end{frame}
 
-\begin{frame}{Consolidación de grafías: tres reglas separables}
+\begin{frame}{Las grafías del mismo puesto se consolidan antes de estimar}
 \begin{enumerate}
 \item \textbf{Semántica.} Enlace completo sobre el grafo de similitud, umbral
-0,95. El enlace simple percola: una componente de \alert{1.758} títulos con
-\texttt{ASISTENTE CONTABLE} y \texttt{AUXILIAR DE LIMPIEZA} dentro.
+0,95.
 \item \textbf{Ortográfica.} Indexado por variantes de borrado y absorción
 asimétrica: el grupo raro con $\le 2$ empresas entra en el común con $\ge 10$.
 \item \textbf{Flexión de género}, conservando la diferencia medida antes de
 unir.
 \end{enumerate}
 \medskip
-Cobertura directa: 57,7\,\% a \alert{64,1\,\%}. El coseno no separa erratas de
-una letra: $s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = 0{,}7177$.
-\end{frame}
-
-\begin{frame}{Protocolo, fijado antes del modelo}
 \begin{itemize}
-\item Partición \textbf{por empresa}: con partición por fila la empresa de
-evaluación aparece en ajuste y el acierto es espurio.
-\item Remuestreo \textbf{por empresa} en todo intervalo.
-\item Regla de puntuación propia: pérdida \textit{pinball} en
-$q \in \{0{,}25;\, 0{,}75\}$ sobre la banda de empresas.
-\item Criterio de adopción declarado antes de correr cada experimento.
-\item \textbf{Placebo de permutación} en toda reagrupación: en D-031 permutar
-los destinos cuesta $+0{,}00130$ frente a $-0{,}00001$ de la regla real; en
-D-018 el placebo seleccionó 118 cargos contra 93 de la regla, y la descartó.
-\item El 20\,\% de evaluación final permanece intacto.
+\item Cobertura directa: del 57,7\,\% al \alert{64,1\,\%}, sin coste en
+precisión.
+\item Hace falta la regla ortográfica porque el embedding \alert{no reconoce una
+errata de una letra}: $s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = 0{,}7177$,
+frente a un umbral de 0,95.
 \end{itemize}
 \end{frame}
 
-% ############################################################################
-\section{Resultados medidos}
-% ############################################################################
-
-\begin{frame}{La hipótesis de partida se rechazó}
+\begin{frame}{El nivel jerárquico entra como segundo eje}
 \begin{itemize}
-\item Hipótesis: la composición del pago ---fijo, comisiones, extras---
-discrimina puestos dentro de una etiqueta ancha.
-\item Fuera de muestra, $R^2 = \alert{+0{,}0042}$ contra placebo $-0{,}0002$: un
-0,21\,\% del techo del 12\,\%. Se descarta.
-\item El eje con poder discriminante es el nivel jerárquico,
-$\omega^2 = \alert{0{,}2462}$, con un recorrido de $2{,}11\times$ entre el
-escalón más bajo y el más alto.
-\item El protocolo se construyó antes que el modelo y su primer resultado fue
-falsificar la premisa del proyecto.
+\item Dos personas con el mismo título de cargo no ocupan el mismo puesto. Lo
+que las separa es el nivel: $\omega^2 = \alert{0{,}2462}$.
+\item El recorrido salarial es de \alert{$2{,}11\times$} entre el escalón más
+bajo ---ayudante, auxiliar, operario--- y el más alto ---gerente, director.
+\item La escalera se estima \alert{dentro de empresa y área}, así que no arrastra
+el efecto empleador ni la composición sectorial.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{El eje con poder discriminante}
+\begin{frame}{La escalera de niveles}
 \begin{figure}
 \centering
 \includegraphics[width=0.86\linewidth]{escalera_niveles.pdf}
 \end{figure}
-{\footnotesize Escalera monótona dentro de empresa y área. El nivel jerárquico,
-no la composición del pago, es lo que separa puestos dentro de una etiqueta
-ancha.}
+{\footnotesize Salario relativo al escalón más bajo, estimado dentro de empresa
+y área.}
 \end{frame}
 
-\begin{frame}{Hipótesis medidas y no adoptadas}
+\begin{frame}{El tamaño de la empresa corrige el centro}
 \begin{itemize}
-\item Sector para estrechar la banda: pinball 0,1289 contra 0,1255 sin
-segmentar (D-022).
-\item Sector para corregir el centro: no se sostiene fuera de muestra (D-022).
-\item Escalera estimada con medianas: la media domina, $+0{,}00069$ (D-024).
-\item División o clase CIIU en lugar de sección: degrada con la finura; la
-sección acierta un 9,2\,\% más (D-029).
-\item Contexto en el embedding: mejora el vecindario, pero el efecto sobre las
-bandas cruza cero (D-030).
-\end{itemize}
-\end{frame}
-
-\begin{frame}{Sector y tamaño: la misma pregunta, respuesta opuesta}
-\begin{itemize}
-\item \textbf{Sector.} Adoptado en D-014 y retirado en D-022. De la varianza de
-pago \textit{entre} empresas para un mismo cargo, la división CIIU explica
-\alert{6 puntos netos}: 0,389 en crudo contra 0,325 permutando. El resto es
-inflación mecánica por partición en grupos pequeños.
-\item \textbf{Tamaño.} No estrecha la banda ---la incertidumbre del centro sube
-más de lo que baja el ancho--- pero corrige un sesgo de nivel en los cargos
-altos.
+\item Sale del \alert{RUC} contra el registro completo de la Superintendencia
+---221.754 empresas---, junto con el sector. El cliente no declara ninguno de
+los dos.
+\item No se segmenta el mercado por tamaño: eso no estrecha la banda. Se aplica
+como \alert{desplazamiento del centro} en los cargos altos.
+\item El rango de error del centro pasa de $-$56,0\,\%/$+$81,9\,\% a
+$-$12,1\,\%/$+$17,9\,\%.
 \end{itemize}
 \end{frame}
 
@@ -240,29 +203,67 @@ altos.
 \centering
 \includegraphics[width=0.80\linewidth]{sesgo_tamano.pdf}
 \end{figure}
-{\footnotesize El rango de error del centro pasa de $-$56,0\,\%/$+$81,9\,\% a
-$-$12,1\,\%/$+$17,9\,\% al corregir por tamaño.}
+{\footnotesize A una empresa pequeña se le decía que su gerente general cobra un
+56\,\% por debajo del mercado. Entre empresas de su tamaño, estaba bien pagado.}
 \end{frame}
 
-\begin{frame}{Cobertura y alcance de lo reportado}
+% ############################################################################
+\section{Qué entrega}
+% ############################################################################
+
+\begin{frame}{Lo que recibe el cliente}
+El cliente sube su nómina tal como la tiene y da su RUC. Por cada persona:
+\begin{itemize}
+\item La \alert{referencia de mercado} de su puesto, en dólares.
+\item La \alert{banda}: qué paga la mitad central de las empresas.
+\item Su posición frente a esa referencia, y una \alert{marca de confianza}.
+\end{itemize}
+\medskip
+Y por cada puesto: contra cuántas empresas se comparó, contra qué sector y qué
+tamaño, y su posición frente a la política interna de la propia empresa.
+\medskip
+
+Se entregan \alert{dos bandas}: la de empresas, para decisiones de política
+salarial, y la de personas, para situar a un individuo.
+\end{frame}
+
+\begin{frame}{Cómo se sostienen las cifras}
+\begin{itemize}
+\item Partición \textbf{por empresa}, nunca por fila: si no, la empresa de
+evaluación aparece en ajuste y se acierta por la razón equivocada.
+\item Todo intervalo se \textbf{remuestrea por empresa}. La fila no es la unidad
+independiente.
+\item Puntuación con pérdida \textit{pinball} en $q \in \{0{,}25;\, 0{,}75\}$
+sobre la banda: es una regla propia, se minimiza diciendo la verdad.
+\item Criterio de adopción \textbf{escrito antes} de correr cada experimento, y
+\textbf{placebo de permutación} en todo cambio de agrupación.
+\item \alert{31} decisiones de método registradas con su evidencia y sus
+alternativas; \alert{381} pruebas automatizadas.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Estado del sistema}
 \begin{table}
 \centering
 \small
 \begin{tabular}{lr}
 \toprule
-Techo de cobertura de la etiqueta cruda & 66,6\,\% \\
-Cobertura directa, consolidada & 64,1\,\% \\
-Títulos de una nómina nueva fuera de la base & 35,9\,\% \\
+Títulos en la base & 65.181 \\
+Puestos tras consolidar grafías & 50.420 \\
 Empresas que aportan datos & 6.722 \\
 Empresas resolubles por RUC & 221.754 \\
+Cobertura directa & 64,1\,\% \\
+Títulos de una nómina nueva resueltos por analogía & 35,9\,\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 \begin{itemize}
-\item El efecto empleador acota el alcance: lo estimado es el mercado, no la
-política salarial de una empresa concreta.
-\item Todo procede de particiones de validación dentro del ajuste. Es
-consistencia interna, no validación externa.
+\item API HTTP sobre la base v15: \texttt{/informes} procesa una nómina por lote
+y devuelve Excel, \texttt{/referencia} resuelve un puesto suelto, y
+\texttt{/puestos} alimenta el buscador del front, desde donde se puede corregir
+el mapeo antes de recalcular.
+\item Lo medido hasta hoy sale de particiones de validación. El 20\,\% de
+evaluación final se reserva para una sola pasada, al congelar el método.
 \end{itemize}
 \end{frame}
 
