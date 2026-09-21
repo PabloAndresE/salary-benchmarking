@@ -22,13 +22,28 @@ python docs/tesis/figuras.py
 ## Compilar
 
 ```
-pdflatex tesis.tex     # dos veces, para el índice y las referencias
+pdflatex tesis.tex          # dos veces, para el índice y las referencias
+pdflatex presentacion.tex   # dos veces, para la numeración de láminas
 ```
 
-No hay LaTeX instalado en la máquina donde se escribió, así que **el documento no
-se ha compilado todavía**. Está validado estructuralmente —entornos balanceados,
-llaves, delimitadores de matemática, columnas de tabla— pero la primera
-compilación puede sacar avisos de formato.
+Compilan los dos. La máquina tiene MiKTeX 25.12 (`winget install --id
+MiKTeX.MiKTeX --scope user`); el resto de paquetes los instala MiKTeX solo la
+primera vez que los ve. Si aparece una consola pidiendo permiso para instalar
+`beamer` o `beamertheme-metropolis`, es eso.
+
+Estado: `tesis.pdf` 20 páginas sin un solo desbordamiento; `presentacion.pdf` 11
+láminas con dos desbordamientos verticales de 15,6 pt y 8,8 pt, que no se ven.
+
+Dos cosas que costaron y conviene no repetir:
+
+- **`\usepackage{lmodern}` no es opcional.** Sin él, `microtype` pide expansión
+  de fuente sobre las Computer Modern de mapa de bits y aborta la compilación.
+- **El cuerpo se escribió sin tildes** y hubo que reponerlas a posteriori, en
+  siete pasadas. Reponer tildes con sustitución ciega es peor de lo que parece:
+  `esta`/`está` y `que`/`qué` dependen de la sintaxis, no de la palabra. Lo que
+  se corrigió fue solo lo inequívoco; lo ambiguo se dejó a propósito, porque una
+  tilde de más es tan error como una de menos. **En el próximo documento, se
+  escribe con tildes desde el primer renglón.**
 
 ## Antes de entregarlo
 

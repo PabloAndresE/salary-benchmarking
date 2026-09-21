@@ -13,6 +13,11 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+% Latin Modern: fuente ESCALABLE. Con `fontenc T1` y sin esto, LaTeX cae a las
+% Computer Modern de mapa de bits y `microtype` aborta la compilacion —"auto
+% expansion is only possible with scalable fonts"—. Ademas el PDF saldria con
+% texto que no se puede buscar ni copiar.
+\usepackage{lmodern}
 \usepackage[spanish,es-tabla]{babel}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
@@ -29,7 +34,7 @@
 \newcommand{\cargo}[1]{\texttt{#1}}
 
 \title{\bfseries Benchmarking salarial con etiquetas de puesto delgadas:\\
-       cuanto error es reducible por elegir mejor el grupo de comparacion}
+       cuánto error es reducible por elegir mejor el grupo de comparación}
 \author{Pablo Andres Encalada}
 \date{Maestria en Inteligencia Artificial --- USFQ\\[1ex]\today}
 
@@ -40,24 +45,24 @@
 \chapter*{Resumen}
 \addcontentsline{toc}{chapter}{Resumen}
 
-Un benchmark salarial responde a una pregunta simple: \emph{cuanto paga el mercado
-por este puesto}. La dificultad no esta en el calculo sino en el denominador ---
-que puestos se consideran comparables. Este trabajo parte de un catalogo real de
-nominas ecuatorianas donde la etiqueta de cargo es texto libre, y mide cuanto del
-error de un benchmark es reducible eligiendo mejor el grupo de comparacion.
+Un benchmark salarial responde a una pregunta simple: \emph{cuánto paga el mercado
+por este puesto}. La dificultad no está en el cálculo sino en el denominador ---
+qué puestos se consideran comparables. Este trabajo parte de un catálogo real de
+nóminas ecuatorianas donde la etiqueta de cargo es texto libre, y mide cuánto del
+error de un benchmark es reducible eligiendo mejor el grupo de comparación.
 
-La contribucion principal no es un algoritmo. Es una \textbf{medicion del
-presupuesto disponible}: se descompone el error de prediccion en la parte
+La contribución principal no es un algoritmo. Es una \textbf{medición del
+presupuesto disponible}: se descompone el error de predicción en la parte
 irreducible ---la que genera el empleador--- y la parte atribuible a agrupar mal,
-y se establece que el techo de mejora por agrupacion es del orden del 12\,\%.
-Sobre ese techo se construye un estimador y se mide cuanto de el se recupera.
+y se establece que el techo de mejora por agrupación es del orden del 12\,\%.
+Sobre ese techo se construye un estimador y se mide cuánto de él se recupera.
 
-El trabajo incluye un resultado negativo en el centro: la hipotesis con la que
-arranco el proyecto ---que la composicion del pago (fijo, comisiones, extras)
-discrimina puestos--- se midio y quedo en un $R^2$ fuera de muestra de $+0{,}0042$
-contra un placebo en $-0{,}0002$. El eje que si paga resulto ser el \emph{nivel
-jerarquico}, con $\omega^2 = 0{,}2462$ y un recorrido salarial de $2{,}11\times$
-entre el escalon mas bajo y el mas alto. Ese giro, y el protocolo que lo hizo
+El trabajo incluye un resultado negativo en el centro: la hipótesis con la que
+arrancó el proyecto ---que la composición del pago (fijo, comisiones, extras)
+discrimina puestos--- se midió y quedó en un $R^2$ fuera de muestra de $+0{,}0042$
+contra un placebo en $-0{,}0002$. El eje que sí paga resultó ser el \emph{nivel
+jerárquico}, con $\omega^2 = 0{,}2462$ y un recorrido salarial de $2{,}11\times$
+entre el escalón más bajo y el más alto. Ese giro, y el protocolo que lo hizo
 visible, son parte del aporte.
 
 \tableofcontents
@@ -65,39 +70,39 @@ visible, son parte del aporte.
 % ============================================================================
 \chapter{El problema}
 
-\section{Que es un benchmark salarial y por que es dificil}
+\section{Qué es un benchmark salarial y por qué es difícil}
 
 Una empresa que quiere saber si paga bien necesita comparar el sueldo de cada
-persona contra lo que el mercado paga por \emph{ese mismo puesto}. El calculo es
-trivial: una mediana. La dificultad esta enteramente en decidir que observaciones
+persona contra lo que el mercado paga por \emph{ese mismo puesto}. El cálculo es
+trivial: una mediana. La dificultad está enteramente en decidir qué observaciones
 entran en ella.
 
-La industria resuelve esto con taxonomias duras: catalogos cerrados de puestos a
-los que el cliente mapea su nomina a mano. Ese mapeo es caro, es lento, y es
-donde se pierde la informacion --- dos empresas mapean el mismo puesto a
-categorias distintas segun quien haga el ejercicio.
+La industria resuelve esto con taxonomías duras: catálogos cerrados de puestos a
+los que el cliente mapea su nómina a mano. Ese mapeo es caro, es lento, y es
+donde se pierde la información --- dos empresas mapean el mismo puesto a
+categorías distintas según quien haga el ejercicio.
 
-La alternativa natural es usar la etiqueta que la empresa ya escribio. El
+La alternativa natural es usar la etiqueta que la empresa ya escribió. El
 problema es que esa etiqueta es texto libre.
 
-\section{El catalogo real}
+\section{El catálogo real}
 
-El universo de trabajo son estudios actuariales de nomina de empresas
-ecuatorianas, anos 2024--2025, cruzados con el registro de la Superintendencia de
-Companias. Tras limpieza el catalogo contiene \textbf{65.181 titulos distintos}
+El universo de trabajo son estudios actuariales de nómina de empresas
+ecuatorianas, años 2024--2025, cruzados con el registro de la Superintendencia de
+Compañías. Tras limpieza el catálogo contiene \textbf{65.181 títulos distintos}
 de puesto.
 
-La distribucion de ese catalogo es el problema entero (figura~\ref{fig:espesor}):
+La distribución de ese catálogo es el problema entero (figura~\ref{fig:espesor}):
 
 \begin{table}[h]
 \centering
-\caption{Espesor del catalogo de cargos}
+\caption{Espesor del catálogo de cargos}
 \begin{tabular}{lr}
 \toprule
-Titulos distintos & 65.181 \\
-Mediana de personas por titulo & 2 \\
-Mediana de empresas por titulo & 1 \\
-Personas cubiertas por titulos con respaldo suficiente & 66,6\,\% \\
+Títulos distintos & 65.181 \\
+Mediana de personas por título & 2 \\
+Mediana de empresas por título & 1 \\
+Personas cubiertas por títulos con respaldo suficiente & 66,6\,\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -105,29 +110,29 @@ Personas cubiertas por titulos con respaldo suficiente & 66,6\,\% \\
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{espesor_catalogo.pdf}
-\caption[Espesor del catalogo de cargos]{\textbf{Casi todos los puestos son
-delgados; casi toda la gente esta en los gruesos.} El 78\,\% de los 50.420 puestos
-tiene una sola empresa detras y entre todos cubren el 21\,\% de las personas. En el
-otro extremo, el 1\,\% de los puestos con 30 o mas empresas cubre el 46\,\%. Esa
-asimetria es el problema: la cola larga no se arregla con mas modelo, se arregla
+\caption[Espesor del catálogo de cargos]{\textbf{Casi todos los puestos son
+delgados; casi toda la gente está en los gruesos.} El 78\,\% de los 50.420 puestos
+tiene una sola empresa detrás y entre todos cubren el 21\,\% de las personas. En el
+otro extremo, el 1\,\% de los puestos con 30 o más empresas cubre el 46\,\%. Esa
+asimetría es el problema: la cola larga no se arregla con más modelo, se arregla
 tomando fuerza prestada de un vecindario.}
 \label{fig:espesor}
 \end{figure}
 
-La mitad de los titulos aparece en una sola empresa. Un tercio de las personas
-esta en celdas de una o dos empresas. Calcular una mediana de mercado sobre eso
+La mitad de los títulos aparece en una sola empresa. Un tercio de las personas
+está en celdas de una o dos empresas. Calcular una mediana de mercado sobre eso
 no da un benchmark: da el sueldo de un vecino.
 
-Y el catalogo esta ademas sucio de una forma especifica. El mismo puesto aparece
+Y el catálogo está además sucio de una forma específica. El mismo puesto aparece
 tecleado de varias maneras ---seis variantes de espaciado de \cargo{ASISTENTE
-ADMINISTRATIVO}, trece grafias de \cargo{VENDEDOR} incluyendo \cargo{VEENDEDOR},
+ADMINISTRATIVO}, trece grafías de \cargo{VENDEDOR} incluyendo \cargo{VEENDEDOR},
 \cargo{VENDEDRO} y \cargo{VEDEDOR}--- y cada una es, para el sistema, un puesto
 distinto y delgado.
 
-\section{El limite que ningun metodo basado en el puesto puede cruzar}
+\section{El límite que ningún método basado en el puesto puede cruzar}
 
-Antes de proponer nada conviene saber cuanto hay que ganar. Descomponiendo la
-varianza del logaritmo del sueldo normalizado por el salario basico unificado,
+Antes de proponer nada conviene saber cuánto hay que ganar. Descomponiendo la
+varianza del logaritmo del sueldo normalizado por el salario básico unificado,
 dentro de cada celda de cargo:
 
 \begin{equation}
@@ -144,14 +149,14 @@ conjunto de ajuste:
 \tau = 0{,}2917 \qquad \sigma = 0{,}1423
 \]
 
-El efecto empleador $\tau$ es el doble que la dispersion dentro de la nomina.
+El efecto empleador $\tau$ es el doble que la dispersión dentro de la nómina.
 \textbf{La empresa explica el 81\,\% de lo que no se puede predecir desde el
 puesto.} Dos personas con el mismo cargo en empresas distintas cobran muy
-diferente, y eso no es ruido de medicion: es la variable que de verdad gobierna
+diferente, y eso no es ruido de medición: es la variable que de verdad gobierna
 el salario y que un benchmark por puesto no puede ver.
 
-De ahi sale el presupuesto del trabajo (figura~\ref{fig:descomposicion}). Comparando
-la desviacion del error real contra el suelo irreducible:
+De ahí sale el presupuesto del trabajo (figura~\ref{fig:descomposición}). Comparando
+la desviación del error real contra el suelo irreducible:
 
 \begin{table}[h]
 \centering
@@ -166,60 +171,60 @@ Lejos del piso del SBU ($y > 0{,}05$) & 0,4322 & 0,3750 & 13,2\,\% \\
 \end{tabular}
 
 \vspace{0.6ex}
-{\footnotesize La misma descomposicion sobre la particion de evaluacion da
-10,9\,\%. Las dos cifras son el mismo calculo con distinto alcance y conviene
+{\footnotesize La misma descomposición sobre la partición de evaluacion da
+10,9\,\%. Las dos cifras son el mismo cálculo con distinto alcance y conviene
 citarlas por separado.}
 \end{table}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{descomposicion_error.pdf}
-\caption[Descomposicion del error de prediccion]{\textbf{La franja en color es todo
-lo que una agrupacion mejor puede recuperar.} El resto lo genera el empleador:
-$\tau = 0{,}29$ entre empresas frente a $\sigma = 0{,}14$ dentro de la nomina.
-Cuanto mas lejos del piso del salario basico, mas margen hay ---abajo la
-distribucion esta comprimida contra el minimo legal.}
-\label{fig:descomposicion}
+\caption[Descomposición del error de predicción]{\textbf{La franja en color es todo
+lo que una agrupación mejor puede recuperar.} El resto lo genera el empleador:
+$\tau = 0{,}29$ entre empresas frente a $\sigma = 0{,}14$ dentro de la nómina.
+Cuanto más lejos del piso del salario básico, más margen hay ---abajo la
+distribución está comprimida contra el mínimo legal.}
+\label{fig:descomposición}
 \end{figure}
 
 \textbf{El techo es del orden del 12\,\%.} Cualquier resultado debe leerse contra
-ese numero, no contra cero. Un metodo que reduzca el error un 4\,\% esta
-recuperando un tercio de todo lo que habia disponible; uno que prometa un 40\,\%
-esta midiendo mal.
+ese número, no contra cero. Un método que reduzca el error un 4\,\% está
+recuperando un tercio de todo lo que había disponible; uno que prometa un 40\,\%
+está midiendo mal.
 
-Esta cifra es, en si misma, una contribucion: los trabajos previos comparan
-metodos entre si sin establecer contra que techo compiten.
+Esta cifra es, en sí misma, una contribución: los trabajos previos comparan
+métodos entre si sin establecer contra qué techo compiten.
 
 % ============================================================================
 \chapter{Un resultado negativo en el centro}
 
-\section{La premisa con la que arranco el proyecto}
+\section{La premisa con la que arrancó el proyecto}
 
-El proyecto se diseno sobre la hipotesis de que la \textbf{composicion del pago}
----que fraccion del ingreso es sueldo fijo, comision, horas extra--- discrimina
-puestos que la etiqueta confunde. La intuicion es razonable: un vendedor a
+El proyecto se diseño sobre la hipótesis de que la \textbf{composición del pago}
+---que fracción del ingreso es sueldo fijo, comision, horas extra--- discrimina
+puestos que la etiqueta confunde. La intuición es razonable: un vendedor a
 comision y un vendedor a sueldo hacen trabajos distintos aunque se llamen igual.
 
-Sobre esa hipotesis se construyeron trece semanas de arquitectura: transformacion
-ILR y aparato composicional, compuerta de masa fija, ponderacion por
+Sobre esa hipótesis se construyeron trece semanas de arquitectura: transformación
+ILR y aparato composicional, compuerta de masa fija, ponderación por
 probabilidad inversa, restricciones semi-supervisadas.
 
-\section{Por que no se habia medido}
+\section{Por qué no se había medido}
 
-La composicion estaba disponible en el \textbf{2,7\,\%} de las filas. La hipotesis
-se adopto \emph{por eliminacion} ---se descartaron sector, tamano y antiguedad, y
-quedo ella--- y como el dato no estaba, \textbf{era infalsable en el momento de
+La composición estaba disponible en el \textbf{2,7\,\%} de las filas. La hipótesis
+se adoptó \emph{por eliminación} ---se descartaron sector, tamaño y antiguedad, y
+quedó ella--- y como el dato no estaba, \textbf{era infalsable en el momento de
 adoptarla}.
 
 Se recupero al 80\,\% arreglando el pipeline de ingesta (\dref{001}, \dref{008}),
-se midio que es un rasgo estable entre anos, se midio cuanto de ella explica el
-empleador. Nunca se midio lo unico que sostenia la tesis.
+se midió que es un rasgo estable entre años, se midió cuanto de ella explica el
+empleador. Nunca se midió lo único que sostenia la tesis.
 
-El hueco lo detecto una pregunta del director del proyecto: \emph{``sacamos la
-composicion pero en el EDA nunca analizamos nada de eso para ver si efectivamente
+El hueco lo detectó una pregunta del director del proyecto: \emph{``sacamos la
+composición pero en el EDA nunca analizamos nada de eso para ver si efectivamente
 es relevante''}.
 
-\section{Lo que salio al medirlo}
+\section{Lo que salió al medirlo}
 
 \begin{table}[h]
 \centering
@@ -230,128 +235,128 @@ es relevante''}.
 Eje & $R^2$ fuera de muestra & Reduce la sd \\
 \midrule
 Placebo & $-0{,}0002$ & --- \\
-\textbf{Composicion del pago} & $+0{,}0042$ & 0,21\,\% \\
+\textbf{Composición del pago} & $+0{,}0042$ & 0,21\,\% \\
 Antiguedad & $+0{,}0114$ & 0,57\,\% \\
-\textbf{Rango jerarquico} ($\omega^2$, dentro de area) & $\mathbf{+0{,}2462}$ & \textbf{13,2\,\%} \\
+\textbf{Rango jerárquico} ($\omega^2$, dentro de área) & $\mathbf{+0{,}2462}$ & \textbf{13,2\,\%} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-La composicion vale \textbf{0,21\,\% de reduccion de desviacion} sobre un techo
-del 12\,\%, con un placebo en cero. El rango jerarquico vale \textbf{59 veces
-mas}.
+La composición vale \textbf{0,21\,\% de reducción de desviación} sobre un techo
+del 12\,\%, con un placebo en cero. El rango jerárquico vale \textbf{59 veces
+más}.
 
-La afirmacion se enuncia estrecha, porque la medicion es estrecha: \emph{la
-composicion no aporta informacion intra-empresa e intra-etiqueta sobre el sueldo
-base}. No ``la composicion no importa'' --- sobre compensacion total es
-mecanicamente casi todo, y el diseno residualiza contra la empresa, que determina
-entre el 39\,\% y el 50\,\% de la propia composicion.
+La afirmación se enuncia estrecha, porque la medición es estrecha: \emph{la
+composición no aporta información intra-empresa e intra-etiqueta sobre el sueldo
+base}. No ``la composición no importa'' --- sobre compensacion total es
+mecánicamente casi todo, y el diseño residualiza contra la empresa, que determina
+entre el 39\,\% y el 50\,\% de la propia composición.
 
-\section{El eje que si paga}
+\section{El eje que sí paga}
 
-El rango jerarquico da una escalera monotona de cinco escalones (figura~\ref{fig:escalera})
+El rango jerárquico da una escalera monótona de cinco escalones (figura~\ref{fig:escalera})
 con un recorrido de \textbf{$2{,}11\times$ en salario} entre el nivel 1 y el nivel 5. Se obtiene de
 tres fuentes por orden de confianza:
 
 \begin{enumerate}[nosep]
-  \item \textbf{Lexico de rango} --- la palabra de jerarquia en el propio titulo
+  \item \textbf{Lexico de rango} --- la palabra de jerarquía en el propio título
         (\cargo{AUXILIAR}, \cargo{ASISTENTE}, \cargo{JEFE}, \cargo{GERENTE}).
         Cubre el 34,5\,\% de las personas, es gratis y es auditable.
-  \item \textbf{Catalogo MDT-2019-395}, niveles A--E oficiales definidos
+  \item \textbf{Catálogo MDT-2019-395}, niveles A--E oficiales definidos
         \emph{por contenido de puesto}, no por sueldo.
   \item Un clasificador para el resto, validado contra el 34,5\,\% donde la
         verdad se conoce.
 \end{enumerate}
 
-Que el catalogo oficial defina los niveles por contenido y no por remuneracion es
+Que el catálogo oficial defina los niveles por contenido y no por remuneracion es
 lo que permite usarlo sin circularidad.
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{escalera_niveles.pdf}
-\caption[Escalera salarial por escalon jerarquico]{\textbf{El eje que si paga.}
-Efecto de cada escalon sobre el salario, \emph{dentro} de empresa y de area ---o sea
-ya descontado el empleador, que es el factor dominante. La escalera es monotona y el
-recorrido entre el escalon mas bajo y el mas alto es de $2{,}11\times$. Comparese con
-la composicion del pago, que en la misma medicion vale un 0,21\,\% de reduccion de
-desviacion (tabla~\ref{tab:ejes}).}
+\caption[Escalera salarial por escalón jerárquico]{\textbf{El eje que sí paga.}
+Efecto de cada escalón sobre el salario, \emph{dentro} de empresa y de área ---o sea
+ya descontado el empleador, que es el factor dominante. La escalera es monótona y el
+recorrido entre el escalón más bajo y el más alto es de $2{,}11\times$. Comparese con
+la composición del pago, que en la misma medición vale un 0,21\,\% de reducción de
+desviación (tabla~\ref{tab:ejes}).}
 \label{fig:escalera}
 \end{figure}
 
-\section{La ceguera jerarquica de los embeddings}
+\section{La ceguera jerárquica de los embeddings}
 
 El hallazgo que obliga a tratar el nivel aparte: el modelo de embeddings
-multilingue codifica el \emph{area} del puesto y no su \emph{jerarquia}. Medido
-sobre pares del catalogo:
+multilingüe codifica el \emph{área} del puesto y no su \emph{jerarquía}. Medido
+sobre pares del catálogo:
 
 \begin{table}[h]
 \centering
 \begin{tabular}{lr}
 \toprule
 Pares que difieren solo en el \textbf{rango} & coseno 0,857 \\
-Pares que difieren solo en el \textbf{area} & coseno 0,764 \\
+Pares que difieren solo en el \textbf{área} & coseno 0,764 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-El modelo considera \emph{mas parecidos} a dos puestos que difieren en jerarquia
-que a dos que difieren en area. Como el nivel vale un recorrido de
-$2{,}11\times$ en pago y el area no, agrupar por similitud semantica sin corregir
-fusiona puestos que cobran el doble. La jerarquia tiene que entrar por otra via.
+El modelo considera \emph{más parecidos} a dos puestos que difieren en jerarquía
+que a dos que difieren en área. Como el nivel vale un recorrido de
+$2{,}11\times$ en pago y el área no, agrupar por similitud semántica sin corregir
+fusiona puestos que cobran el doble. La jerarquía tiene que entrar por otra via.
 
-\section{La reformulacion}
+\section{La reformulación}
 
 El enunciado de la tesis pasa a ser:
 
 \begin{quote}
-\emph{¿Cuanto error de un benchmark salarial es reducible por elegir mejor el
-grupo de comparacion, y que precision cuesta la taxonomia dura que vende la
+\emph{¿cuánto error de un benchmark salarial es reducible por elegir mejor el
+grupo de comparación, y qué precisión cuesta la taxonomía dura que vende la
 industria?}
 \end{quote}
 
 Con ese enunciado el resultado modesto deja de ser una decepcion y pasa a ser una
-medicion dentro de un presupuesto cuantificado. Y un modelo simple pasa a ser una
-virtud metodologica: uno complicado confundiria el techo con la capacidad del
-metodo.
+medición dentro de un presupuesto cuantificado. Y un modelo simple pasa a ser una
+virtud metodológica: uno complicado confundiria el techo con la capacidad del
+método.
 
 \section{La leccion de proceso}
 
-Una hipotesis que no se puede falsar con los datos que hay no es un cimiento: es
-una apuesta. El correctivo no es desconfiar mas, sino \textbf{ordenar el trabajo
+Una hipótesis que no se puede falsar con los datos que hay no es un cimiento: es
+una apuesta. El correctivo no es desconfiar más, sino \textbf{ordenar el trabajo
 para que la premisa se mida primero}, aunque medirla exija arreglar el pipeline
 antes.
 
-De esta entrada sale ademas una regla operativa del repositorio: \emph{un numero
-que no se puede reproducir no se defiende}. Toda medicion que sostenga una
-afirmacion vive en \texttt{research/experimentos/} con su script y su salida,
+De esta entrada sale además una regla operativa del repositorio: \emph{un número
+que no se puede reproducir no se defiende}. Toda medición que sostenga una
+afirmación vive en \texttt{research/experimentos/} con su script y su salida,
 commiteados el mismo dia en que se mide.
 
 % ============================================================================
-\chapter{El metodo}
+\chapter{El método}
 
 \section{Vista general}
 
 El sistema construye una \textbf{base de referencia} una vez y la consulta muchas.
-Dado un titulo de puesto:
+Dado un título de puesto:
 
 \begin{itemize}[nosep]
-  \item si el titulo esta en la base, se usa la referencia de su propia celda;
+  \item si el título está en la base, se usa la referencia de su propia celda;
   \item si es nuevo, se embebe y se coloca entre los puestos que se le parecen.
 \end{itemize}
 
-Lo segundo no es un adorno: \textbf{el 35,9\,\% de las personas de una nomina
-nueva tiene un titulo que no esta en la base}. Sin la rama de analogia la
+Lo segundo no es un adorno: \textbf{el 35,9\,\% de las personas de una nómina
+nueva tiene un título que no está en la base}. Sin la rama de analogía la
 cobertura se queda en dos tercios.
 
-El sistema \emph{siempre} responde. La decision es de producto: un cliente sin
-referencia no se queda quieto, se inventa un numero. Pero como se responde
-siempre, la marca de confianza deja de ser decorativa --- es lo unico que separa
+El sistema \emph{siempre} responde. La decisión es de producto: un cliente sin
+referencia no se queda quieto, se inventa un número. Pero como se responde
+siempre, la marca de confianza deja de ser decorativa --- es lo único que separa
 ``esto lo se'' de ``esto lo estoy suponiendo''.
 
 \section{El estimador: pesos inverso-varianza}
 
-Del modelo de la ecuacion~\eqref{eq:modelo} se deriva todo lo demas sin
-hiperparametros. El voto de cada empresa $f$ en una celda es la mediana de sus
+Del modelo de la ecuación~\eqref{eq:modelo} se deriva todo lo demas sin
+hiperparámetros. El voto de cada empresa $f$ en una celda es la mediana de sus
 personas, $m_f$, y se pondera por
 
 \begin{equation}
@@ -362,14 +367,14 @@ w_f = \frac{1}{\tau^2 + \sigma^2 / n_f}
 La referencia es el cuantil ponderado al 50\,\% de los votos $\{m_f\}$ con esos
 pesos.
 
-Este peso resuelve un debate de diseno que antes se zanjaba por criterio. Sus dos
-regimenes limite son las dos posturas:
+Este peso resuelve un debate de diseño que antes se zanjaba por criterio. Sus dos
+regímenes límite son las dos posturas:
 
 \begin{table}[h]
 \centering
 \begin{tabular}{lll}
 \toprule
-Regimen & $w_f$ tiende a & Equivale a \\
+Régimen & $w_f$ tiende a & Equivale a \\
 \midrule
 $n_f \to \infty$ & $1/\tau^2$, igual para todas & una empresa, un voto \\
 $\tau^2 \to 0$ & $n_f/\sigma^2$ & una persona, un voto \\
@@ -377,23 +382,23 @@ $\tau^2 \to 0$ & $n_f/\sigma^2$ & una persona, un voto \\
 \end{tabular}
 \end{table}
 
-Y lo que resuelve el problema practico: \textbf{el ratio maximo entre pesos esta
-acotado por $1 + \sigma^2/\tau^2 \approx 1{,}24$}, no por el tamano relativo de
+Y lo que resuelve el problema práctico: \textbf{el ratio máximo entre pesos está
+acotado por $1 + \sigma^2/\tau^2 \approx 1{,}24$}, no por el tamaño relativo de
 las empresas. Una empresa de 3.000 personas no puede dominar la celda, y no hace
-falta descartar el voto de las pequenas para conseguirlo.
+falta descartar el voto de las pequeñas para conseguirlo.
 
-Esta estructura ancla el trabajo en estimacion en areas pequenas ---tomar fuerza
+Esta estructura ancla el trabajo en estimación en áreas pequeñas ---tomar fuerza
 prestada de un vecindario--- y no en la busqueda de una variable que faltaba.
 
-\section{El vecindario semantico y por que no se pesa por similitud}
+\section{El vecindario semántico y por qué no se pesa por similitud}
 
-Para un titulo nuevo hay que combinar las celdas vecinas. La version ingenua pesa
+Para un título nuevo hay que combinar las celdas vecinas. La versión ingenua pesa
 cada vecino por \emph{similitud} $\times$ \emph{precision}. Medido sobre un caso
 real, eso rompe:
 
 \begin{table}[h]
 \centering
-\caption{Por que la ponderacion ingenua falla: \cargo{OPERADOR DE PARQUEADERO}}
+\caption{Por qué la ponderación ingenua falla: \cargo{OPERADOR DE PARQUEADERO}}
 \begin{tabular}{lrr}
 \toprule
 Vecino & Similitud & Peso ingenuo \\
@@ -404,12 +409,12 @@ Vecino & Similitud & Peso ingenuo \\
 \end{tabular}
 \end{table}
 
-El sistema tenia la respuesta exacta delante y le hizo caso a una excavadora,
-porque la excavadora tenia mas datos. La correccion es tratar cada vecino como
-una \emph{observacion ruidosa} del puesto objetivo, con varianza
+El sistema tenía la respuesta exacta delante y le hizo caso a una excavadora,
+porque la excavadora tenía más datos. La corrección es tratar cada vecino como
+una \emph{observación ruidosa} del puesto objetivo, con varianza
 
 \begin{equation}
-\mathrm{var}_j = \underbrace{1/W_j}_{\text{error de medicion}} +
+\mathrm{var}_j = \underbrace{1/W_j}_{\text{error de medición}} +
                  \underbrace{\lambda\,(1 - s_j)}_{\text{castigo por no ser el mismo puesto}}
 \label{eq:varvecino}
 \end{equation}
@@ -417,140 +422,140 @@ una \emph{observacion ruidosa} del puesto objetivo, con varianza
 y pesar por $1/\mathrm{var}_j$. Un vecino lejano se descuenta aunque este
 perfectamente medido.
 
-\textbf{$\lambda$ se estima de los datos, no se elige}: es cuanto difieren de
-verdad dos celdas por unidad de distancia semantica. Se estima por escalon
-jerarquico, porque varia un factor 18 entre ellos.
+\textbf{$\lambda$ se estima de los datos, no se elige}: es cuánto difieren de
+verdad dos celdas por unidad de distancia semántica. Se estima por escalón
+jerárquico, porque varia un factor 18 entre ellos.
 
-Esta formulacion resuelve sola el caso degenerado. Para \cargo{LOTERO} el
+Esta formulación resuelve sola el caso degenerado. Para \cargo{LOTERO} el
 embedding no encuentra nada parecido y se agarra a la terminacion \emph{-ero}:
 \cargo{LINIERO}, \cargo{BOTERO}, \cargo{LAMPERO}, \cargo{TESORERO}, todos entre
-0,748 y 0,784 de similitud. \cargo{TESORERO} paga 2,5 veces mas. Con la varianza
-de la ecuacion~\eqref{eq:varvecino}, si todos los vecinos estan lejos el termino
+0,748 y 0,784 de similitud. \cargo{TESORERO} paga 2,5 veces más. Con la varianza
+de la ecuación~\eqref{eq:varvecino}, si todos los vecinos están lejos el termino
 $\lambda(1-s_j)$ domina, el intervalo se dispara y la confianza cae a BAJA sin
 que haya que programar ninguna excepcion.
 
-\section{Consolidacion de grafias}
+\section{Consolidación de grafías}
 
-Antes de estimar nada, las grafias del mismo puesto se juntan. Tres pasadas, en
+Antes de estimar nada, las grafías del mismo puesto se juntan. Tres pasadas, en
 orden y por separado para que cada una sea auditable:
 
 \begin{enumerate}[nosep]
-  \item \textbf{Semantica}, por enlace completo sobre el grafo de similitud con
+  \item \textbf{Semántica}, por enlace completo sobre el grafo de similitud con
         umbral 0,95. El enlace \emph{completo} y no el simple: medido, el enlace
-        simple percola --- produce un grupo de 1.758 titulos que contiene a la vez
+        simple percola --- produce un grupo de 1.758 títulos que contiene a la vez
         \cargo{ASISTENTE CONTABLE} y \cargo{AUXILIAR DE LIMPIEZA}, unidos por una
         cadena de saltos individualmente razonables.
   \item \textbf{Por errata}, con indexado por variantes de borrado. Absorbe el
-        grupo raro dentro del comun exigiendo asimetria: el lado raro con
-        $\le 2$ empresas, el comun con $\ge 10$.
-  \item \textbf{Por grafia de genero}, que unifica \cargo{ENFERMERA} y
-        \cargo{ENFERMERO} conservando y reportando la diferencia que habia antes
+        grupo raro dentro del común exigiendo asimetría: el lado raro con
+        $\le 2$ empresas, el común con $\ge 10$.
+  \item \textbf{Por grafía de genero}, que unifica \cargo{ENFERMERA} y
+        \cargo{ENFERMERO} conservando y reportando la diferencia que había antes
         de unirlos.
 \end{enumerate}
 
-La fusion sube la cobertura directa del \textbf{57,7\,\% al 64,1\,\%} sin costar
+La fusión sube la cobertura directa del \textbf{57,7\,\% al 64,1\,\%} sin costar
 precision.
 
 Un hallazgo lateral vale la pena: \textbf{el embedding no reconoce una errata de
 una letra}. \cargo{VENDEROR} contra \cargo{VENDEDOR} puntua 0,7177 frente a un
-umbral de fusion de 0,95. Las trece grafias de vendedor las unio la regla
-ortografica, no el modelo semantico.
+umbral de fusión de 0,95. Las trece grafías de vendedor las unio la regla
+ortográfica, no el modelo semántico.
 
 \section{La banda}
 
-El entregable no es un numero sino un intervalo, y la pregunta que responde es
-\emph{que paga la mitad central de las empresas}. De ahi dos decisiones:
+El entregable no es un número sino un intervalo, y la pregunta que responde es
+\emph{que paga la mitad central de las empresas}. De ahí dos decisiones:
 
 \begin{itemize}[nosep]
   \item \textbf{$\sigma$ no entra en la banda de empresas.} El nivel de una
         empresa es $\mu_c + u_f$, con varianza $\tau_c^2$; $\sigma^2$ separa a dos
-        personas de la misma nomina y no mueve el nivel del empleador.
-  \item \textbf{Con datos de sobra se usan los cuantiles empiricos} de los votos,
+        personas de la misma nómina y no mueve el nivel del empleador.
+  \item \textbf{Con datos de sobra se usan los cuantiles empíricos} de los votos,
         no una normal. Describen la forma real, que va de un pico a una cola larga
-        segun el cargo.
+        según el cargo.
 \end{itemize}
 
 Se entregan dos bandas: la de \emph{empresas} para decisiones de politica
 salarial, y la de \emph{personas} ---que si lleva $\sigma$--- para situar a un
 individuo.
 
-\section{Correccion por tamano de empresa}
+\section{Corrección por tamaño de empresa}
 
-Segmentar el mercado por tamano \emph{no} estrecha la banda: medido, la
-incertidumbre del centro sube mas de lo que baja el ancho. Pero el tamano si
+Segmentar el mercado por tamaño \emph{no} estrecha la banda: medido, la
+incertidumbre del centro sube más de lo que baja el ancho. Pero el tamaño si
 corrige un \textbf{sesgo grande en el centro} de los cargos altos.
 
-El caso que lo muestra: a una empresa pequena se le decia que su gerente general
-cobra un 56\,\% por debajo del mercado, cuando entre sus pares de tamano estaba
-bien. La correccion por desplazamiento lleva el rango de error de
-$-56{,}0\,\%/+81{,}9\,\%$ a $-12{,}1\,\%/+17{,}9\,\%$.
+El caso que lo muestra: a una empresa pequeña se le decía que su gerente general
+cobra un 56\,\% por debajo del mercado, cuando entre sus pares de tamaño estaba
+bien. La corrección por desplazamiento lleva el rango de error de
+$-$56{,}0\,\%/$+$81{,}9\,\% a $-$12{,}1\,\%/$+$17{,}9\,\%.
 
-La leccion metodologica es que \emph{segmentar para estrechar} y \emph{segmentar
+La leccion metodológica es que \emph{segmentar para estrechar} y \emph{segmentar
 para corregir el centro} son dos preguntas distintas y la respuesta no es la
 misma.
 
 % ============================================================================
-\chapter{Protocolo de medicion}
+\chapter{Protocolo de medición}
 
-El instrumento se construyo antes que el modelo, deliberadamente (\dref{002}). La
-contribucion del trabajo es la medicion, no el algoritmo, y una regla de medicion
+El instrumento se construyó antes que el modelo, deliberadamente (\dref{002}). La
+contribución del trabajo es la medición, no el algoritmo, y una regla de medición
 torcida no se detecta midiendo: se detecta auditandola antes de usarla.
 
 \section{Las reglas}
 
 \begin{description}[style=nextline,nosep]
-  \item[Particion por empresa, nunca por fila.] El empleador explica el 39\,\% del
-        salario. Con particion aleatoria por fila, la empresa de test aparece en
-        train y se acierta por la razon equivocada.
+  \item[Partición por empresa, nunca por fila.] El empleador explica el 39\,\% del
+        salario. Con partición aleatoria por fila, la empresa de test aparece en
+        train y se acierta por la razón equivocada.
   \item[Todo intervalo se remuestrea por empresa.] La fila no es la unidad
-        independiente: una persona recurre entre anos y una empresa aporta cientos
+        independiente: una persona recurre entre años y una empresa aporta cientos
         de personas. Tratarlas como independientes estrecha los intervalos sin
         derecho.
-  \item[Puntuacion propia.] La perdida \emph{pinball} en $q = 0{,}25$ y
+  \item[Puntuación propia.] La perdida \emph{pinball} en $q = 0{,}25$ y
         $q = 0{,}75$ sobre la banda de empresas. Es estrictamente propia: se
         minimiza diciendo la verdad. El error absoluto es su caso degenerado.
   \item[Criterio escrito antes de mirar.] Cada experimento declara en su
-        encabezado que resultado lo adoptaria y cual lo rechazaria, antes de
+        encabezado qué resultado lo adoptaría y cual lo rechazaria, antes de
         correr.
-  \item[Placebo en todo cambio de agrupacion.] Cualquier reagrupacion mejora la
-        cobertura por construccion. El placebo ---mismos grupos, destinos
-        barajados--- es lo unico que distingue senal de mecanica.
-  \item[El 20\,\% de test no se toca] hasta que el metodo este congelado en el
+  \item[Placebo en todo cambio de agrupación.] Cualquier reagrupacion mejora la
+        cobertura por construcción. El placebo ---mismos grupos, destinos
+        barajados--- es lo único que distingue señal de mecánica.
+  \item[El 20\,\% de test no se toca] hasta que el método este congelado en el
         pre-registro.
 \end{description}
 
-\section{Por que el placebo es la pieza que decide}
+\section{Por qué el placebo es la pieza que decide}
 
 Tres ejemplos de esta misma serie de experimentos:
 
 \begin{itemize}[nosep]
-  \item En la fusion por errata (\dref{025}) el placebo \emph{no} tuvo potencia, y
-        la decision se registro como ``no validada, solo no contradicha''.
-  \item Al ampliar esa regla (\dref{031}) el placebo si discrimino: mandar las
+  \item En la fusión por errata (\dref{025}) el placebo \emph{no} tuvo potencia, y
+        la decisión se registro como ``no validada, solo no contradicha''.
+  \item Al ampliar esa regla (\dref{031}) el placebo sí discriminó: mandar las
         mismas absorciones a destinos al azar cuesta $+0{,}00130$ de pinball
-        frente a $-0{,}00001$ de la regla real, cien veces mas. Eso es lo que
-        demuestra que la distancia de edicion elige bien el destino.
-  \item En la segmentacion selectiva por tamano (\dref{018}) el placebo
-        \textbf{eligio mas cargos que la seleccion real} --- 118 contra 93 --- lo
-        que basto para descartar el metodo.
+        frente a $-0{,}00001$ de la regla real, cien veces más. Eso es lo que
+        demuestra que la distancia de edición elige bien el destino.
+  \item En la segmentación selectiva por tamaño (\dref{018}) el placebo
+        \textbf{eligio más cargos que la seleccion real} --- 118 contra 93 --- lo
+        que bastó para descartar el método.
 \end{itemize}
 
 % ============================================================================
-\chapter{Lo que se midio y no entro}
+\chapter{Lo que se midió y no entro}
 
-Un catalogo de resultados negativos no es un apendice: es lo que impide que el
+Un catálogo de resultados negativos no es un apéndice: es lo que impide que el
 lector suponga que lo obvio no se probo.
 
 \begin{table}[h]
 \centering
-\caption{Hipotesis medidas y rechazadas}
+\caption{Hipótesis medidas y rechazadas}
 \label{tab:negativos}
 \small
 \begin{tabular}{p{4.2cm}p{6.5cm}l}
 \toprule
-Hipotesis & Resultado & Ref. \\
+Hipótesis & Resultado & Ref. \\
 \midrule
-La composicion del pago discrimina puestos &
+La composición del pago discrimina puestos &
 $R^2 = +0{,}0042$ contra placebo $-0{,}0002$. Vale 0,21\,\% sobre un techo del 12\,\% &
 \dref{013} \\[0.8ex]
 
@@ -563,42 +568,42 @@ No se sostiene fuera de muestra. Se retira lo adoptado en \dref{014} &
 \dref{022} \\[0.8ex]
 
 La escalera de niveles debe estimarse con medianas &
-La mediana pierda contra la media: $+0{,}00069$, IC sobre cero. Hipotesis propia rechazada &
+La mediana pierda contra la media: $+0{,}00069$, IC sobre cero. Hipótesis propia rechazada &
 \dref{024} \\[0.8ex]
 
-Comparar contra el sector especifico del cliente (division o clase CIIU) &
-Peor cuanto mas fino. Cambia el veredicto del 1,79\,\% de los cargos y en esos la seccion acierta un 9,2\,\% mas &
+Comparar contra el sector específico del cliente (division o clase CIIU) &
+Peor cuanto más fino. Cambia el veredicto del 1,79\,\% de los cargos y en esos la sección acierta un 9,2\,\% más &
 \dref{029} \\[0.8ex]
 
 Dar contexto al embedding mejora la representacion &
-Mejora el vecindario (2/5 a 4/5 en pares sinonimo/rima) y \emph{no} mueve las bandas: IC cruza el cero &
+Mejora el vecindario (2/5 a 4/5 en pares sinónimo/rima) y \emph{no} mueve las bandas: IC cruza el cero &
 \dref{030} \\[0.8ex]
 
 Excluir al cliente de su propio mercado &
-Quitar una empresa mueve el centro un 1,2\,\% de la barra de error ya declarada. Corregirlo seria corregir ruido &
+Quitar una empresa mueve el centro un 1,2\,\% de la barra de error ya declarada. Corregirlo sería corregir ruido &
 \dref{027} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\section{El caso del sector, que se adopto y luego se retiro}
+\section{El caso del sector, que se adoptó y luego se retiró}
 
-Merece detalle porque es el unico eje que entro al modelo y despues salio.
+Merece detalle porque es el único eje que entro al modelo y después salió.
 
-\dref{014} lo adopto como ``segundo eje del arquetipo'' con una reduccion del
-13,2\,\% de desviacion dentro de las etiquetas anchas y un placebo en 0,9\,\%. La
-condicion que se le puso fue medirlo \emph{fuera de muestra}. Al hacerlo
-(\dref{022}) no se sostuvo, ni para la banda ni para el centro, y se retiro.
+\dref{014} lo adoptó como ``segundo eje del arquetipo'' con una reducción del
+13,2\,\% de desviación dentro de las etiquetas anchas y un placebo en 0,9\,\%. La
+condición que se le puso fue medirlo \emph{fuera de muestra}. Al hacerlo
+(\dref{022}) no se sostuvo, ni para la banda ni para el centro, y se retiró.
 
-La razon de fondo aparecio despues, al descomponer la varianza: de la diferencia
+La razón de fondo aparecio después, al descomponer la varianza: de la diferencia
 de pago \emph{entre empresas} por un mismo cargo, la division CIIU explica
 \textbf{6 puntos netos} --- $0{,}389$ en crudo contra $0{,}325$ barajando, o sea
-que casi todo es inflacion mecanica de partir en grupos pequenos. Lo que una
+que casi todo es inflacion mecánica de partir en grupos pequeños. Lo que una
 empresa paga por un contador depende de la empresa, no de si vende libros o
 repuestos.
 
 El sector permanece en el producto como \emph{lente} ---el cliente ve contra que
-sector se le compara--- pero no como mejora del modelo, y eso esta escrito donde
+sector se le compara--- pero no como mejora del modelo, y eso está escrito donde
 se implementa.
 
 % ============================================================================
@@ -612,14 +617,14 @@ se implementa.
 \begin{tabular}{lr}
 \toprule
 Techo de cobertura de la etiqueta cruda & 66,6\,\% \\
-Cobertura directa antes de consolidar grafias & 57,7\,\% \\
-Cobertura directa despues de consolidar & \textbf{64,1\,\%} \\
-Personas de una nomina nueva con titulo desconocido & 35,9\,\% \\
+Cobertura directa antes de consolidar grafías & 57,7\,\% \\
+Cobertura directa después de consolidar & \textbf{64,1\,\%} \\
+Personas de una nómina nueva con título desconocido & 35,9\,\% \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-La rama de analogia es lo que convierte un sistema que cubre dos tercios en uno
+La rama de analogía es lo que convierte un sistema que cubre dos tercios en uno
 que responde siempre. El coste de responder siempre se paga en la marca de
 confianza, no en silencio.
 
@@ -630,11 +635,11 @@ confianza, no en silencio.
 \caption{El artefacto}
 \begin{tabular}{lr}
 \toprule
-Titulos en la base & 65.181 \\
-Puestos tras consolidar grafias & 50.420 \\
+Títulos en la base & 65.181 \\
+Puestos tras consolidar grafías & 50.420 \\
 Empresas que aportan datos & 6.722 \\
 Empresas resolubles por RUC (registro completo) & 221.754 \\
-Decisiones de metodo registradas con evidencia & 31 \\
+Decisiones de método registradas con evidencia & 31 \\
 Pruebas automatizadas & 381 \\
 \bottomrule
 \end{tabular}
@@ -646,60 +651,60 @@ Pruebas automatizadas & 381 \\
 \begin{description}[style=nextline]
   \item[El techo es el techo.] El empleador explica el 81\,\% de lo que no se
         puede predecir desde el puesto. Este trabajo entrega el \emph{mercado},
-        no la politica salarial de una empresa concreta, y ningun metodo basado
+        no la politica salarial de una empresa concreta, y ningún método basado
         en la etiqueta de puesto puede cruzar esa frontera.
 
-  \item[El conjunto de test sigue sin tocarse.] Todo lo reportado esta medido
-        sobre particiones de validacion dentro del conjunto de ajuste. Es
-        correcto por diseno ---el test se toca una vez, despues del
+  \item[El conjunto de test sigue sin tocarse.] Todo lo reportado está medido
+        sobre particiones de validación dentro del conjunto de ajuste. Es
+        correcto por diseño ---el test se toca una vez, después del
         pre-registro--- pero significa que lo que hay es consistencia interna,
-        no generalizacion demostrada.
+        no generalización demostrada.
 
-  \item[Dos anos de datos.] El universo es 2024--2025, los unicos anos con
+  \item[Dos años de datos.] El universo es 2024--2025, los unicos años con
         plantilla completa. No hay serie temporal suficiente para separar
         tendencia de nivel.
 
   \item[El 30\,\% de las empresas no cruza con el registro.] De las 6.722 que
         aportan datos, 1.987 no presentan balances en la Superintendencia
-        ---probablemente sector publico, fundaciones y personas naturales--- y
-        para ellas no hay sector ni tamano.
+        ---probablemente sector público, fundaciones y personas naturales--- y
+        para ellas no hay sector ni tamaño.
 
-  \item[El modelo de embeddings es un limite blando.] Con titulos de una a tres
-        palabras en espanol no separa el sinonimo de la rima: \cargo{DENTISTA}
+  \item[El modelo de embeddings es un límite blando.] Con títulos de una a tres
+        palabras en español no separa el sinónimo de la rima: \cargo{DENTISTA}
         puntua 0,752 con \cargo{TELEFONISTA} y 0,763 con \cargo{ODONTOLOGA}.
-        Once milesimas entre una terminacion compartida y un sinonimo. Medido
+        Once milesimas entre una terminacion compartida y un sinónimo. Medido
         (\dref{030}), esto degrada el buscador de puestos y \emph{no} degrada las
-        bandas, porque la banda depende de cuantas empresas respaldan el cargo
-        mucho mas que de cual es su vecino mas cercano.
+        bandas, porque la banda depende de cuántas empresas respaldan el cargo
+        mucho más que de cual es su vecino más cercano.
 \end{description}
 
 % ============================================================================
 \chapter{Conclusiones}
 
 \begin{enumerate}
-  \item \textbf{El presupuesto esta cuantificado.} El techo de mejora por
+  \item \textbf{El presupuesto está cuantificado.} El techo de mejora por
         agrupar mejor es del orden del 12\,\%, y el 81\,\% de lo irreducible lo
-        genera el empleador. Cualquier afirmacion sobre benchmarking salarial
-        deberia declarar contra que techo compite.
+        genera el empleador. Cualquier afirmación sobre benchmarking salarial
+        debería declarar contra qué techo compite.
 
-  \item \textbf{La premisa central del proyecto era falsa y se midio.} La
-        composicion del pago vale 0,21\,\% de reduccion de desviacion contra un
-        placebo en cero. El eje que paga es el nivel jerarquico, con
+  \item \textbf{La premisa central del proyecto era falsa y se midió.} La
+        composición del pago vale 0,21\,\% de reducción de desviación contra un
+        placebo en cero. El eje que paga es el nivel jerárquico, con
         $\omega^2 = 0{,}2462$ y un recorrido de $2{,}11\times$.
 
-  \item \textbf{El problema es de estimacion en areas pequenas}, no de encontrar
-        la variable que faltaba. La etiqueta de cargo no esta semanticamente
-        rota: esta estadisticamente delgada, con mediana de dos personas y una
-        empresa por titulo.
+  \item \textbf{El problema es de estimación en áreas pequeñas}, no de encontrar
+        la variable que faltaba. La etiqueta de cargo no está semánticamente
+        rota: está estadísticamente delgada, con mediana de dos personas y una
+        empresa por título.
 
-  \item \textbf{Los embeddings son ciegos a la jerarquia} y eso no es un detalle:
+  \item \textbf{Los embeddings son ciegos a la jerarquía} y eso no es un detalle:
         el eje al que son ciegos vale $2{,}11\times$ en pago y el que si capturan
-        no. Agrupar por similitud semantica sin corregir fusiona puestos que
+        no. Agrupar por similitud semántica sin corregir fusiona puestos que
         cobran el doble.
 
-  \item \textbf{El protocolo produjo mas hallazgos que el modelo.} De las 31
+  \item \textbf{El protocolo produjo más hallazgos que el modelo.} De las 31
         decisiones registradas, siete son resultados negativos que cerraron
-        lineas de trabajo, y tres de ellas contradijeron hipotesis propias
+        líneas de trabajo, y tres de ellas contradijeron hipótesis propias
         (\dref{013}, \dref{022}, \dref{024}). El placebo y el criterio escrito
         antes de mirar son lo que hizo esos hallazgos visibles.
 \end{enumerate}
@@ -712,23 +717,23 @@ Fay, R.~E. y Herriot, R.~A. (1979).
 \emph{Estimates of income for small places: an application of James--Stein
 procedures to census data}.
 Journal of the American Statistical Association, 74(366), 269--277.
-\hfill [VERIFICAR paginacion]
+\hfill [VERIFICAR paginación]
 
 \bibitem{rao2015}
 Rao, J.~N.~K. y Molina, I. (2015).
-\emph{Small Area Estimation}, 2.\textsuperscript{a} ed.
+\emph{Small Área Estimation}, 2.\textsuperscript{a} ed.
 Wiley.
 
 \bibitem{gneiting2007}
 Gneiting, T. y Raftery, A.~E. (2007).
 \emph{Strictly proper scoring rules, prediction, and estimation}.
 Journal of the American Statistical Association, 102(477), 359--378.
-\hfill [VERIFICAR paginacion]
+\hfill [VERIFICAR paginación]
 
 \bibitem{zaoui}
 Zaoui, A., Denis, C. y Hebiri, M.
 \emph{Regression with reject option and application to kNN}.
-\hfill [VERIFICAR ano y venue]
+\hfill [VERIFICAR año y venue]
 
 \bibitem{mdt2019}
 Ministerio del Trabajo del Ecuador (2019).
@@ -736,7 +741,7 @@ Ministerio del Trabajo del Ecuador (2019).
 
 \bibitem{mdt2025}
 Ministerio del Trabajo del Ecuador (2025).
-\emph{Acuerdo Ministerial MDT-2025-195}: salario basico unificado 2026.
+\emph{Acuerdo Ministerial MDT-2025-195}: salario básico unificado 2026.
 Registro Oficial, Suplemento 187, 18 de diciembre de 2025.
 
 \end{thebibliography}

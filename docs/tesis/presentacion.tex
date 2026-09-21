@@ -20,23 +20,28 @@
 \usepackage{graphicx}
 \graphicspath{{figuras/}}
 
-% Tema minimo y seguro: `default` esta en toda instalacion de LaTeX. Un tema
-% exotico (metropolis y compania) obliga a instalarlo antes de poder compilar.
-\usetheme{default}
-\usecolortheme{default}
+% Metropolis: limpio y sin adornos, que es lo que pide un deck comercial. Si no
+% estuviera instalado, `\usetheme{default}` compila en cualquier maquina y el
+% contenido no cambia — solo el aspecto.
+%
+%   mpm --require=beamertheme-metropolis
+%
+\usetheme{metropolis}
 \setbeamertemplate{navigation symbols}{}
-\setbeamertemplate{itemize items}[circle]
 
 \definecolor{azul}{HTML}{2a78d6}
 \definecolor{tinta}{HTML}{0b0b0b}
 \definecolor{tinta2}{HTML}{52514e}
 \definecolor{gris}{HTML}{d6d5d1}
 
-\setbeamercolor{structure}{fg=azul}
-\setbeamercolor{frametitle}{fg=tinta}
-\setbeamercolor{normal text}{fg=tinta}
-\setbeamerfont{frametitle}{size=\large,series=\bfseries}
-\setbeamertemplate{footline}[frame number]
+% Los colores de las figuras y los del tema son los MISMOS: el azul de una barra y
+% el de un titulo tienen que ser el mismo azul o la baraja se ve cosida.
+\setbeamercolor{frametitle}{bg=tinta, fg=white}
+\setbeamercolor{alerted text}{fg=azul}
+\setbeamercolor{progress bar}{fg=azul}
+\setbeamercolor{block title}{bg=gris!40, fg=tinta}
+\setbeamercolor{block body}{bg=gris!15, fg=tinta}
+\metroset{block=fill, numbering=fraction, progressbar=frametitle}
 
 \newcommand{\dato}[1]{{\color{azul}\textbf{#1}}}
 \newcommand{\grande}[1]{{\fontsize{30}{34}\selectfont\color{azul}\textbf{#1}}}
@@ -70,7 +75,7 @@ Calcular el promedio del mercado es trivial.
 
 \vspace{0.5em}
 Lo difícil es decidir \textbf{contra quién} se compara --- y ahí es donde casi
-todas las comparaciones salariales fallan sin que nadie lo note.
+todas las comparaciones fallan sin que nadie lo note.
 \end{column}
 
 \begin{column}{0.44\textwidth}
@@ -121,16 +126,13 @@ Sin mapeo manual. Sin catálogo que aprenderse. Su Excel, como está.
 \begin{frame}{Por qué las comparaciones salariales suelen mentir}
 
 \begin{center}
-\includegraphics[width=0.78\linewidth]{espesor_catalogo.pdf}
+\includegraphics[width=0.66\linewidth]{espesor_catalogo.pdf}
 \end{center}
 
-\vspace{-0.3em}
+\vspace{-0.4em}
 El \dato{78\,\%} de los puestos de un catálogo real tiene \textbf{una sola
-empresa} detrás.
-
-\vspace{0.4em}
-Una ``mediana de mercado'' calculada sobre eso no es el mercado: es el sueldo de
-un vecino. La mayoría de los sistemas no lo dice.
+empresa} detrás. Una ``mediana de mercado'' sobre eso no es el mercado: es el
+sueldo de un vecino --- y la mayoría de los sistemas no lo dice.
 \end{frame}
 
 % ============================================================================
@@ -155,16 +157,15 @@ Si no respondiéramos, usted igual necesitaría un número --- y se lo inventar�
 \vspace{0.5em}
 Cada cifra viene con una marca:
 
-\vspace{0.5em}
-\begin{tabular}{ll}
-\textcolor{azul}{$\bullet$} \textbf{ALTA} & el centro se conoce a mejor que $\pm$5\,\% \\
-\textcolor{azul}{$\bullet$} \textbf{MEDIA} & entre 5 y 15\,\% \\
-\textcolor{tinta2}{$\bullet$} \textbf{BAJA} & es una estimación, trátela como tal \\
-\end{tabular}
+\vspace{0.4em}
+\begin{itemize}
+  \item \textbf{ALTA} --- el centro se conoce a mejor que $\pm$5\,\%
+  \item \textbf{MEDIA} --- entre 5 y 15\,\%
+  \item \textbf{BAJA} --- es una estimación, trátela como tal
+\end{itemize}
 
-\vspace{0.8em}
-Como respondemos siempre, \textbf{la confianza no es decorativa}: es lo único
-que separa ``esto lo sé'' de ``esto lo supongo''.
+\vspace{0.4em}
+Como respondemos siempre, \textbf{la confianza no es decorativa}.
 \end{column}
 \end{columns}
 \end{frame}
@@ -199,15 +200,12 @@ Si su sector no tiene suficientes empresas con ese puesto, subimos un nivel
 \begin{frame}{El error que corrige comparar por tamaño}
 
 \begin{center}
-\includegraphics[width=0.72\linewidth]{sesgo_tamano.pdf}
+\includegraphics[width=0.62\linewidth]{sesgo_tamano.pdf}
 \end{center}
 
-\vspace{-0.5em}
+\vspace{-0.4em}
 A una empresa pequeña se le decía que su gerente general cobra un \dato{56\,\%
-por debajo} del mercado.
-
-\vspace{0.3em}
-Entre empresas de su tamaño, estaba bien pagado.
+por debajo} del mercado. Entre empresas de su tamaño, estaba bien pagado.
 \end{frame}
 
 % ============================================================================
@@ -216,7 +214,7 @@ Entre empresas de su tamaño, estaba bien pagado.
 \begin{columns}[T]
 \begin{column}{0.47\textwidth}
 \begin{block}{La persona típica}
-\grande{$-6{,}0\,\%$}
+\grande{$-$6{,}0\,\%}
 
 \vspace{0.4em}
 Su gente cobra, en la mediana, un 6\,\% menos que el mercado.
@@ -228,7 +226,7 @@ Su gente cobra, en la mediana, un 6\,\% menos que el mercado.
 
 \begin{column}{0.47\textwidth}
 \begin{block}{La nómina entera}
-\grande{$-1{,}3\,\%$}
+\grande{$-$1{,}3\,\%}
 
 \vspace{0.4em}
 Cuesta \$86.023 al mes; a precios de mercado costaría \$87.176.
@@ -251,22 +249,17 @@ Quien presupuesta con la primera pide \$5.160 al mes. La brecha real es
 \begin{frame}{Lo que no le podemos decir}
 
 \begin{center}
-\includegraphics[width=0.70\linewidth]{descomposicion_error.pdf}
+\includegraphics[width=0.60\linewidth]{descomposicion_error.pdf}
 \end{center}
 
-\vspace{-0.4em}
+\vspace{-0.5em}
 El \dato{81\,\%} de lo que no se puede predecir desde el puesto lo genera
-\textbf{la empresa}, no el cargo.
+\textbf{la empresa}, no el cargo. Esto le da el \textbf{mercado}, no la política
+salarial de una empresa concreta.
 
-\vspace{0.5em}
-Esto le da el \textbf{mercado}, no la política salarial de una empresa concreta.
-Dos personas idénticas en empresas distintas cobran muy diferente, y ningún
-método basado en el puesto arregla eso.
-
-\vspace{0.6em}
+\vspace{0.4em}
 \begin{center}
-\color{tinta2}
-Medimos ese techo. Desconfíe de quien le prometa mucho más.
+\textbf{Medimos ese techo. Desconfíe de quien le prometa mucho más.}
 \end{center}
 \end{frame}
 

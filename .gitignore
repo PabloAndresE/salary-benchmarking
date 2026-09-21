@@ -51,3 +51,19 @@ corrida_universo*.log
 
 # caches de embeddings: 150 MB de vectores derivados, se regeneran solos
 *.npz
+
+# intermedios de LaTeX. El .tex y el .pdf si se versionan —el pdf es lo que se
+# entrega y lo que se lee sin tener MiKTeX— pero el .aux/.log/.toc se regeneran
+# en cada compilacion y solo generan ruido en el diff.
+*.aux
+*.log
+*.toc
+*.out
+*.nav
+*.snm
+*.vrb
+*.synctex.gz
+# renders png para revisar laminas a ojo; scratch
+docs/tesis/.rev/
+# logs de las corridas locales de la base
+demo/log_*.txt
