@@ -72,6 +72,22 @@ plt.rcParams.update({
 })
 
 
+# Las figuras se quedan vivas hasta el final: `combina()` las vuelca en un solo
+# PDF y solo entonces se cierran.
+_VIVAS = {}
+
+
+def _emite(fig, nombre):
+    """Guarda la figura suelta y la deja en el registro para el combinado.
+
+    El PNG es solo para poder mirarla sin abrir un visor de PDF; los documentos
+    usan el PDF, que es vectorial.
+    """
+    fig.savefig(SALIDA / (nombre + ".pdf"))
+    fig.savefig(SALIDA / (nombre + ".png"), dpi=200)
+    _VIVAS[nombre] = fig
+
+
 def _limpia(ax, eje_x=True):
     """Rejilla recesiva y sin adornos. El dato manda, no el marco."""
     ax.grid(axis="x" if eje_x else "y", color=REJILLA, linewidth=0.6, zorder=0)
@@ -116,8 +132,7 @@ def fig_escalera():
                 fontsize=9, color=TINTA, fontweight="bold")
     # NO se anota el recorrido con una flecha: las barras ya dicen 1,00x y 2,11x, y la
     # flecha chocaba con la etiqueta de la ultima fila.
-    fig.savefig(SALIDA / "escalera_niveles.pdf")
-    plt.close(fig)
+    _emite(fig, "escalera_niveles")
     return f"escalera: {mult[0]:.2f}x -> {mult[-1]:.2f}x"
 
 
@@ -152,8 +167,7 @@ def fig_descomposicion():
     _limpia(ax)
     # La explicacion va al \caption de LaTeX y no dentro de la imagen: ahi dentro no se
     # puede corregir sin regenerar el PDF, y compite con el pie de figura del documento.
-    fig.savefig(SALIDA / "descomposicion_error.pdf")
-    plt.close(fig)
+    _emite(fig, "descomposicion_error")
     return "descomposicion: 12,1% y 13,2%"
 
 
@@ -206,8 +220,7 @@ def fig_espesor():
     _limpia(ax, eje_x=False)
     ax.legend(frameon=False, fontsize=8, loc="upper right",
               labelcolor=TINTA_2, handlelength=1.1)
-    fig.savefig(SALIDA / "espesor_catalogo.pdf")
-    plt.close(fig)
+    _emite(fig, "espesor_catalogo")
     return (f"espesor: {len(emp):,} puestos; "
             f"{pct_tit[0]:.0f}% con 1 empresa cubren {pct_per[0]:.0f}% de la gente")
 
@@ -248,10 +261,32 @@ def fig_sesgo_tamano():
     _limpia(ax, eje_x=False)
     ax.legend(frameon=False, fontsize=8, loc="upper left",
               labelcolor=TINTA_2, handlelength=1.1)
-    fig.savefig(SALIDA / "sesgo_tamano.pdf")
-    plt.close(fig)
+    _emite(fig, "sesgo_tamano")
     return ("sesgo por tamano: de %s/%s a %s/%s"
             % (es(sin[0], 1), es(sin[2], 1), es(con[0], 1), es(con[2], 1)))
+
+
+# Orden de las paginas del PDF combinado. La presentacion las cita por numero
+# —`\includegraphics[page=2]{\pdf}`— asi que este orden es parte del contrato:
+# cambiarlo mueve las figuras de lamina sin que nada falle.
+PAGINAS = ("espesor_catalogo", "descomposicion_error", "escalera_niveles",
+           "sesgo_tamano")
+
+
+def combina():
+    """Un solo PDF, una figura por pagina, como espera la plantilla de beamer.
+
+    La tesis usa los ficheros sueltos y la presentacion el combinado.
+    """
+    from matplotlib.backends.backend_pdf import PdfPages
+
+    destino = SALIDA.parent / "figuras.pdf"
+    with PdfPages(destino) as pdf:
+        for nombre in PAGINAS:
+            pdf.savefig(_VIVAS[nombre], bbox_inches="tight", pad_inches=0.02)
+    for fig in _VIVAS.values():
+        plt.close(fig)
+    return "combinado: %s (%d paginas)" % (destino.name, len(PAGINAS))
 
 
 if __name__ == "__main__":
@@ -259,4 +294,5 @@ if __name__ == "__main__":
     for f in (fig_escalera, fig_descomposicion, fig_espesor,
               fig_sesgo_tamano):
         print(" ", f(), flush=True)
+    print(" ", combina())
     print("\nPDFs en", SALIDA)

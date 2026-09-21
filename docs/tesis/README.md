@@ -3,9 +3,9 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **Presentación de defensa** (12 láminas + cierre). El problema, el método y los resultados medidos |
+| `presentacion.tex` | **Presentación de defensa**: 11 láminas de texto, 4 de figura y 3 de sección. El problema, el método, los resultados medidos |
 | `presentation.sty` | La plantilla, vendorizada sin modificar. Ver abajo |
-| `figuras.py` | Genera las cuatro figuras que usan los dos |
+| `figuras.py` | Las cuatro figuras, sueltas para la tesis y combinadas para la presentación |
 
 ```
 pdflatex tesis.tex          # dos veces
@@ -32,15 +32,22 @@ MiKTeX.MiKTeX --scope user`); el resto de paquetes los instala MiKTeX solo la
 primera vez que los ve. Si aparece una consola pidiendo permiso para instalar
 `beamer` o `beamertheme-metropolis`, es eso.
 
-Estado: `tesis.pdf` 20 páginas sin un solo desbordamiento; `presentacion.pdf`
-13 páginas con un desbordamiento vertical de 4,2 pt, que no se ve.
+Estado: los dos sin un solo desbordamiento. `tesis.pdf` 20 páginas,
+`presentacion.pdf` 20.
 
 ## La plantilla de la presentación
 
 `presentation.sty` es [pmichaillat/latex-presentation](https://github.com/pmichaillat/latex-presentation),
 copiado sin modificar, con su licencia MIT en `presentation-LICENSE.md`. La
-plantilla espera las figuras en un único PDF multipágina; aquí se usan los cuatro
-PDF sueltos que ya emite `figuras.py`, y eso es lo único que se aparta de ella.
+presentación sigue sus convenciones sin apartarse: figuras en un único PDF
+multipágina citadas por número de página, láminas de sección con `\heading`,
+énfasis con `\al` y `\textsb`, cierre con `\lastslide`. **Sin `\vspace` a mano,
+sin `columns` y sin cambios de cuerpo de letra**: si algo no cabe, sobra texto.
+Lo único que se añade es `babel` para la partición silábica del castellano.
+
+El orden de las páginas de `figuras.pdf` es un contrato con `presentacion.tex`,
+que las cita por número (`page=2`). Está declarado en `PAGINAS`, en `figuras.py`:
+cambiarlo mueve las figuras de lámina sin que nada falle.
 
 Usa Source Sans 3, `MnSymbol` y `mathastext`, y en MiKTeX **no compila de fábrica**:
 `sourcesanspro.sty` resuelve hoy a Source Sans 3, pero `updmap.cfg` solo registra
