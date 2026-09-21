@@ -137,17 +137,18 @@ unir.
 Cobertura directa: del 57,7\,\% al \alert{64,1\,\%}, sin coste en precisión.
 \end{frame}
 
-\begin{frame}{Dos cosas que se aprendieron aquí}
-\begin{block}{El enlace simple percola}
-Encadenando saltos individualmente razonables se forma una componente de
-\alert{1.758} títulos que contiene a la vez \texttt{ASISTENTE CONTABLE} y
-\texttt{AUXILIAR DE LIMPIEZA}. Por eso el enlace es \alert{completo}: todos
-contra todos por encima del umbral, no basta una cadena.
+\begin{frame}{Por qué esas dos reglas, y no una sola}
+\begin{block}{Enlace completo, y no simple}
+El enlace simple percolaba: encadenando saltos individualmente razonables se
+formaba una componente de \alert{1.758} títulos con \texttt{ASISTENTE CONTABLE}
+y \texttt{AUXILIAR DE LIMPIEZA} dentro. Exigir todos contra todos por encima del
+umbral lo corta.
 \end{block}
-\begin{block}{El embedding no reconoce una errata de una letra}
-$s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = \alert{0{,}7177}$, frente a un umbral
-de fusión de 0,95. Las trece grafías de \texttt{VENDEDOR} las unió la regla
-ortográfica, no el modelo semántico.
+\begin{block}{Regla ortográfica además de la semántica}
+El embedding no distingue una errata de una letra:
+$s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = \alert{0{,}7177}$, frente al umbral de
+0,95. Las trece grafías de \texttt{VENDEDOR} las une la distancia de edición, y
+por eso la regla ortográfica es una pasada aparte.
 \end{block}
 \end{frame}
 
@@ -182,8 +183,9 @@ Vecinos de \texttt{OPERADOR DE PARQUEADERO} & Similitud & Peso \\
 \bottomrule
 \end{tabular}
 \end{table}
-El sistema tenía la respuesta exacta delante y le hizo caso a una excavadora,
-porque la excavadora tenía más datos.
+Así pesaba la primera versión: tenía la respuesta exacta delante y le hizo caso a
+una excavadora, porque la excavadora tenía más datos. La formulación que se usa
+lo corrige tratando cada vecino como una medición con error.
 \end{frame}
 
 \begin{frame}{Cada vecino, una observación ruidosa del puesto objetivo}
