@@ -1,3 +1,19 @@
+# Tesis y presentación
+
+| Fichero | Para quién |
+|---|---|
+| `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
+| `presentacion.tex` | **Presentación comercial** (Beamer, 11 láminas). Ordenada por las preguntas que hace un cliente, no por la derivación del método |
+| `figuras.py` | Genera las cuatro figuras que usan los dos |
+
+```
+pdflatex tesis.tex          # dos veces
+pdflatex presentacion.tex   # dos veces
+python docs/tesis/figuras.py
+```
+
+---
+
 # Documento de tesis
 
 `tesis.tex` — redacción del problema y de cómo se resolvió, a partir de
@@ -35,6 +51,7 @@ python docs/tesis/figuras.py     # desde la raiz del repo
 | `espesor_catalogo.pdf` | 78% de los puestos tiene 1 empresa y cubre el 21% de la gente; el 1% con 30+ cubre el 46% | en vivo desde `demo/base_v15.npz` |
 | `descomposicion_error.pdf` | Cuánto del error es reducible agrupando mejor (12,1% y 13,2%) | `mediciones.md` §15.3 |
 | `escalera_niveles.pdf` | El recorrido de 2,11× entre el escalón 1 y el 5 | `mediciones.md` §15.4 |
+| `sesgo_tamano.pdf` | El error de no comparar por tamaño: de −56%/+82% a −12%/+18% | `mediciones.md` §17.6 |
 
 Se guardan también en PNG, solo para poder mirarlas sin abrir un visor de PDF; el
 documento usa los PDF.

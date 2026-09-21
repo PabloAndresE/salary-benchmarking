@@ -1,4 +1,4 @@
-"""Las tres figuras de la tesis, en PDF vectorial.
+"""Las figuras de la tesis y de la presentacion, en PDF vectorial.
 
     python docs/tesis/figuras.py
 
@@ -212,8 +212,51 @@ def fig_espesor():
             f"{pct_tit[0]:.0f}% con 1 empresa cubren {pct_per[0]:.0f}% de la gente")
 
 
+
+# =============================================================================
+def fig_sesgo_tamano():
+    """Sin corregir por tamano, a una empresa pequena se le dice que su gerente cobra un
+    56% por debajo del mercado — y entre sus pares esta bien.
+
+    Es la figura mas vendible del expediente porque el error es enorme, concreto y de
+    los que un cliente puede comprobar por su cuenta.
+
+    Fuente: `docs/mediciones.md` 17.6 y D-018.
+    """
+    tam = ["Pequeña", "Mediana", "Grande"]
+    sin = [-56.0, -15.8, +81.9]
+    con = [-12.1, +6.9, +17.9]
+
+    fig, ax = plt.subplots(figsize=(5.6, 2.7))
+    x = np.arange(len(tam))
+    w = 0.38
+    ax.bar(x - w / 2 - 0.01, sin, w, color=GRIS, zorder=3, label="Sin corregir")
+    ax.bar(x + w / 2 + 0.01, con, w, color=AZUL, zorder=3, label="Corregido por tamaño")
+    ax.axhline(0, color=TINTA_2, linewidth=0.9, zorder=4)
+
+    for xi, (a, c) in enumerate(zip(sin, con)):
+        ax.text(xi - w / 2 - 0.01, a + (4 if a > 0 else -9), es(a, 1) + "%",
+                ha="center", fontsize=8, color=TINTA)
+        ax.text(xi + w / 2 + 0.01, c + (4 if c > 0 else -9), es(c, 1) + "%",
+                ha="center", fontsize=8, color=TINTA, fontweight="bold")
+
+    ax.set_xticks(x, tam)
+    ax.set_xlabel("Tamaño de la empresa", color=TINTA_2, fontsize=8)
+    ax.set_ylabel("Error del diagnóstico", color=TINTA_2, fontsize=8)
+    ax.set_ylim(-72, 98)
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: es(v, 0) + "%"))
+    _limpia(ax, eje_x=False)
+    ax.legend(frameon=False, fontsize=8, loc="upper left",
+              labelcolor=TINTA_2, handlelength=1.1)
+    fig.savefig(SALIDA / "sesgo_tamano.pdf")
+    plt.close(fig)
+    return ("sesgo por tamano: de %s/%s a %s/%s"
+            % (es(sin[0], 1), es(sin[2], 1), es(con[0], 1), es(con[2], 1)))
+
+
 if __name__ == "__main__":
     SALIDA.mkdir(parents=True, exist_ok=True)
-    for f in (fig_escalera, fig_descomposicion, fig_espesor):
+    for f in (fig_escalera, fig_descomposicion, fig_espesor,
+              fig_sesgo_tamano):
         print(" ", f(), flush=True)
     print("\nPDFs en", SALIDA)

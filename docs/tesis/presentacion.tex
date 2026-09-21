@@ -1,0 +1,319 @@
+% ============================================================================
+%  Benchmarking salarial - presentacion COMERCIAL
+%
+%  COMPILAR:  pdflatex presentacion.tex   (dos veces)
+%
+%  AUDIENCIA: cliente. El orden sigue las preguntas que hace un cliente y no la
+%  derivacion del metodo. La metodologia entra como RESPALDO —por que fiarse— y
+%  no como argumento central; para la version academica, ver `tesis.tex`.
+%
+%  Cifras: todas salen de `docs/mediciones.md` y `docs/registro_decisiones.md`.
+%  Las figuras las genera `figuras.py`.
+% ============================================================================
+\documentclass[11pt,aspectratio=169]{beamer}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{figuras/}}
+
+% Tema minimo y seguro: `default` esta en toda instalacion de LaTeX. Un tema
+% exotico (metropolis y compania) obliga a instalarlo antes de poder compilar.
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize items}[circle]
+
+\definecolor{azul}{HTML}{2a78d6}
+\definecolor{tinta}{HTML}{0b0b0b}
+\definecolor{tinta2}{HTML}{52514e}
+\definecolor{gris}{HTML}{d6d5d1}
+
+\setbeamercolor{structure}{fg=azul}
+\setbeamercolor{frametitle}{fg=tinta}
+\setbeamercolor{normal text}{fg=tinta}
+\setbeamerfont{frametitle}{size=\large,series=\bfseries}
+\setbeamertemplate{footline}[frame number]
+
+\newcommand{\dato}[1]{{\color{azul}\textbf{#1}}}
+\newcommand{\grande}[1]{{\fontsize{30}{34}\selectfont\color{azul}\textbf{#1}}}
+
+\title{\bfseries ¿Su empresa paga bien?}
+\subtitle{Benchmarking salarial sobre nóminas reales del Ecuador}
+\author{ActuaLab}
+\date{}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+% ============================================================================
+\begin{frame}{La pregunta es fácil. La respuesta, no}
+
+\begin{columns}[T]
+\begin{column}{0.52\textwidth}
+\vspace{1em}
+Un gerente de RR.HH. quiere saber una cosa:
+
+\vspace{0.8em}
+\begin{center}
+\large\itshape ¿estamos pagando lo que paga el mercado?
+\end{center}
+
+\vspace{1em}
+Calcular el promedio del mercado es trivial.
+
+\vspace{0.5em}
+Lo difícil es decidir \textbf{contra quién} se compara --- y ahí es donde casi
+todas las comparaciones salariales fallan sin que nadie lo note.
+\end{column}
+
+\begin{column}{0.44\textwidth}
+\vspace{2em}
+\begin{block}{Lo que hace la industria hoy}
+Un catálogo cerrado de puestos al que usted mapea su nómina \textbf{a mano}.
+
+\vspace{0.5em}
+Caro, lento, y dos personas mapean el mismo puesto distinto.
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ============================================================================
+\begin{frame}{Qué recibe}
+
+Usted sube su nómina \textbf{tal como la tiene}. Recibe, por cada persona:
+
+\vspace{1em}
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{itemize}
+  \item La \textbf{referencia de mercado} de su puesto, en dólares
+  \item La \textbf{banda}: qué paga la mitad central de las empresas
+  \item Qué tan \textbf{por encima o por debajo} está esa persona
+  \item Una marca de \textbf{confianza}
+\end{itemize}
+\end{column}
+\begin{column}{0.48\textwidth}
+Y por cada puesto:
+\begin{itemize}
+  \item Contra \textbf{cuántas empresas} se comparó
+  \item Contra \textbf{qué sector}
+  \item Su posición frente a su \textbf{propia política interna}
+\end{itemize}
+\end{column}
+\end{columns}
+
+\vspace{1.2em}
+\begin{center}
+\color{tinta2}
+Sin mapeo manual. Sin catálogo que aprenderse. Su Excel, como está.
+\end{center}
+\end{frame}
+
+% ============================================================================
+\begin{frame}{Por qué las comparaciones salariales suelen mentir}
+
+\begin{center}
+\includegraphics[width=0.78\linewidth]{espesor_catalogo.pdf}
+\end{center}
+
+\vspace{-0.3em}
+El \dato{78\,\%} de los puestos de un catálogo real tiene \textbf{una sola
+empresa} detrás.
+
+\vspace{0.4em}
+Una ``mediana de mercado'' calculada sobre eso no es el mercado: es el sueldo de
+un vecino. La mayoría de los sistemas no lo dice.
+\end{frame}
+
+% ============================================================================
+\begin{frame}{Nuestra respuesta: responder siempre, y decir cuánto sabemos}
+
+\begin{columns}[T]
+\begin{column}{0.5\textwidth}
+\textbf{Respondemos siempre.}
+
+\vspace{0.5em}
+Un puesto que no está en la base se coloca entre los que se le parecen. El
+\dato{35,9\,\%} de las personas de una nómina nueva tiene un título que nadie
+más usa.
+
+\vspace{0.8em}
+Si no respondiéramos, usted igual necesitaría un número --- y se lo inventaría.
+\end{column}
+
+\begin{column}{0.5\textwidth}
+\textbf{Y decimos cuánto sabemos.}
+
+\vspace{0.5em}
+Cada cifra viene con una marca:
+
+\vspace{0.5em}
+\begin{tabular}{ll}
+\textcolor{azul}{$\bullet$} \textbf{ALTA} & el centro se conoce a mejor que $\pm$5\,\% \\
+\textcolor{azul}{$\bullet$} \textbf{MEDIA} & entre 5 y 15\,\% \\
+\textcolor{tinta2}{$\bullet$} \textbf{BAJA} & es una estimación, trátela como tal \\
+\end{tabular}
+
+\vspace{0.8em}
+Como respondemos siempre, \textbf{la confianza no es decorativa}: es lo único
+que separa ``esto lo sé'' de ``esto lo supongo''.
+\end{column}
+\end{columns}
+\end{frame}
+
+% ============================================================================
+\begin{frame}{Comparado contra empresas como la suya}
+
+Usted da su RUC. De ahí sale, sin que tenga que saberlo:
+
+\vspace{0.8em}
+\begin{columns}[T]
+\begin{column}{0.46\textwidth}
+\begin{itemize}
+  \item Su \textbf{sector} (CIIU), resuelto contra el registro completo de la
+        Superintendencia --- \dato{221.754} empresas
+  \item Su \textbf{tamaño}, con la misma clasificación oficial
+\end{itemize}
+\end{column}
+\begin{column}{0.5\textwidth}
+\begin{block}{Y se le dice contra qué se le comparó}
+No ``su sector'' a secas: el nivel exacto, y cuántas empresas hay detrás.
+
+\vspace{0.4em}
+Si su sector no tiene suficientes empresas con ese puesto, subimos un nivel
+\textbf{y se lo decimos}.
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ============================================================================
+\begin{frame}{El error que corrige comparar por tamaño}
+
+\begin{center}
+\includegraphics[width=0.72\linewidth]{sesgo_tamano.pdf}
+\end{center}
+
+\vspace{-0.5em}
+A una empresa pequeña se le decía que su gerente general cobra un \dato{56\,\%
+por debajo} del mercado.
+
+\vspace{0.3em}
+Entre empresas de su tamaño, estaba bien pagado.
+\end{frame}
+
+% ============================================================================
+\begin{frame}{Dos cifras, porque contestan preguntas distintas}
+
+\begin{columns}[T]
+\begin{column}{0.47\textwidth}
+\begin{block}{La persona típica}
+\grande{$-6{,}0\,\%$}
+
+\vspace{0.4em}
+Su gente cobra, en la mediana, un 6\,\% menos que el mercado.
+
+\vspace{0.3em}
+\color{tinta2}Es una pregunta de \textbf{equidad}.
+\end{block}
+\end{column}
+
+\begin{column}{0.47\textwidth}
+\begin{block}{La nómina entera}
+\grande{$-1{,}3\,\%$}
+
+\vspace{0.4em}
+Cuesta \$86.023 al mes; a precios de mercado costaría \$87.176.
+
+\vspace{0.3em}
+\color{tinta2}Es una pregunta de \textbf{dinero}.
+\end{block}
+\end{column}
+\end{columns}
+
+\vspace{1em}
+\begin{center}
+Quien presupuesta con la primera pide \$5.160 al mes. La brecha real es
+\$1.153.\\
+\textbf{Se pasa por cuatro veces, y hacia el lado caro.}
+\end{center}
+\end{frame}
+
+% ============================================================================
+\begin{frame}{Lo que no le podemos decir}
+
+\begin{center}
+\includegraphics[width=0.70\linewidth]{descomposicion_error.pdf}
+\end{center}
+
+\vspace{-0.4em}
+El \dato{81\,\%} de lo que no se puede predecir desde el puesto lo genera
+\textbf{la empresa}, no el cargo.
+
+\vspace{0.5em}
+Esto le da el \textbf{mercado}, no la política salarial de una empresa concreta.
+Dos personas idénticas en empresas distintas cobran muy diferente, y ningún
+método basado en el puesto arregla eso.
+
+\vspace{0.6em}
+\begin{center}
+\color{tinta2}
+Medimos ese techo. Desconfíe de quien le prometa mucho más.
+\end{center}
+\end{frame}
+
+% ============================================================================
+\begin{frame}{Por qué fiarse: está medido, no opinado}
+
+\begin{columns}[T]
+\begin{column}{0.48\textwidth}
+\begin{itemize}
+  \item \dato{31} decisiones de método registradas, cada una con su evidencia y
+        sus alternativas descartadas
+  \item Todo se mide \textbf{fuera de muestra} y \textbf{sin la propia empresa}
+  \item El criterio de éxito se escribe \textbf{antes} de mirar el resultado
+  \item Cada cambio de agrupación lleva su \textbf{placebo}
+\end{itemize}
+\end{column}
+
+\begin{column}{0.48\textwidth}
+\begin{block}{La prueba más dura la pasó contra nosotros}
+El proyecto arrancó sobre la hipótesis de que la composición del pago
+discriminaba puestos.
+
+\vspace{0.4em}
+Se midió: vale \dato{0,21\,\%} contra un placebo en cero.
+
+\vspace{0.4em}
+\textbf{Se descartó.} El protocolo detectó que nuestra propia premisa era falsa
+--- que es exactamente para lo que existe.
+\end{block}
+\end{column}
+\end{columns}
+\end{frame}
+
+% ============================================================================
+\begin{frame}[plain]
+\vfill
+\begin{center}
+{\Large\bfseries Su nómina, tal como está.}
+
+\vspace{0.8em}
+{\large Una referencia por persona, con su banda y su nivel de confianza.}
+
+\vspace{1.5em}
+\color{tinta2}
+Y dicho con claridad lo que sabemos y lo que no.
+\end{center}
+\vfill
+\end{frame}
+
+\end{document}
