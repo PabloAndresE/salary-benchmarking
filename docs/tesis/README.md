@@ -59,6 +59,12 @@ Y dos obligaciones que tiran en direcciones opuestas:
   deja fuera lo que solo la ilustra. Quien quiera el detalle tiene el código, que
   está comentado justo para eso.
 
+Y un registro: **descriptivo y plano**. Se enuncia la regla y la cifra. Nada de
+cerrar una lámina con una máxima («el daño nunca vino de X sino de Y»), nada de
+antítesis con dos puntos («no es A: es B»), y nada de atribuirle intenciones al
+sistema. El título de una lámina nombra su contenido; no lo resume en una frase
+ingeniosa.
+
 Si hiciera falta una versión para el tribunal, es ese material el que hay que
 volver a meter: está en `docs/registro_decisiones.md` y en el historial de git.
 

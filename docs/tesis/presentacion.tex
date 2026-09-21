@@ -4,15 +4,19 @@
 %  COMPILAR:  pdflatex presentacion.tex   (dos veces, para el indice)
 %
 %  AUDIENCIA: companeros de ActuaLab, que YA CONOCEN EL PRODUCTO. La baraja no
-%  explica que entrega el sistema ni para que sirve: EXPLICA COMO SE AGRUPA,
-%  regla por regla y con el algoritmo a la vista, y que se midio de cada una.
+%  explica que entrega el sistema ni para que sirve: explica como se agrupa y
+%  que se midio de cada regla.
+%
+%  REGISTRO: descriptivo y plano. Se enuncia la regla y la cifra; no se cierra
+%  con maximas ("el dano nunca vino de X sino de Y"), ni con antitesis ("no es
+%  A: es B"), ni se le atribuyen intenciones al sistema. Un titulo de lamina
+%  nombra su contenido, no lo resume en una frase ingeniosa.
 %
 %  NO se citan codigos de decision (D-013, D-022...). Son referencias internas
 %  de `docs/registro_decisiones.md` y fuera de ese fichero no significan nada.
 %
 %  Las constantes citadas salen de `src/benchmarking/producto/base_referencia.py`
-%  —UMBRAL_FUSION, VECINOS_FUSION, MAX_EMPRESAS_ERRATA, MIN_EMPRESAS_ABSORBE,
-%  MIN_LARGO_ERRATA, PASADAS_ERRATA— y las cifras medidas de `docs/mediciones.md`.
+%  y las cifras medidas de `docs/mediciones.md`.
 %
 %  ESTILO: tema `Madrid` de beamer, de serie.
 % ============================================================================
@@ -33,8 +37,8 @@
 
 % Las versiones entre corchetes son las que van al pie de pagina, que en Madrid
 % es estrecho: ahi no cabe el titulo entero.
-\title[Cómo se agrupan los puestos]{Cómo se agrupan los puestos}
-\subtitle{La metodología detrás del benchmark, y lo que se midió}
+\title[Agrupación de puestos]{Agrupación de puestos}
+\subtitle{Metodología y resultados medidos}
 \author[P. A. Encalada]{Pablo Andrés Encalada}
 \institute[ActuaLab]{ActuaLab}
 \date{\today}
@@ -50,37 +54,32 @@
 \end{frame}
 
 % ############################################################################
-\section{Por qué agrupar es el problema}
+\section{El problema de agrupación}
 % ############################################################################
 
-\begin{frame}{El estimador es trivial; el denominador no}
+\begin{frame}{Qué se decide al agrupar}
 \begin{itemize}
-\item La referencia de mercado es una mediana. Eso no tiene dificultad.
-\item Toda la dificultad está en decidir \alert{qué observaciones entran} en
-ella: qué títulos de cargo son el mismo puesto.
-\item Esa decisión \emph{es} el modelo. Todo lo que sigue son las reglas con las
-que se toma, y lo que costó medir cada una.
+\item La referencia de mercado es una mediana sobre las empresas de una celda de
+cargo.
+\item La celda la define el agrupamiento de títulos: qué títulos se consideran el
+mismo puesto.
+\item La etiqueta de cargo es texto libre escrito por el cliente. No hay
+taxonomía de referencia, y construir una obligaría a mapear a mano.
+\item Lo que sigue son las reglas de agrupamiento y lo que se midió de cada una.
 \end{itemize}
-\medskip
-\begin{block}{La restricción de partida}
-La etiqueta de cargo es texto libre escrito por el cliente. No hay taxonomía a la
-que apoyarse, y construir una obligaría a mapear a mano, que es justo lo que se
-quiere evitar.
-\end{block}
 \end{frame}
 
-\begin{frame}{El catálogo es demasiado delgado para agrupar por fuerza bruta}
+\begin{frame}{Distribución del catálogo de cargos}
 \begin{itemize}
 \item 65.181 títulos distintos, con mediana de 2 personas y \alert{1 empresa}
 por título.
-\item El 78\,\% de los títulos tiene una sola empresa detrás, y entre todos
-cubren el 21\,\% de las personas.
+\item El 78\,\% de los títulos tiene una sola empresa detrás y cubre el 21\,\%
+de las personas.
 \item El 1\,\% de los títulos con 30 o más empresas cubre el 46\,\%.
 \end{itemize}
 \medskip
-Una mediana calculada sobre un título de la cola no es el mercado: es el sueldo
-de un vecino. La cola larga no se arregla con más modelo, se arregla
-\alert{tomando fuerza prestada} de un vecindario.
+En la cola, la mediana de la celda se calcula sobre una sola empresa. Por eso el
+diseño toma fuerza prestada de las celdas vecinas.
 \end{frame}
 
 \begin{frame}{Espesor del catálogo de cargos}
@@ -92,7 +91,7 @@ de un vecino. La cola larga no se arregla con más modelo, se arregla
 el registro de la Superintendencia de Compañías.}
 \end{frame}
 
-\begin{frame}{Cuánto margen hay por agrupar mejor}
+\begin{frame}{Varianza del sueldo y margen recuperable}
 Con $y = \log(\text{sueldo}/\text{SBU})$, dentro de cada celda de cargo $c$:
 \begin{equation*}
 y_{fi} = \mu_c + u_f + e_{fi}, \qquad
@@ -101,10 +100,9 @@ u_f \sim (0, \tau^2), \qquad e_{fi} \sim (0, \sigma^2).
 \begin{itemize}
 \item Medido: $\tau = 0{,}2917$ entre empresas y $\sigma = 0{,}1423$ dentro de
 la nómina. El empleador explica el \alert{81\,\%} de la varianza residual.
-\item Contra ese suelo irreducible, agrupar mejor puede recuperar como mucho un
-\alert{12,1\,\%} del error.
-\item Es la cifra contra la que hay que leer cualquier resultado. Una mejora del
-4\,\% es un tercio de todo lo disponible; una del 40\,\% está mal medida.
+\item Comparando la desviación del error real contra ese suelo irreducible, el
+margen recuperable por agrupar mejor es del \alert{12,1\,\%}.
+\item Los resultados se reportan contra ese 12,1\,\%, no contra cero.
 \end{itemize}
 \end{frame}
 
@@ -113,75 +111,72 @@ la nómina. El empleador explica el \alert{81\,\%} de la varianza residual.
 \centering
 \includegraphics[width=0.90\linewidth]{descomposicion_error.pdf}
 \end{figure}
-{\footnotesize En color, la fracción del error que una agrupación mejor puede
-recuperar. El resto lo genera el empleador.}
+{\footnotesize En color, la fracción del error atribuible al agrupamiento. El
+resto lo genera el empleador.}
 \end{frame}
 
 % ############################################################################
-\section{Consolidar las grafías}
+\section{Consolidación de grafías}
 % ############################################################################
 
-\begin{frame}{Tres pasadas, y el sueldo fuera de todas}
-De 65.181 títulos a \alert{50.420} puestos. Separadas y en este orden, para que
-cada una sea auditable y medible por su cuenta:
+\begin{frame}{Tres pasadas}
+De 65.181 títulos a \alert{50.420} puestos. Separadas y en este orden, para poder
+medir cada una por su cuenta:
 \begin{enumerate}
 \item \textbf{Semántica.} Grafo de similitud del \textit{embedding} con umbral
-0,95, agrupado por \alert{enlace completo}: dos grupos se unen solo si aguanta
-\emph{el par peor} entre ellos, no basta una arista.
-\item \textbf{Ortográfica.} Distancia de edición 1 ---contando el intercambio de
-dos letras contiguas como \emph{un} error---, buscada por variantes de borrado:
-2.100 millones de pares se resuelven en 1,8 millones de claves. Lo raro
-($\le 2$ empresas) entra en lo común ($\ge 10$), \alert{en una sola dirección} y
-en cinco vueltas, para cazar la errata \emph{de} una errata.
+0,95, agrupado por \alert{enlace completo}: dos grupos se unen si todos los pares
+entre ellos superan el umbral.
+\item \textbf{Ortográfica.} Distancia de edición 1, contando el intercambio de
+dos letras contiguas como un solo error. Los pares se buscan por variantes de
+borrado, que reducen 2.100 millones de comparaciones a 1,8 millones de claves. La
+absorción es \alert{unidireccional} ---el grupo raro, $\le 2$ empresas, entra en
+el común, $\ge 10$--- y se repite cinco veces, para alcanzar la errata de una
+errata.
 \item \textbf{Flexión de género}, conservando la brecha medida antes de unir.
 \end{enumerate}
 \medskip
-\begin{block}{La regla que las gobierna}
-El \alert{sueldo nunca entra en la agrupación}. Los grupos se construyen, se
-congelan, y solo entonces aparece el sueldo para calificarlos.
+\begin{block}{Restricción común a las tres}
+El sueldo no interviene en el agrupamiento. Los grupos se construyen y se
+congelan antes de calcular ninguna referencia.
 \end{block}
 \end{frame}
 
-\begin{frame}{Las dos decisiones que no son obvias}
-\begin{block}{Por qué el par peor, y no cualquiera}
-Con enlace simple basta \emph{una} cadena de saltos individualmente razonables:
-se formaba una componente de \alert{1.758} títulos con
-\texttt{ASISTENTE CONTABLE} y \texttt{AUXILIAR DE LIMPIEZA} dentro. El daño nunca
-vino de pares malos, sino de la cadena que los conectaba.
+\begin{frame}{Por qué enlace completo, y por qué dos criterios}
+\begin{block}{Enlace completo y no simple}
+Con enlace simple, una cadena de uniones individualmente por encima del umbral
+conecta extremos que no se parecen. Medido: una componente de \alert{1.758}
+títulos que incluye \texttt{ASISTENTE CONTABLE} y \texttt{AUXILIAR DE LIMPIEZA}.
 \end{block}
-\begin{block}{Por qué dos pasadas, y no un solo criterio}
-El \textit{embedding} no distingue una errata de una letra:
+\begin{block}{Dos criterios y no uno}
+El \textit{embedding} no separa una errata de una letra:
 $s(\texttt{VENDEROR}, \texttt{VENDEDOR}) = \alert{0{,}7177}$, frente al umbral de
-0,95. Y la distancia de edición no ve un sinónimo: \texttt{ODONTOLOGA} y
-\texttt{DENTISTA} no comparten ni una letra en el mismo sitio.
+0,95. La distancia de edición no reconoce sinónimos, como \texttt{ODONTOLOGA} y
+\texttt{DENTISTA}. Cada criterio cubre lo que el otro no alcanza.
 \end{block}
-\medskip
-Son señales ortogonales: cada una cubre el punto ciego de la otra.
 \end{frame}
 
 % ############################################################################
-\section{Estimar dentro y fuera de la celda}
+\section{Estimación dentro y fuera de la celda}
 % ############################################################################
 
-\begin{frame}{Dentro de la celda: cada empresa vota según su precisión}
-El voto de la empresa $f$ es la mediana de sus $n_f$ personas; la referencia, el
-cuantil ponderado al 50\,\% de los votos, con
+\begin{frame}{Estimación dentro de la celda}
+El voto de la empresa $f$ es la mediana de sus $n_f$ personas. La referencia es
+el cuantil ponderado al 50\,\% de los votos, con
 \begin{equation*}
 w_f = \frac{1}{\tau_c^2 + \sigma_c^2/n_f}.
 \end{equation*}
 \begin{itemize}
-\item Los dos regímenes límite son las dos posturas del debate clásico: con
-$n_f$ grande, un voto por empresa; con $\tau_c$ pequeño, un voto por persona. El
-peso interpola con los datos en vez de zanjarlo por criterio.
-\item El ratio entre pesos lo acota la razón de varianzas,
-$w_{\max}/w_{\min} \le 1 + \sigma_c^2/\tau_c^2 \approx \alert{1{,}24}$: una
-empresa de 3.000 personas \alert{no puede dominar la celda}, y no hace falta
-descartar el voto de las pequeñas.
+\item Regímenes límite: con $n_f$ grande, $w_f \to 1/\tau_c^2$, un voto por
+empresa; con $\tau_c$ pequeño, $w_f \to n_f/\sigma_c^2$, un voto por persona.
+\item El ratio entre pesos está acotado por
+$1 + \sigma_c^2/\tau_c^2 \approx \alert{1{,}24}$, con independencia del tamaño de
+las empresas. No hace falta truncar el voto de las grandes ni descartar el de las
+pequeñas.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Fuera de la celda: la similitud no es el peso}
-Ponderar cada vecino por similitud $\times$ precisión invierte el orden:
+\begin{frame}{Ponderación de vecinos: versión inicial}
+Pesando cada vecino por similitud $\times$ precisión:
 \begin{table}
 \centering
 \small
@@ -194,29 +189,29 @@ Vecinos de \texttt{OPERADOR DE PARQUEADERO} & Similitud & Peso \\
 \bottomrule
 \end{tabular}
 \end{table}
-Así pesaba la primera versión: tenía la respuesta exacta delante y le hizo caso a
-una excavadora, porque la excavadora tenía más datos. La formulación que se usa
-lo corrige tratando cada vecino como una medición con error.
+El vecino con 0,989 de similitud recibe el 8\,\% del peso y el de 0,825 recibe el
+46\,\%, porque su celda tiene más datos.
 \end{frame}
 
-\begin{frame}{Cada vecino, una observación ruidosa del puesto objetivo}
+\begin{frame}{Ponderación de vecinos: formulación actual}
+Cada vecino se trata como una medición del puesto objetivo con dos fuentes de
+error:
 \begin{equation*}
 \mathrm{var}_j = \underbrace{1/W_j}_{\text{error de medición}}
 \; + \; \underbrace{\lambda\,(1-s_j)}_{\text{sesgo por no ser el mismo puesto}},
 \qquad w_j = 1/\mathrm{var}_j.
 \end{equation*}
 \begin{itemize}
-\item Un vecino lejano se descuenta aunque esté perfectamente medido.
-\item El caso degenerado se resuelve solo: si todos los vecinos están lejos, el
-segundo término domina, el intervalo se dispara y la confianza cae, sin
-programar ninguna excepción.
+\item Un vecino distante se descuenta aunque su celda esté bien medida.
+\item Si todos los vecinos están distantes, el segundo término domina, el
+intervalo se ensancha y la confianza baja sin necesidad de una regla adicional.
 \end{itemize}
 \medskip
-\begin{block}{$\lambda$ no se elige: se estima por momentos}
-La diferencia observada entre dos celdas al cuadrado tiene dos partes, y una se
-conoce: $(m_i - m_j)^2 - (1/W_i + 1/W_j)$ es lo que sobra tras descontar el ruido
-de medición de ambas. Eso se ajusta contra $1 - s_j$ por mínimos cuadrados por el
-origen. Se estima \alert{por escalón jerárquico}, porque varía un factor 18.
+\begin{block}{Estimación de $\lambda$}
+$\lambda$ se estima por momentos. La expresión $(m_i - m_j)^2 - (1/W_i + 1/W_j)$
+descuenta el ruido de medición conocido de ambas celdas, y el residuo se ajusta
+contra $1 - s_j$ por mínimos cuadrados por el origen. Se estima \alert{por
+escalón jerárquico}, donde varía un factor 18.
 \end{block}
 \end{frame}
 
@@ -224,16 +219,16 @@ origen. Se estima \alert{por escalón jerárquico}, porque varía un factor 18.
 \section{Los otros dos ejes}
 % ############################################################################
 
-\begin{frame}{El nivel jerárquico, como segundo eje de agrupación}
+\begin{frame}{Segundo eje: nivel jerárquico}
 \begin{itemize}
-\item Dos personas con el mismo título no ocupan el mismo puesto. Lo que las
-separa es el nivel: $\omega^2 = \alert{0{,}2462}$.
-\item El recorrido salarial es de \alert{$2{,}11\times$} entre el escalón más
-bajo ---ayudante, auxiliar, operario--- y el más alto ---gerente, director.
-\item La escalera se estima \alert{dentro de empresa y área}, así que no arrastra
-el efecto empleador ni la composición sectorial.
-\item El escalón sale de la propia etiqueta, por palabra de rango, y es lo que
-cierra el candado de la pasada semántica.
+\item El escalón explica $\omega^2 = \alert{0{,}2462}$ de la varianza de nivel
+dentro de las etiquetas anchas.
+\item Recorrido salarial de \alert{$2{,}11\times$} entre el escalón más bajo
+---ayudante, auxiliar, operario--- y el más alto ---gerente, director.
+\item Se estima \alert{dentro de empresa y área}, de modo que no incorpora el
+efecto empleador ni la composición sectorial.
+\item El escalón se deriva de la propia etiqueta por palabra de rango, y bloquea
+las uniones entre niveles distintos en la pasada semántica.
 \end{itemize}
 \end{frame}
 
@@ -246,18 +241,15 @@ cierra el candado de la pasada semántica.
 y área.}
 \end{frame}
 
-\begin{frame}{El tamaño de la empresa: corrige el centro, no la banda}
+\begin{frame}{Tercer ajuste: tamaño de empresa}
 \begin{itemize}
 \item Segmentar el mercado por tamaño \alert{no} estrecha la banda: la
 incertidumbre del centro sube más de lo que baja el ancho.
-\item Pero el centro está sesgado, y cada vez más cuanto más alto el escalón. Ahí
-entra, como \alert{desplazamiento de la banda entera}, no como reestimación.
-\item Por escalón y no cargo a cargo: la selección automática cargo a cargo está
-medida y es ruido ---el placebo eligió más cargos que la señal real.
+\item El centro sí está sesgado, y el sesgo crece con el escalón. El tamaño entra
+como \alert{desplazamiento de la banda completa}, sin reestimarla.
+\item El ajuste se aplica por escalón y no cargo a cargo: en la selección
+automática cargo a cargo, el placebo seleccionó más cargos que la señal real.
 \end{itemize}
-\medskip
-\emph{Segmentar para estrechar} y \emph{segmentar para corregir el centro} son
-dos preguntas distintas, y la respuesta no es la misma.
 \end{frame}
 
 \begin{frame}{Sesgo de nivel por tamaño de empresa}
@@ -265,37 +257,38 @@ dos preguntas distintas, y la respuesta no es la misma.
 \centering
 \includegraphics[width=0.80\linewidth]{sesgo_tamano.pdf}
 \end{figure}
-{\footnotesize A una empresa pequeña se le decía que su gerente general cobra un
-56\,\% por debajo del mercado. Entre empresas de su tamaño, estaba bien pagado.}
+{\footnotesize A una empresa pequeña se le indicaba que su gerente general cobra
+un 56\,\% por debajo del mercado. Entre empresas de su tamaño, estaba por encima
+de la referencia.}
 \end{frame}
 
 % ############################################################################
-\section{Cómo se mide}
+\section{Medición}
 % ############################################################################
 
-\begin{frame}{Las reglas de medición se fijaron antes que el modelo}
+\begin{frame}{Reglas de medición}
+Fijadas antes de construir el modelo:
 \begin{itemize}
-\item Partición \textbf{por empresa}, nunca por fila: con partición aleatoria la
-empresa de evaluación aparece en ajuste y se acierta por la razón equivocada.
-\item Todo intervalo se \textbf{remuestrea por empresa}. Una persona se repite
-entre años y una empresa aporta cientos de personas: la fila no es la unidad
-independiente.
-\item Puntuación con pérdida \textit{pinball} sobre la banda, en los cuantiles
-0,25 y 0,75. Es una regla propia: se minimiza diciendo la verdad.
-\item El criterio de adopción se escribe \textbf{antes} de correr el
-experimento: qué resultado lo adoptaría y cuál lo rechazaría.
-\item El 20\,\% de evaluación final \textbf{no se ha tocado}, y se reserva para
-una sola pasada al congelar el método.
+\item Partición \textbf{por empresa}. Con partición por fila, la empresa de
+evaluación aparece también en ajuste.
+\item Remuestreo \textbf{por empresa} en todo intervalo de confianza. Una persona
+se repite entre años y una empresa aporta cientos de personas.
+\item Pérdida \textit{pinball} sobre la banda, en los cuantiles 0,25 y 0,75. Es
+una regla de puntuación propia.
+\item El criterio de adopción se escribe antes de correr cada experimento.
+\item El 20\,\% de evaluación final no se ha usado. Se reserva para una sola
+pasada al congelar el método.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{El placebo es la pieza que decide}
-Cualquier reagrupación mejora la cobertura \alert{por construcción}: se juntan
-celdas, hay más respaldo, las cifras se ven mejor. Eso no demuestra nada.
+\begin{frame}{El placebo de permutación}
+Toda reagrupación aumenta la cobertura por construcción: al juntar celdas hay más
+respaldo por celda.
 \medskip
 \begin{block}{El contraste}
-Se repite el experimento mandando \alert{las mismas fusiones a destinos al azar}.
-Si el placebo mejora igual, la ganancia era mecánica.
+Se repite el experimento enviando las mismas fusiones a destinos elegidos
+\alert{al azar}. Si el placebo mejora igual, la ganancia procede del mecanismo y
+no de la regla.
 \end{block}
 \medskip
 \begin{table}
@@ -310,8 +303,8 @@ Placebo & \alert{$+0{,}00130$} & $[+0{,}00081,\ +0{,}00180]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
-Cien veces peor. La distancia de edición está eligiendo bien el destino; no da
-igual dónde caiga la gente.
+La regla real no empeora el pinball; el placebo lo empeora en dos órdenes de
+magnitud.
 \end{frame}
 
 \begin{frame}{Resultados medidos}
@@ -321,7 +314,7 @@ igual dónde caiga la gente.
 \begin{tabular}{lr}
 \toprule
 Efecto empleador sobre la varianza residual & 81\,\% \\
-Techo de mejora por reagrupar & 12,1\,\% \\
+Margen recuperable por reagrupar & 12,1\,\% \\
 \midrule
 Títulos distintos en el catálogo & 65.181 \\
 Puestos tras consolidar grafías & \alert{50.420} \\
