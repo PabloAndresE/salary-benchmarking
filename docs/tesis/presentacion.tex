@@ -1,55 +1,45 @@
 % ============================================================================
-%  Benchmarking salarial - presentacion COMERCIAL
+%  Benchmarking salarial - presentacion ACADEMICA
 %
-%  COMPILAR:  pdflatex presentacion.tex   (dos veces)
+%  COMPILAR:  pdflatex presentacion.tex   (dos veces, para la numeracion)
 %
-%  AUDIENCIA: cliente. El orden sigue las preguntas que hace un cliente y no la
-%  derivacion del metodo. La metodologia entra como RESPALDO —por que fiarse— y
-%  no como argumento central; para la version academica, ver `tesis.tex`.
+%  AUDIENCIA: tribunal. El orden sigue la derivacion del metodo: el problema,
+%  como se resuelve, y que se midio. No hay laminas de producto ni de venta;
+%  para esa version, ver el historial de git antes de esta reescritura.
 %
-%  Cifras: todas salen de `docs/mediciones.md` y `docs/registro_decisiones.md`.
-%  Las figuras las genera `figuras.py`.
+%  TEMA: `default`, la plantilla estandar de beamer. Sin tema de color ni
+%  adornos: compila en cualquier maquina con una instalacion basica de LaTeX,
+%  sin paquetes de terceros.
+%
+%  Cifras: todas salen de `docs/mediciones.md` y `docs/registro_decisiones.md`,
+%  y son las mismas que las de `tesis.tex`. Las figuras las genera `figuras.py`.
 % ============================================================================
-\documentclass[11pt,aspectratio=169]{beamer}
+\documentclass[11pt]{beamer}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[spanish]{babel}
-\usepackage{amsmath}
+% Latin Modern: sin esto, `fontenc T1` cae a las Computer Modern de mapa de bits
+% y el PDF sale con texto que no se puede buscar ni copiar.
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{graphicx}
 \graphicspath{{figuras/}}
 
-% Metropolis: limpio y sin adornos, que es lo que pide un deck comercial. Si no
-% estuviera instalado, `\usetheme{default}` compila en cualquier maquina y el
-% contenido no cambia — solo el aspecto.
-%
-%   mpm --require=beamertheme-metropolis
-%
-\usetheme{metropolis}
+\usetheme{default}
 \setbeamertemplate{navigation symbols}{}
+\setbeamerfont{frametitle}{series=\bfseries}
 
-\definecolor{azul}{HTML}{2a78d6}
-\definecolor{tinta}{HTML}{0b0b0b}
-\definecolor{tinta2}{HTML}{52514e}
-\definecolor{gris}{HTML}{d6d5d1}
+\newcommand{\cargo}[1]{\texttt{\small #1}}
+\newcommand{\dref}[1]{{\footnotesize\textsf{D-#1}}}
 
-% Los colores de las figuras y los del tema son los MISMOS: el azul de una barra y
-% el de un titulo tienen que ser el mismo azul o la baraja se ve cosida.
-\setbeamercolor{frametitle}{bg=tinta, fg=white}
-\setbeamercolor{alerted text}{fg=azul}
-\setbeamercolor{progress bar}{fg=azul}
-\setbeamercolor{block title}{bg=gris!40, fg=tinta}
-\setbeamercolor{block body}{bg=gris!15, fg=tinta}
-\metroset{block=fill, numbering=fraction, progressbar=frametitle}
-
-\newcommand{\dato}[1]{{\color{azul}\textbf{#1}}}
-\newcommand{\grande}[1]{{\fontsize{30}{34}\selectfont\color{azul}\textbf{#1}}}
-
-\title{\bfseries ¿Su empresa paga bien?}
-\subtitle{Benchmarking salarial sobre nóminas reales del Ecuador}
-\author{ActuaLab}
-\date{}
+\title[Benchmarking salarial]{Benchmarking salarial con etiquetas de puesto
+delgadas}
+\subtitle{Cuánto error es reducible por elegir mejor el grupo de comparación}
+\author{Pablo Andrés Encalada}
+\institute{Maestría en Inteligencia Artificial --- USFQ}
+\date{\today}
 
 \begin{document}
 
@@ -57,256 +47,541 @@
   \titlepage
 \end{frame}
 
-% ============================================================================
-\begin{frame}{La pregunta es fácil. La respuesta, no}
-
-\begin{columns}[T]
-\begin{column}{0.52\textwidth}
-\vspace{1em}
-Un gerente de RR.HH. quiere saber una cosa:
-
-\vspace{0.8em}
-\begin{center}
-\large\itshape ¿estamos pagando lo que paga el mercado?
-\end{center}
-
-\vspace{1em}
-Calcular el promedio del mercado es trivial.
-
-\vspace{0.5em}
-Lo difícil es decidir \textbf{contra quién} se compara --- y ahí es donde casi
-todas las comparaciones fallan sin que nadie lo note.
-\end{column}
-
-\begin{column}{0.44\textwidth}
-\vspace{2em}
-\begin{block}{Lo que hace la industria hoy}
-Un catálogo cerrado de puestos al que usted mapea su nómina \textbf{a mano}.
-
-\vspace{0.5em}
-Caro, lento, y dos personas mapean el mismo puesto distinto.
-\end{block}
-\end{column}
-\end{columns}
+\begin{frame}{Contenido}
+  \tableofcontents
 \end{frame}
 
-% ============================================================================
-\begin{frame}{Qué recibe}
+% ############################################################################
+\section{El problema}
+% ############################################################################
 
-Usted sube su nómina \textbf{tal como la tiene}. Recibe, por cada persona:
+\begin{frame}{La dificultad no está en el cálculo}
 
-\vspace{1em}
-\begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\begin{itemize}
-  \item La \textbf{referencia de mercado} de su puesto, en dólares
-  \item La \textbf{banda}: qué paga la mitad central de las empresas
-  \item Qué tan \textbf{por encima o por debajo} está esa persona
-  \item Una marca de \textbf{confianza}
-\end{itemize}
-\end{column}
-\begin{column}{0.48\textwidth}
-Y por cada puesto:
-\begin{itemize}
-  \item Contra \textbf{cuántas empresas} se comparó
-  \item Contra \textbf{qué sector}
-  \item Su posición frente a su \textbf{propia política interna}
-\end{itemize}
-\end{column}
-\end{columns}
+Un benchmark salarial responde a una pregunta simple: \emph{cuánto paga el
+mercado por este puesto}.
+
+\vspace{0.8em}
+El cálculo es una mediana. Toda la dificultad está en el \textbf{denominador}:
+qué observaciones entran en ella.
 
 \vspace{1.2em}
-\begin{center}
-\color{tinta2}
-Sin mapeo manual. Sin catálogo que aprenderse. Su Excel, como está.
-\end{center}
+\begin{block}{Cómo lo resuelve la industria}
+Taxonomías duras --- catálogos cerrados de puestos a los que el cliente mapea su
+nómina a mano. Ese mapeo es caro, es lento, y es donde se pierde la información:
+dos empresas mapean el mismo puesto a categorías distintas según quién haga el
+ejercicio.
+\end{block}
+
+\vspace{0.6em}
+La alternativa es usar la etiqueta que la empresa ya escribió. El problema es que
+esa etiqueta es \textbf{texto libre}.
 \end{frame}
 
-% ============================================================================
-\begin{frame}{Por qué las comparaciones salariales suelen mentir}
+% ----------------------------------------------------------------------------
+\begin{frame}{El catálogo real}
 
-\begin{center}
-\includegraphics[width=0.66\linewidth]{espesor_catalogo.pdf}
-\end{center}
+Estudios actuariales de nómina ecuatorianos, 2024--2025, cruzados con el registro
+de la Superintendencia de Compañías.
 
-\vspace{-0.4em}
-El \dato{78\,\%} de los puestos de un catálogo real tiene \textbf{una sola
-empresa} detrás. Una ``mediana de mercado'' sobre eso no es el mercado: es el
-sueldo de un vecino --- y la mayoría de los sistemas no lo dice.
+\vspace{0.6em}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lr}
+\toprule
+Títulos distintos & 65.181 \\
+Mediana de personas por título & 2 \\
+Mediana de empresas por título & 1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.6em}
+El \textbf{78\,\%} de los puestos tiene \textbf{una sola empresa} detrás, y entre
+todos cubren el 21\,\% de las personas. En el otro extremo, el 1\,\% con 30 o más
+empresas cubre el 46\,\%.
+
+\vspace{0.6em}
+La cola larga no se arregla con más modelo: se arregla tomando fuerza prestada de
+un vecindario.
 \end{frame}
 
-% ============================================================================
-\begin{frame}{Nuestra respuesta: responder siempre, y decir cuánto sabemos}
+% ----------------------------------------------------------------------------
+\begin{frame}{El catálogo real}
+\begin{figure}
+\centering
+\includegraphics[width=0.92\linewidth]{espesor_catalogo.pdf}
+\end{figure}
+\vspace{-0.5em}
+{\footnotesize Casi todos los puestos son delgados; casi toda la gente está en
+los gruesos.}
+\end{frame}
 
-\begin{columns}[T]
-\begin{column}{0.5\textwidth}
-\textbf{Respondemos siempre.}
+% ----------------------------------------------------------------------------
+\begin{frame}{El límite que ningún método por puesto puede cruzar}
 
-\vspace{0.5em}
-Un puesto que no está en la base se coloca entre los que se le parecen. El
-\dato{35,9\,\%} de las personas de una nómina nueva tiene un título que nadie
-más usa.
+Antes de proponer nada, cuánto hay que ganar. Descomponiendo la varianza de
+$y = \log(\text{sueldo}/\text{SBU})$ dentro de cada celda de cargo:
+
+\begin{equation*}
+y_{fi} = \mu_c + u_f + e_{fi}, \qquad
+u_f \sim (0, \tau^2), \qquad
+e_{fi} \sim (0, \sigma^2)
+\end{equation*}
+
+con $f$ empresas e $i$ personas dentro de la empresa. Medido sobre el ajuste:
+
+\begin{equation*}
+\tau = 0{,}2917 \qquad\qquad \sigma = 0{,}1423
+\end{equation*}
+
+\vspace{0.4em}
+El efecto empleador es el doble que la dispersión dentro de la nómina:
+\textbf{la empresa explica el 81\,\% de lo que no se puede predecir desde el
+puesto}. Dos personas con el mismo cargo en empresas distintas cobran muy
+diferente, y eso no es ruido de medición.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{El techo de mejora es del orden del 12\,\%}
+
+\begin{table}
+\centering
+\small
+\begin{tabular}{lrrr}
+\toprule
+Subconjunto & sd real & sd irreducible & Techo \\
+\midrule
+Todo el ajuste & 0,3700 & 0,3253 & 12,1\,\% \\
+Lejos del piso del SBU ($y > 0{,}05$) & 0,4322 & 0,3750 & 13,2\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.6em}
+Cualquier resultado debe leerse contra ese número, \textbf{no contra cero}. Un
+método que reduzca el error un 4\,\% recupera un tercio de todo lo disponible;
+uno que prometa un 40\,\% está midiendo mal.
 
 \vspace{0.8em}
-Si no respondiéramos, usted igual necesitaría un número --- y se lo inventaría.
-\end{column}
-
-\begin{column}{0.5\textwidth}
-\textbf{Y decimos cuánto sabemos.}
-
-\vspace{0.5em}
-Cada cifra viene con una marca:
-
-\vspace{0.4em}
-\begin{itemize}
-  \item \textbf{ALTA} --- el centro se conoce a mejor que $\pm$5\,\%
-  \item \textbf{MEDIA} --- entre 5 y 15\,\%
-  \item \textbf{BAJA} --- es una estimación, trátela como tal
-\end{itemize}
-
-\vspace{0.4em}
-Como respondemos siempre, \textbf{la confianza no es decorativa}.
-\end{column}
-\end{columns}
+\begin{block}{Contribución}
+Los trabajos previos comparan métodos entre sí sin establecer contra qué techo
+compiten. Medir el presupuesto disponible es, en sí mismo, un aporte.
+\end{block}
 \end{frame}
 
-% ============================================================================
-\begin{frame}{Comparado contra empresas como la suya}
+% ----------------------------------------------------------------------------
+\begin{frame}{El techo de mejora es del orden del 12\,\%}
+\begin{figure}
+\centering
+\includegraphics[width=0.86\linewidth]{descomposicion_error.pdf}
+\end{figure}
+\vspace{-0.5em}
+{\footnotesize La franja en color es todo lo que una agrupación mejor puede
+recuperar. El resto lo genera el empleador.}
+\end{frame}
 
-Usted da su RUC. De ahí sale, sin que tenga que saberlo:
+% ############################################################################
+\section{El método}
+% ############################################################################
+
+\begin{frame}{Vista general}
+
+Se construye una \textbf{base de referencia} una vez y se consulta muchas. Dado
+un título de puesto:
+
+\begin{itemize}
+  \item si está en la base, se usa la referencia de su propia celda;
+  \item si es nuevo, se embebe y se coloca entre los puestos que se le parecen.
+\end{itemize}
+
+\vspace{0.6em}
+Lo segundo no es un adorno: el \textbf{35,9\,\%} de las personas de una nómina
+nueva tiene un título que no está en la base. Sin la rama de analogía, la
+cobertura se queda en dos tercios.
 
 \vspace{0.8em}
-\begin{columns}[T]
-\begin{column}{0.46\textwidth}
-\begin{itemize}
-  \item Su \textbf{sector} (CIIU), resuelto contra el registro completo de la
-        Superintendencia --- \dato{221.754} empresas
-  \item Su \textbf{tamaño}, con la misma clasificación oficial
-\end{itemize}
-\end{column}
-\begin{column}{0.5\textwidth}
-\begin{block}{Y se le dice contra qué se le comparó}
-No ``su sector'' a secas: el nivel exacto, y cuántas empresas hay detrás.
-
-\vspace{0.4em}
-Si su sector no tiene suficientes empresas con ese puesto, subimos un nivel
-\textbf{y se lo decimos}.
-\end{block}
-\end{column}
-\end{columns}
+El sistema \emph{siempre} responde. Como se responde siempre, la marca de
+confianza deja de ser decorativa: es lo único que separa ``esto lo sé'' de ``esto
+lo estoy suponiendo''.
 \end{frame}
 
-% ============================================================================
-\begin{frame}{El error que corrige comparar por tamaño}
+% ----------------------------------------------------------------------------
+\begin{frame}{El estimador: pesos inverso-varianza}
 
-\begin{center}
-\includegraphics[width=0.62\linewidth]{sesgo_tamano.pdf}
-\end{center}
+El voto de cada empresa $f$ en una celda es la mediana de sus personas, $m_f$,
+ponderada por
 
-\vspace{-0.4em}
-A una empresa pequeña se le decía que su gerente general cobra un \dato{56\,\%
-por debajo} del mercado. Entre empresas de su tamaño, estaba bien pagado.
+\begin{equation*}
+w_f = \frac{1}{\tau^2 + \sigma^2 / n_f}
+\end{equation*}
+
+La referencia es el cuantil ponderado al 50\,\% de los votos con esos pesos. Del
+modelo sale todo, \textbf{sin hiperparámetros}.
+
+\vspace{0.4em}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lll}
+\toprule
+Régimen & $w_f$ tiende a & Equivale a \\
+\midrule
+$n_f \to \infty$ & $1/\tau^2$, igual para todas & una empresa, un voto \\
+$\tau^2 \to 0$ & $n_f/\sigma^2$ & una persona, un voto \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.3em}
+Los dos regímenes límite son las dos posturas del debate de diseño, y el peso las
+interpola con los datos en vez de zanjarlo por criterio.
 \end{frame}
 
-% ============================================================================
-\begin{frame}{Dos cifras, porque contestan preguntas distintas}
+% ----------------------------------------------------------------------------
+\begin{frame}{Una empresa grande no puede dominar la celda}
 
-\begin{columns}[T]
-\begin{column}{0.47\textwidth}
-\begin{block}{La persona típica}
-\grande{$-$6{,}0\,\%}
-
-\vspace{0.4em}
-Su gente cobra, en la mediana, un 6\,\% menos que el mercado.
-
-\vspace{0.3em}
-\color{tinta2}Es una pregunta de \textbf{equidad}.
-\end{block}
-\end{column}
-
-\begin{column}{0.47\textwidth}
-\begin{block}{La nómina entera}
-\grande{$-$1{,}3\,\%}
+\begin{equation*}
+\frac{w_{\max}}{w_{\min}} \;\le\; 1 + \frac{\sigma^2}{\tau^2} \;\approx\; 1{,}24
+\end{equation*}
 
 \vspace{0.4em}
-Cuesta \$86.023 al mes; a precios de mercado costaría \$87.176.
+El ratio máximo entre pesos está acotado por la \textbf{razón de varianzas}, no
+por el tamaño relativo de las empresas.
 
-\vspace{0.3em}
-\color{tinta2}Es una pregunta de \textbf{dinero}.
-\end{block}
-\end{column}
-\end{columns}
+\vspace{0.8em}
+Una empresa de 3.000 personas no puede dominar la celda --- y no hace falta
+descartar el voto de las pequeñas para conseguirlo.
 
 \vspace{1em}
-\begin{center}
-Quien presupuesta con la primera pide \$5.160 al mes. La brecha real es
-\$1.153.\\
-\textbf{Se pasa por cuatro veces, y hacia el lado caro.}
-\end{center}
+Esta estructura ancla el trabajo en \textbf{estimación en áreas pequeñas}
+---tomar fuerza prestada de un vecindario--- y no en la búsqueda de una variable
+que faltaba.
 \end{frame}
 
-% ============================================================================
-\begin{frame}{Lo que no le podemos decir}
+% ----------------------------------------------------------------------------
+\begin{frame}{El vecindario: por qué no se pesa por similitud}
 
-\begin{center}
-\includegraphics[width=0.60\linewidth]{descomposicion_error.pdf}
-\end{center}
-
-\vspace{-0.5em}
-El \dato{81\,\%} de lo que no se puede predecir desde el puesto lo genera
-\textbf{la empresa}, no el cargo. Esto le da el \textbf{mercado}, no la política
-salarial de una empresa concreta.
+La versión ingenua pesa cada vecino por \emph{similitud} $\times$
+\emph{precisión}. Medido sobre un caso real:
 
 \vspace{0.4em}
-\begin{center}
-\textbf{Medimos ese techo. Desconfíe de quien le prometa mucho más.}
-\end{center}
-\end{frame}
-
-% ============================================================================
-\begin{frame}{Por qué fiarse: está medido, no opinado}
-
-\begin{columns}[T]
-\begin{column}{0.48\textwidth}
-\begin{itemize}
-  \item \dato{31} decisiones de método registradas, cada una con su evidencia y
-        sus alternativas descartadas
-  \item Todo se mide \textbf{fuera de muestra} y \textbf{sin la propia empresa}
-  \item El criterio de éxito se escribe \textbf{antes} de mirar el resultado
-  \item Cada cambio de agrupación lleva su \textbf{placebo}
-\end{itemize}
-\end{column}
-
-\begin{column}{0.48\textwidth}
-\begin{block}{La prueba más dura la pasó contra nosotros}
-El proyecto arrancó sobre la hipótesis de que la composición del pago
-discriminaba puestos.
-
-\vspace{0.4em}
-Se midió: vale \dato{0,21\,\%} contra un placebo en cero.
-
-\vspace{0.4em}
-\textbf{Se descartó.} El protocolo detectó que nuestra propia premisa era falsa
---- que es exactamente para lo que existe.
-\end{block}
-\end{column}
-\end{columns}
-\end{frame}
-
-% ============================================================================
-\begin{frame}[plain]
-\vfill
-\begin{center}
-{\Large\bfseries Su nómina, tal como está.}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lrr}
+\toprule
+Vecino de \cargo{OPERADOR DE PARQUEADERO} & Similitud & Peso ingenuo \\
+\midrule
+\cargo{OPERADOR DE PARQUEADEROS} & 0,989 & 8\,\% \\
+\cargo{OPERADOR DE EXCAVADORA} & 0,825 & \textbf{46\,\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \vspace{0.8em}
-{\large Una referencia por persona, con su banda y su nivel de confianza.}
+El sistema tenía la respuesta exacta delante y le hizo caso a una excavadora,
+porque la excavadora tenía más datos.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Cada vecino, una observación ruidosa}
+
+\begin{equation*}
+\mathrm{var}_j = \underbrace{1/W_j}_{\text{error de medición}} +
+                 \underbrace{\lambda\,(1 - s_j)}_{\text{castigo por no ser el mismo puesto}}
+\end{equation*}
+
+y se pesa por $1/\mathrm{var}_j$. Un vecino lejano se descuenta aunque esté
+perfectamente medido.
+
+\vspace{0.5em}
+\textbf{$\lambda$ se estima de los datos, no se elige}: es cuánto difieren de
+verdad dos celdas por unidad de distancia semántica. Se estima por escalón
+jerárquico, porque varía un factor 18 entre ellos.
+
+\vspace{0.6em}
+\begin{block}{El caso degenerado se resuelve solo}
+Para \cargo{LOTERO} el embedding no encuentra nada parecido y se agarra a la
+terminación \emph{-ero}: \cargo{LINIERO}, \cargo{BOTERO}, \cargo{TESORERO}. Si
+todos los vecinos están lejos, $\lambda(1-s_j)$ domina, el intervalo se dispara y
+la confianza cae a BAJA sin programar ninguna excepción.
+\end{block}
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Consolidación de grafías}
+
+Tres pasadas, en orden y por separado para que cada una sea auditable:
+
+\begin{enumerate}
+  \item \textbf{Semántica}, por \emph{enlace completo} sobre el grafo de
+        similitud, umbral 0,95. El enlace simple percola: produce un grupo de
+        1.758 títulos que contiene a la vez \cargo{ASISTENTE CONTABLE} y
+        \cargo{AUXILIAR DE LIMPIEZA}, unidos por una cadena de saltos
+        individualmente razonables.
+  \item \textbf{Por errata}, con indexado por variantes de borrado. Absorbe el
+        grupo raro dentro del común exigiendo asimetría.
+  \item \textbf{Por grafía de género}, conservando y reportando la diferencia que
+        había antes de unir.
+\end{enumerate}
+
+\vspace{0.5em}
+Cobertura directa: del \textbf{57,7\,\% al 64,1\,\%}, sin costar precisión.
+
+\vspace{0.4em}
+Hallazgo lateral: \textbf{el embedding no reconoce una errata de una letra}.
+\cargo{VENDEROR} contra \cargo{VENDEDOR} puntúa 0,7177, frente a un umbral de
+0,95.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{La banda}
+
+El entregable no es un número sino un intervalo, y responde a \emph{qué paga la
+mitad central de las empresas}. De ahí dos decisiones:
+
+\vspace{0.6em}
+\begin{itemize}
+  \item \textbf{$\sigma$ no entra en la banda de empresas.} El nivel de una
+        empresa es $\mu_c + u_f$, con varianza $\tau_c^2$; $\sigma^2$ separa a dos
+        personas de la misma nómina y no mueve el nivel del empleador.
+  \item \textbf{Con datos de sobra se usan los cuantiles empíricos} de los votos,
+        no una normal. Describen la forma real, que va de un pico a una cola larga
+        según el cargo.
+\end{itemize}
+
+\vspace{0.8em}
+Se entregan dos bandas: la de \emph{empresas}, para política salarial, y la de
+\emph{personas} ---que sí lleva $\sigma$--- para situar a un individuo.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Corrección por tamaño de empresa}
+
+Segmentar por tamaño \textbf{no} estrecha la banda: la incertidumbre del centro
+sube más de lo que baja el ancho. Pero el tamaño sí corrige un \textbf{sesgo
+grande en el centro} de los cargos altos: el rango de error pasa de
+$-$56{,}0\,\%/$+$81{,}9\,\% a $-$12{,}1\,\%/$+$17{,}9\,\%.
+
+\vspace{0.3em}
+\begin{figure}
+\centering
+\includegraphics[width=0.58\linewidth]{sesgo_tamano.pdf}
+\end{figure}
+
+\vspace{-0.3em}
+\emph{Segmentar para estrechar} y \emph{segmentar para corregir el centro} son
+dos preguntas distintas, y la respuesta no es la misma.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Protocolo de medición}
+
+El instrumento se construyó \textbf{antes} que el modelo: una regla de medición
+torcida no se detecta midiendo, se detecta auditándola antes de usarla.
+
+\vspace{0.5em}
+\begin{itemize}
+  \item \textbf{Partición por empresa, nunca por fila.} Con partición aleatoria
+        la empresa de test aparece en train y se acierta por la razón equivocada.
+  \item \textbf{Todo intervalo se remuestrea por empresa.} La fila no es la
+        unidad independiente.
+  \item \textbf{Puntuación propia.} Pérdida \emph{pinball} en $q = 0{,}25$ y
+        $q = 0{,}75$ sobre la banda de empresas: se minimiza diciendo la verdad.
+  \item \textbf{Criterio escrito antes de mirar.} Cada experimento declara qué
+        resultado lo adoptaría y cuál lo rechazaría, antes de correr.
+  \item \textbf{Placebo en todo cambio de agrupación.}
+  \item \textbf{El 20\,\% de test no se toca} hasta congelar el pre-registro.
+\end{itemize}
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Por qué el placebo es la pieza que decide}
+
+Cualquier reagrupación mejora la cobertura \emph{por construcción}. El placebo
+---mismos grupos, destinos barajados--- es lo único que distingue señal de
+mecánica.
+
+\vspace{0.8em}
+Tres ejemplos de la misma serie:
+
+\begin{itemize}
+  \item \dref{025}: el placebo \emph{no} tuvo potencia. La decisión se registró
+        como ``no validada, solo no contradicha''.
+  \item \dref{031}: el placebo sí discriminó. Mandar las mismas absorciones a
+        destinos al azar cuesta $+0{,}00130$ de pinball frente a $-0{,}00001$ de
+        la regla real --- cien veces más.
+  \item \dref{018}: el placebo \textbf{eligió más cargos que la selección real}
+        (118 contra 93). Bastó para descartar el método.
+\end{itemize}
+\end{frame}
+
+% ############################################################################
+\section{Resultados medidos}
+% ############################################################################
+
+\begin{frame}{El resultado negativo del centro}
+
+El proyecto arrancó sobre la hipótesis de que la \textbf{composición del pago}
+(fijo, comisiones, extras) discrimina puestos.
+
+\vspace{0.6em}
+\begin{block}{Medido}
+$R^2$ fuera de muestra $= +0{,}0042$, contra un placebo en $-0{,}0002$. Vale un
+\textbf{0,21\,\%} sobre un techo del 12\,\%. Se descartó.
+\end{block}
+
+\vspace{0.6em}
+El eje que sí paga resultó ser el \textbf{nivel jerárquico}:
+$\omega^2 = 0{,}2462$, con un recorrido salarial de $2{,}11\times$ entre el
+escalón más bajo y el más alto.
+
+\vspace{0.5em}
+El protocolo detectó que la premisa propia del proyecto era falsa. Ese giro, y el
+instrumento que lo hizo visible, son parte del aporte.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{El eje que sí paga}
+\begin{figure}
+\centering
+\includegraphics[width=0.86\linewidth]{escalera_niveles.pdf}
+\end{figure}
+\vspace{-0.5em}
+{\footnotesize Recorrido de $2{,}11\times$ entre el escalón más bajo y el más
+alto.}
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Lo que se midió y no entró}
+
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{p{3.2cm}p{5.2cm}l}
+\toprule
+Hipótesis & Resultado & Ref. \\
+\midrule
+La composición del pago discrimina puestos &
+$R^2 = +0{,}0042$ contra placebo $-0{,}0002$ &
+\dref{013} \\[0.6ex]
+
+El sector estrecha la banda &
+pinball $0{,}1289$ contra $0{,}1255$ sin segmentar. Empeora &
+\dref{022} \\[0.6ex]
+
+El sector corrige el centro &
+No se sostiene fuera de muestra. Se retira lo adoptado &
+\dref{022} \\[0.6ex]
+
+La escalera debe estimarse con medianas &
+La mediana pierde: $+0{,}00069$, IC sobre cero &
+\dref{024} \\[0.6ex]
+
+Comparar contra el sector específico del cliente &
+Peor cuanto más fino. La sección acierta un 9,2\,\% más &
+\dref{029} \\[0.6ex]
+
+Dar contexto al embedding mejora la representación &
+Mejora el vecindario y \emph{no} mueve las bandas: el IC cruza el cero &
+\dref{030} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.2em}
+{\footnotesize Un catálogo de resultados negativos no es un apéndice: impide
+suponer que lo obvio no se probó.}
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{El caso del sector: adoptado y luego retirado}
+
+Es el único eje que entró al modelo y después salió.
+
+\vspace{0.5em}
+\begin{itemize}
+  \item \dref{014} lo adoptó: $-$13{,}2\,\% de desviación dentro de las etiquetas
+        anchas, placebo en 0{,}9\,\%. Con la condición de medirlo fuera de
+        muestra.
+  \item \dref{022}: no se sostuvo, ni para la banda ni para el centro. Se retiró.
+\end{itemize}
+
+\vspace{0.8em}
+La razón apareció después, al descomponer la varianza: de la diferencia de pago
+\emph{entre empresas} por un mismo cargo, la división CIIU explica \textbf{6
+puntos netos} ($0{,}389$ en crudo contra $0{,}325$ barajando). Casi todo era
+inflación mecánica de partir en grupos pequeños.
+
+\vspace{0.5em}
+Lo que una empresa paga por un contador depende de la empresa, no de si vende
+libros o repuestos.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Cobertura y estado del sistema}
+
+\begin{columns}[T,onlytextwidth]
+\begin{column}{0.47\textwidth}
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{lr}
+\toprule
+\multicolumn{2}{l}{\textbf{Cobertura}} \\
+\midrule
+Techo de la etiqueta cruda & 66,6\,\% \\
+Directa, sin consolidar & 57,7\,\% \\
+Directa, consolidada & \textbf{64,1\,\%} \\
+Títulos desconocidos & 35,9\,\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{column}
+\begin{column}{0.47\textwidth}
+\begin{table}
+\centering
+\scriptsize
+\begin{tabular}{lr}
+\toprule
+\multicolumn{2}{l}{\textbf{El artefacto}} \\
+\midrule
+Títulos en la base & 65.181 \\
+Puestos tras consolidar & 50.420 \\
+Empresas con datos & 6.722 \\
+Resolubles por RUC & 221.754 \\
+Decisiones con evidencia & 31 \\
+Pruebas automatizadas & 381 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\end{column}
+\end{columns}
+
+\vspace{0.8em}
+La rama de analogía convierte un sistema que cubre dos tercios en uno que
+responde siempre. El coste de responder siempre se paga en la marca de confianza,
+no en silencio.
+\end{frame}
+
+% ----------------------------------------------------------------------------
+\begin{frame}{Límites de lo reportado}
+
+\begin{itemize}
+  \item \textbf{El techo es el techo.} El empleador explica el 81\,\% de lo que
+        no se puede predecir desde el puesto. Este trabajo entrega el
+        \emph{mercado}, no la política salarial de una empresa concreta.
+  \item \textbf{El conjunto de test sigue sin tocarse.} Todo lo reportado está
+        medido sobre particiones de validación dentro del ajuste. Es correcto por
+        diseño ---el test se toca una vez, después del pre-registro--- pero lo que
+        hay es consistencia interna, no validación externa.
+\end{itemize}
 
 \vspace{1.5em}
-\color{tinta2}
-Y dicho con claridad lo que sabemos y lo que no.
+\begin{center}
+\emph{La contribución no es el algoritmo: es medir contra qué techo compite.}
 \end{center}
-\vfill
 \end{frame}
 
 \end{document}

@@ -3,7 +3,7 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **Presentación comercial** (Beamer, 11 láminas). Ordenada por las preguntas que hace un cliente, no por la derivación del método |
+| `presentacion.tex` | **Presentación de defensa** (Beamer, tema `default`, 24 láminas). Tres secciones: el problema, el método, los resultados medidos |
 | `figuras.py` | Genera las cuatro figuras que usan los dos |
 
 ```
@@ -31,13 +31,21 @@ MiKTeX.MiKTeX --scope user`); el resto de paquetes los instala MiKTeX solo la
 primera vez que los ve. Si aparece una consola pidiendo permiso para instalar
 `beamer` o `beamertheme-metropolis`, es eso.
 
-Estado: `tesis.pdf` 20 páginas sin un solo desbordamiento; `presentacion.pdf` 11
-láminas con dos desbordamientos verticales de 15,6 pt y 8,8 pt, que no se ven.
+Estado: `tesis.pdf` 20 páginas sin un solo desbordamiento; `presentacion.pdf`
+24 láminas con un desbordamiento horizontal de 1,4 pt, que no se ve.
+
+La presentación usa el tema `default` de beamer a propósito: sin tema de color ni
+paquetes de terceros, compila con una instalación básica de LaTeX en cualquier
+máquina.
 
 Dos cosas que costaron y conviene no repetir:
 
 - **`\usepackage{lmodern}` no es opcional.** Sin él, `microtype` pide expansión
   de fuente sobre las Computer Modern de mapa de bits y aborta la compilación.
+- **El porcentaje no va dentro de `$...$`.** `babel-spanish` decide el espacio
+  antes del `%` mirando `\lastskip`, que en modo matemático mide en `mu` y no en
+  `pt`; mezcla unidades y TeX aborta. Se escribe `$-$6{,}0\,\%`, con solo el
+  signo en matemáticas. El PDF salía igual, así que el error se iba sin verse.
 - **El cuerpo se escribió sin tildes** y hubo que reponerlas a posteriori, en
   siete pasadas. Reponer tildes con sustitución ciega es peor de lo que parece:
   `esta`/`está` y `que`/`qué` dependen de la sintaxis, no de la palabra. Lo que
