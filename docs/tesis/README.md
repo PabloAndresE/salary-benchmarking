@@ -3,7 +3,7 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **Presentación interna de ActuaLab**, 17 láminas: qué resuelve, cómo funciona, qué entrega |
+| `presentacion.tex` | **Presentación interna de ActuaLab**, 19 láminas: la metodología de agrupación y los resultados medidos |
 | `figuras.py` | Genera las cuatro figuras que usan los dos |
 
 ```
@@ -36,16 +36,21 @@ Estado: los dos sin un solo desbordamiento. `tesis.pdf` 20 páginas,
 
 ## Qué entra en la presentación y qué no
 
-El destinatario son los compañeros de ActuaLab, así que la presentación enseña
-**el producto final**: qué resuelve, cómo funciona y qué entrega. Deliberadamente
-**no** entran las hipótesis que se midieron y se descartaron, los ejes que se
-probaron y no se quedaron, ni el recorrido del proyecto. Todo eso está en
-`tesis.tex`, que es el documento donde ese material sí cuenta —y donde un
-catálogo de resultados negativos es una contribución, no una digresión.
+El destinatario son los compañeros de ActuaLab, **que ya conocen el producto**.
+La presentación no explica qué entrega el sistema ni para qué sirve: va sobre
+**cómo se agrupan los puestos** y sobre **lo que se midió**.
 
-Si hiciera falta una versión para el tribunal, es ese mismo material el que hay
-que volver a meter: está en `docs/registro_decisiones.md` y en el historial de
-git.
+Dos exclusiones deliberadas:
+
+- **Nada de códigos de decisión** (`D-013`, `D-022`…). Son referencias internas
+  de `docs/registro_decisiones.md` y fuera de ese fichero no significan nada.
+  Cuando una cifra viene de un experimento, se describe el experimento.
+- **Nada de hipótesis descartadas** ni del recorrido del proyecto. Eso está en
+  `tesis.tex`, que es donde un catálogo de resultados negativos es una
+  contribución y no una digresión.
+
+Si hiciera falta una versión para el tribunal, es ese material el que hay que
+volver a meter: está en `docs/registro_decisiones.md` y en el historial de git.
 
 ## El estilo de la presentación
 
