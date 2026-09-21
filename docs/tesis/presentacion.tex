@@ -3,7 +3,7 @@
 %
 %  COMPILAR:  pdflatex presentacion.tex   (dos veces, para el indice)
 %
-%  ESTILO: beamer por defecto. Sin tema, sin tema de color, sin paquetes de
+%  ESTILO: tema `Madrid` de beamer, de serie. Sin tema de color, sin paquetes de
 %  terceros y sin un solo color definido a mano. Compila con una instalacion
 %  basica de LaTeX en cualquier maquina.
 %
@@ -23,13 +23,15 @@
 \usepackage{graphicx}
 \graphicspath{{figuras/}}
 
-\usetheme{default}
-\setbeamertemplate{navigation symbols}{}
+\usetheme{Madrid}
 
-\title{Benchmarking salarial con etiquetas de puesto delgadas}
+% Las versiones entre corchetes son las que van al pie de pagina, que en Madrid
+% es estrecho: ahi no cabe el titulo entero.
+\title[Benchmarking salarial]{Benchmarking salarial con etiquetas de puesto
+delgadas}
 \subtitle{Cuánto error es reducible por elegir mejor el grupo de comparación}
-\author{Pablo Andrés Encalada}
-\institute{Maestría en Inteligencia Artificial --- USFQ}
+\author[P. A. Encalada]{Pablo Andrés Encalada}
+\institute[USFQ]{Maestría en Inteligencia Artificial --- USFQ}
 \date{\today}
 
 \begin{document}

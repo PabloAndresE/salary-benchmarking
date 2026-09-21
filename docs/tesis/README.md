@@ -36,9 +36,13 @@ Estado: los dos sin un solo desbordamiento. `tesis.pdf` 20 páginas,
 
 ## El estilo de la presentación
 
-Beamer por defecto: `\usetheme{default}`, sin tema de color, sin paquetes de
-terceros y sin un solo color definido a mano. Compila con una instalación básica
-de LaTeX en cualquier máquina.
+Tema `Madrid` de beamer, de serie: barra de título, pie con autor, título,
+fecha y número de lámina, y bloques redondeados. Sin tema de color, sin paquetes
+de terceros y sin un solo color definido a mano. Compila con una instalación
+básica de LaTeX en cualquier máquina.
+
+Las versiones entre corchetes de `\title`, `\author` e `\institute` son las que
+van al pie, que es estrecho: ahí no cabe el título entero.
 
 Se probó una plantilla externa ([pmichaillat/latex-presentation](https://github.com/pmichaillat/latex-presentation))
 y se descartó. Queda anotado lo que costó, porque el síntoma no señalaba la
