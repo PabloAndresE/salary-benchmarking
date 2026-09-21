@@ -23,6 +23,7 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem}
 \usepackage{caption}
+\graphicspath{{figuras/}}
 
 \newcommand{\dref}[1]{\textbf{D-#1}}
 \newcommand{\cargo}[1]{\texttt{#1}}
@@ -48,8 +49,8 @@ error de un benchmark es reducible eligiendo mejor el grupo de comparacion.
 La contribucion principal no es un algoritmo. Es una \textbf{medicion del
 presupuesto disponible}: se descompone el error de prediccion en la parte
 irreducible ---la que genera el empleador--- y la parte atribuible a agrupar mal,
-y se establece que el techo de mejora por agrupacion es del 10,9\,\%. Sobre ese
-techo se construye un estimador y se mide cuanto de el se recupera.
+y se establece que el techo de mejora por agrupacion es del orden del 12\,\%.
+Sobre ese techo se construye un estimador y se mide cuanto de el se recupera.
 
 El trabajo incluye un resultado negativo en el centro: la hipotesis con la que
 arranco el proyecto ---que la composicion del pago (fijo, comisiones, extras)
@@ -86,7 +87,7 @@ ecuatorianas, anos 2024--2025, cruzados con el registro de la Superintendencia d
 Companias. Tras limpieza el catalogo contiene \textbf{65.181 titulos distintos}
 de puesto.
 
-La distribucion de ese catalogo es el problema entero:
+La distribucion de ese catalogo es el problema entero (figura~\ref{fig:espesor}):
 
 \begin{table}[h]
 \centering
@@ -100,6 +101,18 @@ Personas cubiertas por titulos con respaldo suficiente & 66,6\,\% \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{espesor_catalogo.pdf}
+\caption[Espesor del catalogo de cargos]{\textbf{Casi todos los puestos son
+delgados; casi toda la gente esta en los gruesos.} El 78\,\% de los 50.420 puestos
+tiene una sola empresa detras y entre todos cubren el 21\,\% de las personas. En el
+otro extremo, el 1\,\% de los puestos con 30 o mas empresas cubre el 46\,\%. Esa
+asimetria es el problema: la cola larga no se arregla con mas modelo, se arregla
+tomando fuerza prestada de un vecindario.}
+\label{fig:espesor}
+\end{figure}
 
 La mitad de los titulos aparece en una sola empresa. Un tercio de las personas
 esta en celdas de una o dos empresas. Calcular una mediana de mercado sobre eso
@@ -137,8 +150,8 @@ puesto.} Dos personas con el mismo cargo en empresas distintas cobran muy
 diferente, y eso no es ruido de medicion: es la variable que de verdad gobierna
 el salario y que un benchmark por puesto no puede ver.
 
-De ahi sale el presupuesto del trabajo. Comparando la desviacion del error real
-contra el suelo irreducible:
+De ahi sale el presupuesto del trabajo (figura~\ref{fig:descomposicion}). Comparando
+la desviacion del error real contra el suelo irreducible:
 
 \begin{table}[h]
 \centering
@@ -151,7 +164,23 @@ Todo el ajuste & 0,3700 & 0,3253 & 12,1\,\% \\
 Lejos del piso del SBU ($y > 0{,}05$) & 0,4322 & 0,3750 & 13,2\,\% \\
 \bottomrule
 \end{tabular}
+
+\vspace{0.6ex}
+{\footnotesize La misma descomposicion sobre la particion de evaluacion da
+10,9\,\%. Las dos cifras son el mismo calculo con distinto alcance y conviene
+citarlas por separado.}
 \end{table}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{descomposicion_error.pdf}
+\caption[Descomposicion del error de prediccion]{\textbf{La franja en color es todo
+lo que una agrupacion mejor puede recuperar.} El resto lo genera el empleador:
+$\tau = 0{,}29$ entre empresas frente a $\sigma = 0{,}14$ dentro de la nomina.
+Cuanto mas lejos del piso del salario basico, mas margen hay ---abajo la
+distribucion esta comprimida contra el minimo legal.}
+\label{fig:descomposicion}
+\end{figure}
 
 \textbf{El techo es del orden del 12\,\%.} Cualquier resultado debe leerse contra
 ese numero, no contra cero. Un metodo que reduzca el error un 4\,\% esta
@@ -220,8 +249,8 @@ entre el 39\,\% y el 50\,\% de la propia composicion.
 
 \section{El eje que si paga}
 
-El rango jerarquico da una escalera monotona de cinco escalones con un recorrido
-de \textbf{$2{,}11\times$ en salario} entre el nivel 1 y el nivel 5. Se obtiene de
+El rango jerarquico da una escalera monotona de cinco escalones (figura~\ref{fig:escalera})
+con un recorrido de \textbf{$2{,}11\times$ en salario} entre el nivel 1 y el nivel 5. Se obtiene de
 tres fuentes por orden de confianza:
 
 \begin{enumerate}[nosep]
@@ -236,6 +265,18 @@ tres fuentes por orden de confianza:
 
 Que el catalogo oficial defina los niveles por contenido y no por remuneracion es
 lo que permite usarlo sin circularidad.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\linewidth]{escalera_niveles.pdf}
+\caption[Escalera salarial por escalon jerarquico]{\textbf{El eje que si paga.}
+Efecto de cada escalon sobre el salario, \emph{dentro} de empresa y de area ---o sea
+ya descontado el empleador, que es el factor dominante. La escalera es monotona y el
+recorrido entre el escalon mas bajo y el mas alto es de $2{,}11\times$. Comparese con
+la composicion del pago, que en la misma medicion vale un 0,21\,\% de reduccion de
+desviacion (tabla~\ref{tab:ejes}).}
+\label{fig:escalera}
+\end{figure}
 
 \section{La ceguera jerarquica de los embeddings}
 
