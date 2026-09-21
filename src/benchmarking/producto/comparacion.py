@@ -308,6 +308,26 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     out = out.drop(columns=[c for c in out.columns if c.startswith("_")])
     out = out.drop(columns=["brecha_grafia"], errors="ignore")
 
+    # LA MASA SALARIAL, que contesta una pregunta DISTINTA del titular.
+    #
+    #   `nivel_vs_mercado`  la persona TIPICA cobra un X% menos     -> equidad
+    #   `masa_*`            la planilla entera cuesta un Y% menos   -> dinero
+    #
+    # No son la misma cifra y la diferencia es grande en cualquier nomina con forma de
+    # piramide, que son todas. Sobre una de 151 personas con 135 abajo pagadas por debajo
+    # y 8 arriba por encima: la mediana dice -6,0% y la masa -0,8%. La mediana cuenta a
+    # cada persona como una cabeza; la planilla las cuenta por lo que pesan.
+    #
+    # POR QUE IMPORTA QUE VIAJE: un gerente que lee "pagamos 6% bajo mercado" presupuesta
+    # el 6% de su planilla. En ese ejemplo son $5.100 al mes contra los $675 que de verdad
+    # separan su nomina del mercado — se equivoca por 7,6 veces, y en la direccion cara.
+    #
+    # SOLO SOBRE QUIEN TIENE LAS DOS CIFRAS. Sumar el sueldo de alguien sin referencia
+    # contra una referencia que no existe daria una diferencia inventada; se cuenta
+    # cuanta gente queda fuera para que el numero se pueda juzgar.
+    con_ambas = out["sueldo_actual"].notna() & out["referencia"].notna()
+    masa_real = float(out.loc[con_ambas, "sueldo_actual"].sum())
+    masa_mercado = float(out.loc[con_ambas, "referencia"].sum())
     resumen = {
         "personas": int(len(out)),
         "con_referencia": int(out["referencia"].notna().sum()),
@@ -315,6 +335,11 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
         "usadas_para_el_ancla": int(n_ancla),
         "nivel_vs_mercado": float(np.exp(nivel) - 1.0) if np.isfinite(nivel) else float("nan"),
         "ancla_fiable": bool(n_ancla >= MIN_PARA_ANCLA),
+        "masa_personas": int(con_ambas.sum()),
+        "masa_real": round(masa_real, 2),
+        "masa_a_mercado": round(masa_mercado, 2),
+        "masa_vs_mercado": (round(masa_real / masa_mercado - 1.0, 4)
+                            if masa_mercado > 0 else float("nan")),
     }
     return out, por_puesto, resumen
 
@@ -322,10 +347,24 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
 def texto_resumen(resumen, por_puesto):
     """El resumen que un gerente lee primero."""
     lin = []
+    # DOS CIFRAS, Y SE DICE DE QUIEN ES CADA UNA. "La empresa paga un 6% por debajo del
+    # mercado" no dice de quien es ese 6% y se lee como si fuera de la planilla. La
+    # persona tipica y la planilla entera contestan preguntas distintas y en una nomina
+    # con forma de piramide difieren mucho.
     n = resumen["nivel_vs_mercado"]
     if np.isfinite(n):
         lado = "POR ENCIMA" if n > 0 else "POR DEBAJO"
-        lin.append(f"La empresa paga un {abs(n):.1%} {lado} del mercado.")
+        lin.append(f"La persona TIPICA de la empresa cobra un {abs(n):.1%} {lado} "
+                   f"del mercado.")
+    m = resumen.get("masa_vs_mercado")
+    if m is not None and np.isfinite(m) and resumen.get("masa_personas", 0):
+        lado_m = "POR ENCIMA" if m > 0 else "POR DEBAJO"
+        lin.append(f"La NOMINA ENTERA cuesta {resumen['masa_real']:,.0f} al mes; a "
+                   f"precios de mercado costaria {resumen['masa_a_mercado']:,.0f}: "
+                   f"un {abs(m):.1%} {lado_m}.")
+        if resumen["masa_personas"] < resumen["personas"]:
+            lin.append(f"  (la masa suma las {resumen['masa_personas']} personas con "
+                       f"sueldo y referencia, de {resumen['personas']})")
     if not resumen["ancla_fiable"]:
         lin.append("")
         lin.append("  " + "!" * 68)

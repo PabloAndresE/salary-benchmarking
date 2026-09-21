@@ -94,6 +94,13 @@ UNIDADES = {
     "ancho_rel": {"unidad": "ratio"},
     "similitud": {"unidad": "coseno", "rango": [0, 1]},
     "empresas": {"unidad": "conteo"}, "personas": {"unidad": "conteo"},
+    # La masa salarial: dolares al mes, y su diferencia como ratio. Va aqui para que el
+    # front no la formatee como porcentaje ni al reves — que es exactamente el fallo que
+    # `UNIDADES` existe para evitar.
+    "masa_real": {"unidad": "usd", "formato": "$#,##0"},
+    "masa_a_mercado": {"unidad": "usd", "formato": "$#,##0"},
+    "masa_vs_mercado": {"unidad": "ratio", "formato": "+0.0%"},
+    "masa_personas": {"unidad": "conteo"},
     "antiguedad_anios": {"unidad": "anios", "formato": "0.0"},
     # La lista sale de donde se calcula, no se copia: el front la necesita COMPLETA
     # —una nomina joven no trae `mas de 20` y el filtro saldria sin esa opcion— y dos
