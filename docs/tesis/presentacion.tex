@@ -249,19 +249,22 @@ de la referencia.}
 \section{Medición}
 % ############################################################################
 
-\begin{frame}{Reglas de medición}
-Fijadas antes de construir el modelo:
+\begin{frame}{Cómo se puntúa un cambio}
+Una banda no se puntúa como un número: no hay un valor con el que compararla.
+\medskip
 \begin{itemize}
-\item Partición \textbf{por empresa}. Con partición por fila, la empresa de
-evaluación aparece también en ajuste.
-\item Remuestreo \textbf{por empresa} en todo intervalo de confianza. Una persona
-se repite entre años y una empresa aporta cientos de personas.
-\item Pérdida \textit{pinball} sobre la banda, en los cuantiles 0,25 y 0,75. Es
-una regla de puntuación propia.
-\item El criterio de adopción se escribe antes de correr cada experimento.
-\item El 20\,\% de evaluación final no se ha usado. Se reserva para una sola
-pasada al congelar el método.
+\item La pérdida \textit{pinball} cobra distinto según el lado. Para el percentil
+25, \alert{pasarse cuesta el triple} que quedarse corto.
+\item Eso la hace una regla \textbf{propia}: se minimiza diciendo la verdad, así
+que no se puede ganar ensanchando la banda. Con $q = 0{,}5$ es el error absoluto.
+\item Se puntúa en $q = 0{,}25$ y $q = 0{,}75$ sobre la banda de empresas, y se
+reporta la media.
 \end{itemize}
+\medskip
+Las dos variantes se construyen sobre \textbf{el mismo remuestreo}, así que la
+diferencia no arrastra el ruido de la muestra. El intervalo sale de remuestrear
+\textbf{empresas}, no filas. Y el criterio de adopción se escribe antes de
+correr.
 \end{frame}
 
 \begin{frame}{El placebo de permutación}
@@ -286,34 +289,23 @@ Placebo & \alert{$+0{,}00130$} & $[+0{,}00081,\ +0{,}00180]$ \\
 \bottomrule
 \end{tabular}
 \end{table}
-La regla real no empeora el pinball; el placebo lo empeora en dos órdenes de
-magnitud.
+La regla real no empeora el error; el placebo lo empeora cien veces más.
 \end{frame}
 
-\begin{frame}{Resultados medidos}
-\begin{table}
-\centering
-\small
-\begin{tabular}{lr}
-\toprule
-Efecto empleador sobre la varianza residual & 81\,\% \\
-Margen recuperable por reagrupar & 12,1\,\% \\
-\midrule
-Títulos distintos en el catálogo & 65.181 \\
-Puestos tras consolidar grafías & \alert{50.420} \\
-Cobertura directa, antes y después de consolidar &
-57,7\,\% $\rightarrow$ \alert{64,1\,\%} \\
-Títulos de una nómina nueva resueltos por analogía & 35,9\,\% \\
-\midrule
-Varianza de nivel explicada por el escalón jerárquico & $\omega^2 = 0{,}2462$ \\
-Recorrido salarial entre el escalón más bajo y el más alto & $2{,}11\times$ \\
-\midrule
-Error del centro en cargos altos, sin corregir por tamaño &
-$-$56,0\,\%/$+$81,9\,\% \\
-Error del centro, corrigiendo & \alert{$-$12,1\,\%/$+$17,9\,\%} \\
-\bottomrule
-\end{tabular}
-\end{table}
+\begin{frame}{Qué ganó cada cambio}
+\begin{block}{Unir solo si \emph{todos} los pares superan el umbral}
+El efecto pasa de $+0{,}0154$ a $-0{,}0030$: \alert{el signo se invierte}. Con la
+regla de cadena, agrupar empeoraba la referencia.
+\end{block}
+\begin{block}{Consolidar las grafías del mismo puesto}
+$-0{,}00001$, con el intervalo sobre cero: \alert{no mejora la precisión}. Lo que
+mejora es la cobertura, del 57,7 al 64,1\,\%. Midiendo solo el error, este cambio
+se habría descartado.
+\end{block}
+\begin{block}{Banda por celda, con cuantiles empíricos}
+El recorrido de cobertura entre cargos cae de 50,5 a \alert{4,3} puntos: la banda
+deja de cubrir al 18\,\% en unos cargos y al 98\,\% en otros.
+\end{block}
 \end{frame}
 
 \end{document}
