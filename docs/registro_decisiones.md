@@ -1372,8 +1372,8 @@ cimiento.**
 | **Rango jerárquico** (ω², dentro de área) | **+0,2462** | **13,2%** |
 
 Y la descomposición del error de `CARGO`: τ = 0,2917 entre empresas, σ = 0,1423 intra empresa,
-ruido irreducible sd 0,3246 frente a 0,3651 real → **techo de mejora por agrupar mejor: 10,9%**
-(12,1% sobre train completo, 14,4% fuera de la zona pegada al SBU). Concentrado en el 34% de gente
+ruido irreducible sd 0,3253 frente a 0,3700 real → **techo de mejora por agrupar mejor: 12,1%**
+(14,4% fuera de la zona pegada al SBU; ver la enmienda al final de esta decisión). Concentrado en el 34% de gente
 que está en celdas de 1–2 empresas, donde el 44,6% del error es error de estimación.
 
 ### La decisión
@@ -1456,6 +1456,34 @@ línea de spec de clustering.
 
 ---
 
+### Enmienda 2 (2026-09-22): el techo es 12,1%, no 10,9%
+
+Al rastrear la cifra para la tesis se vio que `04` y `05` daban techos distintos —10,9% y 12,1%—
+sobre **el mismo `train` de 847.046 filas**. No eran dos alcances: era una agregación inconsistente
+en `04`.
+
+```
+04:  actual = Σ(sd_c · n_c) / Σn_c                  <- media de DESVIACIONES
+     ideal  = √( Σ(irr_c · n_c) / Σn_c )            <- raíz de media de VARIANZAS
+
+05:  actual = √( Σ((irr_c + est_c) · n_c) / Σn_c )
+     ideal  = √( Σ( irr_c          · n_c) / Σn_c )
+```
+
+Por la desigualdad de Jensen, la media de desviaciones es menor que la raíz de la media de
+varianzas. Por eso `04` obtiene `sd_actual = 0,3651` donde el cálculo consistente da `0,3700`, y el
+techo encoge de 12,1% a 10,9%.
+
+**Vale el 12,1%.** Se corrige en `mediciones.md` §15.2, en esta decisión y en la tesis. `04` se deja
+como está, con su salida original: reescribir una corrida pasada para que cuadre con la conclusión
+de hoy es exactamente lo que este registro existe para impedir.
+
+Dos avisos sobre cómo citar el número:
+
+- Es una reducción de **desviación**, no de varianza. En varianza el mismo resultado es 22,7%.
+- Mide el techo de **engrosar** la celda, no el de **clasificar** mejor: la descomposición supone
+  que la celda asignada es la correcta y solo está mal estimada.
+
 ## D-014 — La ocupación latente tampoco tiene material, y el eje que faltaba es el sector
 
 **Fecha:** 2026-08-20
@@ -1522,7 +1550,7 @@ Y entra en la escalera de rivales: **`CARGO × sector`** es un baseline obvio, b
 hay que batir.
 
 **3. El anclaje a la empresa del cliente se separa como línea propia.** `06` mide −12,8% de MAE
-—más que el 10,9% que da agrupar mejor— y sube a −14,6% en empresas con más de 100 compañeros con
+—más que el 12,1% que da agrupar mejor— y sube a −14,6% en empresas con más de 100 compañeros con
 referencia. Pero **no mejora la cobertura** y **responde otra pregunta**: equidad interna, no nivel
 de mercado. Va a capítulo aparte o se descarta explícitamente; lo que no puede es quedar como nota
 al pie, porque es el número más grande del expediente.
@@ -1558,7 +1586,7 @@ medirlo fuera de muestra. Anotado en pendientes.
 
 ### Y una advertencia sobre sumar los números
 
-`13,2%` del nivel, `13,2%` del sector y `10,9%` del techo **no se suman ni se comparan
+`13,2%` del nivel, `13,2%` del sector y `12,1%` del techo **no se suman ni se comparan
 directamente**: tienen denominadores distintos. El techo de `04` es sobre el error de predicción
 fuera de muestra que queda **después** de `CARGO`; los otros dos son descomposiciones de varianza
 de la señal, y parte de esa señal `CARGO` ya la captura (sus cadenas suelen llevar el rango dentro).

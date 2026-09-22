@@ -815,9 +815,16 @@ Componentes de varianza sobre celdas de `CARGO` (`y_fi = μ_c + a_f + e_fi`), tr
 | σ (sd intra empresa dentro de celda) | **0,1423** |
 | Ruido irreducible bajo leave-company-out | sd **0,3246** |
 | sd predictiva real de `CARGO` | **0,3651** |
-| **Techo de mejora por agrupar mejor** | **10,9%** (12,1% sobre train completo) |
+| **Techo de mejora por agrupar mejor** | **12,1%** (14,4% fuera de la zona pegada al SBU) |
 
 El empleador pesa el doble que todo lo demás junto, y bajo leave-company-out es inobservable.
+
+> **Corrección (2026-09-22).** El techo es **12,1%**, no el 10,9% que se reportó primero. Los dos
+> números salen de este mismo `train` y de esta misma descomposición; la diferencia es que `04`
+> agregaba las celdas de dos formas distintas —media de desviaciones en el numerador, raíz de la
+> media de varianzas en el denominador— y eso subestima `sd_actual` (0,3651 contra 0,3700). `05`
+> agrega las dos igual. La fila `sd predictiva real de CARGO` de arriba conserva el 0,3651 de `04`
+> porque es lo que imprimió esa corrida; el cálculo bueno usa 0,3700.
 
 **Desglose por espesor de celda** (ponderado por personas):
 
