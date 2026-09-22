@@ -3,28 +3,14 @@
 | Fichero | Para quién |
 |---|---|
 | `tesis.tex` | El documento académico: metodología, resultados y lo que se midió y descartó |
-| `presentacion.tex` | **v1** (19 láminas). Ordenada por las reglas del método y con las cifras medidas |
-| `presentacion_v2.tex` | **v2** (22 láminas). Una idea por lámina, con la cifra como prueba; sección de resultados reescrita en torno a qué se aprendió |
+| `presentacion.tex` | **Presentación interna de ActuaLab**, 19 láminas: la metodología de agrupación y los resultados medidos |
 | `figuras.py` | Genera las cuatro figuras que usan los dos |
 
 ```
-pdflatex tesis.tex             # dos veces
-pdflatex presentacion.tex      # dos veces  (v1)
-pdflatex presentacion_v2.tex   # dos veces  (v2)
+pdflatex tesis.tex          # dos veces
+pdflatex presentacion.tex   # dos veces
 python docs/tesis/figuras.py
 ```
-
-## Las dos versiones de la presentación
-
-Se conservan las dos a propósito; ninguna sustituye a la otra todavía.
-
-- **v1** cuenta **qué se midió**. Va regla por regla y cierra con una tabla de nueve
-  cifras. Sirve para responder preguntas concretas.
-- **v2** cuenta **qué se aprendió**. Cada lámina defiende una idea y la cifra es su
-  prueba, con un máximo de dos números por lámina. La sección de resultados está
-  reescrita: entra que cobertura y precisión son ganancias distintas, que un promedio
-  de cobertura del 53 % escondía un rango del 18 % al 98 %, y que la etiqueta de
-  confianza era algebraicamente incapaz de salir de ALTA. Nada de eso estaba en la v1.
 
 ---
 
