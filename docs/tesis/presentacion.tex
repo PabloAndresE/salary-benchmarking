@@ -292,20 +292,30 @@ Placebo & \alert{$+0{,}00130$} & $[+0{,}00081,\ +0{,}00180]$ \\
 La regla real no empeora el error; el placebo lo empeora cien veces más.
 \end{frame}
 
-\begin{frame}{Qué ganó cada cambio}
-\begin{block}{Unir solo si \emph{todos} los pares superan el umbral}
-El efecto pasa de $+0{,}0154$ a $-0{,}0030$: \alert{el signo se invierte}. Con la
-regla de cadena, agrupar empeoraba la referencia.
-\end{block}
-\begin{block}{Consolidar las grafías del mismo puesto}
-$-0{,}00001$, con el intervalo sobre cero: \alert{no mejora la precisión}. Lo que
-mejora es la cobertura, del 57,7 al 64,1\,\%. Midiendo solo el error, este cambio
-se habría descartado.
-\end{block}
-\begin{block}{Banda por celda, con cuantiles empíricos}
-El recorrido de cobertura entre cargos cae de 50,5 a \alert{4,3} puntos: la banda
-deja de cubrir al 18\,\% en unos cargos y al 98\,\% en otros.
-\end{block}
+\begin{frame}{Resultados medidos}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lr}
+\toprule
+Efecto empleador sobre la varianza residual & 81\,\% \\
+Margen recuperable por reagrupar & 12,1\,\% \\
+\midrule
+Títulos distintos en el catálogo & 65.181 \\
+Puestos tras consolidar grafías & \alert{50.420} \\
+Cobertura directa, antes y después de consolidar &
+57,7\,\% $\rightarrow$ \alert{64,1\,\%} \\
+Títulos de una nómina nueva resueltos por analogía & 35,9\,\% \\
+\midrule
+Varianza de nivel explicada por el escalón jerárquico & $\omega^2 = 0{,}2462$ \\
+Recorrido salarial entre el escalón más bajo y el más alto & $2{,}11\times$ \\
+\midrule
+Error del centro en cargos altos, sin corregir por tamaño &
+$-$56,0\,\%/$+$81,9\,\% \\
+Error del centro, corrigiendo & \alert{$-$12,1\,\%/$+$17,9\,\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
 \end{frame}
 
 \end{document}
