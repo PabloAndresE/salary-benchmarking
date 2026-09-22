@@ -61,7 +61,44 @@ def main():
     rf.add_argument("--base", default="base_referencia.npz", help="base serializada")
     rf.add_argument("--rehacer-base", action="store_true")
 
+    gr = sub.add_parser("grafias",
+                        help="que grafias se juntaron en cada puesto. Solo lectura")
+    gr.add_argument("cargos", nargs="*", help="cargos sueltos, entre comillas")
+    gr.add_argument("--nomina", default=None,
+                    help="Excel o CSV del que se sacan los cargos (se deduplican)")
+    gr.add_argument("--columna", default=None, help="columna de cargo (se autodetecta)")
+    gr.add_argument("--base", default="demo/base_v15.npz", help="base serializada")
+    gr.add_argument("--anio", type=int, default=2026, help="anio del SBU para los dolares")
+    gr.add_argument("--vecinos", type=int, default=0, metavar="K",
+                    help="ademas, los K grupos mas parecidos que NO se fusionaron")
+
     args = ap.parse_args()
+
+    # `grafias` es lectura pura sobre el `.npz`: ni BigQuery ni Vertex. Se resuelve
+    # antes de abrir el cliente para que funcione sin credenciales.
+    if args.cmd == "grafias":
+        from .producto.inspeccion import Inspector, imprimir
+        cargos = list(args.cargos)
+        if args.nomina:
+            from .producto.referenciar_nomina import leer_nomina
+            df, col = leer_nomina(args.nomina, col_cargo=args.columna)
+            vistos = set()
+            for t in df[col].fillna("").astype(str):
+                t = t.strip()
+                if t and t.upper() not in vistos:
+                    vistos.add(t.upper())
+                    cargos.append(t)
+        if not cargos:
+            ap.error("hace falta al menos un cargo, o --nomina")
+        s = cargar_settings()
+        insp = Inspector(args.base)
+        sbu = s.get_sbu(args.anio)
+        print("base: %s | %d titulos | %d puestos | SBU %d = $%.0f\n"
+              % (args.base, len(insp.celdas), len(insp.miembros), args.anio, sbu))
+        for c in cargos:
+            imprimir(insp.ficha(c, sbu, k_vecinos=args.vecinos))
+        return
+
     s = cargar_settings()
     client = bigquery.Client()
     descargar = _con_cache(s)
