@@ -175,8 +175,9 @@ pequeñas.
 \end{itemize}
 \end{frame}
 
-\begin{frame}{Ponderación de vecinos: versión inicial}
-Pesando cada vecino por similitud $\times$ precisión:
+\begin{frame}{Fuera de la celda: la similitud no basta como peso}
+Un peso construido solo con \emph{parecido} $\times$ \emph{precisión} invierte el
+orden correcto:
 \begin{table}
 \centering
 \small
@@ -189,13 +190,17 @@ Vecinos de \texttt{OPERADOR DE PARQUEADERO} & Similitud & Peso \\
 \bottomrule
 \end{tabular}
 \end{table}
-El vecino con 0,989 de similitud recibe el 8\,\% del peso y el de 0,825 recibe el
-46\,\%, porque su celda tiene más datos.
+La excavadora se lleva el 46\,\% del peso porque su celda tiene más datos.
+\medskip
+
+Estar bien medido y ser el puesto correcto son cosas distintas: un vecino
+perfectamente medido que \alert{no es tu puesto} no aporta, por muchos datos que
+tenga.
 \end{frame}
 
-\begin{frame}{Ponderación de vecinos: formulación actual}
-Cada vecino se trata como una medición del puesto objetivo con dos fuentes de
-error:
+\begin{frame}{Cada vecino, una medición con dos fuentes de error}
+Por eso el peso no sale del parecido, sino de cuánto se puede errar usando ese
+vecino como respuesta:
 \begin{equation*}
 \mathrm{var}_j = \underbrace{1/W_j}_{\text{error de medición}}
 \; + \; \underbrace{\lambda\,(1-s_j)}_{\text{sesgo por no ser el mismo puesto}},
