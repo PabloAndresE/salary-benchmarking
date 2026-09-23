@@ -3566,3 +3566,67 @@ conclusión equivocada y firmada.
 Vale también para lo que viene: el siguiente candidato natural no es un NLI sino un
 **cross-encoder de reranking**, que puntúa «cuánto tiene que ver A con B» en vez de «A
 implica B». Ese no se ha probado.
+
+### Enmienda 2 (2026-09-23, mismo día): el reranking no gana, y el examen de cordura es necesario pero no suficiente
+
+**Origen:** al cerrar la Enmienda 1 quedó dicho que el NLI era una elección mía y no
+obviamente la correcta, y que el candidato natural sin probar era un cross-encoder de
+**reranking** —que puntúa «cuánto tiene que ver A con B» en vez de «A implica B»—. El
+director pidió traerlo y medirlo igual.
+**Evidencia:** `research/experimentos/e2_nivel/13d_rerankers.py`.
+
+### El examen de cordura, hecho y declarado ANTES de ver ningún AUC
+
+| modelo | veredicto |
+|---|---|
+| `BAAI/bge-reranker-base` | **PASA.** Orden exacto: idéntico 9,72 > errata 7,94 > género 4,92 > seniority 3,89 > área 0,21 > opuesto −0,82 |
+| `cross-encoder/mmarco-mMiniLMv2` | **FALLA.** Pone `SUPERVISOR CALIDAD`/`SUPERVISOR DE CALIDAD SR` —distintos— en lo más alto (2,38), por encima de `CONTADOR`/`CONTADOR` idéntico (−0,23), y hunde la errata (−1,61) |
+
+`mmarco` quedó descalificado como candidato antes de medirlo, y se midió igual.
+
+### Lo medido
+
+| árbitro | AUC | IC 95 % | permutación vs 0,50 |
+|---|---|---|---|
+| **cross NLI media** | **0,755** | [0,594, 0,894] | **p = 0,003** |
+| bge-reranker máx | 0,674 | [0,495, 0,834] | p = 0,037 |
+| bge-reranker media | 0,660 | [0,470, 0,831] | p = 0,051 |
+| coseno (producción) | 0,601 | [0,417, 0,776] | p = 0,148 |
+| mmarco *(descalificado)* | 0,479 | [0,294, 0,674] | p = 0,589 |
+
+Pareado: `bge` vs coseno **+0,059** [−0,157, +0,260]; `bge` vs cross NLI **−0,095**
+[−0,306, +0,139].
+
+### La hipótesis era razonable y es falsa
+
+«El NLI es una pregunta prestada y el reranking la propia» sonaba bien y no se sostiene.
+**El NLI ordena mejor**, y el reranker no se separa ni del coseno ni del azar.
+
+La explicación probable: **la implicación es asimétrica y aquí eso es justo lo que hace
+falta.** `JEFE DE MONTAJE Y SOLDADURA` implica a `JEFE DE MONTAJE` pero no al revés, y esa
+asimetría *es* la señal de que uno es más amplio que el otro. Un puntaje de relevancia no
+tiene forma de expresar «distintos porque uno es más estrecho». Lo que parecía una
+pregunta prestada resulta tener la forma correcta.
+
+### El examen de cordura se valida a medias, y hay que decir las dos mitades
+
+**Funciona como criba.** `mmarco` falló el examen y salió exactamente en el azar (AUC
+0,479, p = 0,59). El examen lo predijo con seis parejas, sin gastar los 48 juicios.
+
+**No funciona como ranking.** `bge` pasó el examen con el orden exacto y aun así pierde
+contra el NLI. Ordenar bien seis casos fáciles no predice discriminar casos difíciles: son
+habilidades distintas.
+
+**El examen es necesario, no suficiente.** Descarta modelos rotos; no elige entre modelos
+sanos. Esto **acota la lección de la Enmienda 1**, que lo dejaba sonando más potente de lo
+que es: comprobar casos conocidos habría evitado la conclusión falsa de `13b`, pero no
+habría bastado para elegir árbitro.
+
+### Dónde queda esto
+
+El mejor candidato congelado sigue siendo el **cross-encoder NLI**, con AUC 0,755 y p =
+0,003, sin una sola etiqueta nuestra. El reranking se descarta como vía. El coseno de
+producción se queda donde está.
+
+Y no cambia el cuello de botella: los cuatro intervalos son anchísimos con n = 48.
+**~400 pares juzgados** siguen siendo el paso que desbloquea todo lo demás.

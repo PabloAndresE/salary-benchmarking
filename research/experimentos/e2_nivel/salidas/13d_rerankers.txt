@@ -1,0 +1,26 @@
+==============================================================================
+RERANKERS CONTRA 48 JUICIOS  (36 si / 12 no)
+==============================================================================
+  (puntajes en cache)
+
+  arbitro                     AUC     IC95 bootstrap  permutacion
+  coseno (produccion)       0.601     [0.417, 0.776]     p=0.1480
+  cross NLI media           0.755     [0.594, 0.894]     p=0.0034
+  bge-reranker media        0.660     [0.470, 0.831]     p=0.0514
+  bge-reranker min          0.639     [0.459, 0.808]     p=0.0788
+  bge-reranker max          0.674     [0.495, 0.834]     p=0.0366
+  mmarco DESCALIF media     0.479     [0.294, 0.674]     p=0.5892
+  mmarco DESCALIF min       0.486     [0.303, 0.675]     p=0.5722
+  mmarco DESCALIF max       0.488     [0.303, 0.673]     p=0.5622
+
+  --------------------------------------------------------------------------
+  COMPARACION PAREADA (positivo = el primero ordena mejor)
+  bge-reranker media     vs coseno        +0.059  [-0.157, +0.260]  P(mejor)=0.706
+  bge-reranker media     vs cross NLI     -0.095  [-0.306, +0.139]  P(mejor)=0.202
+
+==============================================================================
+LECTURA: `bge` paso el examen de cordura, asi que su AUC se puede interpretar.
+`mmarco` no lo paso y su AUC va solo como referencia: por bueno que salga, un
+modelo que pone dos puestos DISTINTOS por encima de dos IDENTICOS no entra.
+La pregunta es si `bge` le gana al cross NLI de 13c y al coseno de produccion.
+==============================================================================
