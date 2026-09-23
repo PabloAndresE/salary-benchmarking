@@ -61,6 +61,49 @@ _ALTERNATIVAS = "|".join(sorted(RANGOS, key=len, reverse=True))
 _PATRON = re.compile(r"\b(" + _ALTERNATIVAS + r")(?:ES|S)?\b")
 
 
+# SENIORITY: un modificador DENTRO del escalon, no un escalon.
+#
+# `SUPERVISOR DE CALIDAD SR` sigue siendo un supervisor. Meter `SR` en `RANGOS` como
+# nivel propio romperia la escalera —que esta medida sobre cinco escalones— y el
+# `lambda` por nivel. Asi que va aparte y solo sirve para UNA cosa: impedir que dos
+# titulos con seniority distinta se fusionen.
+#
+# DE DONDE SALE. Sobre 48 pares de la banda 0,93-0,97 juzgados a mano, el motivo de
+# "no son el mismo puesto" era casi siempre una marca de seniority que el lexico de
+# rango no ve. Medido contra esos juicios, este conjunto caza 5 de los 12 `no` y no
+# rompe ninguno de los 36 `si`.
+#
+# QUE NO ENTRA, y por que. Se probaron cuatro conjuntos contra los mismos juicios:
+#
+#   solo SR/JR                    caza 2   rompe 1
+#   + SOUS                        caza 3   rompe 1
+#   + CORPORATIVO                 caza 5   rompe 1   <- este
+#   + GENERAL                     caza 5   rompe 3
+#   + numeros y letras romanas    caza 5   rompe 4
+#
+# `GENERAL` no entra: `SUPERVISOR DE ETIQUETADO` y `SUPERVISOR GENERAL DE ETIQUETADO`
+# se juzgaron como el mismo puesto, y con `GENERAL` dentro se separarian. Los numeros
+# y las letras tampoco: `TECNICO MECANICO A` y `TECNICO MECANICO I` son el mismo, y
+# de los escalones por digito ya se ocupa `_es_errata`.
+SENIORIDAD = {
+    "TRAINEE": -2, "SOUS": -1, "JR": -1, "JUNIOR": -1,
+    "SR": 1, "SENIOR": 1,
+    "CORPORATIVO": 2, "CORPORATIVA": 2,
+}
+_PATRON_SEN = re.compile(
+    r"\b(" + "|".join(sorted(SENIORIDAD, key=len, reverse=True)) + r")\b\.?")
+
+
+def seniority_lexica(etiqueta):
+    """Marca de seniority del titulo. 0 si no lleva ninguna.
+
+    Con varias gana la MAS ALTA, por el mismo criterio que `nivel_lexico`: es una
+    heuristica, y el error va en la direccion del ruido y no del sesgo.
+    """
+    vals = [SENIORIDAD[h] for h in _PATRON_SEN.findall(str(etiqueta).upper())]
+    return max(vals) if vals else 0
+
+
 def nivel_lexico(etiqueta):
     """Nivel segun la palabra de rango del titulo, o None si no lleva ninguna.
 

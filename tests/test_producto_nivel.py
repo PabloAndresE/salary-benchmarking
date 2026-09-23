@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 from benchmarking.producto.nivel import (ClasificadorNivel, escalera_salarial,
-                                         etiquetar, nivel_lexico)
+                                         etiquetar, nivel_lexico,
+                                         seniority_lexica)
 
 
 def test_lee_el_rango_del_titulo():
@@ -143,3 +144,52 @@ def test_las_ocupaciones_sin_rango_siguen_sin_nivel():
     # No es un hueco del diccionario: un DOCENTE no es ni auxiliar ni gerente.
     for e in ("TRABAJADOR AGRICOLA", "DOCENTE", "CHOFER", "GUARDIA", "MEDICO OCUPACIONAL"):
         assert nivel_lexico(e) is None
+
+
+# --- el candado de seniority ------------------------------------------------
+# Es un modificador DENTRO del escalon, no un escalon. Validado contra 48 pares de
+# la banda 0,93-0,97 juzgados a mano: caza 5 de los 12 `no` sin romper ninguno de
+# los 36 `si`. Ver `research/experimentos/e2_nivel/13a`.
+
+def test_la_seniority_no_cambia_el_escalon():
+    # `SUPERVISOR DE CALIDAD SR` sigue siendo un supervisor. Si `SR` entrara en
+    # `RANGOS` romperia la escalera, que esta medida sobre cinco escalones.
+    assert nivel_lexico("SUPERVISOR DE CALIDAD SR") == 3
+    assert nivel_lexico("SUPERVISOR DE CALIDAD") == 3
+
+
+def test_lee_la_marca_de_seniority():
+    assert seniority_lexica("SUPERVISOR DE CALIDAD SR") > 0
+    assert seniority_lexica("ANALISTA JUNIOR DE RIESGOS") < 0
+    assert seniority_lexica("SOUS CHEF DE COCINA") < 0
+    assert seniority_lexica("SUPERVISOR DE CALIDAD") == 0
+
+
+def test_separa_lo_que_un_humano_separa():
+    # Los cinco pares que el candado existe para cazar, de los 48 juzgados.
+    for a, b in (("SUPERVISOR CALIDAD", "SUPERVISOR DE CALIDAD SR"),
+                 ("CHEF DE COCINA", "SOUS CHEF DE COCINA"),
+                 ("ANALISTA INTELIGENCIA DE NEGOCIOS",
+                  "ANALISTA JUNIOR - INTELIGENCIA DE NEGOCIOS"),
+                 ("GERENTE DE INGENIERIA INDUSTRIAL",
+                  "GERENTE CORPORATIVO DE INGENIERIA")):
+        assert seniority_lexica(a) != seniority_lexica(b), (a, b)
+
+
+def test_no_separa_lo_que_un_humano_junta():
+    # `GENERAL` y los numeros se probaron y se dejaron FUERA: con ellos dentro,
+    # estos pares se romperian y estan juzgados como el mismo puesto.
+    for a, b in (("SUPERVISOR DE ETIQUETADO", "SUPERVISOR GENERAL DE ETIQUETADO"),
+                 ("TECNICO MECANICO A", "TECNICO MECANICO I"),
+                 ("JEFE SERVICIOS", "JEFE DE SERVICIOS GENERAL"),
+                 ("ASISTENTE DE TESORERIA JR.", "ASISTENTE DE TESORERIA JUNIOR")):
+        assert seniority_lexica(a) == seniority_lexica(b), (a, b)
+
+
+def test_no_confunde_subcadenas_de_seniority():
+    # Los limites de palabra son lo que impide que una subcadena cuele. `ASESORA`
+    # contiene `SR`? no, pero `SENIORITY` si contiene `SENIOR`, y no debe contar:
+    # es otra palabra.
+    assert seniority_lexica("ASESORA DE SERVICIOS") == 0
+    assert seniority_lexica("SENIORITY MANAGER") == 0
+    assert seniority_lexica("JEFE DE CORPORATIVIDAD") == 0

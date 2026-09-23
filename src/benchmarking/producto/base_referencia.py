@@ -1489,7 +1489,7 @@ class BaseReferencia:
         return out
 
 
-def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO):
+def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None):
     """Agrupa cuasi-duplicados por ENLACE COMPLETO. Devuelve etiqueta -> id de grupo.
 
     Aglomerativo y voraz: las aristas candidatas se recorren de mas a menos similares y
@@ -1501,6 +1501,12 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO):
     falta: con enlace completo solo rechaza 18 uniones de 15.870. El dano nunca vino de
     pares malos sino de la cadena que los conectaba. Se deja porque es barato y porque sin
     el, un titulo SIN palabra de rango podria servir de puente entre dos que si la tienen.
+
+    `senior` es el segundo candado —`SUPERVISOR CALIDAD` contra `SUPERVISOR DE CALIDAD
+    SR`— y llega DESACTIVADO. Esta validado contra 48 pares juzgados a mano (caza 5 de
+    los 12 `no` sin romper ninguno de los 36 `si`) pero NO medido con el protocolo:
+    pinball pareado y placebo. Hasta que lo pase, el parametro existe para que el
+    experimento pueda encenderlo y el producto se comporta como siempre.
     """
     n = len(niveles)
     if n < 2 or umbral is None:
@@ -1522,6 +1528,8 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO):
             na, nb = niveles[par[0]], niveles[par[1]]
             if np.isfinite(na) and np.isfinite(nb) and na != nb:
                 continue
+            if senior is not None and senior[par[0]] != senior[par[1]]:
+                continue
             aristas.append((float(s), par[0], par[1]))
     aristas.sort(key=lambda t: -t[0])
 
@@ -1536,6 +1544,9 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO):
             continue
         niv = np.unique(np.concatenate([niveles[A], niveles[B]]))
         if len(niv[np.isfinite(niv)]) > 1:
+            continue
+        if senior is not None and len(np.unique(np.concatenate(
+                [np.asarray(senior)[A], np.asarray(senior)[B]]))) > 1:
             continue
         if float((Z[A] @ Z[B].T).min()) < umbral:      # el par PEOR manda
             continue
