@@ -204,6 +204,15 @@ def main():
     m.insert(0, "n", range(1, len(m) + 1))
     m["lote"] = (m["n"] - 1) // POR_LOTE + 1
 
+    # Los juicios son horas de trabajo a mano y el CSV esta en .gitignore: si ya hay
+    # alguno, no se regenera nada. Para rehacer el lote hay que borrarlo a proposito.
+    previo = SAL / "13e_para_juzgar.csv"
+    if previo.exists():
+        p = pd.read_csv(previo, sep=";", encoding="utf-8-sig", dtype=str,
+                        keep_default_na=False)
+        if (p["mismo"].str.strip() != "").any():
+            raise SystemExit("{} ya tiene juicios; no se sobrescribe.".format(previo))
+
     SAL.mkdir(parents=True, exist_ok=True)
     m.to_csv(SAL / "13e_pares_400.csv", index=False, encoding="utf-8-sig", sep=";")
 
