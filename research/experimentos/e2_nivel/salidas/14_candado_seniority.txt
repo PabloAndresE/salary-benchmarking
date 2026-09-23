@@ -1,0 +1,31 @@
+  fusion por errata: 593 grupos absorbidos
+  fusion por genero: 467 pares juntados
+    {'grupos': 35788}   guardado.
+  fusion por errata: 594 grupos absorbidos
+  fusion por genero: 467 pares juntados
+    {'con_marca': 2418, 'grupos': 35973}   guardado.
+  fusion por errata: 598 grupos absorbidos
+  fusion por genero: 465 pares juntados
+    {'con_marca': 2913, 'grupos': 36011}   guardado.
+
+CANDADO DE SENIORITY EN LA FUSION SEMANTICA
+==============================================================================
+  hoy                {'grupos': 35788}
+  candado            {'con_marca': 2418, 'grupos': 35973}
+  candado_general    {'con_marca': 2913, 'grupos': 36011}
+
+  votos evaluados (empresa, cargo): 34,435
+  votos donde candado CAMBIA la rama: 23
+  votos donde candado_general CAMBIA la rama: 29
+
+  variante                pinball          dif vs hoy (IC95)   cobertura
+  hoy                     0.13471                          -       55.4%
+  candado                 0.13465   -0.00002 [-0.00004,-0.00001]       55.4%
+  candado_general         0.13466   -0.00000 [-0.00003,+0.00003]       55.4%
+
+==============================================================================
+LECTURA: se adopta si el IC de `candado` no queda entero sobre cero y la
+cobertura no cae mas de 0,5 puntos. Si `candado` y `candado_general` dan lo
+mismo, el criterio de que palabras entran no estaba aportando: seria una
+senal de que el candado funciona por separar, no por separar BIEN.
+==============================================================================

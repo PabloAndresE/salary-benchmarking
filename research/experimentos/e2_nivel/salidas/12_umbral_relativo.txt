@@ -1,0 +1,40 @@
+  fusion por errata: 593 grupos absorbidos
+  fusion por genero: 467 pares juntados
+    {'erratas': 593}   guardado.
+  fusion por errata: 641 grupos absorbidos
+  fusion por genero: 463 pares juntados
+    {'erratas': 641}   guardado.
+  fusion por errata: 667 grupos absorbidos
+  fusion por genero: 463 pares juntados
+    {'erratas': 667}   guardado.
+  fusion por errata: 641 grupos absorbidos
+  fusion por genero: 482 pares juntados
+    {'erratas': 641, 'absorciones_plac': 740}   guardado.
+
+==============================================================================
+SUELO RELATIVO DEL LADO RARO EN LA FUSION POR ERRATA
+==============================================================================
+  hoy          {'erratas': 593}
+  R05          {'erratas': 641}
+  R10          {'erratas': 667}
+  R05_plac     {'erratas': 641, 'absorciones_plac': 740}
+
+  absorciones: hoy 593   R05 641   R10 667
+
+  votos evaluados (empresa, cargo): 34,435
+  votos donde R05 CAMBIA la rama: 11
+    POCOS: el placebo no discriminaria. NO CONCLUYENTE.
+  votos donde R10 CAMBIA la rama: 16
+    POCOS: el placebo no discriminaria. NO CONCLUYENTE.
+
+  variante          pinball          dif vs hoy (IC95)   cobertura
+  hoy               0.13471                          -       55.4%
+  R05               0.13481    0.00004 [-0.00003,+0.00012]       55.5%
+  R10               0.13480    0.00004 [-0.00003,+0.00012]       55.5%
+  R05_plac          0.13630    0.00119 [+0.00058,+0.00174]       55.5%
+
+==============================================================================
+LECTURA: se adopta si la cobertura sube, el IC de R05 no queda entero sobre
+cero, y el de R05_plac SI. Si R05 y R10 dan lo mismo, el resultado no depende
+de donde se ponga la raya, que es lo que se quiere de un umbral relativo.
+==============================================================================

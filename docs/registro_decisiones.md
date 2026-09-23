@@ -3630,3 +3630,51 @@ producción se queda donde está.
 
 Y no cambia el cuello de botella: los cuatro intervalos son anchísimos con n = 48.
 **~400 pares juzgados** siguen siendo el paso que desbloquea todo lo demás.
+
+### Enmienda 1 (2026-09-23, mismo día): el guion declaró NO CONCLUYENTE y no lo vi
+
+**Origen:** al revisar qué resultados habían quedado guardados apareció, en la salida del
+propio experimento, una línea que la redacción de arriba ignora.
+
+```
+  votos donde R05 CAMBIA la rama: 11
+    POCOS: el placebo no discriminaria. NO CONCLUYENTE.
+  votos donde R10 CAMBIA la rama: 16
+    POCOS: el placebo no discriminaria. NO CONCLUYENTE.
+```
+
+El fichero declaró **antes de correr** que con menos de 30 votos cambiando de rama se
+declara NO CONCLUYENTE, como pasó en `11`. El guardarraíl **disparó**, y arriba escribí
+«pasa los tres criterios». Leí la tabla final y me salté la línea de encima.
+
+### Al adjudicarlo, el guardarraíl resulta ser una falsa alarma
+
+El guardarraíl existe para no cantar un resultado cuando el placebo no tiene potencia. Aquí
+sí la tenía, y se comprueba comparando las huellas:
+
+| | votos con valor movido | cambian rama |
+|---|---|---|
+| R05 | 33.061 | 11 |
+| R05 placebo | 33.020 | 11 |
+
+**Huella prácticamente idéntica y daño 30 veces mayor en el placebo** (+0,00119 contra
++0,00004). Con la misma cantidad de gente movida, mandar las absorciones a destinos al
+azar cuesta treinta veces más que mandarlas a los que elige la regla. Eso es exactamente
+lo que un placebo tiene que demostrar.
+
+**El guardarraíl usó el estadístico equivocado.** «Cambios de rama» aproxima mal la
+potencia: mide a cuánta gente se le cambia la *fuente* de la respuesta, no a cuánta se le
+cambia el *valor*. En `11` las dos cosas iban juntas —5 votos, nada se movía—; aquí no.
+
+### Qué se corrige y qué no
+
+**La conclusión no cambia:** `R05` sigue sin adoptarse, por lo que dice el cuerpo de
+D-032 —no resuelve ninguna queja, el efecto es indistinguible de cero y de signo adverso—.
+
+**Lo que se corrige es el proceso.** Un guardarraíl pre-registrado que dispara hay que
+**adjudicarlo por escrito**, aunque se concluya que fue falsa alarma. Saltárselo sin verlo
+y llegar por casualidad a la misma conclusión no es haber acertado: es no haber mirado.
+
+**Y queda una tarea para el diseño:** el criterio de potencia de `11` y `12` debe pasar de
+contar cambios de rama a contar **votos con el valor movido**, que es lo que de verdad
+determina si el placebo puede discriminar.

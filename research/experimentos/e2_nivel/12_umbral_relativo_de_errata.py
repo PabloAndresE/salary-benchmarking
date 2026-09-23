@@ -70,7 +70,15 @@ repite.
 
 TODO SOBRE TRAIN. El 20% de test no se toca.
 
-RESULTADO (2026-09-23). PASA LOS TRES CRITERIOS Y NO SE ADOPTA. Ver D-032.
+RESULTADO (2026-09-23). NO SE ADOPTA. Ver D-032 y su Enmienda 1.
+
+OJO CON EL GUARDARRAIL: esta corrida IMPRIMIO «votos donde R05 CAMBIA la rama: 11
+-> POCOS: el placebo no discriminaria. NO CONCLUYENTE». Disparo. Al adjudicarlo
+resulta falsa alarma --R05 y su placebo mueven el valor de 33.061 y 33.020 votos,
+huella identica, y el placebo hace 30 veces mas dano-- asi que el placebo SI tenia
+potencia. El guardarrail cuenta cambios de RAMA, que aproxima mal: mide a cuanta
+gente se le cambia la fuente, no a cuanta se le cambia el VALOR. Pendiente
+cambiarlo en `11` y `12`.
 ------------------------------------------------------------------------------
     variante      absorciones   pinball   dif vs hoy (IC95)          cobertura
     hoy                   593   0,13471   -                              55,4%
