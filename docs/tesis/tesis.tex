@@ -111,7 +111,7 @@ Personas cubiertas por títulos con respaldo suficiente & 66,6\,\% \\
 \centering
 \includegraphics[width=\linewidth]{espesor_catalogo.pdf}
 \caption[Espesor del catálogo de cargos]{\textbf{Casi todos los puestos son
-delgados; casi toda la gente está en los gruesos.} El 78\,\% de los 50.420 puestos
+delgados; casi toda la gente está en los gruesos.} El 78\,\% de los 50.296 puestos
 tiene una sola empresa detrás y entre todos cubren el 21\,\% de las personas. En el
 otro extremo, el 1\,\% de los puestos con 30 o más empresas cubre el 46\,\%. Esa
 asimetría es el problema: la cola larga no se arregla con más modelo, se arregla
@@ -150,10 +150,18 @@ conjunto de ajuste:
 \]
 
 El efecto empleador $\tau$ es el doble que la dispersión dentro de la nómina.
-\textbf{La empresa explica el 81\,\% de lo que no se puede predecir desde el
-puesto.} Dos personas con el mismo cargo en empresas distintas cobran muy
-diferente, y eso no es ruido de medición: es la variable que de verdad gobierna
-el salario y que un benchmark por puesto no puede ver.
+\textbf{La empresa explica el 81\,\% de la varianza residual.} Dos personas con
+el mismo cargo en empresas distintas cobran muy diferente, y eso no es ruido de
+medición: es la variable que de verdad gobierna el salario.
+
+Conviene decir con precisión por qué esa variable queda fuera. No es que se
+desconozca ---el RUC del empleador está en cada fila y es justamente lo que
+permite estimar $\tau$---, es que una referencia de mercado no puede
+condicionar en ella sin dejar de ser una referencia de mercado. Una banda que
+usara la empresa le devolvería a cada compañía su propio nivel de pago
+disfrazado de mercado, que es exactamente la pregunta que el cliente hace para
+no tener que contestársela solo. El 81\,\% es entonces un techo \emph{de la
+tarea}, no una carencia de los datos.
 
 De ahí sale el presupuesto del trabajo (figura~\ref{fig:descomposición}). Comparando
 la desviación del error real contra el suelo irreducible:
@@ -638,7 +646,7 @@ confianza, no en silencio.
 \begin{tabular}{lr}
 \toprule
 Títulos en la base & 65.181 \\
-Puestos tras consolidar grafías & 50.420 \\
+Puestos tras consolidar grafías & 50.296 \\
 Empresas que aportan datos & 6.722 \\
 Empresas resolubles por RUC (registro completo) & 221.754 \\
 Decisiones de método registradas con evidencia & 31 \\
@@ -651,10 +659,11 @@ Pruebas automatizadas & 381 \\
 \chapter{Limitaciones}
 
 \begin{description}[style=nextline]
-  \item[El techo es el techo.] El empleador explica el 81\,\% de lo que no se
-        puede predecir desde el puesto. Este trabajo entrega el \emph{mercado},
-        no la politica salarial de una empresa concreta, y ningún método basado
-        en la etiqueta de puesto puede cruzar esa frontera.
+  \item[El techo es el techo.] El empleador explica el 81\,\% de la varianza
+        residual, y una referencia de mercado no puede condicionar en él sin
+        volverse circular. Este trabajo entrega el \emph{mercado}, no la
+        política salarial de una empresa concreta, y ningún método que respete
+        esa frontera puede cruzarla.
 
   \item[El conjunto de test sigue sin tocarse.] Todo lo reportado está medido
         sobre particiones de validación dentro del conjunto de ajuste. Es

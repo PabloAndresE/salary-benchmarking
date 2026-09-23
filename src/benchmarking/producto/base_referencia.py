@@ -66,7 +66,7 @@ from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
                                      cuantiles_de_empresa, cuantiles_de_persona,
                                      sigma2_por_celda,
                                      tabla_votos, tau2_por_celda)
-from .nivel import efecto_nivel, nivel_lexico
+from .nivel import efecto_nivel, nivel_lexico, seniority_lexica
 
 VECINOS = 25
 MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
@@ -862,7 +862,12 @@ class BaseReferencia:
         # Los estadisticos SI salen del grupo fusionado: las grafias de un mismo puesto
         # votan juntas. Se reagrega desde las filas, no sumando celdas: el voto de una
         # empresa en el grupo es la mediana de TODA su gente en cualquiera de las grafias.
-        grupo = _fusionar(Z, niv, umbral_fusion) if umbral_fusion else np.arange(n)
+        # CANDADO DE SENIORITY (D-033). `SR`, `JR`, `SOUS`, `CORPORATIVO` no son
+        # escalones --un `SUPERVISOR DE CALIDAD SR` sigue siendo supervisor-- asi que
+        # no entran en `RANGOS` ni mueven el nivel. Solo impiden la fusion.
+        sen = np.array([seniority_lexica(c) for c in celdas])
+        grupo = (_fusionar(Z, niv, umbral_fusion, senior=sen)
+                 if umbral_fusion else np.arange(n))
         brecha_gen = np.full(n, np.nan)
         if umbral_fusion:
             # SEGUNDA PASADA POR ERRATA. Necesita saber cuantas empresas respalda cada

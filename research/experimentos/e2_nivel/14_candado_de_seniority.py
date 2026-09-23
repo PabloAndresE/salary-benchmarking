@@ -42,16 +42,41 @@ SE ADOPTA si y solo si:
     1. el IC 95% de la diferencia pareada contra hoy NO queda entero POR ENCIMA de cero
     2. la cobertura directa NO cae mas de 0,5 puntos
 
-NO HAY PLACEBO, y hay que decir por que. El placebo de permutacion prueba que una
-FUSION eligio bien el destino: manda las mismas absorciones a destinos al azar. Un
-candado no tiene destino —solo impide uniones— asi que no hay nada que barajar. El
-contraste que si tiene sentido es el conjunto `GENERAL`, que segun los 48 juicios
-rompe mas de lo que caza: si el candado bueno y ese dan lo mismo, el criterio de
-seleccion no estaba aportando.
+NO HAY PLACEBO DE PERMUTACION, y hay que decir por que. El placebo de permutacion
+prueba que una FUSION eligio bien el destino: manda las mismas absorciones a destinos
+al azar. Un candado no tiene destino —solo impide uniones— asi que no hay nada que
+barajar. El contraste que si tiene sentido es el conjunto `GENERAL`, que segun los 48
+juicios rompe mas de lo que caza: si el candado bueno y ese dan lo mismo, el criterio
+de seleccion no estaba aportando.
 
 VARIANTES: hoy / candado / candado_general (el contraste).
 
 TODO SOBRE TRAIN. El 20% de test no se toca.
+
+RESULTADO (2026-09-23). ADOPTADO. Ver D-033.
+------------------------------------------------------------------------------
+    variante            grupos    pinball   dif vs hoy (IC95)        cobertura
+    hoy                 35.788    0,13471   -                            55,4%
+    candado             35.973    0,13465   -0,00002 [-0,00004,-0,00001] 55,4%
+    candado_general     36.011    0,13466   -0,00000 [-0,00003,+0,00003] 55,4%
+
+Pasa los dos criterios. Pero EL AGREGADO NO ES LA EVIDENCIA: el candado mueve el
+valor de 32.155 de los 34.435 votos y solo 1.017 llevan marca de seniority, asi que
+la media esta diluida por 31.138 cargos que el candado no toca. Partido por ahi:
+
+    cargos CON marca   n=1.017    -0,000725  [-0,001274, -0,000221]
+    cargos SIN marca   n=33.418   -0,000014  [-0,000034, +0,000007]
+
+EL PLACEBO QUE ESTE FICHERO DIJO QUE NO EXISTIA, EXISTIA. Los cargos SIN marca son
+un control interno: reciben el mismo cambio de particion y ninguna intervencion
+dirigida. Que ahi el efecto cruce el cero mientras en los tratados lo excluye es
+exactamente la separacion que un placebo busca. La permutacion no aplica; el control
+por exposicion si, y estaba disponible desde el principio.
+
+EL CONTRASTE `GENERAL` NO DISCRIMINO. Sobre los cargos con marca da -0,000819
+[-0,001391, -0,000305], indistinguible del candado bueno. El pinball no tiene
+resolucion para separar los dos conjuntos. La exclusion de `GENERAL` se sostiene en
+los 48 juicios humanos —rompe 3 `si` contra 1—, NO en esta medicion.
 """
 import gc
 import json

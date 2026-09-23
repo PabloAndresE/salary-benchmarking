@@ -69,6 +69,27 @@ MEMORIA: un proceso por variante. Reanudable: si una ya tiene su parquet, no se
 repite.
 
 TODO SOBRE TRAIN. El 20% de test no se toca.
+
+RESULTADO (2026-09-23). PASA LOS TRES CRITERIOS Y NO SE ADOPTA. Ver D-032.
+------------------------------------------------------------------------------
+    variante      absorciones   pinball   dif vs hoy (IC95)          cobertura
+    hoy                   593   0,13471   -                              55,4%
+    R05                   641   0,13481   +0,00004 [-0,00003,+0,00012]   55,5%
+    R10                   667   0,13480   +0,00004 [-0,00003,+0,00012]   55,5%
+    R05_plac              641   0,13630   +0,00119 [+0,00058,+0,00174]   55,5%
+
+El placebo discrimina con holgura —30 veces el efecto de la regla real— y R05 y R10
+coinciden hasta la quinta cifra, que es lo que se le pide a un umbral relativo: que
+no dependa de donde se ponga la raya. La medicion es limpia.
+
+NO SE ADOPTA, y la razon no es la medicion. El criterio de D-031 era «demuestra que
+no estropea» porque aquello arreglaba un desplegable roto. Esto no sale de ninguna
+queja: sale de mirar la regla y notar que un tope fijo es teoricamente feo. Las 48
+absorciones que anade son celdas de una o dos empresas, el efecto es indistinguible
+de cero y el signo es adverso. Un cambio sin problema que resolver no entra.
+
+Queda ARCHIVADO, no descartado: si aparece una queja que este tope resuelva, la
+medicion ya esta hecha y la regla es una linea.
 """
 import gc
 import json

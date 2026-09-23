@@ -3248,3 +3248,148 @@ VENDERORA vs VENDEDORA  coseno 0,8670     (umbral de fusion: 0,95)
 unió la regla ortográfica, no el modelo. Para este tipo de ruido la distancia de edición
 hace todo el trabajo — lo contrario de lo que uno supondría, y coherente con D-030: el
 embedding importa menos de lo que parece.
+
+---
+
+## D-032 — Umbral **relativo** para la fusión por errata. Mide bien y **no se adopta**
+
+**Fecha:** 2026-09-23
+**Origen:** D-031 dejó el tope de la grafía rara en un número fijo (`max_raro` empresas). Un
+tope fijo trata igual a un común de 12 empresas que a uno de 767, cuando lo que dice que
+algo es una errata no es su tamaño absoluto sino **su tamaño frente al del común**.
+**Evidencia:** `research/experimentos/e2_nivel/12_umbral_relativo_de_errata.py`.
+**Estado:** medido y **NO adoptado**. La regla pasa el criterio; no paga.
+
+### La regla
+
+Una sola línea cambia respecto de hoy: el tope de la grafía rara pasa a ser el mayor entre
+el fijo de siempre y una fracción del común.
+
+```python
+tope = (max_raro if frac is None
+        else max(max_raro, frac * emp_por_grupo.get(comun, 0)))
+```
+
+`R05` es `frac = 0,05`; `R10` es `frac = 0,10`. Nunca aprieta —el `max` garantiza que no
+puede absorber menos que hoy—, sólo suelta donde el común es grande.
+
+### Lo medido
+
+Criterio declarado antes de correr: sube la cobertura, el IC de `R05` **no** queda entero
+sobre cero, y el de `R05_plac` **sí**.
+
+| variante | absorciones | pinball | dif vs hoy (IC 95%) | cobertura | |
+|---|---|---|---|---|---|
+| hoy | 593 | 0,13471 | — | 55,4% | |
+| **R05** | **641** | 0,13481 | **+0,00004** [−0,00003, +0,00012] | 55,5% | no empeora |
+| R10 | 667 | 0,13480 | +0,00004 [−0,00003, +0,00012] | 55,5% | no empeora |
+| R05_plac | 641 | 0,13630 | **+0,00119** [+0,00058, +0,00174] | 55,5% | **EMPEORA** |
+
+**Los tres criterios pasan.** El placebo discrimina con holgura: mandar las *mismas* 641
+absorciones a destinos al azar cuesta **30 veces más** que la regla real. Y `R05` y `R10`
+dan el mismo pinball hasta la quinta cifra, que es justo lo que se le pide a un umbral
+relativo: que el resultado no dependa de dónde se ponga la raya.
+
+### Por qué no se adopta, si pasa
+
+Pasar el criterio y merecer entrar en el producto no son lo mismo, y aquí conviene no
+confundirlos.
+
+El criterio de D-031 era **«demuestra que no estropea»**, porque aquello arreglaba el
+desplegable. Este cambio no arregla ningún desplegable roto: no salió de una queja, salió
+de mirar la regla y notar que un tope fijo es teóricamente feo. Las 48 absorciones que
+añade sobre 65.181 títulos son celdas de una o dos empresas y el pinball se mueve **hacia
+arriba** —+0,00004, dentro del ruido, pero el signo es el que es.
+
+Un cambio sin problema que resolver, cuyo efecto medido es indistinguible de cero y de
+signo adverso, no entra. **Queda medido y archivado**, no descartado: si aparece una queja
+concreta que este tope relativo resuelva, la medición ya está hecha y la regla es una
+línea.
+
+---
+
+## D-033 — Candado de **seniority** en la fusión semántica. Adoptado
+
+**Fecha:** 2026-09-23
+**Origen:** 48 pares de la banda 0,93–0,97 juzgados a mano (`13a`). De los 12 juzgados como
+puestos DISTINTOS, el motivo era casi siempre una marca de antigüedad que el léxico de
+rango no ve: `SUPERVISOR CALIDAD` / `SUPERVISOR DE CALIDAD SR`, `CHEF DE COCINA` / `SOUS
+CHEF DE COCINA`, `GERENTE DE INGENIERIA` / `GERENTE CORPORATIVO DE ING.`
+**Evidencia:** `research/experimentos/e2_nivel/14_candado_de_seniority.py`.
+**Estado:** **adoptado**. Requiere reconstruir la base para surtir efecto.
+
+### Por qué un léxico aparte y no dentro de `RANGOS`
+
+`SR` no es un escalón: un `SUPERVISOR DE CALIDAD SR` sigue siendo supervisor. Meterlo en
+`RANGOS` rompería la escalera —medida sobre cinco escalones— y el `lambda` por nivel. Va
+en `SENIORIDAD`, y **sólo sirve para impedir la fusión**, nunca para mover a nadie de
+escalón.
+
+### La selección de palabras, hecha contra los 48 ANTES de escribir el candado
+
+| conjunto | caza (de 12 `no`) | rompe (de 36 `sí`) |
+|---|---|---|
+| solo `SR`/`JR` | 2 | 1 |
+| + `SOUS` | 3 | 1 |
+| **+ `CORPORATIVO`** | **5** | **1** |
+| + `GENERAL` | 5 | 3 |
+| + números y romanos | 5 | 4 |
+
+`GENERAL` fuera: `SUPERVISOR DE ETIQUETADO` y `SUPERVISOR GENERAL DE ETIQUETADO` se
+juzgaron el mismo puesto. Los números tampoco: de los escalones por dígito ya se ocupa
+`_es_errata`. Sumado al candado de escalón que ya existía, los dos cubren **8 de los 12
+`no` con 2 falsos positivos** sobre los 36 `sí` —los dos son del candado viejo, ninguno de
+éste.
+
+### Lo medido
+
+Criterio declarado antes de correr: se adopta si el IC de la diferencia pareada **no** queda
+entero sobre cero y la cobertura **no** cae más de 0,5 puntos.
+
+| variante | grupos | pinball | dif vs hoy (IC 95%) | cobertura |
+|---|---|---|---|---|
+| hoy | 35.788 | 0,13471 | — | 55,4% |
+| **candado** | 35.973 | 0,13465 | **−0,00002** [−0,00004, −0,00001] | 55,4% |
+| candado_general | 36.011 | 0,13466 | −0,00000 [−0,00003, +0,00003] | 55,4% |
+
+**Pasa los dos.** Pero el número agregado no es la evidencia interesante, porque está
+diluido: el candado mueve el valor de 32.155 de los 34.435 votos, y sólo 1.017 de ellos
+llevan marca de seniority. Partido por ahí:
+
+| subconjunto | n | efecto | IC 95% pareado por empresa |
+|---|---|---|---|
+| cargos **CON** marca de seniority | 1.017 | **−0,000725** | **[−0,001274, −0,000221]** |
+| cargos **SIN** marca | 33.418 | −0,000014 | [−0,000034, +0,000007] |
+
+**El efecto está donde el candado actúa, y en ningún otro sitio.** Sobre los cargos tocados
+el intervalo excluye el cero; sobre los 33.418 restantes cruza el cero, es decir el cambio
+de partición no produce daño colateral.
+
+### El placebo que el diseño dijo que no existía, existía
+
+El fichero declara que un candado no admite placebo de permutación: una **fusión** tiene
+destino que barajar, un candado sólo impide uniones. Es cierto para la permutación, pero
+**el grupo sin marca es un control interno**: recibe exactamente el mismo cambio de
+partición y ninguna intervención dirigida. Que ahí el efecto sea indistinguible de cero
+mientras en el tratado excluye el cero es la separación que se quería. Corrige la nota del
+docstring, que decía que este contraste no se podía construir.
+
+### Lo que el contraste `GENERAL` NO demostró
+
+El diseño esperaba que `candado_general` saliera peor y confirmara así que la selección de
+palabras aportaba. **No lo hace:** sobre los cargos con marca da −0,000819
+[−0,001391, −0,000305], estadísticamente indistinguible del candado bueno. El pinball no
+tiene resolución para separar los dos conjuntos.
+
+Dicho claro: **la exclusión de `GENERAL` está justificada por los 48 juicios humanos —3 `sí`
+rotos contra 1—, no por esta medición.** El contraste salió no concluyente y se registra
+como tal.
+
+### La letra pequeña
+
+Un candado **separa**, así que su fallo es el contrario del de una fusión: no contamina una
+celda, la deja delgada. `TECNICO ESPECIALISTA EN MANTENIMIENTO` y `TECNICO DE
+MANTENIMIENTO SR.` se juzgaron iguales y este candado los separa. Es el único falso
+positivo medido, y se paga a cambio de cinco aciertos.
+
+Todo medido sobre `train`. El 20% de test sigue sin tocarse.
