@@ -3393,3 +3393,89 @@ MANTENIMIENTO SR.` se juzgaron iguales y este candado los separa. Es el único f
 positivo medido, y se paga a cambio de cinco aciertos.
 
 Todo medido sobre `train`. El 20% de test sigue sin tocarse.
+
+---
+
+## D-034 — Tres árbitros contra 48 juicios. **No se afina nada**, y la razón es el tamaño
+
+**Fecha:** 2026-09-23
+**Origen:** en la banda 0,93–0,97 los umbrales no separan —`SUPERVISOR PRODUCCION` /
+`SUPERV. PRODUCCION` puntúa 0,941 y `INGENIERO BACK-END` / `INGENIERO FRONT-END` puntúa
+0,940— y hace falta juicio. La pregunta era si merecía la pena entrenar un modelo para eso.
+**Evidencia:** `research/experimentos/e2_nivel/13a_sacar_pares_ambiguos.py` y `13b_comparar_arbitros.py`.
+**Estado:** **no concluyente por diseño insuficiente**. No se adopta ningún árbitro y no se
+afina nada.
+
+### Los tres árbitros
+
+| | |
+|---|---|
+| **coseno** | el bi-encoder que ya decide hoy, corte en 0,95. Línea base |
+| **cross congelado** | `mDeBERTa-v3-base-xnli`, inferencia natural en los dos sentidos, sin una sola etiqueta nuestra. **No supervisado** |
+| **generativo** | Gemini en Vertex, sólo como techo. No es candidato: no es determinista y mete red en la construcción de la base |
+
+Ninguno ve sueldos. Los tres reciben dos cadenas de texto, que es la regla
+anticircularidad: un árbitro que decidiera mirando lo que paga cada lado optimizaría la
+agrupación contra el salario por la puerta de atrás.
+
+### Lo medido
+
+| árbitro | acuerdo | en los `sí` | en los `no` | dice `sí` |
+|---|---|---|---|---|
+| coseno | 28/48 | 20/36 | 8/12 | 24/48 |
+| generativo | 24/48 | 13/36 | **11/12** | 14/48 |
+| cross congelado | 20/48 | 9/36 | **11/12** | 10/48 |
+
+### La lectura que casi me trago
+
+«El cross empata al generativo en los `no`, 11 de 12, y encima es determinista y offline.»
+
+**Es falsa.** El cross contesta `no` **38 de 48 veces** cuando la verdad es `no` 12 de 48.
+Una moneda que dijera `no` a ese mismo ritmo, **sin leer el texto**, acertaría 9,5 de los
+12 por puro sesgo. La última columna no mide detección.
+
+Contra esa moneda —misma tasa de `sí`, texto ignorado, 20.000 simulaciones—:
+
+| árbitro | observado | esperado por sesgo | p |
+|---|---|---|---|
+| coseno | 28/48 | 24,0 | 0,159 |
+| generativo | 24/48 | 19,0 | 0,075 |
+| cross congelado | 20/48 | 17,0 | 0,189 |
+
+**Ninguno de los tres se separa de una moneda sesgada.** Los tres apuntan en la dirección
+buena y ninguno llega.
+
+### Por qué eso no es un fracaso de los modelos
+
+Con n=48 no podía llegar. Si las tasas observadas del cross fueran las verdaderas
+(sensibilidad 0,25, especificidad 0,92), **la potencia de este diseño es del 17%**:
+
+```
+N= 48  17%      N=100  41%      N=200  63%      N=400  92%
+```
+
+El experimento estaba mal dimensionado antes de correrlo, y eso debió calcularse al
+elegir 48. Es el mismo error de D-025 —criterio sin potencia— en otra forma.
+
+### La decisión
+
+**No se afina nada.** Afinar un modelo contra 48 juicios que no distinguen un modelo de una
+moneda es afinar contra ruido, y produciría un número bonito sin contenido.
+
+**El cuello de botella son las etiquetas, no el modelo.** Si se quiere responder esta
+pregunta hay que juzgar ~400 pares. Con eso se decide *y además* se tiene con qué
+entrenar, en ese orden. Hasta entonces el coseno se queda, no porque haya ganado sino
+porque nadie ha demostrado ganarle.
+
+### Una reserva sobre el generativo, que ya estaba dicha antes de ver el número
+
+Su 11/12 salió con un prompt que le da **tres motivos para decir NO y prácticamente
+ninguno para decir SÍ**. Su sesgo hacia el `no` es al menos en parte mío. Un prompt no es
+una evaluación de un modelo, y ese número no debe citarse como «lo que puede un
+generativo».
+
+### Nota de ingeniería
+
+`mDeBERTa-v3-base` en CPU tarda **~10 s por par** en esta máquina (12 hilos). Las 96
+pasadas son ~17 minutos, y dos corridas anteriores murieron por tope de tiempo del
+envoltorio antes de imprimir nada. No era la red: era el cómputo.

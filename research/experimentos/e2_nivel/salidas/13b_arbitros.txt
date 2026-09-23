@@ -1,0 +1,15 @@
+==============================================================================
+ARBITROS CONTRA 48 JUICIOS HUMANOS  (36 si / 12 no)
+==============================================================================
+  arbitro         acuerdo  en los `si`  en los `no`
+  coseno            28/48        20/36         8/12
+C:\Users\pablo.encalada_actua\Documents\REPOS\ACTUALAB\salary-benchmarking\.venv\Lib\site-packages\torch\jit\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+  cross congelado    20/48         9/36        11/12
+
+==============================================================================
+LECTURA: el acuerdo global engana, porque decir `si` siempre acierta el 75%.
+Lo que decide es la ultima columna: detectar los `no` es para lo que se
+quiere un arbitro. Si el cross congelado se acerca al generativo, no hace
+falta entrenar nada; si ninguno de los dos pasa del coseno, tampoco.
+==============================================================================

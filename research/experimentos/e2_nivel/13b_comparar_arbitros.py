@@ -41,6 +41,40 @@ el 75% y no sirve para nada, porque lo que hace falta es justo detectar los `no`
 LO QUE ESTO NO ES. 48 pares no deciden nada por si solos; sirven para descartar lo
 que claramente no funciona y para estimar si merece la pena el paso siguiente. Un
 arbitro que pase de aqui se mide con el protocolo completo, como todo lo demas.
+
+RESULTADO (2026-09-23). NO CONCLUYENTE, Y LA CULPA ES DEL TAMANO. Ver D-034.
+------------------------------------------------------------------------------
+    arbitro           acuerdo   en los `si`   en los `no`   dice `si`
+    coseno              28/48         20/36          8/12       24/48
+    generativo          24/48         13/36         11/12       14/48
+    cross congelado     20/48          9/36         11/12       10/48
+
+LA TENTACION: «el cross empata al generativo en los `no`, 11 de 12». NO SE LEA ASI.
+El cross contesta `no` 38 de 48 veces cuando la verdad es `no` 12 de 48. Una moneda
+que dijera `no` con esa misma frecuencia, SIN LEER EL TEXTO, acertaria 9,5 de los 12
+por puro ritmo. La ultima columna no mide deteccion, mide sesgo.
+
+Contra esa moneda —la misma tasa de `si`, texto ignorado, 20.000 simulaciones—:
+
+    coseno            28/48  contra  24,0 esperados    p = 0,159
+    generativo        24/48  contra  19,0 esperados    p = 0,075
+    cross congelado   20/48  contra  17,0 esperados    p = 0,189
+
+NINGUNO DE LOS TRES SE SEPARA DE UNA MONEDA SESGADA. Los tres van en la direccion
+buena y ninguno llega, que con n=48 es exactamente lo que cabia esperar: si las
+tasas del cross fueran las verdaderas (sens 0,25 / esp 0,92), la potencia de este
+diseno es del 17%.
+
+    N=48  17%     N=100  41%     N=200  63%     N=400  92%
+
+EL CUELLO DE BOTELLA SON LAS ETIQUETAS, NO EL MODELO. Afinar algo contra 48 juicios
+que no distinguen un modelo de una moneda seria afinar contra ruido. El paso
+siguiente, si se quiere responder esta pregunta, es juzgar ~400 pares; con eso se
+decide, y ademas se tiene con que entrenar.
+
+Y OJO CON EL GENERATIVO: su 11/12 salio con un prompt que le da tres motivos para
+decir NO y practicamente ninguno para decir SI. Su sesgo hacia el `no` es al menos
+en parte mio. Un prompt no es una evaluacion de un modelo.
 """
 import pathlib
 import sys
