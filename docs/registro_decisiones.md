@@ -3479,3 +3479,90 @@ generativo».
 `mDeBERTa-v3-base` en CPU tarda **~10 s por par** en esta máquina (12 hilos). Las 96
 pasadas son ~17 minutos, y dos corridas anteriores murieron por tope de tiempo del
 envoltorio antes de imprimir nada. No era la red: era el cómputo.
+
+### Enmienda 1 (2026-09-23, mismo día): el árbitro cross estaba mal montado. Se retracta la conclusión sobre la inferencia natural
+
+**Origen:** objeción del director del trabajo, en voz alta: *«yo creo que estás armando el
+cross-encoder congelado mal, usa un cross-judge para medir si lo hiciste bien y
+corregirte»*. Tenía razón.
+**Evidencia:** `research/experimentos/e2_nivel/13c_arbitros_sin_umbral_fijo.py`.
+
+### El defecto
+
+Al cross se le puso un corte de **0,5** sobre la probabilidad de implicación, exigido
+además **en las dos direcciones**. Ese número no salió de ninguna parte: el coseno
+competía con su 0,95 calibrado en producción y el cross con un 0,5 puesto a dedo.
+
+La comprobación de cordura que debió hacerse **antes** de interpretar nada —juzgar al
+juez sobre casos de respuesta conocida— lo deja a la vista:
+
+| par | verdad | entailment |
+|---|---|---|
+| `CONTADOR` / `CONTADOR` | idéntico | 0,966 |
+| `CONTADOR` / `CONTADORA` | mismo puesto | **0,395** |
+| `SECRETARIA` / `SECETARIA` | errata | 0,740 |
+| `GERENTE GENERAL` / `CONSERJE` | opuesto | 0,001 |
+
+**El corte de 0,5 rechaza `CONTADOR`/`CONTADORA`**, un par que el producto fusiona a
+propósito (D-026). El modelo está sano: en NLI de libro de texto acierta 0,996 / 0,999 /
+0,999 y el mapeo de etiquetas era correcto. Lo que estaba roto era mi regla de decisión.
+
+**El corte óptimo real está en 0,003.** Puse 0,5, unas 170 veces más alto. En pares
+difíciles las probabilidades de implicación viven pegadas a cero —mediana 0,50, mínimo
+0,0007— y exigir el mínimo de las dos direcciones las hunde más. De ahí salía el «contesta
+`no` el 79 % de las veces»: era el umbral, no el juicio del modelo.
+
+### La medición corregida, sin umbral
+
+El AUC no depende del corte, así que compara árbitros en igualdad de condiciones.
+
+| árbitro | AUC | IC 95 % | permutación vs 0,50 | mejor corte |
+|---|---|---|---|---|
+| coseno | 0,601 | [0,410, 0,781] | p = 0,153 | 36/48 |
+| **cross media** | **0,755** | **[0,588, 0,895]** | **p = 0,005** | 38/48 |
+| cross mín (el de `13b`) | 0,725 | | | 38/48 |
+| cross máx | 0,701 | | | 38/48 |
+
+### Lo que se retracta
+
+**«La inferencia natural no es la forma correcta de plantear esta pregunta» era falso.**
+El cross-encoder congelado ordena estos pares claramente mejor que el azar —AUC 0,755, IC
+excluye 0,50, p = 0,005— **sin una sola etiqueta nuestra**. Ahí hay señal real.
+
+**El «20/48» de `13b` no medía el modelo, medía mi umbral.** Queda retirado como lectura
+del cross-encoder.
+
+### Lo que NO se retracta
+
+**El cross sigue sin ganarle al coseno de forma demostrable:** la diferencia es +0,154 con
+IC 95 % [−0,077, +0,389] y P(cross > coseno) = 0,90. Apunta a favor y no llega.
+
+**Y el coseno aquí está medido en su peor terreno**, por construcción: los 48 pares se
+sacaron de la banda 0,93–0,97, donde su propia variación es mínima. Su AUC de 0,601 no es
+su AUC en general; es lo que le queda dentro de la zona donde ya se sabía que no separa.
+No se lea como «el coseno ordena mal».
+
+**Y el diagnóstico de potencia sigue en pie:** n = 48 es poco para decidir esto.
+
+### Lo que cambia en la recomendación
+
+D-034 concluía «no se afina nada» con un tono de *no hay nada que rascar*. **Eso cambia de
+signo.** Un cross-encoder congelado que saca AUC 0,755 en la banda donde el coseno no
+separa es evidencia **a favor** de invertir en esta vía, no en contra.
+
+La conclusión operativa es la misma pero por la razón opuesta: **hay que juzgar ~400
+pares.** Antes era «para descartar»; ahora es **«para explotar»** —con 400 se decide y
+además se tiene con qué afinar—. El orden no cambia: primero las etiquetas, después el
+modelo.
+
+### La lección de método
+
+Un modelo congelado se trae con un umbral que hay que calibrar, y yo lo traté como si
+viniera calibrado. La regla que faltaba: **antes de interpretar el resultado de un árbitro
+nuevo, pasarlo por casos de respuesta conocida** —idéntico, errata, opuesto— y mirar si
+sus puntajes caen donde deben. Diez segundos de comprobación habrían ahorrado una
+conclusión equivocada y firmada.
+
+Vale también para lo que viene: el siguiente candidato natural no es un NLI sino un
+**cross-encoder de reranking**, que puntúa «cuánto tiene que ver A con B» en vez de «A
+implica B». Ese no se ha probado.

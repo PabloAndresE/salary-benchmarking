@@ -1,0 +1,23 @@
+==============================================================================
+ARBITROS SIN UMBRAL FIJO  (36 si / 12 no)
+==============================================================================
+  calculando el cross...
+
+  arbitro                      AUC        mejor corte posible      contra moneda igual
+  coseno                     0.601          36/48 en   0.931       36.0 esp  p=1.000
+  cross media                0.755          38/48 en   0.003       35.0 esp  p=0.024
+  cross min (el de 13b)      0.725          38/48 en   0.002       35.0 esp  p=0.022
+  cross max                  0.701          38/48 en   0.003       35.0 esp  p=0.024
+  cross comun->raro          0.736          38/48 en   0.003       35.0 esp  p=0.024
+  cross raro->comun          0.664          37/48 en   0.002       35.5 esp  p=0.112
+
+  --------------------------------------------------------------------------
+  Y lo que hizo 13b, para que se vea de donde salia:
+    corte fijo en 0,50 -> acierta 20/48, dice `si` 10 veces de 48
+
+==============================================================================
+LECTURA: el AUC no depende del corte, asi que es la comparacion justa. Si el
+cross no le gana ahi al coseno, no hay umbral que lo arregle y la inferencia
+natural no es la forma de plantear esta pregunta. Si le gana, `13b` medio mi
+umbral y no el modelo, y hay que rehacer la conclusion.
+==============================================================================

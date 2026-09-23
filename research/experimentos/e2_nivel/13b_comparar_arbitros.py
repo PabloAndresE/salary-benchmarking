@@ -42,7 +42,21 @@ LO QUE ESTO NO ES. 48 pares no deciden nada por si solos; sirven para descartar 
 que claramente no funciona y para estimar si merece la pena el paso siguiente. Un
 arbitro que pase de aqui se mide con el protocolo completo, como todo lo demas.
 
-RESULTADO (2026-09-23). NO CONCLUYENTE, Y LA CULPA ES DEL TAMANO. Ver D-034.
+ESTE FICHERO MIDIO MAL AL CROSS. LEER `13c` ANTES QUE ESTO.
+------------------------------------------------------------------------------
+El corte de 0,5 sobre la probabilidad de implicacion, exigido ademas en las dos
+direcciones, no salio de ninguna parte: el coseno competia con su 0,95 calibrado
+en produccion y el cross con un numero puesto a dedo. El corte optimo real esta
+en 0,003. El 0,5 rechaza hasta `CONTADOR`/`CONTADORA`, que el producto fusiona a
+proposito, y `SECRETARIA`/`SECETARIA` se queda en 0,740.
+
+Sin umbral fijo, el cross saca AUC 0,755 [0,588, 0,895] contra 0,601 [0,410,
+0,781] del coseno. El «20/48» de abajo medía mi umbral, no el modelo.
+
+Ver `13c_arbitros_sin_umbral_fijo.py` y D-034 Enmienda 1.
+
+RESULTADO DE ESTA CORRIDA, que se conserva solo como registro de lo que fallo.
+Ver D-034.
 ------------------------------------------------------------------------------
     arbitro           acuerdo   en los `si`   en los `no`   dice `si`
     coseno              28/48         20/36          8/12       24/48
