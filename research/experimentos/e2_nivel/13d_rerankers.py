@@ -130,7 +130,8 @@ def puntuar(j):
     col = {}
     for clave, (nom, ruta) in MODELOS.items():
         tok = AutoTokenizer.from_pretrained(ruta)
-        mod = AutoModelForSequenceClassification.from_pretrained(ruta)
+        # fp32 explicito: con dtype automatico un checkpoint fp16 va ~10x mas lento en CPU
+        mod = AutoModelForSequenceClassification.from_pretrained(ruta, dtype=torch.float32)
         mod.eval()
 
         a = [str(x) for x in j["comun"]]
@@ -199,7 +200,7 @@ def main():
     if CACHE_NLI.exists():
         n = pd.read_csv(CACHE_NLI, encoding="utf-8")
         arb["cross NLI media"] = (n["ab"].to_numpy() + n["ba"].to_numpy()) / 2
-    for clave, etq in (("bge-reranker", "bge-reranker"), ("mmarco", "mmarco DESCALIF")):
+    for clave, etq in (("bge", "bge-reranker"), ("mmarco", "mmarco DESCALIF")):
         ab, ba = d[clave + "_ab"].to_numpy(), d[clave + "_ba"].to_numpy()
         arb[etq + " media"] = (ab + ba) / 2
         arb[etq + " min"] = np.minimum(ab, ba)

@@ -62,8 +62,10 @@ def cargar_juicios():
 def puntajes_cross(j):
     """Probabilidad de implicacion en las DOS direcciones, por lotes.
 
-    En lotes porque de una en una son 7,5 s/par y en lotes de 16 son 2,8 s: el coste
-    esta en el arranque de cada pasada, no en el calculo.
+    Los pesos se fuerzan a float32: el checkpoint viene en float16 y transformers 5 lo
+    carga tal cual, y en CPU el fp16 es ~10x mas lento. Medido en lotes de 16 con 4
+    hilos: 954 ms/par en fp16, 90 ms/par en fp32. Los 2,8 s/par que se anotaron antes
+    eran el fp16, no el arranque de cada pasada.
     """
     if CACHE.exists():
         d = pd.read_csv(CACHE, encoding="utf-8")
@@ -76,7 +78,8 @@ def puntajes_cross(j):
 
     torch.set_num_threads(4)        # medido: 4 hilos > 12 > 1 en esta maquina
     tok = AutoTokenizer.from_pretrained(MODELO_CROSS)
-    mod = AutoModelForSequenceClassification.from_pretrained(MODELO_CROSS)
+    mod = AutoModelForSequenceClassification.from_pretrained(MODELO_CROSS,
+                                                             dtype=torch.float32)
     mod.eval()
     etq = [mod.config.id2label[i].lower() for i in range(mod.config.num_labels)]
     i_ent = next(k for k, e in enumerate(etq) if "entail" in e)
