@@ -1,0 +1,60 @@
+CUARTA PASADA: CLAVE DURA (titulo sin puntuacion)
+==============================================================================
+  hoy            {'erratas': 593}
+  D_dura         {'erratas': 593, 'clave_dura': 58}
+  D_dura_plac    {'erratas': 593, 'clave_dura': 58, 'absorciones_plac': 65}
+
+  absorciones nuevas por clave dura: 58
+
+  votos evaluados (empresa, cargo): 34,435
+  votos donde la absorcion CAMBIA la rama: 5
+
+  variante            pinball        dif vs hoy (IC95)    cobertura
+  hoy                 0.13471                        -        55.4%
+  D_dura              0.13470  -0.00001 [-0.00003,-0.00000]        55.5%
+  D_dura_plac         0.13481   0.00005 [-0.00009,+0.00020]        55.5%
+
+==============================================================================
+LECTURA: se adopta si la cobertura sube, el IC de D_dura no queda entero
+sobre cero, y el de D_dura_plac SI. Si los dos quedan igual, la regla no
+aporta: daria lo mismo donde caiga la gente.
+==============================================================================
+
+VEREDICTO: NO CONCLUYENTE. No se adopta.
+
+  1. cobertura sube          SI   55,4% -> 55,5%
+  2. D_dura no empeora       SI   IC entero por DEBAJO de cero
+  3. el placebo SI empeora   NO   su IC cruza el cero
+
+Falla el tercero, que es el que decide. Y la causa esta en la linea de arriba: de
+34.435 votos evaluados, la absorcion cambia la rama en CINCO. El placebo no puede
+discriminar con cinco observaciones; su intervalo es ancho porque no tiene datos,
+no porque la senal sea debil.
+
+Encaja con lo medido despues sobre `base_v15`: de los 97 pares de clave dura, los
+97 tienen el lado chico por debajo del suelo de 3 empresas. Son grupos que YA se
+respondian por analogia y que ahora van por analogia con un vecino algo mejor. El
+voto apenas se mueve, asi que no hay de donde sacar senal.
+
+Mismo desenlace que D-025 en su primera medicion y por la misma razon: "no
+validada, solo no contradicha". Lo que NO se puede decir es que funcione.
+
+QUE HACER EN SU LUGAR. Dimensionando las bolsas de mejora sobre `base_v15`:
+
+  bolsa                                   pares  personas  % gente  bajo suelo
+  clave dura (esta)                          97       816    0,08%    97 de 97
+  errata: lado raro con >2 empresas         254    12.508    1,25%     0 de 254
+  errata: comun con <8 caracteres            45     2.400    0,24%    31 de 45
+  errata: pasa todos los filtros y no une    37       337    0,03%    37 de 37
+
+La segunda toca quince veces mas gente Y ninguno de sus lados chicos esta bajo el
+suelo: hoy se responden con datos propios, partidos en dos. Ahi el efecto deberia
+verse y el placebo deberia tener con que discriminar. Casos:
+
+  ASISTEMTE CONTABLE        43  ->  ASISTENTE CONTABLE       1698   dif 0%
+  AUXILIAR DI LIMPIEZA      41  ->  AUXILIAR DE LIMPIEZA      446   dif 0%
+  GERENTE ADMINISTRATIVA-FI 49  ->  GERENTE ADMINISTRATIVA F  157   dif 1%
+
+Los separa `MAX_EMPRESAS_ERRATA = 2`, cuyo comentario dice "un dedazo no lo teclean
+tres empresas". A esta escala eso es falso: con 6.722 empresas tecleando,
+`ASISTEMTE CONTABLE` lo escriben 43.
