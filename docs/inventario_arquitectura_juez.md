@@ -20,6 +20,8 @@ del repositorio.**
 | `research/experimentos/e2_nivel/salidas/13e_pares_400.csv` | metadatos del oro: grupos, `sim`, estrato y la partición `calibra`/`prueba` | local |
 | `research/experimentos/e2_nivel/salidas/13_para_juzgar.csv` | los 48 juicios anteriores (`13a`); los excluye `16` | local |
 | `research/experimentos/e2_nivel/salidas/16_respuestas_llm.csv` | **la plata**: respuestas de Gemini sobre el lote de 10.000 | local |
+| `research/experimentos/e2_nivel/salidas/18_para_juzgar.csv` | los 139 pares en que Gemini se contradijo, **para juzgar a mano** (Enmienda 1 de D-036). Una vez juzgados son irreemplazables | local |
+| `research/experimentos/e2_nivel/salidas/18_meta.csv` | metadatos de los 139: par de `16` y lo que dijo Gemini en cada orden. No abrir antes de juzgar | local |
 | `research/experimentos/e2_nivel/salidas/15_respuestas_llm.csv` | respuestas del piloto sobre los 400 (validan el montaje, D-035) | local |
 
 ## 2. Diseño y decisiones
@@ -45,8 +47,10 @@ del repositorio.**
 | `research/experimentos/e2_nivel/16_lote_de_10000.py` | el lote de plata: excluye los cargos del oro, partición por cargo, negativos difíciles | versionado |
 | `research/experimentos/e2_nivel/17_lineas_base_agrupamiento.py` | **fila 1 de la tabla factorial**: coseno × {componentes conexas, pivote, Leiden, HDBSCAN sobre PCA y UMAP}, Recall@K, estabilidad. Necesita el grupo opcional `agrupamiento` de `pyproject.toml` | versionado |
 
+| `research/experimentos/e2_nivel/18_incoherentes_a_juzgar.py` | saca a un CSV ciego los 139 pares de la plata en que Gemini se contradijo entre órdenes | versionado |
+
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `18_…` en adelante.
+añaden aquí con el número que les toque, `19_…` en adelante.
 
 ## 4. Salidas de los guiones
 
