@@ -1,0 +1,30 @@
+==============================================================================
+19 · POTENCIA DE H1 ANTES DE ABRIR `prueba`
+==============================================================================
+
+calibra: 200 pares (144 si, 56 no). prueba NO se abre.
+
+AUC en calibra (bootstrap pareado estratificado, 10,000 remuestreos)
+  coseno            0.688
+  NLI media         0.748   diferencia +0.061  IC95 [-0.039, +0.159]  ee 0.050
+  NLI producto      0.737   diferencia +0.049  IC95 [-0.056, +0.150]  ee 0.052
+
+REFERENCIA: NLI media, diferencia observada +0.061, ee con 200 pares 0.050
+  medio ancho del IC95 de la DIFERENCIA con 200 pares: +/-0.099
+
+POTENCIA de H1 = P(IC95 de la diferencia entero sobre 0)
+  (aprox. normal; ee escalado por raiz(200/n); misma mezcla de estratos)
+
+      efecto   n=200   n=300   n=400   n=600   n=800
+      +0.050    17%     23%     29%     41%     51%
+      +0.061    23%     32%     40%     56%     68%
+      +0.075    32%     45%     56%     73%     85%
+      +0.100    51%     68%     80%     93%     98%
+      +0.150    85%     95%     99%    100%    100%
+
+  n necesario para 80% de potencia:
+    efecto +0.050  ->  ~1,591 pares
+    efecto +0.061  ->  ~1,069 pares
+    efecto +0.075  ->  ~707 pares
+    efecto +0.100  ->  ~398 pares
+    efecto +0.150  ->  ~177 pares

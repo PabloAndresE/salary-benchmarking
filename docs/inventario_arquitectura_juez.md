@@ -22,6 +22,8 @@ del repositorio.**
 | `research/experimentos/e2_nivel/salidas/16_respuestas_llm.csv` | **la plata**: respuestas de Gemini sobre el lote de 10.000 | local |
 | `research/experimentos/e2_nivel/salidas/18_para_juzgar.csv` | los 139 pares en que Gemini se contradijo, **para juzgar a mano** (Enmienda 1 de D-036). Una vez juzgados son irreemplazables | local |
 | `research/experimentos/e2_nivel/salidas/18_meta.csv` | metadatos de los 139: par de `16` y lo que dijo Gemini en cada orden. No abrir antes de juzgar | local |
+| `research/experimentos/e2_nivel/salidas/20_para_juzgar.csv` | **los 400 pares nuevos de `prueba`** (Enmienda 2 de D-036), para juzgar a mano. Bloquean H1. Una vez juzgados son irreemplazables | local |
+| `research/experimentos/e2_nivel/salidas/20_pares_400.csv` | metadatos de los 400: grupos, `sim`, estrato, tramo. No abrir antes de juzgar | local |
 | `research/experimentos/e2_nivel/salidas/15_respuestas_llm.csv` | respuestas del piloto sobre los 400 (validan el montaje, D-035) | local |
 
 ## 2. Diseño y decisiones
@@ -49,8 +51,11 @@ del repositorio.**
 
 | `research/experimentos/e2_nivel/18_incoherentes_a_juzgar.py` | saca a un CSV ciego los 139 pares de la plata en que Gemini se contradijo entre órdenes | versionado |
 
+| `research/experimentos/e2_nivel/19_potencia_h1.py` | potencia de H1 con el NLI congelado sobre `calibra`; motivo de ampliar `prueba` a 600 | versionado |
+| `research/experimentos/e2_nivel/20_ampliar_prueba.py` | los 400 pares nuevos de `prueba`, del censo de `16`, sin grupos de la plata | versionado |
+
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `19_…` en adelante.
+añaden aquí con el número que les toque, `21_…` en adelante.
 
 ## 4. Salidas de los guiones
 
@@ -64,6 +69,8 @@ añaden aquí con el número que les toque, `19_…` en adelante.
 | `salidas/16_para_llm.csv` | lo único que ve el LLM: `n`, `comun`, `raro` | local |
 | `salidas/16_censo.parquet` | censo de pares de donde sale el lote | local |
 | `salidas/17_lineas_base.txt` | líneas base de D-036; solo agregados, sin títulos | versionado |
+| `salidas/19_potencia_h1.txt` | tabla de potencia de H1; solo agregados | versionado |
+| `salidas/19_puntajes_nli_calibra.csv` | puntajes del NLI congelado sobre `calibra` (caché de `19`) | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)
 

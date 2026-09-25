@@ -3804,7 +3804,8 @@ base, solo `calibra`). Diagrama: <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeS
 (privado). Inventario de archivos: `docs/inventario_arquitectura_juez.md`.
 **Estado:** **diseño registrado antes de entrenar.** H1 queda fija aquí; nada de lo que
 sigue se ha medido contra `prueba`. **La Enmienda 1, al final, cambia la selección de
-modelo a `calibra` y añade el oro lejano y la capa A0.**
+modelo a `calibra` y añade el oro lejano y la capa A0; la Enmienda 2 amplía `prueba` a 600
+pares y añade H1b.**
 
 ### El cambio de eje
 
@@ -4156,3 +4157,143 @@ secundario.
 2. Entrenar B por pasos con la grilla de arriba (con la plata que ya hay).
 3. En paralelo: diseñar el agrupamiento del oro lejano y, si hay permiso, la capa A0.
 4. Rehacer la línea base de C con la regla del punto 8.
+
+### Enmienda 2 (2026-09-25, antes de abrir `prueba` y de entrenar): `prueba` pasa a 600, H1b y la operación
+
+**Origen:** revisión con otra sesión de Claude y con el autor. El punto que decide es la
+potencia de H1, medida hoy.
+**Evidencia:** `research/experimentos/e2_nivel/19_potencia_h1.py` (solo `calibra`) y
+`20_ampliar_prueba.py` (los 400 pares nuevos, aún sin juzgar).
+
+#### 1. Con 200 pares, H1 sale inconclusa aunque B sea mejor
+
+`19` corre el NLI congelado sobre los 200 de `calibra`, con la plantilla fija, y lo compara
+con el coseno por bootstrap pareado estratificado (10.000 remuestreos):
+
+| | AUC | diferencia con el coseno | IC 95 % |
+|---|---|---|---|
+| coseno | 0,688 | | |
+| NLI congelado, media de las dos direcciones | 0,748 | +0,061 | [−0,039, +0,159] |
+
+El medio ancho del IC 95 % **de la diferencia** con 200 pares es **±0,099**, no los ±7 puntos
+de un AUC suelto. Potencia de H1, aproximación normal con el error estándar escalado por
+raíz(200/n):
+
+| efecto real de B | n = 200 | 400 | 600 | 800 |
+|---|---|---|---|---|
+| +0,061 (lo que ya da el NLI sin entrenar) | 23 % | 40 % | 56 % | 68 % |
+| +0,075 | 32 % | 56 % | 73 % | 85 % |
+| +0,10 | 51 % | 80 % | 93 % | 98 % |
+| +0,15 | 85 % | 99 % | 100 % | 100 % |
+
+**Decisión: `prueba` pasa de 200 a 600 pares.** Con 600 se detecta una mejora de ~+0,08 con
+~80 % de potencia. No se baja a 400: con el plazo de diciembre, la carga de juicio cabe (ver
+el punto 8).
+
+#### 2. Los 400 pares nuevos (`20`)
+
+- **Mismo marco que `13e`:** pares entre grupos distintos de `base_v15` con coseno
+  0,90–1,01, del censo de `16`, con los mismos estratos y los cuatro tramos de la banda.
+- **Excluidos:** cualquier par que toque un grupo de la plata (los 139 incoherentes están
+  dentro), porque B se entrena con esos cargos; y los pares ya juzgados de `13e` y `13a`.
+- **El estrato alto está agotado.** De 126 pares con coseno ≥ 0,97 en todo el censo quedan
+  6 tras las exclusiones. Se toman los 6 y los 54 que faltan pasan a la banda, que es la
+  regla de `16`. Composición de los 400: bajo 60, banda 334 (84/84/83/83 por tramo), alto 6.
+- **Juicio ciego con la v3 congelada**, en 8 lotes de 50, sin `sim`, estrato ni partición.
+  Estos pares **no se usaron para escribir la rúbrica**, así que atenúan el límite de
+  D-035 de que la v3 se escribió viendo `prueba`.
+
+**La comparación principal es sobre los 600 juntos, pase lo que pase.** Se reporta además el
+AUC por estrato y por separado en los 200 originales y en los 400 nuevos. Si el AUC del
+coseno difiere entre las dos mitades con un IC que excluya el cero, se declara la
+heterogeneidad, pero la vara no cambia. Queda fijado ahora para que no se decida viendo los
+números.
+
+Composición de los 600: bajo 90, banda 474, alto 36. Hay menos alto que en `13e` y más
+banda, la zona difícil.
+
+#### 3. H1 queda bilateral
+
+No se pasa a una prueba unilateral. Declararla ahora, después de ver +0,061 en `calibra` y
+una tabla de potencia, se leería como un ajuste hecho a medida (unilateral al 0,05 es
+bilateral al 0,10). Con 600 pares no hace falta.
+
+#### 4. H1b (secundaria): B contra el NLI congelado
+
+La pregunta interesante para la tesis no es si B le gana al coseno —el NLI sin entrenar ya
+va +0,061 adelante— sino **si ajustar aporta sobre el modelo sin ajustar**. D-036 ya pedía
+reportar esa diferencia sin criterio de adopción; aquí se le pone número a su potencia con
+600 pares:
+
+| efecto de B sobre el NLI | potencia |
+|---|---|
+| +0,03 | ~18 % |
+| +0,05 | ~41 % |
+
+Es conservadora: B parte del NLI y sus puntajes estarán correlacionados, lo que achica el
+error de la diferencia. **No se promete significancia.** Si sale inconclusa, se reporta como
+tal.
+
+#### 5. La plantilla del cross y una corrección que sube la vara
+
+**Plantilla fija:** `«El puesto de trabajo es {Título}.»`, con el título en formato de
+título, la de `13c`. Es la que dio AUC 0,748 en `calibra` y 0,755 en los 48.
+
+**Corrección:** D-036 decía «AUC del coseno en estos pares: 0,616». Ese número salió de
+`17`, que compara los **representantes de grupo** y no los títulos juzgados. **Sobre los
+títulos juzgados, el AUC del coseno es 0,688.** Las métricas de agrupamiento de `17` siguen
+valiendo porque trabajan por grupo. **La línea base es más alta de lo que decía D-036, así
+que el margen que tiene que ganar B es más chico**, y se corrige antes de entrenar para que
+no parezca que la meta se movió.
+
+#### 6. El oro lejano, en dos fases y con tope
+
+Juzgar a mano 100 anclas con candidatos hasta el rango 500 serían decenas de miles de
+juicios. El diseño queda así:
+
+1. **50 anclas** al azar con respaldo suficiente.
+2. **Tope por fuente y ancla:** los 50 primeros del coseno, los 50 primeros de la
+   descripción (A0) y hasta 20 que proponga Gemini. Sin repetidos, ~100 por ancla, ~5.000
+   pares.
+3. **Gemini filtra** los ~5.000 con la rúbrica v3.
+4. **Juicio humano de todos los `si` de Gemini** y de una **muestra estratificada de sus
+   `no`**, sobremuestreando los que vienen de la descripción y los de rango de coseno alto,
+   que es donde viven los sinónimos perdidos. El 5 % al azar no alcanza: con ~240 pares y
+   pocos sinónimos perdidos, el factor de corrección tendría un error enorme.
+5. Los recalls se corrigen con el inverso de la probabilidad de inclusión
+   (Horvitz-Thompson), y se parte en `calibra`/`prueba` antes de juzgar.
+
+Juicio estimado: ~500 pares. **Tres límites declarados:** el recall es relativo a lo
+agrupado; depende de la muestra de `no` de Gemini; y **la fuente Gemini la filtra Gemini**,
+así que su recall sale inflado frente a las otras. A favor: Gemini junta de más (kappa por
+estrato, D-035), así que probablemente se le escapan pocos.
+
+#### 7. Operación del producto
+
+- **Latencia:** consultar un título nuevo cuesta una llamada a Gemini y ~50 pases del cross,
+  varios segundos en CPU. Si Gemini falla o tarda, se recupera **solo por título** y la
+  descripción se completa en segundo plano. **El informe dice qué fuentes se usaron**,
+  porque repetir la consulta con la descripción lista puede dar otra respuesta.
+- **Deriva:** los títulos nuevos se asignan a grupos existentes y no se reagrupan en el
+  momento. Se reconstruye todo con C cada 3 a 6 meses, junto con el reentrenamiento del
+  adaptador. Entre reconstrucciones, un título queda solo cuando unirse a cualquier grupo
+  cuesta más que quedarse aparte: el criterio de C, sin umbral nuevo.
+- **Versiones:** cada base lleva versión, y se reporta cuánto cambió respecto de la anterior
+  (ARI entre versiones y cargos cuya banda se movió más que su propia incertidumbre).
+
+#### 8. Carga de juicio y orden de trabajo
+
+| qué | pares | horas (20–30 s por par) | bloquea |
+|---|---|---|---|
+| **los 400 nuevos de `prueba`** | 400 | ~2,5–3,5 | **H1** |
+| los 139 incoherentes | 139 | ~1 | el entrenamiento de B (mejora, no bloquea) |
+| oro lejano | ~500 | ~3–4 | el Recall de A (secundario) |
+| **total** | ~1.040 | **~6,5–8,5 h** | |
+
+El ritmo de 20–30 s por par es un supuesto: se cronometra el primer lote de 50.
+
+**Aclaración:** los 200 originales de `prueba` **ya tienen juicio humano** (los 400 de `13e`
+están completos). Lo que D-035 llama «juzgar `prueba` con la v3» es correr **Gemini** sobre
+`prueba` una sola vez con `15_piloto_llm.py`, para reportar su acuerdo con el juez; no es
+trabajo a mano ni abre `prueba` para elegir modelo. La Enmienda 1 lo nombraba igual y debe
+leerse así.
