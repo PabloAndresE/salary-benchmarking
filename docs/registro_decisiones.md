@@ -3803,7 +3803,8 @@ cuatro arquitecturas propuestas por Gemini, y de todas se tomaron piezas (ver ab
 base, solo `calibra`). Diagrama: <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeSfZW>
 (privado). Inventario de archivos: `docs/inventario_arquitectura_juez.md`.
 **Estado:** **diseño registrado antes de entrenar.** H1 queda fija aquí; nada de lo que
-sigue se ha medido contra `prueba`.
+sigue se ha medido contra `prueba`. **La Enmienda 1, al final, cambia la selección de
+modelo a `calibra` y añade el oro lejano y la capa A0.**
 
 ### El cambio de eje
 
@@ -4006,3 +4007,152 @@ normalización y similitud de títulos de cargo.
 2. Entrenar B por pasos: simétrico, luego direccional, luego motivo y peso por nivel.
 3. Destilar A; completar la tabla factorial; utilidad aguas abajo.
 4. En paralelo: literatura para la novedad; más oro o un segundo anotador sobre una muestra.
+
+### Enmienda 1 (2026-09-25, antes de entrenar): selección en `calibra`, oro lejano y recuperación por unión de fuentes
+
+**Origen:** revisión del prerregistro con otra sesión de Claude y con el autor, antes de
+ajustar un solo peso. Todo lo que sigue se registra **antes** de ver cualquier resultado de B.
+**Evidencia nueva:** la tabla de rangos de abajo (medida sobre `base_v15`) y el recuento de
+incoherencias de la plata (`salidas/16_respuestas_llm.csv`, ya completa: 20.000 respuestas,
+cero errores).
+
+#### El hallazgo que motiva la mitad de esta enmienda
+
+El Recall@25 = 0,97 de `17` solo describe la franja que el oro ve (coseno ≥ 0,90). Con
+sinónimos de palabras distintas —pares elegidos para ilustrar, **no juzgados**— la
+recuperación por coseno no funciona:
+
+| par | coseno | rango del grupo entre los vecinos |
+|---|---|---|
+| `JEFE DE TALENTO HUMANO` / `JEFE DE RECURSOS HUMANOS` | 0,881 | 46 |
+| `GUARDIA` / `AGENTE DE SEGURIDAD` | 0,706 | 122 |
+| `CHOFER` / `CONDUCTOR` | 0,588 | 1.601 |
+| `VENDEDOR` / `ASESOR COMERCIAL` | 0,683 | 2.076 |
+| `MENSAJERO` / `MOTORIZADO` | 0,589 | 11.131 |
+
+Ninguno está hoy en el mismo grupo, y con k = 20–25 ninguno llegaría al cross.
+
+**Esto corrige en parte a D-012**, que concluía que «los embeddings sí resuelven los
+sinónimos». Los resuelven para variaciones cercanas del mismo texto, no para sinónimos de
+vocabulario distinto. D-030 ya lo había visto de lado (`DENTISTA` puntúa 0,752 con
+`TELEFONISTA` y 0,763 con `ODONTOLOGA`).
+
+#### Lo que cambia
+
+**1. La selección de modelo se hace en `calibra`, no en la plata `valida`.** Reemplaza la
+frase de D-036 «la plata `valida` elige época e hiperparámetros». Elegir con la plata es
+elegir el modelo que mejor imita a Gemini.
+- `prueba` sigue cerrada: elegir con ella invalidaría H1.
+- Con 200 pares (144 `si`, 56 `no`) y AUC ~0,75, el IC 95 % del AUC es de **±7 puntos**
+  (Hanley y McNeil). Por eso la grilla es chica y se fija aquí: **w ∈ {1, 2, 3} × aumento
+  {con, sin}**, seis configuraciones, con el peso del motivo fijo en 0,3. w = 1 es el control.
+- Las diferencias entre configuraciones se miden con bootstrap pareado. **Regla de
+  desempate:** si la mejor no le gana a la más simple con un IC que excluya el cero, se
+  elige la más simple.
+- La plata `valida` se reporta al lado. Si elige otro modelo, eso mide cuánto se aleja
+  Gemini del juicio humano.
+- **La calibración por temperatura también se hace en `calibra`**, porque la probabilidad
+  tiene que reflejar el juicio humano.
+- Costo declarado: `calibra` pasa a tener cuatro usos (líneas base, umbral de C, selección y
+  calibración). Sus números serán optimistas; la vara es `prueba`.
+
+**2. Los pares en que Gemini se contradijo entre órdenes no se descartan.** Son **139 de
+10.000 (1,39 %)**, no «la mitad de la señal». Probablemente son la frontera. Entran al
+entrenamiento con **etiqueta blanda 0,5** y se juzgan a mano con la rúbrica v3 y a ciegas.
+Juzgados, **sirven para entrenar, no para evaluar**: están elegidos por ser difíciles para
+Gemini y son una muestra sesgada.
+
+**3. Aumento de datos, las dos formas como filas de la ablación:**
+- **Erratas** solo con los patrones medidos en `10` (letra cambiada, borrada o transpuesta).
+  Se mantienen porque el cross sí las verá: el 1,0 % de la plata (98 pares) difiere en una
+  sola errata, y los títulos de un cliente no pasan por la fusión por errata.
+- **Permutación controlada**: mover los modificadores de seniority (`SR`, `JR`, `I`, `II`) e
+  intercambiar segmentos unidos por `Y` o coma, **sin mover la palabra que nombra el
+  puesto**. En la plata hay 244 pares con las mismas palabras en otro orden, los 244 `si`;
+  la permutación libre fabricaría `GERENTE ASISTENTE` = `ASISTENTE GERENTE`.
+
+**4. El kappa de Gemini se declara por estrato** (v3, `calibra`): **bajo 0,53** (n = 30),
+banda 0,83, alto 1,00; global 0,79/0,80. No es un acuerdo moderado en general: es menos
+fiable justo en el estrato donde el producto hoy no fusiona.
+
+**5. Oro por debajo de 0,90, como requisito.** Sin él no se puede medir si A mejora el
+recall, que es su razón de ser. Al azar no sirve: casi todos los pares lejanos son `no`.
+Se hace por **agrupación de candidatos** (el *pooling* de TREC):
+1. unos 100 grupos ancla al azar, con respaldo suficiente;
+2. candidatos de varias fuentes por ancla: vecinos de coseno hasta el rango ~500, los que
+   proponga Gemini sobre el catálogo y, cuando existan, los de A;
+3. juicio humano ciego de todo lo propuesto, más una muestra al azar del resto;
+4. partición `calibra` / `prueba` **antes** de juzgar.
+
+El recall que sale es **relativo** a lo agrupado, y así se reporta.
+
+**6. Positivos lejanos en el entrenamiento de A y de B.** La plata de `16` sale de 0,90–1,01
+y no tiene ningún `CHOFER` / `CONDUCTOR`. Sin positivos lejanos, el adaptador no puede
+aprender sinónimos que nunca vio, y el cross juzgaría pares distintos de los que vio al
+entrenar. Se sacan del mismo agrupamiento, con **grupos ancla disjuntos de los de
+evaluación**.
+
+**7. Capa nueva, A0: una descripción por título, solo para recuperar.** Gemini escribe una
+descripción corta de cada título («conduce vehículos de la empresa»), se embebe, y la
+recuperación pasa a ser la **unión** de los vecinos del título, los de la descripción y, más
+adelante, los del adaptador.
+- **D-030 no la bloquea:** su plantilla fija dio nulo en la banda pero mejoró los pares
+  (2/5 → 4/5), y con el eje de D-036 lo que manda son los pares.
+- **Nunca entra al juez.** Una descripción puede borrar el nivel («gestiona la bodega» vale
+  para jefe y auxiliar). Como solo agrega candidatos, lo peor que puede costar es cómputo.
+- Reproducible con la disciplina de D-035: versión fija, temperatura 0, caché y hash de la
+  instrucción.
+- Si Gemini falla, la recuperación sigue solo con el título.
+- Se mide cuántos pares nuevos aporta cada fuente, con un tope de k por fuente.
+- **Queda condicionada al permiso** para mandar títulos a Gemini (pendiente desde D-035).
+- En la ablación: solo título, solo descripción, unión.
+
+**8. C: el costo solo cuenta pares observados.** Los pares que no pasaron por el cross, que
+son casi todos, pesan cero. Tratarlos como `no` castigaría justo los sinónimos que la
+recuperación perdió.
+
+```
+costo = Σ sobre pares observados de  [ si cortado × log-odds  +  no juntado × |log-odds| ]
+```
+
+El pivote se corre con **~20 semillas** y se queda la de menor costo, más una **búsqueda
+local** que mueve cada cargo al grupo que más baja el costo hasta que ninguno mejora (Elsner
+y Schudy 2009, a verificar). Se reportan dos estabilidades: ARI entre semillas y ARI contra
+un 80 % de los datos. **Nota sobre `17`:** su pivote sobre el coseno trata lo no observado
+como `no` y usa una sola semilla. Es aceptable como línea base, pero no es la regla de C, y
+se rehará con esta regla para que la comparación sea justa.
+
+**9. Plantilla de entrada del cross, fija desde ya:** la misma que usó `13c`, para que el AUC
+0,755 del NLI congelado siga siendo comparable. Se documenta en el guion de entrenamiento.
+
+**10. Lo que se discutió y no se adopta:**
+
+| propuesta | por qué no |
+|---|---|
+| clasificador ordinal de nivel sobre el embedding | ya medido y descartado: `e2_nivel/01` (98,9 % solo por leer la palabra; 58 % de los títulos sin rango al nivel 1) y `02` (tapar el rango tampoco). El embedding es ciego al nivel (D-012). Sí vale ampliar el léxico de rango con Gemini, validado contra el 38,6 % donde se conoce |
+| bandas por «familia × nivel» | la plata marca `no` cuando cambia el nivel, así que ni A ni C aprenden familias; haría falta otra etiqueta. `e2_nivel/04` ya eligió cómo entra el nivel (título completo + corrección de escalón) |
+| componentes conexas o Louvain para agrupar | percolan y no usan los `no` (`17`: 21.101 grupos en uno; Leiden empata a 0,95 y es menos estable a 0,93) |
+| diccionario de corrección palabra por palabra y lematización | pisa D-025/D-031/D-032 (reglas de errata medidas con placebo) y D-026 (la brecha de género tiene que quedar visible). Puede entrar como rival medido, no como reemplazo |
+| hacer oro de `calibra`/`prueba` con las contradicciones | `calibra` y `prueba` ya existen y se fijaron antes de juzgar; las contradicciones son una muestra sesgada |
+| re-afinar la rúbrica si el acuerdo baja de 80 % | ya se midió (D-035) y la v3 está congelada |
+
+**11. Aparte, como decisión de producto:** la normalización tiene que ser la misma al
+construir y al consultar. Hoy `referenciar()` busca el título exacto y, si no está, va al
+vecindario sin pasar por la fusión por errata: `VENDEROR` de un cliente cae por analogía. Se
+propone una sola función, reusando `_distancia1` y `_es_errata`, que al consultar mapee un
+título nuevo a un título de la base con ≥ 10 empresas si es errata suya. Se medirá
+reinyectando como «de cliente» los títulos que la pasada de erratas absorbió, y se
+registrará como decisión propia al implementarla.
+
+#### Lo que no cambia
+
+H1, H2 y H3 siguen como están. H1 sigue midiéndose una sola vez sobre `prueba` con los 400
+de `13e`. El oro lejano del punto 5 **no entra en H1**: mide el Recall de A, que es un
+secundario.
+
+#### Orden de trabajo que resulta
+
+1. Juzgar `prueba` con la v3 y los 139 incoherentes.
+2. Entrenar B por pasos con la grilla de arriba (con la plata que ya hay).
+3. En paralelo: diseñar el agrupamiento del oro lejano y, si hay permiso, la capa A0.
+4. Rehacer la línea base de C con la regla del punto 8.
