@@ -3480,6 +3480,14 @@ generativo».
 pasadas son ~17 minutos, y dos corridas anteriores murieron por tope de tiempo del
 envoltorio antes de imprimir nada. No era la red: era el cómputo.
 
+> **Corrección (2026-09-23, commit `c885afb`): no era el cómputo, era el tipo de dato.** El
+> checkpoint viene en float16 y transformers 5 lo carga tal cual; en CPU el fp16 va ~10×
+> más lento. Medido en lotes de 16 con 4 hilos: **954 ms/par en fp16, 90 ms/par en fp32**.
+> Forzando `dtype=torch.float32` las probabilidades se mueven como mucho 0,0085, así que
+> ningún AUC publicado cambia. Aparte, con acceso al Hub `from_pretrained` se quedaba
+> colgado más de 10 min con los modelos ya descargados: hay que correr con
+> `HF_HUB_OFFLINE=1`.
+
 ### Enmienda 1 (2026-09-23, mismo día): el árbitro cross estaba mal montado. Se retracta la conclusión sobre la inferencia natural
 
 **Origen:** objeción del director del trabajo, en voz alta: *«yo creo que estás armando el
@@ -3678,3 +3686,107 @@ y llegar por casualidad a la misma conclusión no es haber acertado: es no haber
 **Y queda una tarea para el diseño:** el criterio de potencia de `11` y `12` debe pasar de
 contar cambios de rama a contar **votos con el valor movido**, que es lo que de verdad
 determina si el placebo puede discriminar.
+
+---
+
+## D-035 — Etiquetas de plata con un LLM: la rúbrica v3 y `gemini-3.8-flash` pasan contra 200 juicios
+
+**Fecha:** 2026-09-25
+**Origen:** D-034 cerró con «el cuello de botella son las etiquetas, no el modelo». Juzgar a
+mano los ~10.000 pares que harían falta para ajustar el cross no es viable; la propuesta
+es que los etiquete un LLM y validar antes ese montaje contra juicios humanos.
+**Evidencia:** `research/experimentos/e2_nivel/13e_lote_de_400.py` (el patrón de oro),
+`rubrica_mismo_cargo.md` (v1 → v3) y `15_piloto_llm.py` (el piloto). Las respuestas y los
+juicios son CSV con títulos de clientes y no se versionan (regla LOPDP del `.gitignore`).
+**Estado:** **adoptado para generar etiquetas de entrenamiento.** No toca el producto.
+
+### Por qué no contradice D-034
+
+D-034 descartó al generativo **como árbitro del producto**: no es determinista y mete red en
+la construcción de la base. Aquí no decide nada en el producto. Etiqueta una vez, fuera de
+él, los datos con los que se ajustará el cross; lo que llegaría al producto es ese cross,
+local y determinista.
+
+Y la reserva de D-034 —su 11/12 salió de un prompt con tres motivos para decir `no`— es
+justo lo que este diseño corrige: el LLM recibe la misma rúbrica que el juez humano, y se
+mide contra él antes de usarlo.
+
+### El montaje
+
+- **Patrón de oro:** los 400 pares de `13e`, juzgados a mano y a ciegas (sin `sim`),
+  partidos en 200 `calibra` / 200 `prueba` antes de la primera etiqueta. En `calibra`, el
+  72 % son `si`.
+- **La rúbrica**, cinco pasos en orden. La v1 salió de los 48 de `13a`; la v2 se cerró
+  contra los 400 (un verificador mecánico de los pasos 1, 2, 3 y 5 reproduce las 400
+  etiquetas salvo dos que lee mal). En la revisión se corrigieron 13 etiquetas con el
+  autor; el valor juzgado queda en `mismo_v1`.
+- **El LLM:** `gemini-3.8-flash`, un par por petición (sin arrastrar los anteriores), en
+  los dos órdenes A/B y B/A, temperatura 0, salida JSON con esquema. Solo ve los dos
+  títulos.
+
+### La compuerta, fijada antes de ver una respuesta
+
+El acierto no sirve: con 72 % de `si`, contestar siempre `si` acierta el 72 %. Se usa
+**kappa**, que descuenta el acuerdo por azar. En los dos órdenes: **kappa ≥ 0,60**
+(«sustancial», Landis y Koch 1977), **recall de `no` ≥ 0,70** y **coherencia A/B = B/A ≥
+0,90**. Solo se puntúa `calibra`; el guion no tiene opción para puntuar `prueba`.
+
+### Lo medido, en `calibra`
+
+| | v2 | **v3** |
+|---|---|---|
+| kappa A/B · B/A | 0,640 · 0,662 | **0,790 · 0,802** |
+| recall de `no` | 0,93 · 0,95 | 0,77 · 0,77 |
+| coherencia | 0,970 | **0,995** |
+| kappa por estrato: bajo · banda · alto | 0,29 · 0,67 · 0,84 | **0,53 · 0,83 · 1,00** |
+| desacuerdos | 33 (29 separa de más) | **16** (13 junta de más, 3 separa de más) |
+
+### La v2 pasaba, pero con la medición inflada
+
+La v2 usaba **34 títulos de `calibra` como ejemplos, con su respuesta**, y el LLM los veía.
+Se habían tomado de `calibra` para proteger `prueba`, sin ver que así se contaminaba la
+mitad con la que se decide. En la v3 todos los ejemplos son inventados, y se comprobó por
+búsqueda que ninguno coincide con un título de los 400. **La v3 mejora aun sin esa ayuda.**
+
+### Qué arregló la v3, y qué no se puede arreglar
+
+La v2 separaba de más, y siempre en el paso 4: el juez junta dos títulos que comparten la
+función principal aunque la segunda sea otra, y el texto era más estricto que eso. La v3
+reescribe el paso 4 alrededor de la función principal compartida, y en la duda dice `si`.
+
+El sesgo cambió de sentido: ahora junta algo de más. Pero la mayoría de esos 13 son casos en
+los que **el propio juez no es uniforme**: `SUPERVISOR DE PLANTA` / `… Y PROYECTO` es `no` y
+`JEFE DE DESARROLLO Y PROCESOS` / `… Y GESTION` es `si`, con la misma estructura. Ninguna
+regla escrita reproduce las dos cosas. Por eso **se congela la v3 aquí**: otra vuelta
+ajustaría el ruido de 200 pares y no generalizaría a 10.000.
+
+### Alternativas descartadas
+
+- **Pegar los pares en un chat** (Gemini o Claude): gratis con la suscripción, pero no
+  valida el montaje que etiquetará los 10.000, cada par ve los anteriores, no deja registro
+  reproducible y, en el nivel gratuito, las conversaciones pueden usarse para entrenar.
+- **`gemini-2.5-pro`**: medido solo en la muestra de coste; piensa ~5 veces más por
+  respuesta (977 frente a 199 tokens) y no hace falta si Flash pasa.
+- **Modelos `preview` o alias `-latest`**: cambian por detrás; los 10.000 no serían
+  reproducibles.
+- **Seguir iterando la rúbrica**: ver arriba.
+
+### Límites que hay que declarar
+
+- **La v2 y la v3 se escribieron viendo también `prueba`.** Las reglas se ajustaron a las
+  400 etiquetas, así que el acuerdo en `prueba` saldrá algo optimista.
+- **No se conoce el acuerdo del juez consigo mismo** en el paso 4, que es el techo real del
+  kappa. Se puede acotar re-etiquetando a ciegas ~50 pares de `calibra`.
+- **Un solo juez humano.**
+- **Pendiente de documentar:** el permiso para mandar los títulos a Gemini y el nivel de la
+  cuenta (gratuito o de pago), que decide si Google puede usar lo enviado.
+
+### Reversibilidad
+
+Total. Cada respuesta guarda el hash de la rúbrica con que se pidió, así que otra versión
+no se mezcla con esta y el piloto se puede repetir entero por unos céntimos.
+
+### Siguiente
+
+`prueba` se juzga **una sola vez** con la v3 y queda cerrada hasta la comparación final.
+Después, los ~10.000 pares y la curva de aprendizaje del cross ajustado.

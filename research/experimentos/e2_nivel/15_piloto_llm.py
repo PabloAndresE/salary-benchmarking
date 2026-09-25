@@ -71,6 +71,10 @@ LINEA = "=" * 78
 
 COMPUERTA = {"kappa": 0.60, "recall_no": 0.70, "coherencia": 0.90}
 
+# La rubrica con la que se juzga `prueba` (D-035). `prueba` se juzga UNA vez: si la rubrica
+# cambia, `ejecutar` solo deja iterar sobre calibra.
+RUBRICA_CONGELADA = "118be8eb1105"
+
 INSTRUCCION = """Eres un analista de benchmarking salarial. Vas a recibir dos titulos de
 cargo, A y B. Decide si son el mismo cargo siguiendo EXACTAMENTE la rubrica de abajo:
 recorre los pasos en orden y el primero que diga `no` decide; si ninguno lo dice, es `si`.
@@ -269,6 +273,9 @@ def cmd_estimar(a):
 
 def cmd_ejecutar(a):
     sistema, sha = rubrica()
+    if not a.solo_calibra and sha != RUBRICA_CONGELADA:
+        sys.exit("La rubrica ({}) no es la congelada ({}): `prueba` solo se juzga con la "
+                 "congelada. Para iterar, usa --solo-calibra.".format(sha, RUBRICA_CONGELADA))
     todas = peticiones(a.solo_calibra)
     hechas = ya_hechas(a.modelo, sha)
     falta = todas[[(n, o) not in hechas for n, o in zip(todas.n, todas.orden)]]

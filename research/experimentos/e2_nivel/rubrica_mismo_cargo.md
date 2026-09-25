@@ -176,6 +176,11 @@ No separa:
 
 ## Historial
 
+> **La v3 está CONGELADA (D-035, 2026-09-25).** No se toca nada de lo que va antes de este
+> historial, ni una tilde: su hash (`118be8eb1105`) es lo que identifica las respuestas del
+> LLM, y cambiarlo las deja huérfanas. Cualquier cambio es una v4, y obliga a repetir el
+> piloto. Las notas nuevas van aquí, debajo.
+
 ### v1 (2026-09-23): cuatro contradicciones de los 48 de `13a`
 
 1. **Escalón**: `ASISTENTE` < `ANALISTA` < `COORDINADOR`, y distinto nivel es distinto
