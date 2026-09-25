@@ -74,7 +74,7 @@ def main():
     print("  por particion:", dict(m["particion"].value_counts()))
     print("\n  para juzgar -> {}".format(JUZGAR))
     print("  metadatos   -> {}   (NO abrir antes de juzgar)".format(META))
-    print("\n  rellena `mismo` con si / no / duda, con la rubrica v3. No hay sim ni la")
+    print("\n  rellena `mismo` con si o no (rubrica v3); si dudas, elige y pon `duda` en `nota`. Sin sim ni la")
     print("  respuesta de Gemini, a proposito.")
 
 
