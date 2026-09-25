@@ -36,6 +36,7 @@ USO (la clave se lee de GEMINI_API_KEY; nunca se escribe en ningun sitio):
     python 15_piloto_llm.py ejecutar --modelo M --autorizado
     python 15_piloto_llm.py ejecutar --modelo M --autorizado --solo-calibra   (iterar)
     python 15_piloto_llm.py evaluar
+    python 15_piloto_llm.py etiquetar --modelo M --autorizado [--limite N]   (los 10.000)
 
 `--autorizado` es obligatorio para todo lo que manda titulos a la API: son datos de
 empresas clientes (regla LOPDP del .gitignore) y hace falta el permiso antes. Los precios
@@ -66,6 +67,8 @@ RUBRICA = AQUI / "rubrica_mismo_cargo.md"
 PARES = SAL / "13e_para_juzgar.csv"       # de aqui salen los titulos... y las etiquetas
 META = SAL / "13e_pares_400.csv"          # particion y estrato
 RESPUESTAS = SAL / "15_respuestas_llm.csv"
+LOTE_10K = SAL / "16_para_llm.csv"        # de 16_lote_de_10000.py: n, comun, raro
+RESPUESTAS_10K = SAL / "16_respuestas_llm.csv"
 SEM = 20260923
 LINEA = "=" * 78
 
@@ -124,6 +127,11 @@ def peticiones(solo_calibra=False):
     if solo_calibra:
         m = pd.read_csv(META, sep=";", encoding="utf-8-sig", dtype=str)
         p = p[p.n.isin(m.loc[m.particion == "calibra", "n"])]
+    return dos_ordenes(p)
+
+
+def dos_ordenes(p):
+    assert list(p.columns) == ["n", "comun", "raro"], "se colo una columna en las peticiones"
     ab = p.assign(orden="ab", a=p["comun"], b=p["raro"])
     ba = p.assign(orden="ba", a=p["raro"], b=p["comun"])
     r = pd.concat([ab, ba])[["n", "orden", "a", "b"]]
@@ -183,20 +191,23 @@ def juzgar(cli, modelo, cfg, fila, sha, intentos=6):
     return base
 
 
-def ya_hechas(modelo, sha):
-    if not RESPUESTAS.exists():
+def ya_hechas(modelo, sha, ruta=None):
+    ruta = ruta or RESPUESTAS
+    if not ruta.exists():
         return set()
-    d = pd.read_csv(RESPUESTAS, encoding="utf-8", dtype=str, keep_default_na=False)
+    d = pd.read_csv(ruta, encoding="utf-8", dtype=str, keep_default_na=False)
     d = d[(d.modelo == modelo) & (d.rubrica_sha == sha) & (d.error == "")]
     return set(zip(d.n, d.orden))
 
 
-def correr(filas, modelo, sistema, sha, hilos):
+def correr(filas, modelo, sistema, sha, hilos, ruta=None):
     """Lanza las peticiones y va escribiendo cada respuesta en cuanto llega."""
+    ruta = ruta or RESPUESTAS
     cli, cfg = cliente(), configuracion(sistema)
-    nuevo = not RESPUESTAS.exists()
+    nuevo = not ruta.exists()
     fallos = 0
-    with open(RESPUESTAS, "a", newline="", encoding="utf-8") as fh, \
+    cada = 50 if len(filas) <= 2000 else 500
+    with open(ruta, "a", newline="", encoding="utf-8") as fh, \
             cf.ThreadPoolExecutor(hilos) as ex:
         w = csv.DictWriter(fh, fieldnames=CAMPOS)
         if nuevo:
@@ -207,7 +218,7 @@ def correr(filas, modelo, sistema, sha, hilos):
             fallos += bool(r.get("error"))
             w.writerow({k: r.get(k, "") for k in CAMPOS})
             fh.flush()
-            if i % 50 == 0 or i == len(futs):
+            if i % cada == 0 or i == len(futs):
                 print("    {}/{}  (fallos: {})".format(i, len(futs), fallos), flush=True)
     return fallos
 
@@ -288,6 +299,49 @@ def cmd_ejecutar(a):
         fallos = correr(falta, a.modelo, sistema, sha, a.hilos)
         if fallos:
             print("\n  {} fallaron. Vuelve a lanzar `ejecutar` para reintentarlas.".format(fallos))
+
+
+def cmd_etiquetar(a):
+    """El lote de 16_lote_de_10000.py, con el mismo montaje que paso el piloto (D-035).
+
+    Solo con la rubrica congelada: etiquetar con otra seria usar un montaje que nadie ha
+    validado. `--limite` pide solo los primeros N pares, para ir por tandas y ver el gasto
+    real antes de lanzar el resto; lo ya hecho no se repite."""
+    sistema, sha = rubrica()
+    if sha != RUBRICA_CONGELADA:
+        sys.exit("La rubrica ({}) no es la congelada ({}): este montaje no esta validado."
+                 .format(sha, RUBRICA_CONGELADA))
+    if not LOTE_10K.exists():
+        sys.exit("Falta {}: corre antes 16_lote_de_10000.py.".format(LOTE_10K))
+    p = pd.read_csv(LOTE_10K, sep=";", encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    p = p[["n", "comun", "raro"]]
+    if a.limite:
+        p = p[p.n.astype(int) <= a.limite]
+    todas = dos_ordenes(p)
+    hechas = ya_hechas(a.modelo, sha, RESPUESTAS_10K)
+    falta = todas[[(n, o) not in hechas for n, o in zip(todas.n, todas.orden)]]
+    print(LINEA)
+    print("ETIQUETAR  modelo={}  rubrica={}  pares={:,}".format(a.modelo, sha, len(p)))
+    print("  hechas: {:,}   faltan: {:,}".format(len(todas) - len(falta), len(falta)))
+    print(LINEA)
+    if len(falta):
+        fallos = correr(falta, a.modelo, sistema, sha, a.hilos, RESPUESTAS_10K)
+        if fallos:
+            print("\n  {} fallaron. Vuelve a lanzar `etiquetar` para reintentarlas."
+                  .format(fallos))
+    d = pd.read_csv(RESPUESTAS_10K, encoding="utf-8", dtype=str, keep_default_na=False)
+    d = d[(d.modelo == a.modelo) & (d.rubrica_sha == sha) & (d.error == "")]
+    ent = pd.to_numeric(d.tok_entrada, errors="coerce").sum()
+    sal = (pd.to_numeric(d.tok_salida, errors="coerce").fillna(0)
+           + pd.to_numeric(d.tok_pensamiento, errors="coerce").fillna(0)).sum()
+    w = d.pivot_table(index="n", columns="orden", values="mismo", aggfunc="last")
+    ambos = w.dropna() if {"ab", "ba"} <= set(w.columns) else w.iloc[:0]
+    print("\n  respuestas validas : {:,}   tokens: {:.2f} M entrada, {:.2f} M salida".format(
+        len(d), ent / 1e6, sal / 1e6))
+    if len(ambos):
+        print("  pares con los dos ordenes: {:,}   dicen `no`: {:.1%}   coherencia: {:.3f}"
+              .format(len(ambos), ((ambos.ab == "no") & (ambos.ba == "no")).mean(),
+                      (ambos.ab == ambos.ba).mean()))
 
 
 # ---------------------------------------------------------------------------- evaluar
@@ -399,7 +453,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("modelos", help="lista los modelos de Gemini disponibles")
-    for nombre in ("estimar", "ejecutar"):
+    for nombre in ("estimar", "ejecutar", "etiquetar"):
         p = sub.add_parser(nombre)
         p.add_argument("--modelo", required=True)
         p.add_argument("--hilos", type=int, default=4)
@@ -409,16 +463,18 @@ def main():
             p.add_argument("--precio-entrada", type=float, help="USD / 1M (opcional)")
             p.add_argument("--precio-salida", type=float, help="USD / 1M (opcional)")
             p.add_argument("--muestra", type=int, default=10)
-        else:
+        elif nombre == "ejecutar":
             p.add_argument("--solo-calibra", action="store_true",
                            help="para iterar la rubrica: no juzga los 200 de prueba")
+        else:
+            p.add_argument("--limite", type=int, help="solo los primeros N pares")
     sub.add_parser("evaluar")
     a = ap.parse_args()
-    if a.cmd in ("estimar", "ejecutar") and not a.autorizado:
+    if a.cmd in ("estimar", "ejecutar", "etiquetar") and not a.autorizado:
         sys.exit("Esto manda titulos de empresas clientes a Gemini. Con el permiso ya "
                  "confirmado, repite con --autorizado.")
     {"modelos": cmd_modelos, "estimar": cmd_estimar, "ejecutar": cmd_ejecutar,
-     "evaluar": cmd_evaluar}[a.cmd](a)
+     "evaluar": cmd_evaluar, "etiquetar": cmd_etiquetar}[a.cmd](a)
 
 
 if __name__ == "__main__":
