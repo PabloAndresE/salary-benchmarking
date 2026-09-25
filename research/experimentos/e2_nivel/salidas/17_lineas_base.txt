@@ -1,0 +1,75 @@
+==============================================================================
+17 · LINEAS BASE DE AGRUPAMIENTO SOBRE EL COSENO (fila 1 de D-036)
+==============================================================================
+
+TAMANO DEL PROBLEMA
+  titulos (celdas)            65,181
+  grupos de hoy (atomos)      50,296
+  k=10  ~  251,480 pares unicos x 2 direcciones x 0.09 s =  12.6 h CPU
+  k=20  ~  502,960 pares unicos x 2 direcciones x 0.09 s =  25.1 h CPU
+
+ORO: calibra, 200 pares (144 si, 56 no; 0 sin si/no fuera). prueba NO se abre.
+  AUC del coseno sobre estos pares: 0.616
+
+  calculando top-50 vecinos de 50,296 grupos...
+  listo en 97 s
+
+1. RECALL@K de los pares `si` (rango del mejor de los dos sentidos)
+   ATENCION: solo pares con coseno >= 0,90; lo de abajo el oro no lo ve.
+   todos  n=144  @1=0.64  @5=0.87  @10=0.92  @20=0.96  @25=0.97  @50=0.97
+   bajo   n= 16  @1=0.06  @5=0.44  @10=0.62  @20=0.81  @25=0.81  @50=0.81
+   banda  n=101  @1=0.70  @5=0.92  @10=0.96  @20=0.98  @25=0.99  @50=0.99
+   alto   n= 27  @1=0.74  @5=0.93  @10=0.93  @20=0.96  @25=0.96  @50=0.96
+
+2. AGRUPAMIENTO: precision / recall / F1 / kappa del `si`, sobre calibra
+   producto de hoy: recall 0 por construccion (los 400 cruzan grupos)
+
+   metodo                     t   prec    rec     F1  kappa    mayor  grupos>1
+   componentes conexas     0.90  0.715  0.958  0.819 -0.032   21,101     3,195
+   pivote (corr. clust.)   0.90  0.702  0.410  0.518 -0.028       55     8,478
+   componentes conexas     0.92  0.719  0.889  0.795 -0.005   10,185     3,970
+   pivote (corr. clust.)   0.92  0.756  0.410  0.532  0.052       25     7,204
+   componentes conexas     0.93  0.717  0.826  0.768 -0.015    5,459     3,901
+   pivote (corr. clust.)   0.93  0.768  0.438  0.558  0.073       18     5,869
+   componentes conexas     0.94  0.760  0.660  0.706  0.112      296     3,237
+   pivote (corr. clust.)   0.94  0.782  0.424  0.550  0.088       18     4,016
+   componentes conexas     0.95  0.808  0.438  0.568  0.125       32     1,470
+   pivote (corr. clust.)   0.95  0.810  0.326  0.465  0.088        7     1,588
+   componentes conexas     0.96  0.844  0.264  0.402  0.090       10       594
+   pivote (corr. clust.)   0.96  0.829  0.236  0.368  0.071        4       603
+   componentes conexas     0.97  0.833  0.104  0.185  0.030        3       111
+   pivote (corr. clust.)   0.97  0.833  0.104  0.185  0.030        3       111
+
+   HDBSCAN sobre PCA-32 (ruido = grupo de uno)
+   HDBSCAN mcs=2              -  0.830  0.507  0.629  0.183       24    10,188   ruido 41%, 132 s
+   HDBSCAN mcs=5              -  0.721  0.986  0.833  0.006   45,183         4   ruido 10%, 147 s
+
+3. ESTABILIDAD: ARI completo vs 80% de los grupos (media, minimo de 3)
+   componentes conexas  t=0.93   ARI 0.625 (min 0.621)
+   pivote               t=0.93   ARI 0.918 (min 0.916)
+   componentes conexas  t=0.95   ARI 0.927 (min 0.925)
+   pivote               t=0.95   ARI 0.961 (min 0.957)
+   HDBSCAN PCA mcs=2            ARI 0.797 (min 0.793)
+
+4. LEIDEN (modularidad, peso = coseno) sobre el mismo grafo
+
+   metodo                     t   prec    rec     F1  kappa    mayor  grupos>1
+   Leiden                  0.90  0.708  0.875  0.783 -0.066    1,191     3,286
+   Leiden                  0.92  0.725  0.861  0.787  0.026      654     4,022
+   Leiden                  0.93  0.730  0.806  0.766  0.041      395     3,943
+   Leiden                  0.94  0.766  0.660  0.709  0.128      154     3,244
+   Leiden                  0.95  0.808  0.438  0.568  0.125       32     1,470
+   Leiden                  0.96  0.844  0.264  0.402  0.090       10       594
+   Leiden                  0.97  0.833  0.104  0.185  0.030        3       111
+
+   HDBSCAN sobre UMAP-10 (coseno, 15 vecinos; ruido = grupo de uno)
+   UMAP en 202 s
+   HDBSCAN UMAP mcs=2         -  0.778  0.340  0.473  0.063      100    10,757   ruido 26%, 48 s
+   HDBSCAN UMAP mcs=5         -  0.715  0.611  0.659 -0.012      360     1,757   ruido 29%, 46 s
+
+   estabilidad (ARI completo vs 80%, media y minimo de 3)
+   Leiden               t=0.93   ARI 0.506 (min 0.479)
+   Leiden               t=0.95   ARI 0.920 (min 0.914)
+   HDBSCAN UMAP mcs=2           ARI 0.347 (min 0.334)   (UMAP se reajusta)
+
+  total 1464 s

@@ -16,6 +16,8 @@ dev = ["pytest>=8.0", "ruff>=0.6"]
 # El servicio HTTP es OPCIONAL a proposito: la ruta de investigacion y el CLI no deben
 # arrastrar un framework web, y la imagen del pipeline por lotes tampoco.
 servicio = ["fastapi>=0.110", "uvicorn[standard]>=0.27", "python-multipart>=0.0.9"]
+# Lineas base de agrupamiento de D-036 (`e2_nivel/17`): UMAP antes de HDBSCAN, y Leiden.
+agrupamiento = ["umap-learn>=0.5.12", "leidenalg>=0.12", "igraph>=1.0"]
 [project.scripts]
 benchmarking = "benchmarking.cli:main"
 [build-system]
