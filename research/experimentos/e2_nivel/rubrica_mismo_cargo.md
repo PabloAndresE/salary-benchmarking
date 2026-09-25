@@ -3,7 +3,7 @@
 La siguen igual quien juzga a mano y el LLM. Si las dos partes aplican reglas distintas, el
 acuerdo entre ellas no mide nada.
 
-**Versión 2 — 2026-09-23.** Todo lo que va antes de «Historial» es la rúbrica, y es lo que
+**Versión 3 — 2026-09-25.** Todo lo que va antes de «Historial» es la rúbrica, y es lo que
 recibe el LLM. El historial explica de dónde sale cada regla.
 
 ---
@@ -29,8 +29,8 @@ título completo), vale como cualquiera de los dos: basta con que uno de ellos s
 puesto que el otro título.
 `CAJERO / AUXILIAR DE PERCHA` = `AUXILIAR DE PERCHA`.
 
-Si lo que va tras `/` no es un puesto sino una función más (`SUPERVISOR DE PRODUCCION /
-MANTENIMIENTO`), no es un título doble: es una función añadida (paso 4).
+Si lo que va tras `/` no es un puesto sino una función más (`SUPERVISOR DE EMPAQUE /
+DESPACHO`), no es un título doble: es una función añadida (paso 4).
 
 ## Cómo decidir: cinco pasos, en orden
 
@@ -40,11 +40,11 @@ Recorre los pasos en orden. El primero que diga `no` decide. Si ninguno lo dice,
 
 - **Ortografía, erratas, abreviaturas y espacios de más o de menos**: `SUPERV.` =
   `SUPERVISOR`, `AYUD.` = `AYUDANTE`, `DESAROLO` = `DESARROLLO`, `ADM.` = `ADMINISTRACION`,
-  `SECRETRIA` = `SECRETARIA`, `AUXILIARCONTABLE` = `AUXILIAR CONTABLE`.
+  `BODGA` = `BODEGA`, `AUXILIARCONTABLE` = `AUXILIAR CONTABLE`.
 - **Género y número**: `PROFESORA` = `PROFESOR`, `ENFERMERAS` = `ENFERMERO`.
 - **Conectores, relleno y orden de las palabras**: `DE`, `DEL`, `Y`, `/`, `-`, `EN EL AREA
   DE`. Las mismas palabras en otro orden son el mismo título.
-  `ASISTENTE DE SECRETARIA GENERAL` = `ASISTENTE EN EL AREA DE SECRETRIA GENERAL`.
+  `ASISTENTE DE BODEGA` = `ASISTENTE EN EL AREA DE BODGA`.
 - **Códigos internos de la empresa**: letras sueltas, números de tres cifras o más, y
   números pegados a una abreviatura. `SOLDADOR A` = `SOLDADOR I`,
   `INGENIERO INSPECTOR DE PROYECTOS 132` = `... 108`, `SENIOR` = `SENIOR C`, `PORTERO BR`,
@@ -53,13 +53,13 @@ Recorre los pasos en orden. El primero que diga `no` decide. Si ninguno lo dice,
   `PROFESOR TIEMPO COMPLETO FAC. HUMANIDADES` = `... FAC. HUMANIDADES - ESC. ARTES`.
 - **Traducciones que repiten el título**: `GERENTE DE PROYECTOS 项目经理` = `GERENTE DE
   PROYECTOS`.
-- **`GENERAL`** no es un nivel: `SUPERVISOR DE BODEGA` = `SUPERVISOR GENERAL DE BODEGA`,
+- **`GENERAL`** no es un nivel: `SUPERVISOR DE EMPAQUE` = `SUPERVISOR GENERAL DE EMPAQUE`,
   `JEFE SERVICIOS` = `JEFE DE SERVICIOS GENERAL`.
 
 **Excepción: el grado.** Un ordinal pequeño (del 1 al 9, o del I al X) que aparece en
 **los dos** títulos con valor **distinto** es un grado de la escala interna, y separa →
-`no`. `AUXILIAR 1 DE CONTABILIDAD` ≠ `AUXILIAR 2 DE CONTABILIDAD`, `QUIMICO I` ≠
-`QUIMICO II`, `ASISTENTE CONTABLE 3` ≠ `ASISTENTE CONTABLE 5`. Si el número está en un solo
+`no`. `AUXILIAR 1 DE COCINA` ≠ `AUXILIAR 2 DE COCINA`, `LABORATORISTA I` ≠
+`LABORATORISTA II`, `CAJERO 3` ≠ `CAJERO 5`. Si el número está en un solo
 título, es ruido: `OPERARIO 2 DE EMPAQUE` = `OPERARIO DE EMPAQUE`. Una letra no es un
 grado: `A` frente a `I` sigue siendo ruido.
 
@@ -76,30 +76,29 @@ Estos son los niveles, de menor a mayor:
 | 5 | GERENTE, DIRECTOR, VICEPRESIDENTE, PRESIDENTE |
 
 `ASESOR`, `EJECUTIVO` y `ADMINISTRADOR` están donde los ponen los juicios, no donde
-sugiere el nombre: en estas nóminas un `EJECUTIVO DE COBRANZAS` es personal de primera
+sugiere el nombre: en estas nóminas un `EJECUTIVO DE CUENTAS` es personal de primera
 línea, no un directivo.
 
 **Cómo se lee el nivel de un título:**
 
 - **Es el nivel de quien ocupa el cargo.** Si un título tiene varias palabras de rango,
-  cuenta la **más alta**: `ANALISTA AUXILIAR DE ADMINISTRACION` es un analista,
-  `SUPERVISOR JEFE DE BASE` es un jefe.
+  cuenta la **más alta**: `ANALISTA AUXILIAR DE COMPRAS` es un analista,
+  `SUPERVISOR JEFE DE TURNO` es un jefe.
 - **Lo que va detrás de `DE` / `DEL` no cuenta**: dice a quién apoya, y eso es el paso 5.
-  `ASISTENTE DE ADMINISTRADOR DE CAMPO` es un asistente (nivel 1).
+  `ASISTENTE DE ADMINISTRADOR DE TIENDA` es un asistente (nivel 1).
 - **`TECNICO` y `ESPECIALISTA` solo son palabras de rango si abren el título.** En
   cualquier otra posición, `TECNICO` es un adjetivo y no cuenta (`AUXILIAR TECNICO DE
-  MANTENIMIENTO` es un auxiliar), y `ESPECIALISTA` o `ESPECIALIZADO` son la marca de
+  BODEGA` es un auxiliar), y `ESPECIALISTA` o `ESPECIALIZADO` son la marca de
   senior del paso 3 (`TECNICO ESPECIALISTA` es un técnico senior).
 - **Este paso solo decide si LOS DOS títulos tienen palabra de rango.** Si solo uno la
   tiene, o ninguno, sigue a los pasos siguientes. Las palabras que no están en la tabla
   (`PROGRAMADOR`, `INGENIERO`, `PROFESOR`, `CHOFER`, `VENDEDOR`, `GESTOR`, `LIDER`, …) no
   marcan nivel.
 
-**Distinto nivel → `no`.** `ASISTENTE DE CUSTOMER EXPERIENCE` = `ASESOR DE CUSTOMER
-EXPERIENCE` (los dos nivel 1), pero `EJECUTIVO DE GESTION DE COBRANZAS` ≠ `JEFE DE GESTION
-DE COBRANZAS`, `ADMINISTRADOR FABRICA` ≠ `JEFE ADMINISTRATIVO DE FABRICA`, `ENCARGADO DE
-MATERIALES Y SUMINISTROS` ≠ `JEFE DE MATERIALES Y SUMINISTROS`, `SUBGERENTE DE TIENDA` ≠
-`SUBJEFE DE TIENDA`.
+**Distinto nivel → `no`.** `ASISTENTE DE SERVICIO AL CLIENTE` = `ASESOR DE SERVICIO AL
+CLIENTE` (los dos nivel 1), pero `EJECUTIVO DE CUENTAS` ≠ `JEFE DE CUENTAS`,
+`ADMINISTRADOR DE PLANTA` ≠ `JEFE ADMINISTRATIVO DE PLANTA`, `ENCARGADO DE ARCHIVO` ≠
+`JEFE DE ARCHIVO`, `SUBGERENTE DE AGENCIA` ≠ `SUBJEFE DE AGENCIA`.
 
 ### Paso 3. La antigüedad y el alcance dentro del escalón: si no coinciden, `no`
 
@@ -111,34 +110,43 @@ Y aparte, el **ámbito**: `REGIONAL`, `ZONAL`.
 
 - **Si un título tiene marca y el otro no, o tienen marcas distintas → `no`.**
   `ANALISTA INTELIGENCIA DE NEGOC` ≠ `ANALISTA JUNIOR - INTELIGENCIA DE NEGOCIOS`,
-  `CHEF DE COCINA` ≠ `SOUS CHEF DE COCINA`, `SUPERVISOR CREDITO Y COBRANZA` ≠
-  `SUPERVISOR CORPORATIVO DE CREDITO Y COBRANZA`, `GERENTE DE VENTAS COSTA` ≠
-  `GERENTE REGIONAL DE VENTAS COSTA`, `COORDINADOR REGIONAL DE TALENTO HUMANO` ≠
-  `COORDINADOR ZONAL DE TALENTO HUMANO`.
+  `CHEF DE COCINA` ≠ `SOUS CHEF DE COCINA`, `SUPERVISOR DE GARANTIAS` ≠
+  `SUPERVISOR CORPORATIVO DE GARANTIAS`, `GERENTE DE OPERACIONES SIERRA` ≠
+  `GERENTE REGIONAL DE OPERACIONES SIERRA`, `COORDINADOR REGIONAL DE CREDITO` ≠
+  `COORDINADOR ZONAL DE CREDITO`.
 - **La misma marca con otra grafía no separa.** `JR.` = `JUNIOR`, `SR.` = `SENIOR`,
   `TECNICO ESPECIALISTA EN MANTENIMIENTO` = `TECNICO DE MANTENIMIENTO SR.`
 - **`CORPORATIVO` no cuenta cuando es parte del nombre de un área o de un negocio**
   (`BANCA CORPORATIVA`, `PROCESOS CORPORATIVOS`, `VENTAS CORPORATIVAS`, `CLIENTES
   CORPORATIVOS`): `JEFE DE COMUNICACION` = `JEFE DE COMUNICACION CORPORATIVA`. Sí cuenta cuando
-  dice el alcance del cargo: `JEFE CORPORATIVO DE SEGURIDAD INDUSTRIAL`.
+  dice el alcance del cargo: `JEFE CORPORATIVO DE AUDITORIA`.
 
-### Paso 4. La función: si es otro trabajo, `no`
+### Paso 4. La función PRINCIPAL: si es otra, `no`
 
-- **Otra función u otra área → `no`.** `JEFE DE INGENIERIA Y MANTENIMIENTO` ≠ `JEFE DE
-  INFRAESTRUCTURA Y MANTENIMIENTO`.
-- **Función añadida (`X` frente a `X Y Z`).** Si lo añadido es contiguo a la función
-  principal, es el mismo puesto → `si`: `JEFE DE ALMACEN` = `JEFE ALMACENAMIENTO Y
-  DESPACHO`, `ANALISTA DE BASE DE DATOS` = `ANALISTA DE BASE DE DATOS Y APLICACIONES`.
-  Si lo añadido es **otro oficio, con su propio mercado salarial**, → `no`:
-  `JEFE DE MONTAJE` ≠ `JEFE DE MONTAJE Y SOLDADURA` (la soldadura es un oficio certificado
-  aparte).
-- **Especialidades hermanas.** Si el mercado las contrata y las paga por separado, → `no`:
-  `INGENIERO BACK-END SENIOR` ≠ `INGENIERO FRONT-END SENIOR`. Si es la misma tarea sobre
-  otro objeto, → `si`: `ASISTENTE DE DOCUMENTACION EXPORT JR.` = `ASISTENTE DE
-  DOCUMENTACION IMPORT JR.`
+Son el mismo puesto si comparten la **función principal** —la que los dos títulos nombran
+en común— y el nivel. Este paso se aplica con amplitud: separa poco.
+
+- **Una SEGUNDA función distinta no separa.** `JEFE DE VENTAS Y MARKETING` = `JEFE DE
+  VENTAS Y SERVICIO AL CLIENTE`, `JEFE DE ALMACEN` = `JEFE ALMACENAMIENTO Y DESPACHO`.
+- **Especificar o acotar la misma función no separa.** `ANALISTA DE COMPRAS` = `ANALISTA
+  DE COMPRAS NACIONALES E IMPORTACIONES`, `ANALISTA DE BASE DE DATOS` = `ANALISTA DE BASE
+  DE DATOS Y APLICACIONES`.
+- **La misma tarea sobre otro objeto no separa.** `ASISTENTE DE DOCUMENTACION EXPORT JR.`
+  = `ASISTENTE DE DOCUMENTACION IMPORT JR.`
 - **Nombres distintos para la misma tarea → `si`.** `PROGRAMADOR DE SOFTWARE SENIOR` =
   `ESPECIALISTA DE SOFTWARE SENIOR`, `ANALISTA DE SISTEMAS TELECOMUNICACIONES` =
   `ANALISTA DE TELECOMUNICACIONES`.
+
+Solo separa, → `no`:
+
+- **Función principal distinta**, sin ninguna en común: `JEFE DE COMPRAS` ≠ `JEFE DE
+  TESORERIA`.
+- **Lo añadido es OTRO OFICIO certificado**, con su propio mercado: `JEFE DE MONTAJE` ≠
+  `JEFE DE MONTAJE Y SOLDADURA`.
+- **Especialidades con mercados claramente distintos**: `INGENIERO BACK-END SENIOR` ≠
+  `INGENIERO FRONT-END SENIOR`.
+
+**En la duda** entre dos títulos que comparten la función principal: `si`.
 
 ### Paso 5. A quién apoya: un mando no es un área
 
@@ -149,8 +157,8 @@ mando** —una palabra de nivel 3 o más: `SUPERVISOR`, `COORDINADOR`, `JEFE`, `
 
 No separa:
 - **Si lo apoyado no es un mando** (`TECNICO`, `OPERADOR`, `ADMINISTRADOR`, `CONTROLLER`):
-  `AYUDANTE DE TECNICO` = `AYUDANTE SERVICIO TECNICO`, `ASISTENTE DE ADMINISTRADOR DE
-  CAMPO` = `ASISTENTE ADMINISTRATIVO CAMPO`.
+  `AYUDANTE DE SOLDADOR` = `AYUDANTE DE SOLDADURA`, `ASISTENTE DE ADMINISTRADOR DE
+  TIENDA` = `ASISTENTE ADMINISTRATIVO DE TIENDA`.
 - **Si el área nombrada es la oficina de ese mando**: `GERENCIA` = `GERENTE`, `JEFATURA` =
   `JEFE`, `DIRECCION` = `DIRECTOR`, `SUPERVISION` = `SUPERVISOR`, `COORDINACION` =
   `COORDINADOR`. Apoyar a la gerencia general es apoyar al gerente general.
@@ -203,6 +211,31 @@ los 48 de `13a` reproduce 47; el #38 (`ASISTENTE` / `ANALISTA`) es la regla del 
 LLM en `prueba` sale por eso algo optimista, y hay que decirlo al reportarlo. En el texto
 que recibe el LLM no aparece ningún título de `prueba`: se comprobó por búsqueda, y tres
 que se habían colado (uno ya en la v1) se cambiaron por ejemplos inventados.
+
+### v3 (2026-09-25): el paso 4, tras el piloto con `gemini-3.8-flash`
+
+**El piloto con la v2 pasó la compuerta por poco** (kappa 0,640 / 0,662, recall de `no`
+0,93 / 0,95, coherencia 0,970, AUC 0,880 sobre `calibra`). Y lo hizo con la medición
+inflada: la v2 usaba 34 títulos de `calibra` como ejemplos, con su respuesta, y el LLM los
+veía. Se habían elegido de `calibra` para proteger `prueba`, sin ver que así se contaminaba
+la mitad con la que se decide.
+
+**El desacuerdo tenía una sola dirección.** De 33, 29 eran «juez `si`, LLM `no`», casi
+todos en el paso 4: el juez junta dos títulos que comparten la función principal aunque la
+segunda sea otra, y el texto de la v2 («otro oficio», «especialidades que el mercado paga
+distinto») era más estricto que ese criterio. Etiquetar 10.000 así habría enseñado al
+modelo a separar de más, justo donde el producto ya se queda corto (estrato `bajo`).
+
+**Qué cambia:**
+
+- **El paso 4 se reescribe** alrededor de la función principal compartida, y en la duda
+  dice `si`. Lo aprobó el autor.
+- **Todos los ejemplos que ve el LLM son inventados**, sin ningún título de los 400. Así
+  el acuerdo en `calibra` de la v3 mide la rúbrica, y no la memoria de sus ejemplos.
+- **Choca con dos de los 48** de `13a`, que no son el patrón de oro: #32 (`JEFE DE
+  INGENIERIA Y MANTENIMIENTO` / `… INFRAESTRUCTURA Y MANTENIMIENTO`) y #22 (`JEFE DE
+  PROCESOS Y SISTEMA` / `JEFE ORGANIZACION Y PROCESOS`), juzgados `no` aunque comparten
+  una función. En los 400 el juez resolvió igual casos así con `si` (#296, #300).
 
 ### Pendiente en el código del producto, no en la rúbrica
 

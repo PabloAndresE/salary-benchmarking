@@ -34,6 +34,7 @@ USO (la clave se lee de GEMINI_API_KEY; nunca se escribe en ningun sitio):
     python 15_piloto_llm.py modelos
     python 15_piloto_llm.py estimar  --modelo M --autorizado [--precio-entrada X --precio-salida Y]
     python 15_piloto_llm.py ejecutar --modelo M --autorizado
+    python 15_piloto_llm.py ejecutar --modelo M --autorizado --solo-calibra   (iterar)
     python 15_piloto_llm.py evaluar
 
 `--autorizado` es obligatorio para todo lo que manda titulos a la API: son datos de
@@ -107,11 +108,18 @@ def rubrica():
     return INSTRUCCION + texto, hashlib.sha256(texto.encode("utf-8")).hexdigest()[:12]
 
 
-def peticiones():
-    """Una fila por par y orden. Solo titulos: el LLM no ve nada mas."""
+def peticiones(solo_calibra=False):
+    """Una fila por par y orden. Solo titulos: el LLM no ve nada mas.
+
+    `solo_calibra` es para iterar la rubrica: `prueba` se juzga una vez, con la rubrica
+    ya congelada, y no se paga en cada vuelta. La particion filtra QUE pares se piden; el
+    LLM sigue sin verla."""
     p = pd.read_csv(PARES, sep=";", encoding="utf-8-sig", dtype=str, keep_default_na=False)
     p = p[["n", "comun", "raro"]]
     assert list(p.columns) == ["n", "comun", "raro"], "se colo una columna en las peticiones"
+    if solo_calibra:
+        m = pd.read_csv(META, sep=";", encoding="utf-8-sig", dtype=str)
+        p = p[p.n.isin(m.loc[m.particion == "calibra", "n"])]
     ab = p.assign(orden="ab", a=p["comun"], b=p["raro"])
     ba = p.assign(orden="ba", a=p["raro"], b=p["comun"])
     r = pd.concat([ab, ba])[["n", "orden", "a", "b"]]
@@ -261,11 +269,12 @@ def cmd_estimar(a):
 
 def cmd_ejecutar(a):
     sistema, sha = rubrica()
-    todas = peticiones()
+    todas = peticiones(a.solo_calibra)
     hechas = ya_hechas(a.modelo, sha)
     falta = todas[[(n, o) not in hechas for n, o in zip(todas.n, todas.orden)]]
     print(LINEA)
-    print("PILOTO  modelo={}  rubrica={}".format(a.modelo, sha))
+    print("PILOTO  modelo={}  rubrica={}{}".format(
+        a.modelo, sha, "  (solo calibra)" if a.solo_calibra else ""))
     print("  hechas: {}   faltan: {}".format(len(todas) - len(falta), len(falta)))
     print(LINEA)
     if len(falta):
@@ -317,6 +326,11 @@ def cmd_evaluar(a):
                 d[o] = np.nan
         cal = d[d.particion == "calibra"]
         pru = d[d.particion == "prueba"]
+        # Las respuestas de `estimar` son una muestra de 10: no hay nada que medir con ellas.
+        if min(cal.ab.notna().sum(), cal.ba.notna().sum()) < 100:
+            print("  ({} con rubrica {}: {} respuestas en calibra, pocas para evaluar; se omite)"
+                  .format(modelo, sha, int(cal.ab.notna().sum() + cal.ba.notna().sum())))
+            continue
 
         print(LINEA)
         print("PILOTO CONTRA EL JUEZ, SOLO CALIBRA  modelo={}  rubrica={}".format(modelo, sha))
@@ -388,6 +402,9 @@ def main():
             p.add_argument("--precio-entrada", type=float, help="USD / 1M (opcional)")
             p.add_argument("--precio-salida", type=float, help="USD / 1M (opcional)")
             p.add_argument("--muestra", type=int, default=10)
+        else:
+            p.add_argument("--solo-calibra", action="store_true",
+                           help="para iterar la rubrica: no juzga los 200 de prueba")
     sub.add_parser("evaluar")
     a = ap.parse_args()
     if a.cmd in ("estimar", "ejecutar") and not a.autorizado:
