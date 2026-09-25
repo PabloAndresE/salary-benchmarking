@@ -73,6 +73,7 @@ SEM = 20260923
 LINEA = "=" * 78
 
 COMPUERTA = {"kappa": 0.60, "recall_no": 0.70, "coherencia": 0.90}
+TOPE_PETICION_MS = 90_000   # una respuesta normal tarda unos segundos
 
 # La rubrica con la que se juzga `prueba` (D-035). `prueba` se juzga UNA vez: si la rubrica
 # cambia, `ejecutar` solo deja iterar sobre calibra.
@@ -147,7 +148,11 @@ def cliente():
     if not os.environ.get("GEMINI_API_KEY"):
         sys.exit("Falta GEMINI_API_KEY en el entorno.")
     from google import genai
-    return genai.Client()
+    from google.genai import types
+    # Sin esto el SDK no tiene tope de tiempo: una conexion que el servidor deja abierta
+    # sin contestar bloquea su hilo para siempre, y con todos los hilos asi la corrida se
+    # congela sin un solo error. Paso a los 13.284 pares del lote de 10.000.
+    return genai.Client(http_options=types.HttpOptions(timeout=TOPE_PETICION_MS))
 
 
 def configuracion(sistema):
@@ -187,6 +192,12 @@ def juzgar(cli, modelo, cfg, fila, sha, intentos=6):
                 time.sleep(min(60, 2 ** k) + random.random())
                 continue
             base.update(error="APIError {}: {}".format(e.code, str(e)[:250]))
+            return base
+        except Exception as e:  # tope de tiempo, conexion cortada: la red, no el modelo
+            if k < intentos - 1:
+                time.sleep(min(60, 2 ** k) + random.random())
+                continue
+            base.update(error="{}: {}".format(type(e).__name__, str(e)[:250]))
             return base
     return base
 
