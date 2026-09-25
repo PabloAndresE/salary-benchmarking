@@ -3790,3 +3790,219 @@ no se mezcla con esta y el piloto se puede repetir entero por unos céntimos.
 
 `prueba` se juzga **una sola vez** con la v3 y queda cerrada hasta la comparación final.
 Después, los ~10.000 pares y la curva de aprendizaje del cross ajustado.
+
+---
+
+## D-036 — El eje de la tesis pasa a ser el juez de «mismo cargo». Arquitectura y prerregistro
+
+**Fecha:** 2026-09-25
+**Origen:** decisión del autor: el aporte de IA de la tesis está en decidir qué cargos son el
+mismo y agruparlos, no en medir el techo del 12 % de error del benchmark. Se discutieron
+cuatro arquitecturas propuestas por Gemini, y de todas se tomaron piezas (ver abajo).
+**Evidencia:** `research/experimentos/e2_nivel/17_lineas_base_agrupamiento.py` (líneas
+base, solo `calibra`). Diagrama: <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeSfZW>
+(privado). Inventario de archivos: `docs/inventario_arquitectura_juez.md`.
+**Estado:** **diseño registrado antes de entrenar.** H1 queda fija aquí; nada de lo que
+sigue se ha medido contra `prueba`.
+
+### El cambio de eje
+
+La pregunta de la tesis deja de ser «¿cuánto error del benchmark se puede reducir?» y pasa a
+ser:
+
+> ¿Se puede aprender un juez de «mismo cargo» que supere a la similitud de embeddings sobre
+> títulos ruidosos en español, aprovechando que la relación es asimétrica (un orden de
+> generalidad), y convertir sus juicios en grupos consistentes a escala?
+
+El benchmark salarial no desaparece: queda como **capítulo de utilidad aguas abajo**, medido
+con el protocolo de siempre (pinball en q = 0,25/0,75, partición por empresa, placebo). No
+tiene que ganar por mucho; tiene que mostrar que acertar más pares no es irrelevante para la
+banda.
+
+Lo que ya estaba escrito se reutiliza: el resultado negativo de la composición motiva el
+problema, la ceguera jerárquica (D-012) motiva el castigo por nivel, y la consolidación por
+coseno 0,95 con enlace completo (`07`) es la línea base.
+
+### La hipótesis de fondo
+
+«Ser el mismo cargo» no es un puntaje de similitud: es una **equivalencia que sale de un
+orden parcial de generalidad**. Dos cargos son el mismo cuando cada uno incluye al otro.
+Viene de la Enmienda 2 de D-034: el NLI le gana al reranker porque la implicación es
+asimétrica (`JEFE DE MONTAJE Y SOLDADURA` implica `JEFE DE MONTAJE`, no al revés).
+
+### La arquitectura
+
+| capa | qué hace | cómo | se mide con |
+|---|---|---|---|
+| **0** | registros → cargos únicos | la normalización de hoy (género, erratas, `nivel_lexico`) | — |
+| **A · recuperar** | k vecinos por cargo; no decide | bi-encoder ajustado de forma contrastiva **con plata** o destilado de B; variante con n-gramas de caracteres | Recall@K |
+| **B · juzgar** | P(mismo) por par | `mDeBERTa-v3-base-xnli` ajustado con plata; el par entra en los dos órdenes; P(mismo) = P(A⊑B)·P(B⊑A); cabeza auxiliar del motivo (paso de la rúbrica); peso extra en la pérdida cuando el error confunde nivel; aumento solo con erratas sintéticas | AUC, calibración |
+| **C · agrupar** | grupos transitivos | correlation clustering sobre log-odds de P(mismo); sin «ruido» descartado; nombre = medoide | F1 por pares, kappa, estabilidad |
+
+**Las direcciones no se supervisan.** La plata dice sí/no, no «A es más estrecho». Solo se
+supervisa el producto; cada dirección queda latente y arranca de un NLI que ya es asimétrico.
+Que signifiquen algo es H3, no un supuesto. Así no se toca la rúbrica v3 congelada.
+
+**Qué datos tocan qué.** La plata `entrena` ajusta B; la plata `valida` elige época e
+hiperparámetros; B se destila en A; el oro `calibra` solo fija el umbral de C; el oro
+`prueba` se abre **una vez**, con todo congelado. El oro nunca entrena.
+
+### El flujo de un cargo nuevo (nómina de un cliente)
+
+La base no se reagrupa. Cada título no exacto pasa por A (índice precalculado) y B, y se
+asigna al grupo que maximiza Σ log-odds de P(mismo) con sus miembros: la versión incremental
+del criterio de C. Tres ramas: **directa** (grupo claro), **referencia más general** (el
+nuevo es más estrecho que un grupo; se trata como analogía de un vecino y nunca sale ALTA;
+solo si H3 se sostiene) y **analogía** (var = 1/W + λ(1 − P(mismo)), con λ reestimado). Los
+títulos nuevos van a una cola y entran en la siguiente reconstrucción: la nómina de un cliente
+no redefine los grupos contra los que se le compara.
+
+### Qué cambia en las bandas
+
+La fórmula no cambia; cambia **quién vota en cada celda**. Fusionar de más mete empresas de
+otro nivel, estira la banda y mueve el centro; separar de más deja celdas bajo 10 empresas,
+sin cuantiles empíricos y con menos confianza. A vigilar: τ<sub>c</sub> y σ<sub>c</sub> se
+reestiman; posible doble castigo entre P(mismo) y la penalización de nivel del vecindario
+(medir con y sin); más cobertura directa mejora por construcción, así que el placebo es
+obligatorio.
+
+### Prerregistro
+
+**H1 (comparación principal, la única confirmatoria).** B supera al coseno preentrenado en
+AUC sobre `prueba`.
+- **Puntaje de B:** P(mismo) del modelo elegido en plata `valida`, sin mirar el oro.
+- **Comparadores:** coseno de `base_v15` y NLI congelado (media de las dos direcciones, `13c`).
+- **Etiqueta:** columna `mismo` de `13e_para_juzgar.csv` (v3); `duda` fuera.
+- **Prueba:** bootstrap pareado por par, 10.000 remuestreos, IC 95 % de ΔAUC.
+- **Se adopta** si el IC 95 % de AUC(B) − AUC(coseno) queda entero sobre 0. Contra el NLI
+  congelado se reporta la diferencia con su IC, sin criterio de adopción.
+- **Potencia declarada:** con ~200 pares, la potencia es limitada (D-034: 63 % para el
+  efecto del cross congelado). Un resultado nulo se leerá como «no demostrado», no como
+  «no funciona».
+
+**H2 (secundaria).** Con el mismo juez, correlation clustering supera a las componentes
+conexas en kappa sobre `calibra`, y las componentes conexas percolan (grupo mayor ≫ el de
+correlation clustering).
+
+**H3 (exploratoria).** Las direcciones de B recuperan el orden de generalidad en un conjunto
+pequeño de pares de dirección evidente, armado antes de mirar las salidas de B.
+
+**Secundarios, descriptivos:** tabla factorial juez {coseno, A, B} × algoritmo {HDBSCAN,
+componentes conexas, Leiden, correlation clustering}; Recall@K; ablaciones de B (sin motivo,
+sin peso por nivel, simétrico, interacción tardía tipo ColBERT); curva de aprendizaje de 500 a
+10.000; aprendizaje activo simulado (azar contra incertidumbre, LLM de oráculo); asignación
+dejando uno fuera; utilidad aguas abajo en las bandas.
+
+### Líneas base medidas hoy (`17`, solo `calibra`, 200 pares, 72 % `si`)
+
+**El F1 del `si` engaña con esta tasa base.** Decir `si` a todo da F1 ≈ 0,84. Por eso la
+métrica de agrupamiento que se reporta es **kappa**, con F1 al lado.
+
+| método sobre coseno | t | prec | rec | F1 | kappa | grupo mayor |
+|---|---|---|---|---|---|---|
+| componentes conexas | 0,90 | 0,715 | 0,958 | 0,819 | −0,032 | **21.101** |
+| componentes conexas | 0,94 | 0,760 | 0,660 | 0,706 | 0,112 | 296 |
+| componentes conexas | 0,95 | 0,808 | 0,438 | 0,568 | 0,125 | 32 |
+| pivote (corr. clust.) | 0,93 | 0,768 | 0,438 | 0,558 | 0,073 | 18 |
+| pivote (corr. clust.) | 0,95 | 0,810 | 0,326 | 0,465 | 0,088 | 7 |
+| HDBSCAN, PCA-32, mcs = 2 | — | 0,830 | 0,507 | 0,629 | **0,183** | 24 (41 % ruido) |
+| HDBSCAN, PCA-32, mcs = 5 | — | 0,721 | 0,986 | 0,833 | 0,006 | **45.183** |
+| Leiden (modularidad) | 0,94 | 0,766 | 0,660 | 0,709 | 0,128 | 154 |
+| HDBSCAN, UMAP-10, mcs = 2 | — | 0,778 | 0,340 | 0,473 | 0,063 | 100 (26 % ruido) |
+| HDBSCAN, UMAP-10, mcs = 5 | — | 0,715 | 0,611 | 0,659 | −0,012 | 360 (29 % ruido) |
+
+Estabilidad (ARI contra un 80 % de los grupos, media de 3):
+
+| método | t = 0,93 | t = 0,95 |
+|---|---|---|
+| componentes conexas | 0,625 | 0,927 |
+| **pivote** | **0,918** | **0,961** |
+| Leiden | 0,506 | 0,920 |
+| HDBSCAN PCA, mcs = 2 | 0,797 | |
+| HDBSCAN UMAP, mcs = 2 (UMAP reajustado) | 0,347 | |
+
+Curva completa en `salidas/17_lineas_base.txt`. Lectura:
+
+- **Sobre el coseno, el mejor kappa es 0,18.** Lo saca HDBSCAN con mcs = 2 a costa de
+  dejar como ruido el 41 % de los grupos. Lo demás queda por debajo de 0,13. El algoritmo
+  cambia cuánto se junta, no si se junta bien. Es la línea base que tiene que batir B, y la
+  razón de que el juez sea el centro de la tesis y no el algoritmo.
+- **La percolación se reproduce a nivel de grupo:** 21.101 grupos en uno con componentes
+  conexas a 0,90, y 45.183 con HDBSCAN mcs = 5. Los dos tienen F1 alto y kappa nulo.
+- **La receta estándar, UMAP + HDBSCAN, es la peor aquí:** kappa 0,06 y −0,01, y la menos
+  estable (ARI 0,347). UMAP deforma las distancias finas que esta tarea necesita. Cierra la
+  objeción «¿por qué no hicieron lo de BERTopic?».
+- **Leiden no aporta sobre las componentes conexas:** a 0,95 da exactamente lo mismo, y a
+  0,93 es menos estable (0,506).
+- **El pivote es el más estable** con el mismo grafo (0,918 a 0,93, contra 0,625 de las
+  componentes conexas y 0,506 de Leiden): un apoyo temprano, en el coseno, para la elección
+  de C.
+- AUC del coseno en estos pares: 0,616.
+
+**Recall@K** de los pares `si` (rango del mejor de los dos sentidos): @10 = 0,92, @20 =
+0,96, @25 = 0,97. En el estrato bajo (0,90–0,93) cae a @10 = 0,62 y @20 = 0,81, con n = 16.
+
+**Tamaño:** 50.296 grupos; con k = 20, ~503.000 pares únicos × 2 direcciones × 0,09 s ≈
+25 h de CPU para construir la base. Viable una vez, no para iterar: hace falta GPU o k = 10
+(~12,6 h) para la reconstrucción.
+
+### Lo que se tomó y lo que se descartó de las propuestas de Gemini
+
+| propuesta | se tomó | se descartó, y por qué |
+|---|---|---|
+| retrieve & rerank contra catálogo | Recall@K; peso por nivel; aumento con erratas; F1 por pares | **el catálogo**: no existe, y ESCO es demasiado grueso para la rúbrica; **el grafo de conocimiento hecho a mano**: la descomposición nivel + área se aprende en la cabeza de motivo; **la capa fonética**: el transformer ya aguanta erratas y D-026 ya resolvió el género (queda como línea de ablación); **permutar palabras**: rompe `ASISTENTE DE GERENCIA` / `GERENTE ASISTENTE`, su propio ejemplo |
+| clustering no supervisado (UMAP + HDBSCAN) | HDBSCAN como línea base; estabilidad por remuestreo; n-gramas de caracteres; nombre por medoide | **la premisa «no hay etiquetas»**: hay 400 de oro y 10.000 de plata; **agrupar en el espacio del coseno**: es el que falla en 0,93–0,97 (D-034), y la tabla de arriba lo confirma; **silueta y Davies-Bouldin**: miden compacidad en el mismo espacio, son circulares |
+| semi-supervisado con aprendizaje activo | curva de aprendizaje; aprendizaje activo **simulado**; ajuste contrastivo del bi-encoder | **entrenar con los 400 de oro**: deja sin con qué medir; **aprendizaje activo humano**: las etiquetas las pone el LLM; **pares elegidos por AL como prueba**: están sesgados |
+| métrica ajustada + componentes conexas | Leiden y componentes conexas como columnas; bi-encoder ajustado como competidor | **componentes conexas como método**: es enlace simple y percola (`06`, y la tabla de arriba); **H2 de Gemini**: cambia espacio y algoritmo a la vez; **«datos sintéticos»**: son etiquetas de un LLM sobre pares reales |
+
+### Límites que hay que declarar
+
+- **El oro no ve nada por debajo de 0,90 de coseno.** `13e` muestreó solo 0,90–1,01. El
+  Recall de A por debajo de 0,90 no se puede medir con este oro; hace falta un estrato nuevo
+  para eso.
+- **El oro son pares entre grupos distintos de hoy.** Mide «¿deberían fundirse estos dos
+  grupos?», no la calidad de los grupos que ya existen.
+- **La plata tiene techo.** Kappa del LLM de 0,53 en el estrato bajo; B difícilmente supere
+  al LLM contra el juez. El argumento es igualarlo siendo local, determinista y barato.
+- **Un solo juez humano**, y la rúbrica v3 se escribió viendo también `prueba` (D-035).
+- **Las líneas base no se afinaron.** HDBSCAN (PCA-32 y UMAP-10) y Leiden corrieron con un
+  solo juego de hiperparámetros cada uno. Afinarlos contra `calibra` sería optimista; queda
+  dicho que un HDBSCAN afinado podría subir algo.
+
+### Referencias
+
+- Reimers, N. y Gurevych, I. (2019). *Sentence-BERT*. EMNLP.
+- Thakur, N. et al. (2021). *Augmented SBERT*. NAACL.
+- He, P., Gao, J. y Chen, W. (2023). *DeBERTaV3*. ICLR.
+- Khattab, O. y Zaharia, M. (2020). *ColBERT*. SIGIR.
+- Vendrov, I. et al. (2016). *Order-Embeddings of Images and Language*. ICLR.
+- Vilnis, L. et al. (2018). *Probabilistic Embedding of Knowledge Graphs with Box Lattice
+  Measures*. ACL.
+- Bansal, N., Blum, A. y Chawla, S. (2004). *Correlation Clustering*. Machine Learning 56.
+- Ailon, N., Charikar, M. y Newman, A. (2008). *Aggregating Inconsistent Information:
+  Ranking and Clustering*. JACM 55(5).
+- Traag, V., Waltman, L. y van Eck, N. (2019). *From Louvain to Leiden*. Scientific Reports 9.
+- Campello, R., Moulavi, D. y Sander, J. (2013). *Density-Based Clustering Based on
+  Hierarchical Density Estimates*. PAKDD.
+- Decorte, J.-J. et al. (2021). *JobBERT: Understanding Job Titles through Skills*. arXiv
+  2109.09605.
+- Ein-Dor, L. et al. (2020). *Active Learning for BERT: An Empirical Study*. EMNLP.
+- Lowell, D., Lipton, Z. y Wallace, B. (2019). *Practical Obstacles to Deploying Active
+  Learning*. EMNLP.
+
+Datos bibliográficos a verificar antes de citarlos en la tesis.
+
+### Reversibilidad
+
+Total para el código: nada de esto toca el producto hasta que B gane H1. El cambio de eje sí
+obliga a reescribir el resumen, «La reformulación» y la defensa del modelo simple en
+`docs/tesis/tesis.tex`, y a reorientar `docs/estado_del_arte.md` hacia la literatura de
+normalización y similitud de títulos de cargo.
+
+### Siguiente
+
+1. Terminar `etiquetar` sobre el lote de 10.000 (al escribir esto hay 4.830 respuestas guardadas) y juzgar
+   `prueba` con la v3.
+2. Entrenar B por pasos: simétrico, luego direccional, luego motivo y peso por nivel.
+3. Destilar A; completar la tabla factorial; utilidad aguas abajo.
+4. En paralelo: literatura para la novedad; más oro o un segundo anotador sobre una muestra.
