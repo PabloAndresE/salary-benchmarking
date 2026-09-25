@@ -32,7 +32,7 @@ Si no pasa, se ajusta la rubrica mirando SOLO los desacuerdos de calibra, y se r
 USO (la clave se lee de GEMINI_API_KEY; nunca se escribe en ningun sitio):
 
     python 15_piloto_llm.py modelos
-    python 15_piloto_llm.py estimar  --modelo M --precio-entrada X --precio-salida Y --autorizado
+    python 15_piloto_llm.py estimar  --modelo M --autorizado [--precio-entrada X --precio-salida Y]
     python 15_piloto_llm.py ejecutar --modelo M --autorizado
     python 15_piloto_llm.py evaluar
 
@@ -213,21 +213,14 @@ def cmd_modelos(_):
 def cmd_estimar(a):
     sistema, sha = rubrica()
     todas = peticiones()
-    cli = cliente()
-    from google.genai import types
 
     print(LINEA)
     print("ESTIMACION DE COSTE  modelo={}  rubrica={}".format(a.modelo, sha))
     print(LINEA)
-    # Entrada: se cuenta en una muestra; todas las peticiones llevan la misma rubrica y
-    # solo cambian dos titulos cortos, asi que la variacion es minima.
-    ent = []
-    for f in todas.head(20).itertuples():
-        c = cli.models.count_tokens(model=a.modelo, contents=contenido(f.a, f.b),
-                                    config=types.CountTokensConfig(system_instruction=sistema))
-        ent.append(c.total_tokens)
-    # Salida y pensamiento no se pueden contar de antemano: se miden en unas pocas
-    # peticiones reales. No se tiran: quedan en el cache y cuentan para `ejecutar`.
+    # Todo se mide en unas pocas peticiones reales, con lo que reporta el propio Gemini.
+    # `count_tokens` no sirve: en la API de desarrolladores no acepta `system_instruction`,
+    # y sin ella contaria dos titulos y no la rubrica, que es casi toda la entrada. Las
+    # respuestas no se tiran: quedan en el cache y cuentan para `ejecutar`.
     muestra = todas.head(a.muestra)
     hechas = ya_hechas(a.modelo, sha)
     falta = muestra[[(n, o) not in hechas for n, o in zip(muestra.n, muestra.orden)]]
@@ -235,23 +228,35 @@ def cmd_estimar(a):
         print("  {} peticiones reales para medir la salida...".format(len(falta)))
         correr(falta, a.modelo, sistema, sha, a.hilos)
     d = pd.read_csv(RESPUESTAS, encoding="utf-8", dtype=str, keep_default_na=False)
-    d = d[(d.modelo == a.modelo) & (d.rubrica_sha == sha) & (d.error == "")]
-    if d.empty:
-        sys.exit("Ninguna peticion de muestra salio bien; mira la columna `error`.")
+    d = d[(d.modelo == a.modelo) & (d.rubrica_sha == sha)]
+    if (d.error == "").sum() == 0:
+        errores = d.error.value_counts().head(3)
+        sys.exit("Ninguna peticion de muestra salio bien. Errores:\n  " +
+                 "\n  ".join("{} x  {}".format(c, e) for e, c in errores.items()))
+    d = d[d.error == ""]
+    ent = pd.to_numeric(d.tok_entrada, errors="coerce").fillna(0)
     sal = pd.to_numeric(d.tok_salida, errors="coerce").fillna(0)
     pen = pd.to_numeric(d.tok_pensamiento, errors="coerce").fillna(0)
 
     n = len(todas)
-    e_med, s_med = float(np.mean(ent)), float((sal + pen).mean())
-    coste = n * (e_med * a.precio_entrada + s_med * a.precio_salida) / 1e6
+    e_med, s_med = float(ent.mean()), float((sal + pen).mean())
+    print("  medido en {} respuestas".format(len(d)))
     print("\n  peticiones             : {}  (400 pares x 2 ordenes)".format(n))
     print("  entrada media          : {:,.0f} tokens".format(e_med))
     print("  salida media           : {:,.0f} tokens  (de ellos pensamiento: {:,.0f})".format(
         s_med, float(pen.mean())))
+    print("  TOTAL piloto           : {:.2f} M de entrada, {:.2f} M de salida".format(
+        n * e_med / 1e6, n * s_med / 1e6))
+    print("  TOTAL 10.000 pares     : {:.1f} M de entrada, {:.1f} M de salida".format(
+        n * e_med / 1e6 * 25, n * s_med / 1e6 * 25))
+    if a.precio_entrada is None or a.precio_salida is None:
+        print("\n  Sin precios: multiplica esos millones por el precio por millon del modelo.")
+        return
+    coste = n * (e_med * a.precio_entrada + s_med * a.precio_salida) / 1e6
     print("  COSTE ESTIMADO         : {:.2f} USD".format(coste))
-    print("  (si el pensamiento se cobra aparte o la cache implicita abarata la rubrica,")
-    print("   el coste real cambia; se ajusta con los precios de la pagina de Gemini)")
-    print("  para 10.000 pares      : {:.2f} USD".format(coste / 400 * 10000))
+    print("  para 10.000 pares      : {:.2f} USD".format(coste * 25))
+    print("  (la salida incluye el pensamiento, que se cobra como salida; si la cache")
+    print("   implicita abarata la rubrica, el coste real sale algo menor)")
 
 
 def cmd_ejecutar(a):
@@ -380,8 +385,8 @@ def main():
         p.add_argument("--autorizado", action="store_true",
                        help="hay permiso para mandar estos titulos a una API externa")
         if nombre == "estimar":
-            p.add_argument("--precio-entrada", type=float, required=True, help="USD / 1M")
-            p.add_argument("--precio-salida", type=float, required=True, help="USD / 1M")
+            p.add_argument("--precio-entrada", type=float, help="USD / 1M (opcional)")
+            p.add_argument("--precio-salida", type=float, help="USD / 1M (opcional)")
             p.add_argument("--muestra", type=int, default=10)
     sub.add_parser("evaluar")
     a = ap.parse_args()
