@@ -1,0 +1,123 @@
+==============================================================================
+PILOTO CONTRA EL JUEZ, SOLO CALIBRA  modelo=gemini-2.5-pro  rubrica=07c725faeaac
+==============================================================================
+  respuestas en calibra : ab 1/200   ba 1/200
+  prueba                : 8 respuestas guardadas, NO se evaluan (paso 8)
+  contestar siempre si  : acierta 0.720  (el liston que el acierto no ve)
+
+  orden      n  acierto   kappa  recall no  recall si
+  ab         1    1.000     nan      0.000      1.000
+  ba         1    1.000     nan      1.000      0.000
+
+  coherencia ab = ba    : nan  (0 pares con los dos ordenes)
+
+  matriz, orden ab (filas juez, columnas LLM):
+    ab    si  sin respuesta
+    juez                   
+    no     0             56
+    si     1            143
+
+  kappa ab por estrato:
+    alto   n=  1  acierto 1.000  kappa nan
+    bajo   n=  0  acierto nan  kappa nan
+    banda  n=  0  acierto nan  kappa nan
+
+  COMPUERTA (kappa >= 0.6, recall no >= 0.7, coherencia >= 0.9): NO PASA
+
+  DESACUERDOS EN CALIBRA, orden ab (0), para revisar la rubrica:
+
+==============================================================================
+PILOTO CONTRA EL JUEZ, SOLO CALIBRA  modelo=gemini-3.8-flash  rubrica=07c725faeaac
+==============================================================================
+  respuestas en calibra : ab 200/200   ba 200/200
+  prueba                : 400 respuestas guardadas, NO se evaluan (paso 8)
+  contestar siempre si  : acierta 0.720  (el liston que el acierto no ve)
+
+  orden      n  acierto   kappa  recall no  recall si
+  ab       200    0.835   0.640      0.929      0.799
+  ba       200    0.845   0.662      0.946      0.806
+
+  coherencia ab = ba    : 0.970  (200 pares con los dos ordenes)
+  AUC (0 / 0,5 / 1)     : 0.880  (comparable con 13c y 13d)
+
+  matriz, orden ab (filas juez, columnas LLM):
+    ab    no   si
+    juez         
+    no    52    4
+    si    29  115
+
+  kappa ab por estrato:
+    alto   n= 30  acierto 0.967  kappa 0.839
+    bajo   n= 30  acierto 0.633  kappa 0.292
+    banda  n=140  acierto 0.850  kappa 0.666
+
+  COMPUERTA (kappa >= 0.6, recall no >= 0.7, coherencia >= 0.9): PASA
+
+  DESACUERDOS EN CALIBRA, orden ab (33), para revisar la rubrica:
+    #11   juez si  LLM no [p4]  AUXILIAR DE APOYO ENFERMERIA  /  AUXILIAR DE ENFERMERIA Y TTHH
+           El cargo B añade funciones de Talento Humano (TTHH), que es otra área.
+    #33   juez no  LLM si [ninguno]  COORDINADOR SALES OPERATION  /  COORDINATOR SALES COORDINATION
+           Ambos corresponden al rol de coordinación en el área de operaciones y soporte de ventas.
+    #38   juez si  LLM no [p4]  COORDINADOR (A) DE MARKETING  /  COORDINADOR COMERCIAL Y MARKETING
+           La función comercial añadida representa otra área con distinto alcance y perfil funcional.
+    #43   juez si  LLM no [p4]  ASISTENTE DE CONTROL DE PRESUPUESTO  /  ASISTENTE DE PRESUPUESTO CONTROL/COMPRAS
+           Se añade la función de compras, que constituye una función u oficio distinto con su propia área de especialidad
+    #48   juez no  LLM si [ninguno]  SECRETARIA ADMINISTRADORA  /  SECRETARIA(O)
+           Las tareas administrativas son contiguas a la función principal de una secretaria y el género/paréntesis es ruido.
+    #50   juez si  LLM no [p4]  ASISTENTE ADMINISTRATIVO MANTENIMIENTO  /  ASISTENTE DE MANTENIMIENTO Y EDIFICACIONES
+           Uno es un rol netamente administrativo y el otro es técnico/operativo de mantenimiento e infraestructura.
+    #71   juez si  LLM no [p4]  JEFE DE LABORATORIO DE MICROBIOLOGIA  /  JEFE DE LAB.CLINICO Y BACTERI
+           Distinta area o especialidad de laboratorio (microbiologia general/industrial frente a clinico y bacteriologia).
+    #88   juez si  LLM no [p4]  SUPERVISOR DE DISTRIBUCION Y ALMACENAMIENTO  /  SUPERVISOR ALMACEN PRODUCTO TERMINADO
+           Distribución y almacenamiento abarca un área y función distinta a la supervisión exclusiva de almacén de producto terminado.
+    #100  juez si  LLM no [p4]  ANALISTA DE CONTROL EN PROCESOS  /  ANALISTA GESTION DE PROYECTOS Y PROCESOS
+           Las funciones de control de procesos y de gestión de proyectos y procesos son distintas.
+    #101  juez si  LLM no [p4]  GERENTE DE PRODUCCION Y TECNOLOGIA  /  GERENTE TECNICO DE PRODUCCION
+           Producción y tecnología abarca un área funcional distinta a la gerencia técnica de producción.
+    #112  juez no  LLM si [ninguno]  AUXILIAR DE MANTENIMIENTO Y MENSAJERIA  /  AUXILIAR DE MANTENIMIENTO, LIMPIEZA Y MENSAJERIA
+           La funcion de limpieza añadida es contigua a las labores de servicios generales y mantenimiento.
+    #145  juez si  LLM no [p4]  ANALISTA ADMINISTRATIVA DE CREDITO Y CARTERA  /  ANALISTA DE CREDITO Y CALIDAD
+           Las funciones son distintas (cartera frente a calidad).
+    #177  juez si  LLM no [p4]  SUPERVISOR DE LA PLANTACION  /  SUPERVISOR DE PLANTA AGRO
+           Plantación se refiere a labores agrícolas de campo mientras que planta agro se refiere a instalaciones de procesamiento agroindustrial.
+    #184  juez no  LLM si [ninguno]  JEFE DE PLANTA DE PRODUCCION  /  JEFE DE PLANTA HACIENDA
+           Ambos son jefes de planta; hacienda indica la unidad o lugar de trabajo y producción es la función inherente de la planta.
+    #186  juez si  LLM no [p4]  JEFE DE DESARROLLO Y PROCESOS  /  JEFE DE DESARROLLO Y GESTION
+           Tienen funciones o areas distintas en la segunda especialidad (procesos frente a gestion).
+    #195  juez si  LLM no [p4]  SUBGERENTE ADMINISTRATIVO Y DE LOGISTICA  /  SUBGERENTE DE LOGISTICA Y COMPRAS
+           Tienen funciones o áreas distintas combinadas con logística (administrativo vs compras).
+    #198  juez si  LLM no [p4]  GERENTE TECNICA DE PROYECTOS  /  GESTOR TECNICO DE PROYECTOS
+           Un gerente y un gestor tienen responsabilidades y bandas salariales distintas no homologables.
+    #201  juez si  LLM no [p4]  ANALISTA DE INFRAESTRUCTURA Y MANTENIMIENTO  /  ANALISTA DE INFRAESTRUCTURA Y SEGURIDAD
+           Funciones o especialidades distintas (Mantenimiento frente a Seguridad).
+    #213  juez si  LLM no [p5]  ASISTENTE CONTABILIDAD COBRANZA  /  ASISTENTE CONTABLE Y GERENCIA
+           Uno apoya a un área funcional y el otro apoya a un mando (gerencia).
+    #215  juez si  LLM no [p4]  JEFE DE SEGURIDAD INFORMATICA  /  JEFE DE SISTEMAS Y SEGURIDAD INFORMATICA
+           Sistemas y seguridad informática representan alcances y especialidades distintas con diferente mercado salarial
+    #219  juez si  LLM no [p4]  COORDINADOR DE TALENTO HUMANO  /  COORDINADOR DE TALENTO HUMANO - SSO
+           SSO (Seguridad y Salud Ocupacional) añade una función y especialidad técnica distinta con su propio perfil de mercado.
+    #230  juez si  LLM no [p4]  ANALISTA CALIDAD  /  ANALISTA CONTROL DE CALIDAD INVESTIGACION
+           Investigación añade otra área o función con perfil propio a la de calidad
+    #276  juez si  LLM no [p4]  COORDINADOR DE MANTENIMIENTO (INFRAESTRUCTURA)  /  COORDINADOR DE MANTENIMIENTO Y PROYECTOS
+           Mantenimiento enfocado en infraestructura difiere de la función agregada de proyectos.
+    #295  juez si  LLM no [p4]  ANALISTA DE GESTION DE CALIDAD  /  ANALISTA DE CONTROL DE CALIDAD FISICO
+           Gestion de calidad y control de calidad fisico corresponden a funciones y especialidades distintas
+    #296  juez si  LLM no [p4]  JEFE DE OPERACIONES Y PROCESOS  /  JEFE DE PROCESOS Y SISTEMA
+           Las funciones y áreas son distintas (operaciones vs. sistemas).
+    #300  juez si  LLM no [p4]  GERENTE DE OPERACIONES Y PROYECTOS  /  GERENTE DE PROCESOS Y PROYECTOS
+           Operaciones y procesos son áreas o funciones distintas.
+    #312  juez si  LLM no [p4]  COORDINADORA DE COMPRAS Y LOGISTICA  /  COORDINADORA DE COMPRAS Y CARTERA
+           Logística y cartera son funciones distintas con áreas de responsabilidad diferentes.
+    #318  juez si  LLM no [p4]  ASESOR DE MARKETING Y OPERACIONES  /  ASISTENTE OPERATIVO DE MARKETING
+           Marketing y Operaciones abarca dos areas distintas mientras que el otro cargo es del area de Marketing a nivel operativo.
+    #327  juez si  LLM no [p4]  JEFE DE MANTENIMIENTO Y CONSTRUCCION  /  JEFE DE MANTENIMIENTO DE EDIFICIOS
+           Construcción es una función añadida u oficio con su propio mercado frente a solo mantenimiento de edificios.
+    #340  juez si  LLM no [p4]  ANALISTA DE DATA & ANALYTICS  /  ANALISTA DE DATA SCIENCE
+           Data Analytics y Data Science son especialidades tecnicas hermanas que el mercado contrata y remunera por separado.
+    #351  juez si  LLM no [p4]  JEFE DE PROCESOS DIGITALES  /  JEFE DE SERVICIOS DIGITALES
+           Procesos digitales y servicios digitales corresponden a funciones o áreas distintas.
+    #361  juez si  LLM no [p4]  TECNICO DE MANTENIMIENTO (ELECTRICO - ELECTRONICO)  /  TECNICO ELECTROMECANICO MANTENIMIENTO IN
+           Son especialidades tecnicas distintas con perfiles y mercados separados (electrico-electronico frente a electromecanico).
+    #376  juez si  LLM no [p4]  ANALISTA DE SOPORTE  /  ANALISTA SOPORTE Y DESARROLLO
+           Desarrollo es una disciplina y mercado salarial distinto a soporte tecnico
+
