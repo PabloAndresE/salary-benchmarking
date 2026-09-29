@@ -4518,8 +4518,10 @@ enseñan que el grado no separa, por si la capa 0 no atrapa alguna forma.
 - **Dos correcciones discutibles**, aplicadas por la regla y a declarar: `20` #46
   (`PROF/TITULO III` / `IV NIVEL BASICO`), donde el romano puede ser el nivel del título
   académico y no un grado, y `13e` #290 (`PROFESOR TITULAR AGREGADO 1` / `2`), un escalafón
-  universitario con sueldos distintos. **Fusionar grados puede mezclar bandas**, y la
-  utilidad aguas abajo lo tiene que medir.
+  universitario con sueldos distintos. **Decisión del autor: se quedan como la regla los
+  dejó** (`si` y fuera de `prueba`), sin lista de excepciones, por coherencia con la
+  normalización, que borra el número en los dos casos. **Fusionar grados puede mezclar
+  bandas**, y la utilidad aguas abajo lo tiene que medir.
 - **La capa 0 del producto todavía no borra el grado.** `quitar_grado` en `23` es el
   borrador de la regla. Llevarla a `nivel.py` y reconstruir la base (v16) es una decisión de
   producto aparte: cambia los grupos de los que salen todos los conjuntos, y se hace después
