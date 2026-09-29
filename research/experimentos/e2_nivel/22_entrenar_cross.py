@@ -15,7 +15,8 @@ ANTES DE ENTRENAR: EL JUEZ ESTA BIEN MONTADO
 1. El modelo tiene que ser la revision fijada, y `model.safetensors` tiene que dar el
    hash esperado. Si no, se detiene.
 2. Sin entrenar, en fp32, sobre `calibra` y con la plantilla fija, tiene que dar el AUC
-   0,748 de `19` (media de las dos direcciones), con tolerancia 0,005. Si no, algo cambio
+   0,7285 de `19` (media de las dos direcciones; 194 pares tras la Enmienda 5), con
+   tolerancia 0,005. Si no, algo cambio
    —plantilla, tokenizador o modelo— y se detiene. Es la leccion de D-034.
 
 LAS VARIANTES
@@ -27,7 +28,7 @@ LAS VARIANTES
                            `dificil` (escalon o seniority distintos)
                            grilla: w en {1, 2, 3} x aumento {sin, con} = 6 configuraciones
 
-P(A=>B) es la probabilidad de `entailment` que el NLI ya trae: se arranca de 0,748, no de
+P(A=>B) es la probabilidad de `entailment` que el NLI ya trae: se arranca de 0,7285, no de
 cero. Pasos 1 y 2: una semilla, sin aumento (son para la ablacion). Paso 3: tres semillas
 por configuracion (Enmienda 3).
 
@@ -88,7 +89,8 @@ MODELO_ID = "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
 REVISION = "b5113eb38ab63efdd7f280f8c144ea8b13f978ce"
 SHA_SAFETENSORS = "7c8e29f1115986d032e92b0fbaa0bdef1062a46f658b08705f237c05014a8541"
 PLANTILLA = "El puesto de trabajo es {}."
-AUC_BASE = 0.748                 # `19`, NLI congelado, media de las dos direcciones
+AUC_BASE = 0.7285                # `19`, NLI congelado, media de las dos direcciones.
+                                 # Era 0,748 con la v3 y 200 pares; Enmienda 5 de D-036
 TOL_BASE = 0.005
 
 MOTIVOS = ["ninguno", "p1", "p2", "p3", "p4", "p5"]
@@ -511,8 +513,8 @@ def main():
     datos = {"plata": plata, "calibra": cal}
     y_cal = cal["y"].to_numpy()
 
-    # --- 1. el juez sin entrenar tiene que dar el 0,748 de `19` ---------------------
-    print("\n1. JUEZ SIN ENTRENAR sobre calibra, fp32 (tiene que dar {:.3f})".format(AUC_BASE))
+    # --- 1. el juez sin entrenar tiene que dar el AUC_BASE de `19` -------------------
+    print("\n1. JUEZ SIN ENTRENAR sobre calibra, fp32 (tiene que dar {:.4f})".format(AUC_BASE))
     juez0 = construir(args.modelo, False, dev)
     ab0, ba0 = puntuar(juez0, tok, cal["comun"].tolist(), cal["raro"].tolist(), dev,
                        contextlib.nullcontext)

@@ -17,13 +17,13 @@ del repositorio.**
 
 | archivo | qué es | git |
 |---|---|---|
-| `research/experimentos/e2_nivel/salidas/13e_para_juzgar.csv` | **el patrón de oro**: 400 pares juzgados a mano (`mismo`, `mismo_v1`, `revision`) | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/13e_para_juzgar.csv` | **el patrón de oro**: 400 pares juzgados a mano (`mismo`, `mismo_v1`, `revision`; `mismo_v3` guarda la etiqueta de antes de la Enmienda 5, que corrigió 6) | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/13e_pares_400.csv` | metadatos del oro: grupos, `sim`, estrato y la partición `calibra`/`prueba` | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/13_para_juzgar.csv` | los 48 juicios anteriores (`13a`); los excluye `16` | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/16_respuestas_llm.csv` | **la plata**: respuestas de Gemini sobre el lote de 10.000 | versionado (-f) |
-| `research/experimentos/e2_nivel/salidas/18_para_juzgar.csv` | los 139 pares en que Gemini se contradijo, **juzgados a mano** (87 `si` / 52 `no`; entran a la plata con etiqueta dura, Enmienda 3 de D-036). Irreemplazable | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/18_para_juzgar.csv` | los 139 pares en que Gemini se contradijo, **juzgados a mano** (89 `si` / 50 `no` tras la Enmienda 5, que corrigió 2; `mismo_v3` guarda la de antes; entran a la plata con etiqueta dura, Enmienda 3 de D-036). Irreemplazable | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/18_meta.csv` | metadatos de los 139: par de `16` y lo que dijo Gemini en cada orden. No abrir antes de juzgar | versionado (-f) |
-| `research/experimentos/e2_nivel/salidas/20_para_juzgar.csv` | **los 400 pares nuevos de `prueba`** (Enmienda 2 de D-036), **juzgados a mano** (315 `si` / 76 `no` / 9 `duda`, fuera de `prueba` por la Enmienda 4: quedan 591). Irreemplazable | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/20_para_juzgar.csv` | **los 400 pares nuevos de `prueba`** (Enmienda 2 de D-036), **juzgados a mano** (324 `si` / 67 `no` / 9 `duda` tras la Enmienda 5, que corrigió 9; `mismo_v3` guarda la de antes. Las `duda` salen por la Enmienda 4 y 24 pares más por la 5). Irreemplazable | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/20_pares_400.csv` | metadatos de los 400: grupos, `sim`, estrato, tramo. No abrir antes de juzgar | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/15_respuestas_llm.csv` | respuestas del piloto sobre los 400 (validan el montaje, D-035) | versionado (-f) |
 
@@ -52,14 +52,15 @@ del repositorio.**
 
 | `research/experimentos/e2_nivel/18_incoherentes_a_juzgar.py` | saca a un CSV ciego los 139 pares de la plata en que Gemini se contradijo entre órdenes | versionado |
 
-| `research/experimentos/e2_nivel/19_potencia_h1.py` | potencia de H1 con el NLI congelado sobre `calibra`; motivo de ampliar `prueba` a 600 | versionado |
+| `research/experimentos/e2_nivel/19_potencia_h1.py` | potencia de H1 con el NLI congelado sobre `calibra`; motivo de ampliar `prueba` a 600. Desde la Enmienda 5 excluye lo que fusiona la capa 0: da el `AUC_BASE` de `22` | versionado |
 | `research/experimentos/e2_nivel/20_ampliar_prueba.py` | los 400 pares nuevos de `prueba`, del censo de `16`, sin grupos de la plata | versionado |
-| `research/experimentos/e2_nivel/21_paquete_entrenamiento.py` | arma el paquete para entrenar el cross en el servidor: plata + los 139 + `calibra`, **sin `prueba` y sin sueldos**, con comprobación dura | versionado |
+| `research/experimentos/e2_nivel/21_paquete_entrenamiento.py` | arma el paquete para entrenar el cross en el servidor: plata + los 139 + `calibra`, **sin `prueba` y sin sueldos**, con comprobación dura. Aplica las correcciones de grado de `23` y saca de `calibra` lo que fusiona la capa 0 | versionado |
 | `research/experimentos/e2_nivel/22_entrenar_cross.py` | **entrena el cross-encoder B** en el servidor: pasos 1–3, grilla con 3 semillas, elección y calibración en `calibra`. Solo lee `21_paquete/` | versionado |
+| `research/experimentos/e2_nivel/23_correccion_grado.py` | **el grado ya no separa** (Enmienda 5): corrige en su sitio los juicios de `13e`, `20` y `18` (guarda `mismo_v3`), escribe las correcciones de la plata y la lista de pares que la capa 0 fusiona. `quitar_grado` es el borrador de la regla de la capa 0 | versionado |
 | `requirements-cross.txt` | versiones exactas para entrenar y evaluar el cross (Enmienda 3) | versionado |
 
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `23_…` en adelante.
+añaden aquí con el número que les toque, `24_…` en adelante.
 
 ## 4. Salidas de los guiones
 
@@ -76,6 +77,9 @@ añaden aquí con el número que les toque, `23_…` en adelante.
 | `salidas/19_potencia_h1.txt` | tabla de potencia de H1; solo agregados | versionado |
 | `salidas/19_puntajes_nli_calibra.csv` | puntajes del NLI congelado sobre `calibra` (caché de `19`) | versionado (-f) |
 | `salidas/21_paquete/` | `plata.csv`, `calibra.csv`, `manifiesto.json`: lo que se copia al servidor. Se regenera con `21` | versionado (-f) |
+| `salidas/23_correcciones_plata.csv` | los 137 `no` de Gemini que pasan a `si` por el grado; los aplica `21` | versionado (-f) |
+| `salidas/23_fuera_por_capa0.csv` | los 37 pares de `13e` y `20` que salen de `calibra` (6) y `prueba` (31) porque la capa 0 los fusiona. **Lo lee el guion de H1** | versionado (-f) |
+| `salidas/23_revisar_grado.csv` | 14 `no` con grado distinto y otra diferencia, para juzgar a mano (`mismo_nuevo`) | versionado (-f) |
 | `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)

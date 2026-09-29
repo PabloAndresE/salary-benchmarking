@@ -36,6 +36,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 SAL = pathlib.Path(__file__).resolve().parent / "salidas"
 META = SAL / "13e_pares_400.csv"
 JUICIOS = SAL / "13e_para_juzgar.csv"
+FUERA = SAL / "23_fuera_por_capa0.csv"          # Enmienda 5: los fusiona la capa 0
 CACHE = SAL / "19_puntajes_nli_calibra.csv"     # en .gitignore (lleva titulos)
 MODELO_CROSS = "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7"
 LOTE = 16
@@ -87,9 +88,16 @@ def main():
     t = meta.merge(jui, on="n")
     t = t[(t["particion"] == "calibra")
           & t["mismo"].str.strip().str.lower().isin(["si", "no"])].reset_index(drop=True)
+    ab, ba = nli(t)                  # sobre todo `calibra`: es la clave de la cache
+    n_fuera = 0
+    if FUERA.exists():               # Enmienda 5: fuera los pares que fusiona la capa 0
+        fu = pd.read_csv(FUERA, dtype=str)
+        fu = set(fu.loc[(fu["conjunto"] == "13e") & (fu["particion"] == "calibra"), "n"])
+        queda = ~t["n"].astype(str).isin(fu).to_numpy()
+        n_fuera = int((~queda).sum())
+        t, ab, ba = t[queda].reset_index(drop=True), ab[queda], ba[queda]
     y = (t["mismo"].str.strip().str.lower() == "si").astype(int).to_numpy()
     cos = t["sim"].to_numpy(float)
-    ab, ba = nli(t)
     jueces = {"NLI media": (ab + ba) / 2, "NLI producto": ab * ba}
 
     print("=" * 78)
@@ -97,6 +105,8 @@ def main():
     print("=" * 78)
     print("\ncalibra: {} pares ({} si, {} no). prueba NO se abre.".format(
         len(y), y.sum(), len(y) - y.sum()))
+    if n_fuera:
+        print("  ({} pares fuera: los fusiona la capa 0, Enmienda 5)".format(n_fuera))
 
     rng = np.random.default_rng(SEM)
     idx_si, idx_no = np.flatnonzero(y == 1), np.flatnonzero(y == 0)

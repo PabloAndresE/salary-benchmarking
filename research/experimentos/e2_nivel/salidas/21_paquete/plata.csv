@@ -6,7 +6,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5,EJECUTIVO DE IMPORTACIONES,ENCARGADO DE IMPORTACIONES,valida,banda,False,0.9414,no,no,p2,p2,0.0,gemini,p2
 6,ASISTENTE DE REASEGUROS,SUPERVISOR DE REASEGUROS,valida,bajo,True,0.9104,no,no,p2,p2,0.0,gemini,p2
 7,GERENTE FINANCIERO Y CONTABILIDAD,COORDINADOR DE FINANZAS Y CONTABILIDAD,entrena,bajo,True,0.9116,no,no,p2,p2,0.0,gemini,p2
-8,EXPERIENCE SENIOR 1,EXPERIENCE SENIOR 2,entrena,banda,False,0.9466,no,no,p1,p1,0.0,gemini,p1
+8,EXPERIENCE SENIOR 1,EXPERIENCE SENIOR 2,entrena,banda,False,0.9466,no,no,p1,p1,1.0,gemini_grado,ninguno
 9,ASISTENTE ADMINISTRATIVO DE FLOTA,ASISTENTE DE SUPERVISOR DE FLOTA,entrena,banda,True,0.9317,no,no,p5,p5,0.0,gemini,p5
 10,ASESOR COMERCIAL CAPACITADOR,CAPACITADOR COMERCIAL,entrena,bajo,False,0.9257,si,si,ninguno,ninguno,1.0,gemini,ninguno
 11,JEFE DE DISTRIBUCION NACIONAL,JEFE DE ZONA DISTRIBUIDORES,entrena,bajo,False,0.9206,no,no,p3,p4,0.0,gemini,p3
@@ -105,7 +105,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 104,ASISTENTE DE COMERCIO Y LOGISTICA,ASISTENTE DE LOGISTICA Y COBRANZAS,valida,banda,False,0.9354,si,si,ninguno,ninguno,1.0,gemini,ninguno
 105,JEFE DE OPERACIONES Y PRODUCCION,JEFE PRODUCCION Y EXCELENCIA OPERACIONAL,entrena,banda,False,0.9432,si,si,ninguno,ninguno,1.0,gemini,ninguno
 106,AUXILIAR DE FACTURACION,AUXILIAR DE CONTABILIDAD Y FACTURACION,entrena,banda,False,0.9421,si,si,ninguno,ninguno,1.0,gemini,ninguno
-107,ANALISTA BANCA CORPORATIVA3,ANALISTA BANCA CORPORATIVA5,entrena,banda,False,0.9397,no,no,p1,p1,0.0,gemini,p1
+107,ANALISTA BANCA CORPORATIVA3,ANALISTA BANCA CORPORATIVA5,entrena,banda,False,0.9397,no,no,p1,p1,1.0,gemini_grado,ninguno
 108,ASISTENTE DE OPERACIONES 2,ASISTENTE OPERATIVO II,entrena,banda,False,0.9603,si,si,ninguno,ninguno,1.0,gemini,ninguno
 109,COORDINADOR DE BODEGA Y LOGISTICA,COORDINADOR DE BODEGA PT,entrena,bajo,False,0.901,si,si,ninguno,ninguno,1.0,gemini,ninguno
 110,JEFE DE COMPRAS Y ADQUISICIONES,JEFE DE COMPRAS GENERALES,entrena,banda,False,0.9442,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -120,7 +120,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 119,COORDINADOR BI,COORDINADOR DE BI,entrena,banda,False,0.962,si,si,ninguno,ninguno,1.0,gemini,ninguno
 120,ASISTENTE SERVICIO AL CLIENTE Y OPERACIONES,ASISTENTE DE SERVICIO AL CLIENTE BA,entrena,bajo,False,0.9139,si,si,ninguno,ninguno,1.0,gemini,ninguno
 121,ASISTENTE ADMINISTRATIVO DE FLOTA,ASISTENTE ADMINISTRATIVA - FLOTA PROPIA,entrena,banda,False,0.9458,si,si,ninguno,ninguno,1.0,gemini,ninguno
-122,ASISTENTE 2 DE COMPRAS INTERNACIONALES,ASISTENTE 1 DE COMPRAS INTERNACIONALES,entrena,banda,False,0.9623,no,no,p1,p1,0.0,gemini,p1
+122,ASISTENTE 2 DE COMPRAS INTERNACIONALES,ASISTENTE 1 DE COMPRAS INTERNACIONALES,entrena,banda,False,0.9623,no,no,p1,p1,1.0,gemini_grado,ninguno
 123,TRABAJADOR ACUICOLA/ VARIOS,TRABAJADOR ACUICOLA - AYUDANTE ELECTRICO,entrena,bajo,False,0.9043,no,si,p4,ninguno,0.0,humano_139,
 124,INSTALADOR,INSTALADOR JR,entrena,bajo,True,0.9081,no,no,p3,p3,0.0,gemini,p3
 125,ANALISTA DE CANALES DE ATENCION Y EXPERIENCIA AL SOCIO/CLIENTE,JEFE DE CANALES DE ATENCION Y EXPERIENCIA AL SOCIO/CLIENTE,entrena,banda,True,0.9301,no,no,p2,p2,0.0,gemini,p2
@@ -499,7 +499,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 498,ESPECIALISTA DE PLATAFORMA,ESPECIALISTA DE PLATAFORMA TECNOLOGICA,entrena,banda,False,0.9442,si,si,ninguno,ninguno,1.0,gemini,ninguno
 499,DIRECTOR/A DE SERVICIOS GENERALES,SUBGERENTE DE SERVICIOS GENERALES,entrena,bajo,True,0.9028,no,no,p2,p2,0.0,gemini,p2
 500,GERENTE TECNCO DE PRODUCTO,TECNICO DE PRODUCTO,entrena,bajo,True,0.9195,no,no,p2,p2,0.0,gemini,p2
-501,MAQUINISTA 1,MAQUINISTA 3,entrena,bajo,False,0.9222,no,no,p1,p1,0.0,gemini,p1
+501,MAQUINISTA 1,MAQUINISTA 3,entrena,bajo,False,0.9222,no,no,p1,p1,1.0,gemini_grado,ninguno
 502,ANALISTA DE INSTALACIONES Y SERVICIOS,ANALISTA DE PREINSTALACIONES Y HOME SERVICE,entrena,bajo,False,0.9172,si,si,ninguno,ninguno,1.0,gemini,ninguno
 503,COORDINADOR DE BALCON DE SERVICIOS,LIDER DE BALCON DE SERVICIOS,entrena,banda,False,0.9427,si,si,ninguno,ninguno,1.0,gemini,ninguno
 504,COORDINADOR ZONA 1,COORDINADOR ZONA 2,entrena,banda,False,0.9458,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -527,7 +527,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 526,COORDINADORA PEDAGOGICA KINDERGARTEN CAHC,DIRECTORA KINDERGARTEN CAHC,entrena,banda,False,0.9365,no,no,p2,p2,0.0,gemini,p2
 527,OPERADOR DE RODILLO,OPERADOR DE RODILLO D. TAMBOR,entrena,bajo,False,0.919,si,si,ninguno,ninguno,1.0,gemini,ninguno
 528,JEFE DE MARKETING (EQ),JEFE DE MARKETING ESTANDAR,valida,bajo,False,0.9069,si,si,ninguno,ninguno,1.0,gemini,ninguno
-529,INGENIERO DE AUTOMATIZACION DE PRUEBAS L2,INGENIERO DE AUTOMATIZACION DE PRUEBAS L3,valida,banda,False,0.9492,no,no,p1,p1,0.0,gemini,p1
+529,INGENIERO DE AUTOMATIZACION DE PRUEBAS L2,INGENIERO DE AUTOMATIZACION DE PRUEBAS L3,valida,banda,False,0.9492,no,no,p1,p1,1.0,gemini_grado,ninguno
 530,INGENIERO DE MANTENIMIENTO JR,INGENIERO DE MANTENIMIENTO I,valida,banda,True,0.9303,no,no,p3,p3,0.0,gemini,p3
 531,JEFE DE MANTENIMIENTO INSFRAESTRUCTURA Y PUENTES G,JEFE MANTENIMIENTO-ESTRUCTURAS,valida,bajo,False,0.9187,si,si,ninguno,ninguno,1.0,gemini,ninguno
 532,DISENADOR UI-UX,DISENADORA UI/UX,entrena,banda,False,0.9428,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -573,7 +573,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 572,AUXILIAR DE E-COMMERCE,ASISTENTE DE COMPRAS E-COMMERCE,entrena,bajo,False,0.9233,si,si,ninguno,ninguno,1.0,gemini,ninguno
 573,ANALISTA CONTRATACIONES,ANALISTA ADM. CONTRATOS,entrena,banda,False,0.9453,si,si,ninguno,ninguno,1.0,gemini,ninguno
 574,COORDINADOR DE NOMINA Y GESTION HUMANA,COORDINADOR DE NOMINA Y TALENTO HUMANO,entrena,banda,False,0.9344,si,si,ninguno,ninguno,1.0,gemini,ninguno
-575,FUNCIONARIO 5,FUNCIONARIO 6,entrena,banda,False,0.9366,no,no,p1,p1,0.0,gemini,p1
+575,FUNCIONARIO 5,FUNCIONARIO 6,entrena,banda,False,0.9366,no,no,p1,p1,1.0,gemini_grado,ninguno
 576,ASESOR DE CAPTACIONES JUNIOR,ASESOR DE CAPTACIONES (MASTER),entrena,bajo,True,0.9038,no,no,p3,p3,0.0,gemini,p3
 577,ASISTENTE ADMINISTRATIVO M,ASISTENTE ADMINISTRATIVO..D,entrena,banda,False,0.9425,si,si,ninguno,ninguno,1.0,gemini,ninguno
 578,ASISTENTE TECNICO DE PRODUCCION,ASISTENTE DE PRODUCCION Y SEGURIDAD,entrena,bajo,True,0.9082,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -581,7 +581,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 580,JEFE CONTRATACIONES,GERENTE DE CONTRATACIONES,entrena,banda,True,0.9308,no,no,p2,p2,0.0,gemini,p2
 581,ANALISTA TECNICO COMPRAS,ANALISTA DE COMPRAS TEMPORAL,entrena,bajo,False,0.9099,si,si,ninguno,ninguno,1.0,gemini,ninguno
 582,JEFE CORPORATIVO DE SERVICIO AL CLIENTE,JEFE DE SERVICIO AL CLIENTE Y OPERACIONES,entrena,banda,True,0.9507,no,no,p3,p3,0.0,gemini,p3
-583,OBRERO 2,OBRERO 3,entrena,banda,False,0.936,no,no,p1,p1,0.0,gemini,p1
+583,OBRERO 2,OBRERO 3,entrena,banda,False,0.936,no,no,p1,p1,1.0,gemini_grado,ninguno
 584,ANALISTA COMPRAS E IMPORTACIONES,ANALISTA DE COMPRAS PUBLICAS E IMPORTACIONES,entrena,banda,False,0.9487,si,si,ninguno,ninguno,1.0,gemini,ninguno
 585,CONTADOR CONTADOR GENERAL,CONTADOR GENERAL (E),entrena,banda,False,0.9377,si,si,ninguno,ninguno,1.0,gemini,ninguno
 586,ASISTENTE LICITACIONES,COORDINADOR DE LICITACIONES,entrena,bajo,True,0.9124,no,no,p2,p2,0.0,gemini,p2
@@ -635,7 +635,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 634,AUXILIAR DE CHOFER,CHOFER DE VEHICULO,entrena,bajo,False,0.9066,no,no,p4,p4,0.0,gemini,p4
 635,JEFE COMERCIAL CUENTAS CLAVES,JEFE DE VENTAS DE CUENTAS CLAVE,entrena,bajo,False,0.9222,si,si,ninguno,ninguno,1.0,gemini,ninguno
 636,GESTOR ATENCION AL CLIENTE,GESTOR: ATENCION DE CLIENTE UEN SERVICIOS,valida,banda,False,0.9524,si,si,ninguno,ninguno,1.0,gemini,ninguno
-637,FUNCIONARIO 1,FUNCIONARIO 6,entrena,bajo,False,0.9048,no,no,p1,p1,0.0,gemini,p1
+637,FUNCIONARIO 1,FUNCIONARIO 6,entrena,bajo,False,0.9048,no,no,p1,p1,1.0,gemini_grado,ninguno
 638,ANALISTA QUIMICO,ANALISTA QUIMICO LIDER,valida,banda,False,0.9487,si,si,ninguno,ninguno,1.0,gemini,ninguno
 639,DOCENTE DE DIBUJO TECNICO,TECNICO DE DIBUJO,entrena,banda,False,0.9407,no,no,p4,p4,0.0,gemini,p4
 640,JEFE DE BODEGA DE SUMINISTROS,SUPERVISOR DE BODEGA DE SUMINISTROS,valida,banda,True,0.9516,no,no,p2,p2,0.0,gemini,p2
@@ -650,7 +650,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 649,IT MANAGER,INFORMATION TECHNOLOGY MANAGER,entrena,bajo,False,0.9199,si,si,ninguno,ninguno,1.0,gemini,ninguno
 650,ANALISTA DE RELACIONES INSTITUCIONALES,ASISTENTE DE RELACIONES INSTITUCIONALES,entrena,banda,True,0.948,no,no,p2,p2,0.0,gemini,p2
 651,DIRECTOR DE MEDIOS DIGITALES,DIRECTOR DE MEDIOS,entrena,banda,False,0.9378,si,si,ninguno,ninguno,1.0,gemini,ninguno
-652,SUPERVISOR DE VENTAS 6,SUPERVISOR DE VENTAS 8,entrena,banda,False,0.943,no,no,p1,p1,0.0,gemini,p1
+652,SUPERVISOR DE VENTAS 6,SUPERVISOR DE VENTAS 8,entrena,banda,False,0.943,no,no,p1,p1,1.0,gemini_grado,ninguno
 653,BODEGUERO DE MATERIA PRIMA,BODEGUERO DE MATERIA PRIMA SECOS,entrena,banda,False,0.9397,si,si,ninguno,ninguno,1.0,gemini,ninguno
 654,TRABAJADOR ACUICOLA,TRABAJADOR ACUICOLA - TRACTORISTA,entrena,banda,False,0.9354,no,si,p4,ninguno,1.0,humano_139,ninguno
 655,GERENTE DE GESTION DE PRODUCTO,GERENTE DE DIVISION DE PRODUCTO,entrena,banda,False,0.9419,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -691,7 +691,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 690,ASISTENTE ADMINISTRATIVA DE PRODUCCION,ASISTENTE ( DPTO. PRODUCCION ),entrena,banda,False,0.9331,si,si,ninguno,ninguno,1.0,gemini,ninguno
 691,BOMBERO,3. BOMBERO,entrena,banda,False,0.9456,si,si,ninguno,ninguno,1.0,gemini,ninguno
 692,ASESOR DE RESPALDO TECNICO,JEFE DE RESPALDO TECNICO,valida,banda,True,0.931,no,no,p2,p2,0.0,gemini,p2
-693,ASISTENTE 1 DE VENTAS,ASISTENTE DE VENTAS 2,entrena,banda,False,0.9418,no,no,p1,p1,0.0,gemini,p1
+693,ASISTENTE 1 DE VENTAS,ASISTENTE DE VENTAS 2,entrena,banda,False,0.9418,no,no,p1,p1,1.0,gemini_grado,ninguno
 694,GERENTE DE SOPORTE TECNOLOGICO,GERENTE SERVICIOS TECNOLOGICOS,valida,banda,False,0.9339,si,si,ninguno,ninguno,1.0,gemini,ninguno
 695,COORDINADOR DE INOCUIDAD,JEFE DE INOCUIDAD,entrena,bajo,True,0.9158,no,no,p2,p2,0.0,gemini,p2
 696,JEFE CAJA,JEFE DE CAJA GENERAL,entrena,banda,False,0.9315,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -806,7 +806,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 805,COORDINADOR DE MONITOREO,COORDINADOR CENTRAL DE MONITOREO,entrena,banda,False,0.9481,si,si,ninguno,ninguno,1.0,gemini,ninguno
 806,JEFE DE GESTION AMBIENTAL,COORDINADOR GESTION AMBIENTAL,entrena,bajo,True,0.9272,no,no,p2,p2,0.0,gemini,p2
 807,ENCARGADO DE BODEGA INDUSTRIA,JEFE DE BODEGA INDUSTRIAL,entrena,banda,False,0.9471,no,no,p2,p2,0.0,gemini,p2
-808,OPERADOR DE MAQUINA NIVEL 1,OPERADOR DE MAQUINA NIVEL 3,entrena,banda,False,0.941,no,no,p1,p1,0.0,gemini,p1
+808,OPERADOR DE MAQUINA NIVEL 1,OPERADOR DE MAQUINA NIVEL 3,entrena,banda,False,0.941,no,no,p1,p1,1.0,gemini_grado,ninguno
 809,SUSCRIPTOR SENIOR,SUSCRIPTOR JUNIOR,entrena,bajo,True,0.9273,no,no,p3,p3,0.0,gemini,p3
 810,WAREHOUSE COORDINATOR,WAREHOUSE & LOGISTIC COORDINATOR,entrena,banda,False,0.9467,si,si,ninguno,ninguno,1.0,gemini,ninguno
 811,EJECUTIVO ASIST SENIOR (ANALISTA CSO),EJECUTIVO ASISTENTE SENIOR (ANALISTA) CO,entrena,banda,False,0.9428,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -903,10 +903,10 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 902,COORDINADOR DE MANTENIMIENTO DE APLICACI,JEFE DE MANTENIMIENTO DE APLICACIONES,entrena,bajo,True,0.924,no,no,p2,p2,0.0,gemini,p2
 903,ANALISTA DE IMAGEN INSTITUCIONAL,ESPECIALISTA DE IMAGEN INSTITUCIONAL,entrena,bajo,True,0.9251,no,no,p2,p2,0.0,gemini,p2
 904,COORDINADOR DE COMUNICACI,COORDINADOR DE COMUNICACIONES EXTERNAS,entrena,banda,False,0.9392,si,si,ninguno,ninguno,1.0,gemini,ninguno
-905,ANALISTA BANCA CORPORATIVA5,ANALISTA BANCA CORPORATIVA6,entrena,banda,False,0.9589,no,no,p1,p1,0.0,gemini,p1
+905,ANALISTA BANCA CORPORATIVA5,ANALISTA BANCA CORPORATIVA6,entrena,banda,False,0.9589,no,no,p1,p1,1.0,gemini_grado,ninguno
 906,JEFE DE SERVICIO DE ENFERMERIA,JEFE SERVICIO MEDICO DE EMPRESA,entrena,bajo,False,0.9042,no,no,p4,p4,0.0,gemini,p4
 907,SUPERVISOR DE RECAUDO,SUPERVISOR DE RETENCION,entrena,bajo,False,0.9172,no,no,p4,p4,0.0,gemini,p4
-908,OPERADOR TECASA - 1,OPERADOR TECASA - 2,entrena,banda,False,0.9471,no,no,p1,p1,0.0,gemini,p1
+908,OPERADOR TECASA - 1,OPERADOR TECASA - 2,entrena,banda,False,0.9471,no,no,p1,p1,1.0,gemini_grado,ninguno
 909,EJECUTIVO CANAL DISTRIBUIDORES,GERENTE CANAL DISTRIBUIDORES,entrena,banda,False,0.9332,no,no,p2,p2,0.0,gemini,p2
 910,AUDITOR DE OPERACIONES,"AUDITOR DE OPERACIONES, DESPERDICIO Y MEJORA CONTINUA",entrena,banda,False,0.9415,si,si,ninguno,ninguno,1.0,gemini,ninguno
 911,JEFE DE AREA DE PRODUCCION CALIDAD,JEFE DE GARANTIA DE CALIDAD,valida,bajo,False,0.9069,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -994,7 +994,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 993,AUXILIAE DE SERVICIOS GENERALES,ADM. AUXILIAR DE SERVICIOS GENERALES,entrena,banda,False,0.9387,si,si,ninguno,ninguno,1.0,gemini,ninguno
 994,SUBGERENTE COMERCIAL NACIONAL,SUBGERENTE DE VENTAS NACIONAL,entrena,bajo,False,0.9166,si,si,ninguno,ninguno,1.0,gemini,ninguno
 995,ASISTENTE CONTROL CALIDAD,ASISTENTE ( CONT. CALIDAD ),entrena,banda,False,0.9591,si,si,ninguno,ninguno,1.0,gemini,ninguno
-996,JEFE DE PRODUCTO 1,JEFE DE PRODUCTO 3,entrena,banda,False,0.9364,no,no,p1,p1,0.0,gemini,p1
+996,JEFE DE PRODUCTO 1,JEFE DE PRODUCTO 3,entrena,banda,False,0.9364,no,no,p1,p1,1.0,gemini_grado,ninguno
 997,OFICINISTA 1,OFICINISTA 2 CO,entrena,bajo,False,0.9106,no,no,p1,p1,0.0,gemini,p1
 998,ESPECIALISTA DE MARKETING Y COMUNICACION,ESPECIALISTA DE SERVICIOS DE MARKETING,entrena,banda,False,0.9371,si,si,ninguno,ninguno,1.0,gemini,ninguno
 999,EJECUTIVO DE PROYECTOS Y PROCESOS,SUBGERENTE DE PROCESOS Y PROYECTOS,entrena,bajo,False,0.9016,no,no,p2,p2,0.0,gemini,p2
@@ -1142,10 +1142,10 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 1141,FINANCIAL PLANNING & ANALYSIS ANALYST,FINANCIAL PLANNING & ANALYSIS MANAGER,entrena,banda,False,0.9455,no,no,p2,p2,0.0,gemini,p2
 1142,COORDINADOR DE PROCESOS Y PROYECTOS,COORDINADOR DE PLANIFICACION Y PROCESOS,entrena,banda,False,0.948,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1143,SUPERVISOR DE AREA VERDE,JEFE DE AREAS VERDES,entrena,bajo,True,0.9269,no,no,p2,p2,0.0,gemini,p2
-1144,ANALISTA N1 SOC,ANALISTA N2 SOC,valida,banda,False,0.9493,no,no,p1,p1,0.0,gemini,p1
+1144,ANALISTA N1 SOC,ANALISTA N2 SOC,valida,banda,False,0.9493,no,no,p1,p1,1.0,gemini_grado,ninguno
 1145,ASISTENTE AUXILIAR DE CONTABILIDAD,AUXILIAR DE CONTABILIDAD (E),entrena,banda,False,0.9438,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1146,ANALISTA DE PLANEAMIENTO Y CONTROL FINANCIERO,COORDINADOR DE CONTROL Y PLANEAMIENTO FINANCIERO,entrena,banda,True,0.9317,no,no,p2,p2,0.0,gemini,p2
-1147,SERVICIO AL CLIENTE 1,SERVICIO AL CLIENTE 3,entrena,banda,False,0.9453,no,no,p1,p1,0.0,gemini,p1
+1147,SERVICIO AL CLIENTE 1,SERVICIO AL CLIENTE 3,entrena,banda,False,0.9453,no,no,p1,p1,1.0,gemini_grado,ninguno
 1148,ANALISTA DESARROLLO,ANALISTA DESARROLLO JR.,entrena,banda,True,0.9481,no,no,p3,p3,0.0,gemini,p3
 1149,EJECUTIVO DE CUENTA JR,EJECUTIVA DE CUENTA JUNIOR,entrena,banda,False,0.9426,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1150,AUXILIAR DE BODEGA MATERIA PRIMA,AUXILIAR DE BODEGA MT,entrena,bajo,False,0.9026,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -1208,7 +1208,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 1207,ASISTENTE DE BODEGA DE SUMINISTROS,ASISTENTE DE VENTAS Y BODEGA,entrena,bajo,False,0.9036,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1208,COORDINADOR DE INVESTIGACION,"COORDINADOR DE INVESTIGACION, DESARROLLO Y EMPAQUES",valida,bajo,False,0.9054,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1209,COORDINADOR DE CONTROL DE PRODUCCION,JEFE DE CONTROL DE PRODUCCION,entrena,banda,True,0.9607,no,no,p2,p2,0.0,gemini,p2
-1210,MANTENIMIENTO-TRABAJADOR GENERAL 1,MANTENIMIENTO-TRABAJADOR GENERAL 5,entrena,banda,False,0.9328,no,no,p1,p1,0.0,gemini,p1
+1210,MANTENIMIENTO-TRABAJADOR GENERAL 1,MANTENIMIENTO-TRABAJADOR GENERAL 5,entrena,banda,False,0.9328,no,no,p1,p1,1.0,gemini_grado,ninguno
 1211,ANALISTA INFORMACION Y SOPORTE SISTEMAS,ANALISTA DE SISTEMA/TECNICO,entrena,bajo,False,0.9096,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1212,SUPERVISOR DE RELACIONES COMUNITARIAS,JEFE DE RELACIONES COMUNITARIAS,valida,banda,True,0.9374,no,no,p2,p2,0.0,gemini,p2
 1213,JEFE DE AUDITORIA Y CALIDAD,JEFE AUDITORIA ADMINISTRATIVA,entrena,bajo,False,0.907,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -1490,7 +1490,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 1489,ANALISTA DE DISENO,ANALISTA DISENO,entrena,banda,False,0.943,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1490,INGENIERO DE MINA,INGENIERO JUNIOR DE MINA,entrena,banda,True,0.934,no,no,p3,p3,0.0,gemini,p3
 1491,COORDINADOR FRONT OPERATIVO,JEFE FRONT OPERATIVO,entrena,banda,True,0.9454,no,no,p2,p2,0.0,gemini,p2
-1492,RECAUDADOR 2,RECAUDADOR 1,entrena,banda,False,0.9433,no,no,p1,p1,0.0,gemini,p1
+1492,RECAUDADOR 2,RECAUDADOR 1,entrena,banda,False,0.9433,no,no,p1,p1,1.0,gemini_grado,ninguno
 1493,ASISTENTE TECNICO DE PRODUCCION,ASISTENTE DE PRODUCCION/REPRESENTANTE TECNICO,entrena,banda,False,0.9524,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1494,COORDINADOR DE AMBIENTE,COORDINADOR DE GESTION AMBIENTAL,entrena,banda,False,0.9473,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1495,ANALISTA DE SOPORTE (TECNICO),ANALISTA DE SOPORTE TECNICO AL CLIENTE,entrena,banda,False,0.9428,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -1520,7 +1520,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 1519,ESPECIALISTA DE RIESGO,ESPECIALISTA DE RIESGOS (E),entrena,banda,False,0.9482,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1520,DISENADOR GRAFICO DIGITAL,DISENADOR GRAFICO DIGITAL Y PREPRENSA,entrena,banda,False,0.9394,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1521,JEFE DISTRIBUCION,JEFE DISTRIBUCION Y SERVICIO AL CLIENTE,entrena,banda,False,0.9417,si,si,ninguno,ninguno,1.0,gemini,ninguno
-1522,SERVICIO AL CLIENTE 3,SERVICIO AL CLIENTE 6,entrena,banda,False,0.9374,no,no,p1,p1,0.0,gemini,p1
+1522,SERVICIO AL CLIENTE 3,SERVICIO AL CLIENTE 6,entrena,banda,False,0.9374,no,no,p1,p1,1.0,gemini_grado,ninguno
 1523,ANALISTA DE INFRAESTRUCTURA Y COM,ANALISTA INFRAESTRUCTURA SISTEMAS,entrena,banda,False,0.9425,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1524,ASISTENTE ADM. PRODUCCION,ASISTENTE OPERATIVO PRODUCCION,entrena,banda,False,0.9466,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1525,ASISTENTE COMERCIAL Y DE COMUNICACION,ASISTENTE DE MERCADEO Y DE COMUNICACION,entrena,banda,False,0.9546,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -1828,7 +1828,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 1827,SUPERVISOR DE MANTENIMIENTO Y RIEGO,SUPERVISOR DE RIEGO Y FERTILIZACION,entrena,banda,False,0.9368,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1828,COORDINADOR DE CONTROL PRESUPUESTARIO,"COORDINADOR DE PRESUPUESTO, DESARROLLO Y CONTROL",entrena,banda,False,0.9346,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1829,TECNICO JUNIOR DE MANTENIMIENTO,JEFE TECNICO DE MANTENIMIENTO,valida,banda,True,0.9458,no,no,p2,p2,0.0,gemini,p2
-1830,ANALISTA N1 CERT,ANALISTA N2 CERT,entrena,banda,False,0.95,no,no,p1,p1,0.0,gemini,p1
+1830,ANALISTA N1 CERT,ANALISTA N2 CERT,entrena,banda,False,0.95,no,no,p1,p1,1.0,gemini_grado,ninguno
 1831,ANALISTA TECNOLOGIA INFORMACIO,ANALISTA_DE_INFORMACION,entrena,bajo,False,0.9005,no,si,p4,ninguno,1.0,humano_139,ninguno
 1832,ESPECIALISTA COMUNICACION,ESPECIALISTA COMUNICACION Y DESARROLLO,entrena,banda,False,0.9407,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1833,JEFE DE COORDINACION Y SERVICIO AL CLIENTE,JEFE DE VENTAS Y SERVICIO AL CLIENTE,valida,banda,False,0.9384,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -1949,7 +1949,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 1948,ASISTENTE DE MARKETING,ASISTENTE / MARKETING,entrena,banda,False,0.9355,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1949,COORDINADOR HSE ECUADOR,HSE TEAM LEADER ECUADOR,entrena,banda,False,0.9461,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1950,ASISTENTE DE MECANICA,AUXILIAR DE MECANICA,entrena,banda,False,0.9442,si,si,ninguno,ninguno,1.0,gemini,ninguno
-1951,JEFE DE AGENCIA 1,JEFE DE AGENCIA 2,entrena,banda,False,0.9569,no,no,p1,p1,0.0,gemini,p1
+1951,JEFE DE AGENCIA 1,JEFE DE AGENCIA 2,entrena,banda,False,0.9569,no,no,p1,p1,1.0,gemini_grado,ninguno
 1952,AYUDANTE DE MANTENIMIENTO ELECTRICO,AYUDANTE DE MANTENIMIENTO ELEC,entrena,banda,False,0.9368,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1953,ADMINISTRADOR CONTROL CALIDAD,ADMINISTRADOR DE ASEGURAMIENTO DE LA CALIDAD,valida,banda,False,0.9406,si,si,ninguno,ninguno,1.0,gemini,ninguno
 1954,COORDINADOR INSPECCIONES,DIRECTOR DE INSPECCIONES Y REINSPECCIONES,entrena,bajo,True,0.9039,no,no,p2,p2,0.0,gemini,p2
@@ -2040,7 +2040,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2039,ANALISTA DE DATOS E INFORMACION,ANALISTA_DE_INFORMACION,entrena,banda,False,0.9301,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2040,GERENTE REGIONAL TECNICO,JEFE TECNICO REGIONAL,entrena,banda,True,0.9428,no,no,p2,p2,0.0,gemini,p2
 2041,ANALISTA DE ESTRATEGIA,ANALISTA DE ESTRATEGIA E INNOVACION,entrena,banda,False,0.944,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2042,ASISTENTE 2 DE PRODUCCION,ASISTENTE DE PRODUCCION 1,entrena,banda,False,0.9527,no,no,p1,p1,0.0,gemini,p1
+2042,ASISTENTE 2 DE PRODUCCION,ASISTENTE DE PRODUCCION 1,entrena,banda,False,0.9527,no,no,p1,p1,1.0,gemini_grado,ninguno
 2043,SUBGERENTE ADMINISTRATIVA,SUBGERENTE ADMINISTRACION,entrena,banda,False,0.9549,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2044,ASISTENTE TECNICO,ASISTENTE TECNICO RO,entrena,bajo,False,0.9018,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2045,ANALISTA DE NOMINA Y CONTRATOS,ANALISTA DE NOMINA Y COMISIONES,entrena,bajo,False,0.9052,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2083,7 +2083,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2082,ASISTENTE DE TECNOLOGIA INFORMATICA,"ASISTENTE DE TECNOLOGIA, INFORMATICA Y C",entrena,banda,False,0.9634,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2083,OPERADOR DE WELL TESTING,TECNICO DE WELL TESTING,entrena,banda,True,0.9339,no,no,p2,p2,0.0,gemini,p2
 2084,TECNICO DE MAQUINAS Y HERRAMIENTAS,TECNICO DE EQUIPOS Y HERRAMIENTAS,entrena,banda,False,0.9399,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2085,INGENIERO DE CAMPO III,INGENIERO DE CAMPO IV,entrena,banda,False,0.9446,no,no,p1,p1,0.0,gemini,p1
+2085,INGENIERO DE CAMPO III,INGENIERO DE CAMPO IV,entrena,banda,False,0.9446,no,no,p1,p1,1.0,gemini_grado,ninguno
 2086,LIDER DE CONTROL DE CALIDAD,ENCARGADO DE CONTROL DE CALIDAD,entrena,banda,False,0.9345,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2087,COORDINADOR DE PROCESOS Y PROYECTOS,COORDINADOR DE GESTION DE PROCESOS,entrena,banda,False,0.9433,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2088,ASESOR DE INVERSIONES,ASESOR DE INVERSIONES SENIOR,entrena,bajo,True,0.9029,no,no,p3,p3,0.0,gemini,p3
@@ -2154,7 +2154,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2153,AUDITORA DE CONTROL Y PROCESOS,AUDITORA DE PROCESOS Y CONTROL DE CALIDAD,entrena,banda,False,0.9461,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2154,ATARRAYADOR,ATARRAYADOR G.3,valida,bajo,False,0.9043,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2155,JEFE DE COMERCIO EXTERIOR Y COMPRAS,JEFE DE COMERCIO EXTERIOR Y LOGISTICA,entrena,banda,False,0.941,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2156,MAQUINISTA 1,MAQUINISTA 2,entrena,banda,False,0.9417,no,no,p1,p1,0.0,gemini,p1
+2156,MAQUINISTA 1,MAQUINISTA 2,entrena,banda,False,0.9417,no,no,p1,p1,1.0,gemini_grado,ninguno
 2157,ASISTENTE DE MATRICERIA,ASISTENTE DE MATRICERIA Y DISENO,entrena,banda,False,0.9465,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2158,COORDINADOR DE AUDITORIA INTERNA,COORDINADOR DE AUDITORIA Y CONTROL INTERNO,entrena,banda,False,0.9595,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2159,SUPERVISOR DE BODEGA Y DISTRIBUCION,SUPERVISOR BODEGA Y DESPACHO,entrena,banda,False,0.9479,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2248,7 +2248,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2247,AYUDANTE,AYUDANTE TBH,entrena,banda,False,0.9359,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2248,SUPERVISOR DE OPERACIONES DE ESTIBAS,SUPERVISOR DE ESTIBAS,entrena,banda,False,0.9484,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2249,MAESTRO DE OBRA,MAESTRO DE OBRA 1,entrena,banda,False,0.9455,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2250,COCINERO 1,COCINERO 2,entrena,banda,False,0.9416,no,no,p1,p1,0.0,gemini,p1
+2250,COCINERO 1,COCINERO 2,entrena,banda,False,0.9416,no,no,p1,p1,1.0,gemini_grado,ninguno
 2251,AUXILIAR DE PRODUCCION - TALLER DE CORTE,AUXILIAR DE PRODUCCION CORTE,valida,banda,False,0.9356,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2252,JEFE DE OPERACIONES DE CENTRAL DE ATENCION PRIORITARIO,JEFE MEDICO DE CENTRAL DE ATENCION PRIORITARIO,entrena,banda,False,0.9448,no,no,p4,p4,0.0,gemini,p4
 2253,EJECUTIVO COMERCIAL SENIOR,EJECUTIVO COMERCIAL SENIOR CONCESIONARIOS,entrena,banda,False,0.9325,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2278,7 +2278,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2277,SUPERVISOR DE BODEGA DE REPUESTOS,SUPERVISOR DE ALMACEN DE INSUMOS Y REPUESTOS,valida,bajo,False,0.9094,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2278,INGENIERO SENIOR DE MANTENIMIENTO,TECNICO SENIOR DE MANTENIMIENTO,entrena,banda,False,0.9573,no,si,p4,ninguno,1.0,humano_139,ninguno
 2279,ANALISTA DE TESORERIA JR.,ANALISTA DE TESORERIA 1,entrena,bajo,True,0.9252,no,no,p3,p3,0.0,gemini,p3
-2280,MANTENIMIENTO-TRABAJADOR GENERAL 1,MANTENIMIENTO-TRABAJADOR GENERAL 6,entrena,banda,False,0.9394,no,no,p1,p1,0.0,gemini,p1
+2280,MANTENIMIENTO-TRABAJADOR GENERAL 1,MANTENIMIENTO-TRABAJADOR GENERAL 6,entrena,banda,False,0.9394,no,no,p1,p1,1.0,gemini_grado,ninguno
 2281,EJECUTIVO DE SINIESTROS,EJECUTIVO SENIOR SINIESTROS,entrena,banda,True,0.9325,no,no,p3,p3,0.0,gemini,p3
 2282,ANALISTA CREDITO Y COBRANZA,ANALISTA CREDITO,entrena,banda,False,0.9467,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2283,LCDA. EN ENFERMERIA,LCDA ENFERMERIA,entrena,banda,False,0.9404,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2380,7 +2380,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2379,AYUDANTE DE PANADERIA / PASTELERIA,AUXILIAR DE PASTELERIA,entrena,bajo,False,0.9283,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2380,ASISTENTE TECNICO DE INFORMATICA,ASISTENTE TECNICO IT,entrena,banda,False,0.9475,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2381,JEFE DE COMUNICACION CORPORATIVA,JEFE DE COMUNICACION INTERNA,entrena,banda,True,0.9464,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2382,ANALISTA DE SISTEMAS I,ANALISTA DE SISTEMAS III,entrena,banda,False,0.943,no,no,p1,p1,0.0,gemini,p1
+2382,ANALISTA DE SISTEMAS I,ANALISTA DE SISTEMAS III,entrena,banda,False,0.943,no,no,p1,p1,1.0,gemini_grado,ninguno
 2383,OPERADOR DE MAQUINARIA PESADA,OPERADOR DE MAQUINARIA PESADA 2,valida,banda,False,0.9351,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2384,SUPERVISOR DE TECNOLOGIA,SUPERVISOR DE TECNOLOGIA INFORMATICA,entrena,banda,False,0.934,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2385,MERCADERISTA-IMPULSADORA,MERCADERISTA/IMPULSADOR,entrena,banda,False,0.9657,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2473,7 +2473,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2472,JEFE DE PUBLICIDAD Y COMUNICACION,"JEFE DE COMUNICACION, EDUCACION E INFORMACION",entrena,bajo,False,0.9117,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2473,ASISTENTE ADMINISTRATIVO RC,ASISTENTE ADMINISTRATIVO REGIONAL,valida,bajo,False,0.9237,no,no,p3,p3,0.0,gemini,p3
 2474,ANALISTA DE PLANIFICACION DE DEMANDA COLEC,JEFE DE PLANIFICACION DE LA DEMANDA COLEC,valida,banda,True,0.947,no,no,p2,p2,0.0,gemini,p2
-2475,TRABAJADOR AGRICOLA 3,TRABAJADOR AGRICOLA 4,entrena,banda,False,0.9557,no,no,p1,p1,0.0,gemini,p1
+2475,TRABAJADOR AGRICOLA 3,TRABAJADOR AGRICOLA 4,entrena,banda,False,0.9557,no,no,p1,p1,1.0,gemini_grado,ninguno
 2476,AGENTE DE COBRANZA,AGENTE DE COBRANZAS,entrena,banda,False,0.9345,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2477,CHOFER C,CHOFER (B),entrena,banda,False,0.9545,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2478,DIRECTOR DE PROYECTOS Y PROCESOS,EJECUTIVO DE PROYECTOS Y PROCESOS,entrena,banda,False,0.9329,no,no,p2,p2,0.0,gemini,p2
@@ -2664,7 +2664,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2663,JEFE NACIONAL DE SERVICIO,JEFE NACIONAL DE CENTRO DE SERVICIO,entrena,banda,False,0.9438,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2664,ANALISTA DE SISTEMA DE GESTION DE CALIDAD,ANALISTA DE CALIDAD CORPORATIVO,entrena,bajo,True,0.9147,no,no,p3,p3,0.0,gemini,p3
 2665,ANALISTA DE CERTIFICACION Y CALIDAD,ANALISTA TECNICO DE CALIDAD,entrena,banda,False,0.9331,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2666,AUDITOR INTERNO 2,AUDITOR INTERNO 3,valida,banda,False,0.9448,no,no,p1,p1,0.0,gemini,p1
+2666,AUDITOR INTERNO 2,AUDITOR INTERNO 3,valida,banda,False,0.9448,no,no,p1,p1,1.0,gemini_grado,ninguno
 2667,AUXILAR DE FACTURACION,AUXILIAR CAJA FACTURACION,entrena,bajo,False,0.9039,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2668,JEFE DE PLANEACION DE SUMINISTROS,JEFE DE SUPPLY PLANNING,entrena,banda,False,0.9435,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2669,AYUDANTE DE MECANICA,AYUDANTE DE MECANICA INDUSTRIAL,entrena,banda,False,0.9505,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2797,7 +2797,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2796,DOCENTE DE MATEMATICA,DOCENTE DE MATEMATICAS Y SOCIALES,entrena,banda,False,0.9324,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2797,AUDITOR DE SISTEMAS,AUDITOR DE SISTEMAS SENIOR,entrena,banda,True,0.9344,no,no,p3,p3,0.0,gemini,p3
 2798,JEFE DE TRANSFORMACION DIGITAL,COORDINADOR DE TRANSFORMACION DIGITAL,entrena,banda,True,0.9368,no,no,p2,p2,0.0,gemini,p2
-2799,OPERADOR DE MAQUINARIA PESADA 1,OPERADOR DE MAQUINARIA PESADA 2,valida,banda,False,0.956,no,no,p1,p1,0.0,gemini,p1
+2799,OPERADOR DE MAQUINARIA PESADA 1,OPERADOR DE MAQUINARIA PESADA 2,valida,banda,False,0.956,no,no,p1,p1,1.0,gemini_grado,ninguno
 2800,COORDINADOR DE SISTEMAS DE GESTION DE CALIDAD,COORDINADOR DE CALIDAD Y MONITOREO,entrena,banda,False,0.9333,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2801,COORDINADO DE PRODUCCION,COORDINADOR DE ORDENES DE PRODUCCION,entrena,banda,False,0.9407,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2802,SUPERVISOR DE OPERACIONES PUERTO,SUB COORDINADOR OPERACIONES PUERTO,entrena,banda,False,0.9649,no,no,p3,p3,0.0,gemini,p3
@@ -2810,7 +2810,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2809,ACCOUNTANT ANALYST,ACCOUNTANT SENIOR ANALYST,entrena,banda,True,0.9363,no,no,p3,p3,0.0,gemini,p3
 2810,ASISTENTE INSTALADOR DE SISTEMAS,AUXILIAR /INSTALADOR DE SISTEMAS,entrena,banda,False,0.9457,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2811,NUTRICIONISTA,NUTRICIONISTA DIETISTA,entrena,banda,False,0.9486,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2812,ADMINISTRADOR 2,ADMINISTRADOR 3,valida,banda,False,0.9401,no,no,p1,p1,0.0,gemini,p1
+2812,ADMINISTRADOR 2,ADMINISTRADOR 3,valida,banda,False,0.9401,no,no,p1,p1,1.0,gemini_grado,ninguno
 2813,REPRESENTANTE TECNICO DE VENTA,REPRESENTANTE TECNICO DE VENTAS SR,entrena,banda,True,0.9437,no,no,p3,p3,0.0,gemini,p3
 2814,AUXILIAR /INSTALADOR DE SISTEMAS,ASISTENTE / AYUDANTE / AUXILIAR / INSTALADOR,entrena,bajo,False,0.9052,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2815,SUPERVISOR DE ENTREGAS,SUPERVISOR ENTREGAS,entrena,banda,False,0.942,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2852,7 +2852,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2851,ASISTENTE DE CAJAS,ASISTENTE DE CAJAS VOLANTE,entrena,banda,False,0.9311,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2852,GERENTE DE GESTION DE MARKETING,GERENTE COMERCIAL Y MARKETING,entrena,banda,False,0.9499,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2853,ASIS ADMINISTRATIVO,"ASIS,ADMINISTRATIVO",entrena,banda,False,0.9505,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2854,ASISTENTE CONTABLE1,ASISTENTE CONTABLE 2,valida,banda,False,0.9543,no,no,p1,p1,0.0,gemini,p1
+2854,ASISTENTE CONTABLE1,ASISTENTE CONTABLE 2,valida,banda,False,0.9543,no,no,p1,p1,1.0,gemini_grado,ninguno
 2855,COORDINADOR DE DESARROLLO Y TECNOLOGIA,"JEFE DE TECNOLOGIA, DESARROLLO Y COMUNIC",entrena,bajo,True,0.9032,no,no,p2,p2,0.0,gemini,p2
 2856,JEFE DE BODEGA INSUMOS PLANTA,SUPERVISOR DE BODEGA DE INSUMOS,entrena,bajo,True,0.9135,no,no,p2,p2,0.0,gemini,p2
 2857,ASISTENTE DE IMPORT,ASISTENTE DE IMPORTACION Y LOGISTICA,entrena,banda,False,0.9317,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2897,7 +2897,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2896,GERENTE ADMINISTRATIVO Y DE TALENTO HUMANO,GERENTE DE GESTION DE PERSONAS,valida,bajo,False,0.9127,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2897,JEFE DE CALIDAD DEL SERVICIO,JEFE CALIDAD FUNCIONAL,entrena,bajo,False,0.9101,no,si,p4,ninguno,1.0,humano_139,ninguno
 2898,ASISTENTE LOGISTICA Y MANTENIMIENTO,ASISTENTE DE LOGISTICA Y SEGURIDAD,entrena,banda,False,0.9308,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2899,LINIERO 1,LINIERO 2,entrena,banda,False,0.9401,no,no,p1,p1,0.0,gemini,p1
+2899,LINIERO 1,LINIERO 2,entrena,banda,False,0.9401,no,no,p1,p1,1.0,gemini_grado,ninguno
 2900,COORDINADOR DE LICITACIONES,COORDINADOR DE PRESUPUESTOS Y LICITACIONES,entrena,banda,False,0.9429,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2901,ASISTENTE DE PRODUCTO TERMINADO,AUXILIAR DE PRODUCTO TERMINADO,entrena,banda,False,0.9391,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2902,ESPECIALISTA COMUNICACION,ESPECIALISTA COMUNICACION INTERNA,entrena,bajo,False,0.9071,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -2917,7 +2917,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2916,BODEGUERO S/F,BODEGUERO SM,valida,banda,False,0.94,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2917,COORDINADOR DE PUBLICIDAD Y COMUNICACION,COORDINADOR DE PUBLICIDAD E IMAGEN,entrena,banda,False,0.9437,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2918,VENDEDOR SEGMENTOS PESADOS,VENDEDOR SEGMENTOS PESADOS JR,entrena,banda,True,0.9339,no,no,p3,p3,0.0,gemini,p3
-2919,SOLDADOR TIPO 1,SOLDADOR TIPO II,entrena,banda,False,0.9316,no,no,p1,p1,0.0,gemini,p1
+2919,SOLDADOR TIPO 1,SOLDADOR TIPO II,entrena,banda,False,0.9316,no,no,p1,p1,1.0,gemini_grado,ninguno
 2920,JEFE DE CALIDAD E INNOVACION,JEFE DE CALIDAD Y PRODUCTO,entrena,banda,False,0.9491,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2921,GERENTE DE DESARROLLO HUMANO,GERENTE DE DESARROLLO HUMANO Y ADMINISTRACION,entrena,banda,False,0.9458,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2922,SUPERVISOR DE CAJA,JEFE DE CAJA,entrena,bajo,True,0.9138,no,no,p2,p2,0.0,gemini,p2
@@ -2986,7 +2986,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 2985,AUX BODEGA,AUX.DE BODEGA,entrena,banda,False,0.9407,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2986,AUXILIAR DE MAQUINARIA,AUXILIAR DE MANTENIMIENTO DE EQUIPOS Y VEHICULOS,entrena,bajo,False,0.9023,no,si,p4,ninguno,0.0,humano_139,
 2987,DOCENTE DE ARTE / FISICA CAHC,DOCENTE DE FISICA CAHC,valida,banda,False,0.9364,si,si,ninguno,ninguno,1.0,gemini,ninguno
-2988,INGENIERO EN SISTEMAS L2,INGENIERO EN SISTEMAS L3,valida,banda,False,0.9372,no,no,p1,p1,0.0,gemini,p1
+2988,INGENIERO EN SISTEMAS L2,INGENIERO EN SISTEMAS L3,valida,banda,False,0.9372,no,no,p1,p1,1.0,gemini_grado,ninguno
 2989,ASISTENTE 1 ADMINISTRATIVO,ASISENTE ADMINISTRATIVO,entrena,banda,False,0.9374,si,si,ninguno,ninguno,1.0,gemini,ninguno
 2990,ANALISTA DE TALENTO HUMANO SENIOR,ANALISTA DE EVALUACION Y DESARROLLO DE TALENTO HUMANO,entrena,bajo,True,0.9018,no,no,p3,p3,0.0,gemini,p3
 2991,SUPERVISOR DE OBRA,SUPERVISOR DE OBRA Y TALLER AUTOMOTRIZ,entrena,bajo,False,0.9054,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3029,7 +3029,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3028,ANALISTA DE APRENDIZAJE,ANALISTA DE APRENDIZAJE CONTINUO,entrena,banda,False,0.9494,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3029,DIRECTOR DE PLANIFICACION,DIRECTOR (A) DE PLANIFICACION Y SEGUIMIENTO,entrena,bajo,False,0.9219,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3030,JEFE DE RIESGOS INTEGRALES,JEFE DE RIESGOS INTEGRALES Y CUMPLIMIENTO,entrena,banda,False,0.9509,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3031,ELECTROMECANICO 1,ELECTROMECANICO 2,entrena,banda,False,0.9446,no,no,p1,p1,0.0,gemini,p1
+3031,ELECTROMECANICO 1,ELECTROMECANICO 2,entrena,banda,False,0.9446,no,no,p1,p1,1.0,gemini_grado,ninguno
 3032,ANALISTA SENIOR COMPENSACION Y BENEFICIOS,ANALISTA SENIOR DE COMPENSACIONES Y DESARROLLO ORGANZACIONAL,entrena,banda,False,0.9302,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3033,JEFE DE FLOTA,GERENTE DE FLOTAS,entrena,bajo,True,0.9264,no,no,p2,p2,0.0,gemini,p2
 3034,INGENIERO MANTENIMIENTO,INGENIERO SOPORTE Y MANTENIMIENTO CORPORATIVO,entrena,bajo,True,0.9235,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3148,7 +3148,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3147,ESPECIALISTA DE SOPORTE TECNICO,ASESOR DE SOPORTE TECNICO,entrena,banda,True,0.9472,no,no,p2,p2,0.0,gemini,p2
 3148,JEFE SEGURIDAD OCUPACIONAL,JEFE UNIDAD SEGURIDAD Y SALUD OCUPACIONAL,entrena,banda,False,0.9443,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3149,CONSERJE MENSAJERO,CONSERJE MENSAJERO DE AGENCIA,entrena,banda,False,0.9422,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3150,OPERARIOS 1 DE EMPAQUE PIFO,OPERARIOS 3 DE EMPAQUE PIFO,entrena,banda,False,0.9494,no,no,p1,p1,0.0,gemini,p1
+3150,OPERARIOS 1 DE EMPAQUE PIFO,OPERARIOS 3 DE EMPAQUE PIFO,entrena,banda,False,0.9494,no,no,p1,p1,1.0,gemini_grado,ninguno
 3151,OPERADOR MANT ELECTRICO,OPERADOR MANT-MECANICO,entrena,banda,False,0.9327,no,no,p4,p4,0.0,gemini,p4
 3152,JEFE DE INDUSTRIAL,JEFE DEPARTAMENTO INDUSTRIAL,entrena,banda,False,0.9486,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3153,SUPERVISOR DE BODEGA DE PRODUCTO,SUPERVISOR DE BODEGA DE SUMINISTROS,valida,banda,False,0.9363,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3280,7 +3280,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3279,GERENTE DE SEGURIDAD ALIMENTARIA,GERENTE DE CONTROL CALIDAD Y SEGURIDAD ALIMENTARIA,entrena,banda,False,0.9433,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3280,ASISTENTE TECNICO Y ADMINISTRA,ASISTENTE ADM. Y OPERACIONAL,entrena,banda,True,0.9322,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3281,TECNICO (A) DE ENFERMERIA,TECNICO (A) DE ENFERMERIA 2,entrena,banda,False,0.9356,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3282,SALONERO 1,SALONERO 2,entrena,banda,False,0.9443,no,no,p1,p1,0.0,gemini,p1
+3282,SALONERO 1,SALONERO 2,entrena,banda,False,0.9443,no,no,p1,p1,1.0,gemini_grado,ninguno
 3283,ASISTENTE DE SERVICIO A PROVEEDORES MEDICOS,COORDINADOR DE SERVICIO A PROVEEDORES MEDICOS,entrena,bajo,True,0.924,no,no,p2,p2,0.0,gemini,p2
 3284,SUPERVISOR DE NOMINA,SUPERVISORA NOMINA,entrena,bajo,False,0.9031,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3285,JEFE DE SALUD Y SEGURIDAD OCUPACIONAL,"JEFE / TECNICO DE SEGURIDAD, SALUD OCUPACIONAL Y AMBIENTE",entrena,banda,False,0.9358,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3397,7 +3397,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3396,HOUSEKEEPER,HOUSEKEEPER (BC),entrena,bajo,False,0.9193,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3397,GERENTE DE INNOVACION Y DESARROLLO,DIRECTOR DE INNOVACION,entrena,bajo,False,0.9013,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3398,COORDINADOR DE REVENUE MANAGEMENT,ANALISTA DE REVENUE MANAGEMENT,entrena,bajo,True,0.9103,no,no,p2,p2,0.0,gemini,p2
-3399,ASISTENTE DE COMPRAS 2,ASISTENTE DE COMPRAS 4,entrena,banda,False,0.9456,no,no,p1,p1,0.0,gemini,p1
+3399,ASISTENTE DE COMPRAS 2,ASISTENTE DE COMPRAS 4,entrena,banda,False,0.9456,no,no,p1,p1,1.0,gemini_grado,ninguno
 3400,JEFE DE OPERACIONES,COORDINADOR TECNICO DE OPERACIONES,entrena,bajo,True,0.9052,no,no,p2,p2,0.0,gemini,p2
 3401,GERENTE DE ADMINISTRACION FIDUCIARIA,JEFE DE ADMINISTRACION FIDUCIARIA,entrena,banda,True,0.9453,no,no,p2,p2,0.0,gemini,p2
 3402,ANALISTA CONTABLE TRIBUTARIO,ANALISTA DE CONTROL TRIBUTARIO,entrena,banda,False,0.9414,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3446,7 +3446,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3445,GERENTE DE SEGURIDAD CORPORATIVA,JEFE DE SEGURIDAD CORPORATIVA,valida,banda,True,0.9532,no,no,p2,p2,0.0,gemini,p2
 3446,CHOFER DE VEHICULO LIVIANO,CHOFER VEHICULOS LIVIANOS,entrena,banda,False,0.9498,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3447,ASISTENDE ADMINISTRATIVO,ADM ASISTENTE ADMINISTRATIVO,entrena,banda,False,0.944,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3448,ASIST. OPERACIONES 1,ASIST. OPERACIONES 2,entrena,banda,False,0.9499,no,no,p1,p1,0.0,gemini,p1
+3448,ASIST. OPERACIONES 1,ASIST. OPERACIONES 2,entrena,banda,False,0.9499,no,no,p1,p1,1.0,gemini_grado,ninguno
 3449,COORDINADOR DE CREDITOS Y COBRANZAS,COORDINADOR DE ANALISIS Y CONTROL DE CREDITO,entrena,bajo,False,0.9089,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3450,ESPECIALISTA DESARROLLO ORGANIZACIONAL,SUBGERENTE DE DESARROLLO ORGANIZACIONAL,entrena,bajo,True,0.9126,no,no,p2,p2,0.0,gemini,p2
 3451,ANALISTA DE INFRAESTRUCTURA,ASISTENTE DE INFRAESTRUCTURA Y PROYECTOS,entrena,bajo,True,0.9056,no,no,p2,p2,0.0,gemini,p2
@@ -3504,7 +3504,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3503,JEFE COMERCIAL DE IMPORTACIONES,JEFE COMERCIAL DE EXPORTACIONES,entrena,banda,False,0.9627,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3504,OPERADOR DE PRODUCCION (MAQUINA),OPERADOR SERVICIOS A LA PRODUCCION,entrena,bajo,False,0.906,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3505,JEFE DE BODEGA DE REPUESTOS,JEFE DE BODEGA DE INSUMOS Y REPUESTOS,entrena,banda,False,0.9473,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3506,SUPERVISOR DE SEGURIDAD SALUD Y AMBIENTE 1,SUPERVISOR DE SEGURIDAD SALUD Y AMBIENTE 3,entrena,banda,False,0.946,no,no,p1,p1,0.0,gemini,p1
+3506,SUPERVISOR DE SEGURIDAD SALUD Y AMBIENTE 1,SUPERVISOR DE SEGURIDAD SALUD Y AMBIENTE 3,entrena,banda,False,0.946,no,no,p1,p1,1.0,gemini_grado,ninguno
 3507,JEFE AREA DE CALIDAD,JEFE DE ASEG. DE LA CALIDAD,valida,banda,False,0.9554,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3508,GERENTE DE INGENIERIA Y PROYECTOS,INGENIERO DE PROYECTOS (G),entrena,banda,False,0.9311,no,no,p4,p4,0.0,gemini,p4
 3509,ANALISTA SEGURIDAD INFORMACION,ANALISTA SEGURIDAD SENIOR,entrena,bajo,True,0.9131,no,no,p3,p3,0.0,gemini,p3
@@ -3567,7 +3567,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3566,ANALYST - PRODUCT SUPPORT,SENIOR ANALYST - PRODUCT SUPPORT,entrena,banda,True,0.9467,no,no,p3,p3,0.0,gemini,p3
 3567,DIRECTOR DE CALIDAD,DIRECTOR DE GESTION & CALIDAD,entrena,banda,False,0.937,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3568,CONSULTOR TECNICO DE VENTAS,CONSULTOR TECNICO DE VENTAS II,entrena,banda,False,0.9498,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3569,APLICAD-COCHERO 1,APLICAD-COCHERO 3,entrena,banda,False,0.9394,no,no,p1,p1,0.0,gemini,p1
+3569,APLICAD-COCHERO 1,APLICAD-COCHERO 3,entrena,banda,False,0.9394,no,no,p1,p1,1.0,gemini_grado,ninguno
 3570,ASISTENTE DE AUTOSERVICIOS,GERENTE DE AUTOSERVICIOS,entrena,bajo,True,0.9031,no,no,p2,p2,0.0,gemini,p2
 3571,COORDINADOR DE PLANIFICACION Y PROYECTOS,COORDINADOR DE PLANIFICACION D,valida,bajo,False,0.9018,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3572,DIRECTORA LEGAL Y COMPLIANCE,DIRECTOR LEGAL Y DE CUMPLIMIENTO,entrena,banda,False,0.9492,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3741,7 +3741,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3740,ASIST. ADMINISTRATIVO LABORATORIO,ANALISTA ADMINISTRATIVO DE LABORATORIO,entrena,banda,False,0.9401,no,no,p2,p2,0.0,gemini,p2
 3741,JEFE DE MANTENIMIENTO Y OPERACIONES,ASISTENTE DE OPERACIONES Y MANTENIMIENTO,entrena,bajo,True,0.9221,no,no,p2,p2,0.0,gemini,p2
 3742,OFICIAL DE ATENCION AL SOCIO,OFICIAL DE ATENCION AL SOCIO/CLIENTE,entrena,banda,False,0.9467,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3743,MAQUINISTA 3,MAQUINISTA 4,entrena,banda,False,0.9487,no,no,p1,p1,0.0,gemini,p1
+3743,MAQUINISTA 3,MAQUINISTA 4,entrena,banda,False,0.9487,no,no,p1,p1,1.0,gemini_grado,ninguno
 3744,ASISTENTE DE CATALOGO,ADMINISTRADOR DE CATALOGO,entrena,bajo,False,0.9294,no,no,p2,p2,0.0,gemini,p2
 3745,ASISTENTE TECNICO DE INFRAESTRUCTURA,ASISTENTE DE INFRAESTRUCTURA TECNOLOGICA,entrena,banda,True,0.9543,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3746,SUPERVISOR DE BODEGA Y DISTRIBUCION,SUPERVISOR DE BODEGA SEMIELABORADO,entrena,bajo,False,0.9205,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3813,7 +3813,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3812,ANALISTA DE RIESGOS SENIOR,ANALISTA SENIOR GESTION DE RIESGOS Y CUMPLIMIENTO,entrena,banda,False,0.937,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3813,VICEPRESIDENTE ADMINISTRATIVO,VICEPRESIDENTE OPERATIVO,valida,banda,False,0.9368,no,no,p4,p4,0.0,gemini,p4
 3814,ANALISTA SENIOR DE FINANZAS,ANALISTA SENIOR DE GESTION,entrena,bajo,False,0.9026,no,no,p4,p4,0.0,gemini,p4
-3815,MAQUINISTA 5,MAQUINISTA 6,entrena,banda,False,0.9458,no,no,p1,p1,0.0,gemini,p1
+3815,MAQUINISTA 5,MAQUINISTA 6,entrena,banda,False,0.9458,no,no,p1,p1,1.0,gemini_grado,ninguno
 3816,GERENTE DE ESTRATEGIA Y NEGOCIOS,GERENTE DE PLANEACION Y ANALISIS ESTRATEGICO,entrena,bajo,False,0.9194,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3817,JEFE COMERCIAL REGION COSTA,JEFE ZONAL DE VENTAS COSTA,entrena,bajo,False,0.9157,no,no,p3,p3,0.0,gemini,p3
 3818,OPERADOR DE BOMBAS,MECANICO OPERADOR DE BOMBAS,entrena,banda,False,0.9404,no,no,p4,p4,0.0,gemini,p4
@@ -3961,7 +3961,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3960,COORDINADOR DE INFRAESTRUCTURA Y SEGURIDAD,COORDINADOR DE OPERACIONES E INFRAESTRUCTURA,entrena,banda,False,0.9392,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3961,ANALISTA DE OPERACIONES,ANALISTA DE OPERACIONES JR,entrena,banda,True,0.9364,no,no,p3,p3,0.0,gemini,p3
 3962,TECNICO ASESOR MECANICO DIESEL 1,TECNICO MECANICO DIESEL,valida,banda,False,0.9325,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3963,OFICINISTA 1,OFICINISTA 2,entrena,banda,False,0.9319,no,no,p1,p1,0.0,gemini,p1
+3963,OFICINISTA 1,OFICINISTA 2,entrena,banda,False,0.9319,no,no,p1,p1,1.0,gemini_grado,ninguno
 3964,COBRADOR/FACTURADOR/RECAUDADOR/ENCUESTADOR,COBRADOR / RECAUDADOR / FACTURA,entrena,banda,False,0.9354,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3965,DIRECTOR DE INDEMNIZACIONES,EJECUTIVO(A) DE INDEMNIZACIONES,entrena,bajo,False,0.9181,no,no,p2,p2,0.0,gemini,p2
 3966,ASISTENTE FISCALIZADOR,AUXILIAR DE FISCALIZACION,valida,banda,False,0.9411,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -3970,7 +3970,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3969,SECRETARIA - OFICINISTA,SECRETARIA DE OFICINA,valida,banda,False,0.948,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3970,INSTALADOR DE SISTEMAS,INSTALADOR DE DISPOSITIVOS,entrena,bajo,False,0.9233,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3971,ANALISTA DE COMUNICACION Y MARKETING,ESPECIALISTA DE MARKETING Y COMUNICACION,entrena,bajo,True,0.9037,no,no,p2,p2,0.0,gemini,p2
-3972,CALIBRADOR NIVEL 1,CALIBRADOR NIVEL 2,entrena,banda,False,0.9488,no,no,p1,p1,0.0,gemini,p1
+3972,CALIBRADOR NIVEL 1,CALIBRADOR NIVEL 2,entrena,banda,False,0.9488,no,no,p1,p1,1.0,gemini_grado,ninguno
 3973,ANALISTA DE COMUNICACION EXTERNA,ANALISTA DE COMUNICACION Y RELACIONAMIENTO,entrena,banda,False,0.9487,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3974,ASISTENTE A DE CONTABILIDAD,ASISTENTE CONTABLE FINANCIERA,valida,bajo,False,0.9172,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3975,OPERARIO/A DE BODEGA DE MATERIAL SECO,COORDINADOR/A OPERATIVO/A DE BODEGA DE MATERIAL SECO,entrena,banda,True,0.9462,no,no,p2,p2,0.0,gemini,p2
@@ -3993,7 +3993,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 3992,GERENTE OPERATIVO / PRODUCCION CONTACT CENTER,OPERADOR DE CONTACT CENTER,entrena,bajo,True,0.905,no,no,p2,p2,0.0,gemini,p2
 3993,ARQUITECTO,ARQUITECTO -A,entrena,bajo,False,0.9039,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3994,ASISTENTE DE CLIENTES Y SERVICIOS,ASISTENTE SERVICIO AL CLIENTE Y OPERACIONES,entrena,banda,False,0.9642,si,si,ninguno,ninguno,1.0,gemini,ninguno
-3995,AUXILIAR CONTABLE 1,AUXILIAR CONTABLE 3,valida,banda,False,0.9376,no,no,p1,p1,0.0,gemini,p1
+3995,AUXILIAR CONTABLE 1,AUXILIAR CONTABLE 3,valida,banda,False,0.9376,no,no,p1,p1,1.0,gemini_grado,ninguno
 3996,ANALISTA PRODUCTIVIDAD Y CONTROL ORGANIZACIONAL,COORDINADOR PRODUCTIVIDAD Y CONTROL ORGANIZACIONAL,valida,banda,True,0.9488,no,no,p2,p2,0.0,gemini,p2
 3997,ASISTENTE COMERCIAL (AC),ASISTENTE COMERCIAL SAC,entrena,banda,False,0.9385,si,si,ninguno,ninguno,1.0,gemini,ninguno
 3998,ANALISTA PROYECTO ELECTRICO,ANALISTA SENIOR ELECTRICO,entrena,bajo,True,0.9083,no,no,p3,p3,0.0,gemini,p3
@@ -4046,14 +4046,14 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4045,EC_SUPERVISOR DE MANTENIMIENTO,SUPERVISOR DE MANTENIMIENTO EL,entrena,banda,False,0.939,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4046,COORDINADOR DE STEWARDSHIP,COORDINADOR(A) DE STEWARDS,entrena,banda,False,0.9418,si,no,ninguno,p4,1.0,humano_139,ninguno
 4047,OPERADOR DE PROCESO,OPERADOR DE CONTROL DE PROCESO,entrena,banda,False,0.9511,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4048,SECRETARIA 3,SECRETARIA 4,entrena,banda,False,0.9462,no,no,p1,p1,0.0,gemini,p1
+4048,SECRETARIA 3,SECRETARIA 4,entrena,banda,False,0.9462,no,no,p1,p1,1.0,gemini_grado,ninguno
 4049,SUBGERENTE DE FACULTAIVOS,SUBGERENTE DE FACULTATIVOS,entrena,banda,False,0.9507,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4050,ANALISTA DE MOVILIDAD INTERNACIONAL,ANALISTA TRANSPORTE INTERNACIONAL,entrena,bajo,False,0.9008,no,no,p4,p4,0.0,gemini,p4
 4051,JEFE DE EJECUCION Y GESTION DE ESTRATEGIA,JEFE DE EJECUCION Y GESTION DE LA ESTRATEGIA/BI,entrena,banda,False,0.9438,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4052,JEFE CONTABLE FINANCIERO,JEFE DE CONTOL FINANCIERO,entrena,banda,False,0.9521,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4053,ANALISTA DE BIENESTAR SOCIAL,ANALISTA DE BIENESTAR SOCIAL & SSO,entrena,banda,False,0.9494,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4054,ASISTENTE DE PRODUCCION Y CALIDAD,ANALISTA DE CALIDAD DE PRODUCCION,entrena,bajo,True,0.9138,no,no,p2,p2,0.0,gemini,p2
-4055,JARDINERO 1,JARDINERO 2,entrena,banda,False,0.9412,no,no,p1,p1,0.0,gemini,p1
+4055,JARDINERO 1,JARDINERO 2,entrena,banda,False,0.9412,no,no,p1,p1,1.0,gemini_grado,ninguno
 4056,SUPERVISOR DE ALMACEN,COORDINADOR ALMACEN,entrena,bajo,False,0.9169,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4057,FINANCIAL PLANNING & ANALYSIS ANALYST,"SENIOR ANALYST, FINANCIAL PLANNING AND ANALYSIS",entrena,banda,True,0.9417,no,no,p3,p3,0.0,gemini,p3
 4058,GERENTE NACIONAL DE CREDITO,GERENTE NACIONAL DE CREDITOS Y COBRANZAS,entrena,banda,False,0.9341,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4196,7 +4196,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4195,VENDEDOR,VENDEDOR (C),entrena,banda,False,0.9398,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4196,ESPECIALISTA TD - SERVICIOS IT,ESPECIALISTA TD - SERVICIOS IT CORE,entrena,banda,False,0.951,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4197,GERENTE DE MANTENIMIENTO E INGENIERIA,GERENTE DE INFRAESTRUCTURA Y MANTENIMIENTO,entrena,banda,False,0.9348,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4198,OPERADOR SIMON I,OPERADOR SIMON III,entrena,banda,False,0.9464,no,no,p1,p1,0.0,gemini,p1
+4198,OPERADOR SIMON I,OPERADOR SIMON III,entrena,banda,False,0.9464,no,no,p1,p1,1.0,gemini_grado,ninguno
 4199,SUB-GERENTE LOGISTICO,SUBGERENTE DE COMERCIO Y LOGISTICA,entrena,bajo,True,0.9043,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4200,COORDINADOR CONTROL INTERNO,COORDINADOR DE CONTROL INTERNO Y PROCESOS,entrena,banda,False,0.938,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4201,GERENTE ARQUITECTURA EMPRESARIAL,JEFE DE ARQUITECTURA EMPRESARIAL,entrena,banda,True,0.9418,no,no,p2,p2,0.0,gemini,p2
@@ -4320,7 +4320,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4319,JEFE DE PRODUCCION Y LOGISTICA,JEFE DE PLANTA Y LOGISTICA,entrena,banda,False,0.9378,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4320,INTEGRATION ENGINEER,INTEGRATIONS SR ENGINEER,valida,bajo,True,0.9237,no,no,p3,p3,0.0,gemini,p3
 4321,ASISTENTE DE PRESUPUESTO,AUXILIAR DE PRESUPUESTO,valida,banda,False,0.9552,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4322,EMPACADOR/CARGADOR 1,EMPACADOR/CARGADOR 3,entrena,banda,False,0.9418,no,no,p1,p1,0.0,gemini,p1
+4322,EMPACADOR/CARGADOR 1,EMPACADOR/CARGADOR 3,entrena,banda,False,0.9418,no,no,p1,p1,1.0,gemini_grado,ninguno
 4323,ANALISTA CONTROL CALIDAD,ESPECIALISTA CONTROL CALIDAD,entrena,bajo,True,0.901,no,no,p2,p2,0.0,gemini,p2
 4324,ANALYTICAL CONSULTANT,ANALYTICS CONSULTANT - SPECIALIST,entrena,banda,False,0.945,no,no,p3,p3,0.0,gemini,p3
 4325,LIDER DE SERVICIO AL CLIENTE,JEFE DE EXCELENCIA AL CLIENTE,entrena,bajo,False,0.9006,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4367,10 +4367,10 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4366,JEFE DE ADMINISTRACION DE RECURSOS HUMAN,RESPONSABLE DE RECURSOS HUMANOS Y ADMINISTRATIVO,valida,bajo,False,0.9063,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4367,SITE RELIABILITY ENGINEER,SENIOR SITE RELIABILITY ENGINEER,entrena,banda,True,0.949,no,no,p3,p3,0.0,gemini,p3
 4368,COCINERO 2,2. COCINERO,entrena,banda,False,0.9378,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4369,OPERADOR DE CARGADORA 4,OPERADOR DE CARGADORA 8,entrena,bajo,False,0.928,no,no,p1,p1,0.0,gemini,p1
+4369,OPERADOR DE CARGADORA 4,OPERADOR DE CARGADORA 8,entrena,bajo,False,0.928,no,no,p1,p1,1.0,gemini_grado,ninguno
 4370,ANALISTA DE INNOVACION,ASISTENTE DE INNOVACION,valida,bajo,True,0.9141,no,no,p2,p2,0.0,gemini,p2
 4371,TECNICO DE SISTEMA,TECNICO DE SISTEMAS SR.,entrena,banda,True,0.9427,no,no,p3,p3,0.0,gemini,p3
-4372,REPRESENTANTE DE VENTAS LIFE 2 SIERRA,REPRESENTANTE DE VENTAS LIFE 3 SIERRA,entrena,banda,False,0.95,no,no,p1,p1,0.0,gemini,p1
+4372,REPRESENTANTE DE VENTAS LIFE 2 SIERRA,REPRESENTANTE DE VENTAS LIFE 3 SIERRA,entrena,banda,False,0.95,no,no,p1,p1,1.0,gemini_grado,ninguno
 4373,ANALISTA COMERCIAL SENIOR,ANALISTA SENIOR SOPORTE COMERCIAL,entrena,banda,False,0.9412,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4374,DIRECTOR GENERAL DE CUENTAS,DIRECTOR DE CUENTAS INTEGRALES,entrena,bajo,False,0.9182,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4375,CE BRAND MANAGER,EXECUTIVE CE BRAND MANAGER,entrena,banda,False,0.9647,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4388,7 +4388,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4387,COORDINADOR BODEGA,COORDINADOR BODEGA COMERCIAL,entrena,banda,False,0.9599,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4388,ASISTENTE ADM. PRODUCCION,ASISTENTE COORDINADOR DE PRODUCCION,entrena,banda,True,0.9494,no,no,p5,p5,0.0,gemini,p5
 4389,3. BODEGUERO,BODEGUERO 3,entrena,banda,False,0.9492,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4390,ASISTENTE CONTABLE 2,ASISTENTE CONTABLE 4,valida,banda,False,0.9467,no,no,p1,p1,0.0,gemini,p1
+4390,ASISTENTE CONTABLE 2,ASISTENTE CONTABLE 4,valida,banda,False,0.9467,no,no,p1,p1,1.0,gemini_grado,ninguno
 4391,ANALISTA DE PROGRAMACION,ANALISTA DE APLICACIONES INFORMATICAS,entrena,bajo,False,0.9032,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4392,GERENTE DE LOGISTICA,GERENTE DE TRANSPORTE Y LOGISTICA,entrena,banda,False,0.9536,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4393,JEFE DE CONTROL PRESUPUESTARIO,SUPERVISOR DE CONTROL PRESUPUESTAL,entrena,banda,True,0.9325,no,no,p2,p2,0.0,gemini,p2
@@ -4580,12 +4580,12 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4579,COORDINADOR DE SISTEMA,COORDINADOR DE SISTE,valida,banda,False,0.9545,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4580,OPERARIO DE PRODUCCION / LIMPIEZA,OPERADOR LIMPIEZA DE FABRICA,entrena,banda,False,0.9361,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4581,ANALISTA DE BIENESTAR,ANALISTA DE BIENESTAR SENIOR,entrena,banda,True,0.9433,no,no,p3,p3,0.0,gemini,p3
-4582,CADENERO 2,CADENERO 3,entrena,banda,False,0.9374,no,no,p1,p1,0.0,gemini,p1
-4583,MEDICO OCUPACIONAL III,MEDICO OCUPACIONAL IV,entrena,banda,False,0.9449,no,no,p1,p1,0.0,gemini,p1
+4582,CADENERO 2,CADENERO 3,entrena,banda,False,0.9374,no,no,p1,p1,1.0,gemini_grado,ninguno
+4583,MEDICO OCUPACIONAL III,MEDICO OCUPACIONAL IV,entrena,banda,False,0.9449,no,no,p1,p1,1.0,gemini_grado,ninguno
 4584,ASISTENTE DE CONTABLE,"ASISTENTE CONTABLE, CREDITO Y COBRANZA",entrena,banda,False,0.9486,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4585,SUPERVISOR DE ADMINISTRACION DE PERSONAL,SUPERVISOR DE PERSONAL,entrena,banda,False,0.946,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4586,JUNIOR ASSISTANT OF COST CONTROL,SENIOR ASSISTANT OF COST CONTROL,entrena,bajo,True,0.9274,no,no,p3,p3,0.0,gemini,p3
-4587,MANTENIMIENTO-TRABAJADOR GENERAL 5,MANTENIMIENTO-TRABAJADOR GENERAL 6,entrena,banda,False,0.9613,no,no,p1,p1,0.0,gemini,p1
+4587,MANTENIMIENTO-TRABAJADOR GENERAL 5,MANTENIMIENTO-TRABAJADOR GENERAL 6,entrena,banda,False,0.9613,no,no,p1,p1,1.0,gemini_grado,ninguno
 4588,ANALISTA DE RECLAMOS,ANALISTA DE RECPCION,valida,banda,False,0.9397,no,no,p4,p4,0.0,gemini,p4
 4589,ASISTENTE ADMINISTRATIVO CALIDAD,ASISTENTE DPTO. CALIDAD,entrena,banda,False,0.9379,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4590,JEFE DE DISENO Y DESARROLLO,COORDINADOR DE DISENO Y DESARROLLO,entrena,banda,True,0.9354,no,no,p2,p2,0.0,gemini,p2
@@ -4612,7 +4612,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4611,DIRECTOR DE INFORMACION Y TECNOLOGIA,DIRECTOR DE TECNOLOGIA INFORMATICA,entrena,banda,False,0.9387,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4612,COORDINADOR DE PROGRAMACION,SUPERVISOR DE PROGRAMACIO,entrena,bajo,False,0.9135,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4613,ASISTENTE CONTABLE,ASISTENTE CONTABLE GENERAL,entrena,banda,False,0.9392,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4614,DISENADORA I,DISENADORA II,entrena,banda,False,0.9432,no,no,p1,p1,0.0,gemini,p1
+4614,DISENADORA I,DISENADORA II,entrena,banda,False,0.9432,no,no,p1,p1,1.0,gemini_grado,ninguno
 4615,JEFE DE SSO,JEFE DE LA UNIDAD DE SSO,entrena,banda,False,0.9482,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4616,OPERADOR DE CAMARA DE COMPENSACION,OPERADOR DE CAMARA DE COMPENSACION E INDEXACION,entrena,banda,False,0.9333,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4617,SUPERVISOR DE LOGISTICA INVERSA,JEFE DE LOGISTICA INVERSA,entrena,banda,True,0.9402,no,no,p2,p2,0.0,gemini,p2
@@ -4664,7 +4664,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4663,ASISTENTE ADMINISTRATIVA Y DE RRHH,ASISTENTE ADMINISTRATIVA Y RRH,entrena,banda,False,0.9392,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4664,TECNICO AMBIENTE,TECNICA DE MEDIO AMBIENTE,entrena,bajo,False,0.905,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4665,ANALISTA PROGRAMADOR,ANALISTA PROGRAMADOR G,entrena,banda,False,0.9311,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4666,TRIPULANTE 1,TRIPULANTE 2,entrena,banda,False,0.9345,no,no,p1,p1,0.0,gemini,p1
+4666,TRIPULANTE 1,TRIPULANTE 2,entrena,banda,False,0.9345,no,no,p1,p1,1.0,gemini_grado,ninguno
 4667,COORDINADORA ACADEMICA DE GRADO FAC. DERECHO - ONLINE,PROFESORA TIEMPO COMPLETO DE LA ESC. DE DERECHO DE LA FAC. POSTGRADOS CON CARGA EN GESTION ACADEMICA COMO COORDINADORA ACADEMICA ONLINE,entrena,bajo,False,0.9234,no,no,p4,p4,0.0,gemini,p4
 4668,COORDINADOR ADMINISTRATIVA,COORDINADORA DE RECURSOS HUMANOS Y ADMINISTRATICO,entrena,bajo,False,0.9032,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4669,JEFE DE INNOVACION Y MEJORA CONTINUA,JEFE DE ESTRATEGIA Y MEJORA CONTINUA,entrena,banda,False,0.9303,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4697,14 +4697,14 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4696,AYUDANTE DE MECANICA INDUSTRIAL,AYUDANTE DE METALMECANICA,entrena,banda,False,0.934,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4697,ASISTENTE DE FINANCIERO,ASISTENTE FINANCIERO - CONTABILIDAD,entrena,banda,False,0.9422,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4698,SUBGERENTE COMERCIAL Y OPERACIONES,SUBGERENTE COMERCIAL Y SERVICIO,entrena,banda,False,0.9432,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4699,ELECTRICISTA 2,ELECTRICISTA 4,entrena,banda,False,0.9318,no,no,p1,p1,0.0,gemini,p1
+4699,ELECTRICISTA 2,ELECTRICISTA 4,entrena,banda,False,0.9318,no,no,p1,p1,1.0,gemini_grado,ninguno
 4700,ASISTENTE ASUNTOS REGULATORIOS,ASISTENTE DE ASUNTOS REGULATORIOS Y COMERCIALES,entrena,banda,False,0.9383,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4701,AUXILIAR COCINA,AUXILIAR DE COCINA 1,entrena,banda,False,0.9459,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4702,JEFE DE VENTAS UIO,JEFE DE VENTAS COBERTURA UIO,entrena,banda,False,0.937,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4703,COORDINADOR DE PROYECTOS E INNOVACION,COORDINADOR DE MEJORAMIENTO E INNOVACION,entrena,bajo,False,0.9186,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4704,SALES SUPERVISOR,SALES AND MARKETING SUPERVISOR,entrena,banda,False,0.9421,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4705,COORDINADOR DE APLICATIVOS,COORDINADOR DE GESTION DE APLICACIONES,entrena,banda,False,0.9431,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4706,SUPERVISOR ROTATIVO 1,SUPERVISOR ROTATIVO 3,entrena,banda,False,0.9357,no,no,p1,p1,0.0,gemini,p1
+4706,SUPERVISOR ROTATIVO 1,SUPERVISOR ROTATIVO 3,entrena,banda,False,0.9357,no,no,p1,p1,1.0,gemini_grado,ninguno
 4707,ASISTENTE DE LOGISTICA DE TARJETA DE CREDITO,ASISTENTE DE LOGISTICA MEDIOS DE PAGO,entrena,bajo,False,0.9138,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4708,ASISTENTE DE GESTION 1,ASISTENTE GESTION ADMINISTRATIVA 1,valida,banda,False,0.9536,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4709,ASISTENTE BODEGA,ASISTENTE/ AUX BODEGA,valida,banda,False,0.9427,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4720,11 +4720,11 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4719,ANALISTA DE INFRAESTRUCTURA TI,ANALISTA DE INFRAESTRUCURA TI,entrena,banda,False,0.9531,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4720,AYUDANTE DE MECANICA AIREADOR,AYUDANTE DE AIREADORES,entrena,banda,False,0.9405,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4721,GERENTE DE COMPRA Y FRUTA,JEFE DE COMPRA DE FRUTA,entrena,banda,True,0.9328,no,no,p2,p2,0.0,gemini,p2
-4722,PAR PEDAGOGICO 2,PAR PEDAGOGICO 3,entrena,banda,False,0.9384,no,no,p1,p1,0.0,gemini,p1
+4722,PAR PEDAGOGICO 2,PAR PEDAGOGICO 3,entrena,banda,False,0.9384,no,no,p1,p1,1.0,gemini_grado,ninguno
 4723,ANALISTA SENIOR PLANIFICACION Y CONTROL DE GESTION,ANALISTA SENIOR PLANIFICACION Y REPORTING,entrena,banda,False,0.9394,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4724,PROFESOR ESTUDIOS SOCIALES,PROFESORA SEC ESTUDIOS SOCIALES,entrena,banda,False,0.9337,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4725,CLIENT SOLUTIONS MANAGER,CUSTOMER SOLUTIONS MANAGER,entrena,banda,False,0.9335,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4726,ANALISTA BANCA CORPORATIVA 8,ANALISTA BANCA CORPORATIVA6,entrena,banda,True,0.9489,no,no,p1,p1,0.0,gemini,p1
+4726,ANALISTA BANCA CORPORATIVA 8,ANALISTA BANCA CORPORATIVA6,entrena,banda,True,0.9489,no,no,p1,p1,1.0,gemini_grado,ninguno
 4727,COORDINADOR DE DISENO Y DESARROLLO,DIRECTOR DE DISENO Y DESARROLLO,entrena,banda,True,0.9448,no,no,p2,p2,0.0,gemini,p2
 4728,ANALISTA DE INVESTIGACION Y SEGURIDAD FISICA,ANALISTA DE SEGURIDAD DE LA INFORMACION Y FISICA,entrena,bajo,False,0.9167,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4729,JEFE TERMINAL NORTE,JEFE TERMINAL SUR,entrena,banda,False,0.9404,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4755,7 +4755,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4754,ANALISTA ADMINISTRATIVA FINANCIERA,AUXILIAR ADMINISTRATIVA FINANCIERA,entrena,banda,True,0.9466,no,no,p2,p2,0.0,gemini,p2
 4755,JEFE DE TECNOLOGIA Y COMUNICACIONES,"JEFE DE TECNOLOGIA, DESARROLLO Y COMUNIC",entrena,banda,False,0.9349,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4756,ASISTENTE COMUNICACION Y MEDIOS DE PUBLICIDAD,ASISTENTE DE PUBLICIDAD/VENTAS,entrena,bajo,False,0.9121,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4757,JEFE DE CAMPO 1,JEFE DE CAMPO 2,valida,banda,False,0.9547,no,no,p1,p1,0.0,gemini,p1
+4757,JEFE DE CAMPO 1,JEFE DE CAMPO 2,valida,banda,False,0.9547,no,no,p1,p1,1.0,gemini_grado,ninguno
 4758,ASISTENTE FINANCIERO 3,AUXILIAR FINANCIERO 1,entrena,bajo,False,0.9131,no,no,p1,p1,0.0,gemini,p1
 4759,ASISTENTE PUBLICIDAD Y MERCADEO,AUXILIAR EN MERCADEO Y PUBLICIDAD,entrena,banda,False,0.9483,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4760,GERENTE TECNICA,GERENTE REGIONAL TECNICO,entrena,bajo,False,0.9259,no,no,p3,p3,0.0,gemini,p3
@@ -4778,7 +4778,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4777,SUPERVISOR DE INNOVACION Y PLANIFICACION,SUPERVISOR DE MEJORAMIENTO E INNOVACION,entrena,bajo,False,0.929,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4778,JEFE DE PROYECTO,LIDER DE GESTION DE PROYECTOS,entrena,bajo,False,0.9158,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4779,GERENTE DE MANTENIMIENTO,JEFE DE MANTENIMIENTO E INCIDENCIAS,entrena,bajo,True,0.9021,no,no,p2,p2,0.0,gemini,p2
-4780,ASESOR COMERCIAL II,ASESOR COMERCIAL III,valida,banda,False,0.9388,no,no,p1,p1,0.0,gemini,p1
+4780,ASESOR COMERCIAL II,ASESOR COMERCIAL III,valida,banda,False,0.9388,no,no,p1,p1,1.0,gemini_grado,ninguno
 4781,ASISTENTE GESTION DE PERSONAL,ASISTENTE DE GERENCIA Y CONSEJOS,entrena,bajo,False,0.9095,no,no,p4,p4,0.0,gemini,p4
 4782,JEFE DE PUBLICIDAD Y MERCADEO,JEFE MARKETING Y PROMOCION,entrena,banda,False,0.9351,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4783,SUPERVISOR DE MANTENIMIENTO PLANEADO,SUPERVISOR DE MANTENIMIENTO AERONAUTICO,valida,bajo,False,0.9128,no,no,p4,p4,0.0,gemini,p4
@@ -4920,7 +4920,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4919,AUXILIAR TECNICO CALIDAD,"AUXILIAR DE CALIDAD, SEGURIDAD Y SALUD",entrena,bajo,True,0.9062,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4920,ASISTENTE DE SEGURIDAD OCUPACIONAL,"ASISTENTE DE SEGURIDAD, SALUD OCUPACIONAL Y MEDIO AMBIENTE",entrena,banda,False,0.9455,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4921,PSICOLOGA BASICA ELEMENTAL,PSICOLOGA BASICA SUPERIOR,entrena,banda,False,0.934,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4922,DOCENTE NO TITULAR 1,DOCENTE NO TITULAR 3,entrena,banda,False,0.943,no,no,p1,p1,0.0,gemini,p1
+4922,DOCENTE NO TITULAR 1,DOCENTE NO TITULAR 3,entrena,banda,False,0.943,no,no,p1,p1,1.0,gemini_grado,ninguno
 4923,GERENTE DE TTHH,ADMINISTRADOR DE TTHH,entrena,bajo,False,0.9207,no,no,p2,p2,0.0,gemini,p2
 4924,ANALISTA DE PLANEAMIENTO Y CONTROL FINANCIERO,ANALISTA Y PLANIFICADOR FINANCIERO,entrena,banda,False,0.9419,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4925,AUXILIAR TRIBUTARIO,AYUDANTE TRIBUTARIO,entrena,banda,False,0.9414,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4980,7 +4980,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4979,ASISTENTE GERENCIA VENTAS,ASISTENTE GERENTE DE VENTAS,entrena,banda,True,0.9548,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4980,SUPERVISOR DE OPERACIONES CONTACT CENTER,LIDER DE OPERACIONES CONTACT CENTER,valida,banda,False,0.9421,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4981,T/A ALIMENTADOR - AIREACION,T/A ALIMENTADOR/ AYUD AIREADORES,entrena,banda,False,0.941,si,si,ninguno,ninguno,1.0,gemini,ninguno
-4982,CORDINADOR DE PLANTA PRODUCCION 2,CORDINADOR DE PLANTA PRODUCCION 3,entrena,banda,False,0.9483,no,no,p1,p1,0.0,gemini,p1
+4982,CORDINADOR DE PLANTA PRODUCCION 2,CORDINADOR DE PLANTA PRODUCCION 3,entrena,banda,False,0.9483,no,no,p1,p1,1.0,gemini_grado,ninguno
 4983,JEFE DE AREA,GERENTE DE AREA,entrena,banda,True,0.9304,no,no,p2,p2,0.0,gemini,p2
 4984,EJECUTIVA OPERATIVA COMERCIAL,EJECUTIVA / O COMERCIAL,valida,banda,False,0.934,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4985,SECRETARIO(A),SECRETARIO(A) GENERAL,valida,banda,False,0.9508,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -4996,7 +4996,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 4995,AUDITOR DE ASEGURAMIENTO DE CALIDAD,AUDITOR DE CERTIFICACION,entrena,bajo,False,0.9243,si,si,ninguno,ninguno,1.0,gemini,ninguno
 4996,ASISTENTE CONTROL CALIDAD,ASISTENTE DE GERENCIA DE CALIDAD,entrena,banda,False,0.932,no,no,p5,p5,0.0,gemini,p5
 4997,JEFE DE VENTAS REGIONAL,GERENTE DE VENTAS REGIONAL,entrena,banda,True,0.9525,no,no,p2,p2,0.0,gemini,p2
-4998,LABORATORISTA 2,LABORATORISTA 3,entrena,banda,False,0.934,no,no,p1,p1,0.0,gemini,p1
+4998,LABORATORISTA 2,LABORATORISTA 3,entrena,banda,False,0.934,no,no,p1,p1,1.0,gemini_grado,ninguno
 4999,JEFE DE PLANEAMIENTO,JEFE DE PLANEACION Y PROYECTOS,valida,banda,False,0.9566,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5000,COORDINADOR SSA,SUPERVISOR DE SSA,entrena,bajo,False,0.906,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5001,SUBGERENTE,SUBGERENCIA,valida,banda,False,0.9359,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5011,10 +5011,10 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5010,SUPERVISOR DE EXTRUSION,SUPERVISOR EXTRUSION SOPLADO,entrena,banda,False,0.938,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5011,ASISTENTE ADMINISTRATIVO INFRAESTRUCTURA,ASISTENTE DE INFRAESTRUCTURA Y PROYECTOS,entrena,banda,False,0.9361,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5012,ASISTENTE DE ADQUISICIONES Y SERVICIOS GENERALES,ASISTENTE DE COMPRAS GENERALES,entrena,banda,False,0.932,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5013,TECNICO LABORATORISTA 1,TECNICO LABORATORISTA 3,entrena,banda,False,0.9406,no,no,p1,p1,0.0,gemini,p1
+5013,TECNICO LABORATORISTA 1,TECNICO LABORATORISTA 3,entrena,banda,False,0.9406,no,no,p1,p1,1.0,gemini_grado,ninguno
 5014,ASISTENTE COMPRAS Y LOGISTICA,ASISTENTE DE LOGISTI,entrena,bajo,False,0.9024,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5015,SUPERVISOR DE SANITIZACION,JEFE DE SANITIZACION,valida,banda,True,0.9409,no,no,p2,p2,0.0,gemini,p2
-5016,MAESTRO DE OBRA 1,MAESTRO DE OBRA 2,entrena,banda,False,0.9459,no,no,p1,p1,0.0,gemini,p1
+5016,MAESTRO DE OBRA 1,MAESTRO DE OBRA 2,entrena,banda,False,0.9459,no,no,p1,p1,1.0,gemini_grado,ninguno
 5017,ANALISTA DE RELACIONES INSTITUCIONALES,ESPECIALISTA RELACIONES INSTITUCIONALES,entrena,banda,True,0.9391,no,no,p2,p2,0.0,gemini,p2
 5018,LIDER DE SEGURIDAD Y SALUD OCUPACIONAL,LIDER_DE_SEGURIDAD_INDUSTRIAL_Y_SALUD_OCUPACIONAL,entrena,banda,False,0.9459,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5019,JEFE DE ESTRATEGIAS DIGITALES,JEFE DISENO Y ESTRATEGIA DIGITAL,valida,banda,False,0.9487,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5037,7 +5037,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5036,ADMINISTRADOR FIDUCIARIO JUNIOR,ADMINISTRADOR FIDUCIARIO SENIOR,entrena,banda,True,0.943,no,no,p3,p3,0.0,gemini,p3
 5037,ASISTENTE DE CALIDAD Y LABORATORIO,ASISTENTE DE PRODUCCION Y CALIDAD,entrena,bajo,False,0.9196,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5038,TECNICO DE ENSAMBLAJE,MECANICO DE ENSAMBLAJE,entrena,banda,False,0.9449,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5039,EXPERTO (FUN 3),EXPERTO (FUN 4),entrena,banda,False,0.9473,no,no,p1,p1,0.0,gemini,p1
+5039,EXPERTO (FUN 3),EXPERTO (FUN 4),entrena,banda,False,0.9473,no,no,p1,p1,1.0,gemini_grado,ninguno
 5040,JEFE DE VENTAS MAQUINARIA,GERENTE DE VENTAS MAQUINARIA,valida,banda,True,0.9531,no,no,p2,p2,0.0,gemini,p2
 5041,ANALISTA DE ESTANDARIZACION,ANALISTA DE ESTANDARIZACION Y PRODUCTIVIDAD,entrena,banda,False,0.9309,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5042,COORDINADOR DE INNOVACION,GERENTE INNOVACION Y DESARROLLO,entrena,bajo,True,0.9072,no,no,p2,p2,0.0,gemini,p2
@@ -5054,7 +5054,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5053,ASISTENTE DE LOGISTICA EXPORTACION,ASISTENTE DE LOGISTICA INTERNACIONAL,entrena,banda,False,0.9353,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5054,ASISTENTE DE BODEGA B,ASISTENTE DE BODEGA B POR MENOR,entrena,banda,False,0.9511,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5055,LIDER DE PROYECTO,RESPONSABLE DE PROYECTO,entrena,bajo,False,0.919,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5056,INGENIERO BACK-END I,INGENIERO BACK-END II,entrena,banda,False,0.9459,no,no,p1,p1,0.0,gemini,p1
+5056,INGENIERO BACK-END I,INGENIERO BACK-END II,entrena,banda,False,0.9459,no,no,p1,p1,1.0,gemini_grado,ninguno
 5057,AUX. DE BODEGA,AUX. DE BODEGA (EQ),entrena,banda,False,0.9323,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5058,ASISTENTE DE TECNOLOGIA Y MEDIOS,ASISTENTE DE TECNOLOGIA Y SISTEMAS,entrena,banda,False,0.9422,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5059,SUPERVISOR DE DIGITADOR,SUPERVISOR DIGITACION,valida,banda,False,0.9632,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5072,7 +5072,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5071,ANALISTA DE MICROBIOLOGIA,ANALISTA DE MICROBIOLOGIA JUNIOR,entrena,banda,True,0.9489,no,no,p3,p3,0.0,gemini,p3
 5072,JEFE INTEGRAL DE RIESGOS,JEFE NAC. DE ADM. INTEGRAL DE RIESGO,entrena,banda,False,0.9342,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5073,ESPECIALISTA SOPORTE INFRAESTRUCTURA,ESPECIALISTA DE INFRAESTRUCTURA TECNOLOGICA,entrena,bajo,False,0.9129,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5074,PAR PEDAGOGICO 2,PAR PEDAGOGICO 4,entrena,banda,False,0.9322,no,no,p1,p1,0.0,gemini,p1
+5074,PAR PEDAGOGICO 2,PAR PEDAGOGICO 4,entrena,banda,False,0.9322,no,no,p1,p1,1.0,gemini_grado,ninguno
 5075,ASISTENTE / AYUDANTE DE PROYECTOS,AUXILIAR DE PROYECTOS,entrena,banda,False,0.9449,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5076,ESPECIALISTA CRM,ESPECIALISTA REGIONAL CRM,entrena,banda,False,0.949,no,no,p3,p3,0.0,gemini,p3
 5077,ASISTENTE SOPORTE TECNICO,ASISTENTE SOPORTE SERVICIOS TECNOLOGICOS,entrena,banda,True,0.9465,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5116,7 +5116,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5115,ANALISTA DE INFRAESTRUCTURA Y SERVICIOS GENERALES,ANALISTA DE INFRAESTRUCTURA Y TELECOMUNICACIONES SR,entrena,banda,True,0.9305,no,no,p3,p3,0.0,gemini,p3
 5116,ANALISTA DE CUMPLIMIENTO NORMATIVO,ANALISTA DE NORMATIVA,entrena,banda,False,0.943,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5117,JEFE DE SALUD Y SEGURIDAD OCUPACIONAL,JEFE SEGURIDAD Y SALUD TRABAJO,entrena,banda,False,0.9532,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5118,SUPERVISOR DE VENTAS 5,SUPERVISOR DE VENTAS 6,entrena,banda,False,0.9512,no,no,p1,p1,0.0,gemini,p1
+5118,SUPERVISOR DE VENTAS 5,SUPERVISOR DE VENTAS 6,entrena,banda,False,0.9512,no,no,p1,p1,1.0,gemini_grado,ninguno
 5119,GERENTE DE ORIGINACION DE CREDITO,GERENTE NACIONAL DE ORIGINACION DE CREDITO,entrena,banda,False,0.9311,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5120,JEFE DE VENTAS ZONAL,GERENTE DE VENTAS ZONA,entrena,banda,True,0.9318,no,no,p2,p2,0.0,gemini,p2
 5121,AUXILIAR EN GENERAL EN SERVICIOS DE VENTAS,AUXILIAR ASISTENTEDE GERENTE DE VENTAS,entrena,banda,True,0.9306,no,no,p5,p5,0.0,gemini,p5
@@ -5144,7 +5144,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5143,TUTORA DE DECIMOS DE BASICA/DOCENTE,TUTORA DE QUINTOS DE BASICA/DOCENTE,entrena,banda,False,0.9351,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5144,COORDINADOR DE SEGURIDAD CORPORATIVA,ANALISTA DE SEGURIDAD CORPORATIVA,valida,bajo,True,0.9176,no,no,p2,p2,0.0,gemini,p2
 5145,COORDINADOR DE SEGURIDAD INFORMATICA,LIDER DE SEGURIDAD INFORMATICA,entrena,banda,False,0.9362,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5146,VENDEDOR V2,VENDEDOR V3,entrena,bajo,False,0.9264,no,no,p1,p1,0.0,gemini,p1
+5146,VENDEDOR V2,VENDEDOR V3,entrena,bajo,False,0.9264,no,no,p1,p1,1.0,gemini_grado,ninguno
 5147,JEFE DE IMPORTACIONES & COMEX,JEFE DE IMPORTACIONES Y POST VENTA,entrena,banda,False,0.9324,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5148,JEFE DE VENTAS DE AUTOSERVICIOS,JEFE DE VENTAS VEHICULOS,entrena,banda,False,0.9469,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5149,TRABAJADOR FLORICOLA,TRABAJADOR FLORICULTOR,entrena,banda,False,0.9422,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5182,7 +5182,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5181,CHOFER DE BUS,CHOFER DE TRANSPORTE,entrena,bajo,False,0.9237,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5182,VICEPRESIDENTE FINANCIERO,VICEPRESIDENTE FINANZAS Y OPERACIONES,entrena,banda,False,0.9301,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5183,ASISTENTE ELECTRICO,ASISTENTE ELECTRICO B,entrena,banda,False,0.9473,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5184,AUDITOR INTERNO 1,AUDITOR INTERNO 2,valida,banda,False,0.9558,no,no,p1,p1,0.0,gemini,p1
+5184,AUDITOR INTERNO 1,AUDITOR INTERNO 2,valida,banda,False,0.9558,no,no,p1,p1,1.0,gemini_grado,ninguno
 5185,COORDINADOR DE PRODUCCION - B,COORDINADOR DE PRODUCCION - C,entrena,banda,False,0.9452,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5186,GERENTE DE CANAL DIRECTO,DIRECTOR DE CANAL,entrena,bajo,False,0.9008,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5187,TECNICO SOLDADOR,TECNICO MECANICO SOLDADOR,entrena,banda,False,0.9495,no,si,p4,ninguno,0.0,humano_139,
@@ -5375,7 +5375,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5374,TECNICO AGRONOMO,TECNICO COMERCIAL AGRONOMO,valida,bajo,False,0.9091,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5375,ENCARGADO DE TESORERIA,COORDINADOR DE TESORERIA Y COBRANZAS,entrena,bajo,False,0.9021,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5376,JEFE DE CANAL MODERNO,JEFE DE CANAL MODERNO Y CANAL NO TRADICIONAL,entrena,banda,False,0.9409,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5377,CAPUCHON 1,CAPUCHON 2,entrena,banda,False,0.9318,no,no,p1,p1,0.0,gemini,p1
+5377,CAPUCHON 1,CAPUCHON 2,entrena,banda,False,0.9318,no,no,p1,p1,1.0,gemini_grado,ninguno
 5378,DIRECTOR/A DE SERVICIOS GENERALES,"COORDINADOR DE GESTION, CONTROL Y SERVICIOS GENERALES",entrena,bajo,True,0.9051,no,no,p2,p2,0.0,gemini,p2
 5379,OPERADOR DE MAQUINAS SEMICOMPLEJAS,OPERADOR DE MAQUINAS SEMICOMPLEJAS SOLDADURA,entrena,banda,False,0.9407,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5380,ASISTENTE ADMINISTRATIVO (TEMPORAL),ASISTENTE ADMINISTRATIVO JUNIOR,entrena,bajo,True,0.9035,no,no,p3,p3,0.0,gemini,p3
@@ -5398,7 +5398,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5397,AUXILIAR DE PLANTA,OPERADOR AUXILIAR DE PLANTA,entrena,banda,False,0.9347,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5398,ANALISTA DE PLANIFICACION DE EMBARQUE,COORDINADOR DE PLANIFICACION Y EMBARQUE,entrena,banda,True,0.9328,no,no,p2,p2,0.0,gemini,p2
 5399,BARMAN (CANTINERO) (ESTABLECIMIENTOS CATEGORIA PRIMERA),BARMAN (ESTABLECIMIENTOS CATEGORIA LUJO),entrena,banda,False,0.9328,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5400,ASISTENTE DE MANTENIMIENTO 2,ASISTENTE DE MANTENIMIENTO 3,entrena,banda,False,0.9431,no,no,p1,p1,0.0,gemini,p1
+5400,ASISTENTE DE MANTENIMIENTO 2,ASISTENTE DE MANTENIMIENTO 3,entrena,banda,False,0.9431,no,no,p1,p1,1.0,gemini_grado,ninguno
 5401,JEFE DE BODEGA Y COMPRAS,JEFA DE COMPRAS Y BODEGA,entrena,banda,False,0.9496,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5402,AYUDANTE DEL SECTOR METALMECANICO 267,AYUDANTE DEL SECTOR METALMECANICO 274,entrena,banda,False,0.9603,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5403,JEFE CORPORATIVO DE COBRANZAS,JEFE DE COBRANZAS CORPORATIVAS Y FINANCIERAS,entrena,banda,True,0.9363,no,no,p3,p3,0.0,gemini,p3
@@ -5417,7 +5417,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5416,JEFE DE REASEGUROS,GERENTE DE REASEGUROS,valida,banda,True,0.9467,no,no,p2,p2,0.0,gemini,p2
 5417,COORDINADOR DE OPERACIONES IT,COORDINADOR DEPARTAMENTO IT,valida,bajo,False,0.927,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5418,AYUDANTE DE SOLDADOR,TA/ AYUDANTE DE SOLDADOR,entrena,banda,False,0.9539,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5419,FUNCIONARIO 1,FUNCIONARIO 2,entrena,banda,False,0.9488,no,no,p1,p1,0.0,gemini,p1
+5419,FUNCIONARIO 1,FUNCIONARIO 2,entrena,banda,False,0.9488,no,no,p1,p1,1.0,gemini_grado,ninguno
 5420,DOCENTE BASICA MEDIA INGLES,DOCENTE BASICA MEDIA ESPANOL,entrena,banda,False,0.95,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5421,ANALISTA PROGRAMADOR,ANALISTA PROGRAMADOR JUNIOR,entrena,banda,True,0.9421,no,no,p3,p3,0.0,gemini,p3
 5422,ANALISTA DE ADMINISTRACION DE RIESGOS,ANALISTA DE GESTION DE RIESGOS Y ADMINISTRACION DE DATOS,entrena,banda,False,0.9358,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5590,7 +5590,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5589,GERENTE DE LOGISTICA Y DISTRIBUCION,GERENTE DE COMERCIO Y LOGISTICA,entrena,banda,False,0.9405,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5590,AUXILIAR DE SERVICIOS GENERALES Y CONSERJERIA,SUBGERENTE DE SERVICIOS GENERALES,entrena,bajo,True,0.9006,no,no,p2,p2,0.0,gemini,p2
 5591,GERENTE DE LOGISTICA Y OPERACIONES,GERENTE DE OPERACIONES Y LOGISTICA INTEGRAL,entrena,banda,False,0.9572,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5592,TRABAJADOR AGRICOLA 2,TRABAJADOR AGRICOLA 4,entrena,banda,False,0.9416,no,no,p1,p1,0.0,gemini,p1
+5592,TRABAJADOR AGRICOLA 2,TRABAJADOR AGRICOLA 4,entrena,banda,False,0.9416,no,no,p1,p1,1.0,gemini_grado,ninguno
 5593,ASISTENTE ADMINISTRATIVA DE SERVICIO TECNICO,ASIST. ADMINISTRATIVO SERVICIO TECNICO,entrena,banda,False,0.9451,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5594,SUPERVISOR GENERAL DE PRODUCCION,SUPERINTENDENTE DE PRODUCCION,entrena,banda,False,0.945,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5595,ASISTENTE ADMINISTRATIVA Y RECURSOS HUMANOS,AUXILIAR DE CONTABILIDAD Y RECURSOS HUMANOS,valida,bajo,False,0.9012,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5613,14 +5613,14 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5612,AUX. ADMINISTRATIVA,AUXILIAR ADMINISTRATIVA GENERAL,entrena,bajo,False,0.9077,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5613,GERENTE CORPORATIVO COMPRAS,GERENTE REGIONAL COMPRAS,entrena,banda,True,0.9386,no,no,p3,p3,0.0,gemini,p3
 5614,ASISTENTE DE OBRA,ASISTENTE GERENCIA DE OBRA,valida,banda,False,0.9327,no,no,p5,p5,0.0,gemini,p5
-5615,MOLINERO 1,MOLINERO 2,entrena,banda,False,0.9365,no,no,p1,p1,0.0,gemini,p1
+5615,MOLINERO 1,MOLINERO 2,entrena,banda,False,0.9365,no,no,p1,p1,1.0,gemini_grado,ninguno
 5616,COORDINADOR DE PLANEACION Y CONTROL,COORDINADOR(A) DE PLANEACION Y CONTROL GESTION,valida,banda,False,0.9341,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5617,JEFE DE DISTRIBUIDORES,JEFE DE ZONA DISTRIBUIDORES,entrena,banda,False,0.9519,no,no,p3,p3,0.0,gemini,p3
 5618,AUXILIAR DE BODEGA EXTERNA,AUXILIAR - BODEGA,entrena,bajo,False,0.9021,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5619,JEFE COMPRAS,JEFE DE COMPRAS G,entrena,bajo,False,0.9211,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5620,EJECUTIVA DE CUENTA,EJECUTIVA DE CUENTAS INTERNACI,entrena,bajo,False,0.902,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5621,EJECUTIVO DE ATENCION AL CLIENTE Y VENTAS,EJECUTIVO EXCELENCIA AL CLIENTE,entrena,bajo,False,0.9221,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5622,ANALISTA BANCA CORPORATIVA3,ANALISTA BANCA CORPORATIVA6,entrena,banda,False,0.945,no,no,p1,p1,0.0,gemini,p1
+5622,ANALISTA BANCA CORPORATIVA3,ANALISTA BANCA CORPORATIVA6,entrena,banda,False,0.945,no,no,p1,p1,1.0,gemini_grado,ninguno
 5623,ESPECIALISTA DE TRANSFORMACION DE PROCESOS,CONSULTOR TECNICO DE TRANSFORMACION DE PROCESOS,entrena,banda,True,0.9414,no,no,p2,p2,0.0,gemini,p2
 5624,ANALISTA DE COMPRAS Y ABASTECIMIENTO,ANALISTA DE COMPRAS SR,entrena,bajo,True,0.9154,no,no,p3,p3,0.0,gemini,p3
 5625,GERENTE GENERAL / JEFE DE VENTAS,ASESOR DE VENTAS / GERENTE GENERAL,entrena,banda,False,0.9636,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5658,7 +5658,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5657,CONTROLLER INTERNO FINANCIERO Y DE GESTION,JEFE DE CONTABILIDAD Y CONTROL INTERNO,valida,bajo,False,0.9157,no,no,p2,p2,0.0,gemini,p2
 5658,JEFE DE INFRAESTRUCTURA OPERACIONAL,COORDINADOR DE OPERACIONES E INFRAESTRUCTURA,entrena,banda,True,0.9367,no,no,p2,p2,0.0,gemini,p2
 5659,AYUDANTE DE MECANICA,AYUDANTE DE MECANICA GENERAL,entrena,banda,False,0.9609,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5660,DIRECTOR DE TIENDA 1,DIRECTOR DE TIENDA 3,entrena,banda,False,0.9398,no,no,p1,p1,0.0,gemini,p1
+5660,DIRECTOR DE TIENDA 1,DIRECTOR DE TIENDA 3,entrena,banda,False,0.9398,no,no,p1,p1,1.0,gemini_grado,ninguno
 5661,ASISTENTE DE LABORATORIO Y SISTEMA,ASISTENTE TECNICO DE LABORATORIO,entrena,banda,True,0.9308,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5662,COORDINADORA SERVICIOS GENERALES,COORDINADORA ADM GENERAL,entrena,bajo,False,0.9029,no,no,p4,p4,0.0,gemini,p4
 5663,ANALISTA DE FACTURACION,ANALISTA DE FACTURACION Y COSTOS,entrena,banda,False,0.9567,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5788,7 +5788,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5787,ANALISTA DE DESARROLLO DE NEGOCIOS,ANALISTA DE SOPORTE DE NEGOCIOS,entrena,bajo,False,0.9202,no,no,p4,p4,0.0,gemini,p4
 5788,JEFE DE CONTROL Y CORDINACION FINANCIERA,JEFE CONTROL FINANCIERO Y CONTABILIDAD,entrena,banda,False,0.9654,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5789,CAJERA/ FACTURADORA,CAJERO/A FACTURADOR,entrena,banda,False,0.9446,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5790,1 MIRADOR,3 MIRADOR,entrena,banda,False,0.9349,no,no,p1,p1,0.0,gemini,p1
+5790,1 MIRADOR,3 MIRADOR,entrena,banda,False,0.9349,no,no,p1,p1,1.0,gemini_grado,ninguno
 5791,GERENTE DE GESTION DE PROYECTOS,GERENTE CORPORATIVO DE PROYECTOS,entrena,banda,True,0.9523,no,no,p3,p3,0.0,gemini,p3
 5792,JEFE ALMACEN,JEFE DE ALMACEN ENCARGADO,entrena,banda,False,0.9359,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5793,JEFE DE CUSTOMER EXPERIENCE,JEFE DE CUSTOMER SERVICE,entrena,banda,False,0.942,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5798,7 +5798,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5797,ASISTENTE DE CONSULTA,ASISTENTE DE CONSULTORIA,entrena,banda,False,0.9409,no,no,p4,p4,0.0,gemini,p4
 5798,ANALISTA DE REVENUE MANAGEMENT,ANALISTA REVENUE MANAGEMENT,entrena,banda,False,0.9356,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5799,DIRECTOR ADMINISTRATIVO FINANCIERO,DIRECTOR GENERAL FINANCIERO,entrena,banda,False,0.9414,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5800,AUXILIAR DE COCINA 1,AUXILIAR DE COCINA 2,entrena,banda,False,0.965,no,no,p1,p1,0.0,gemini,p1
+5800,AUXILIAR DE COCINA 1,AUXILIAR DE COCINA 2,entrena,banda,False,0.965,no,no,p1,p1,1.0,gemini_grado,ninguno
 5801,OPERADOR DE EQUIPO INDUSTRIAL EN ETIQUETADO Y ENCARTONADO,OPERARIO DE ETIQUETADO Y ENCARTONADO,entrena,banda,False,0.9334,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5802,SUPERVISOR DE SECTOR 1,SUPERVISOR DE SECTOR 2,entrena,banda,False,0.9411,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5803,EJECUTIVA SENIOR COBRANZAS,EJECUTIVA/O COBRANZAS,entrena,bajo,True,0.9118,no,no,p3,p3,0.0,gemini,p3
@@ -5834,12 +5834,12 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5833,ANALISTA INFRAESTRUCTURA,ANALISTA INFRAESTRUCTURA SISTEMAS,entrena,banda,False,0.9516,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5834,ENCARGADO OPERATIVO BODEGA,JEFE OPERATIVO - BODEGA,entrena,banda,False,0.9467,no,no,p2,p2,0.0,gemini,p2
 5835,JEFE DE INFRAESTRUCTURA INFORMATICA,JEFE DE MANTENIMIENTO INFORMATICO,entrena,bajo,False,0.9177,no,si,p4,ninguno,1.0,humano_139,ninguno
-5836,TECNICO LABORATORISTA 3,TECNICO LABORATORISTA 5,entrena,banda,False,0.9336,no,no,p1,p1,0.0,gemini,p1
+5836,TECNICO LABORATORISTA 3,TECNICO LABORATORISTA 5,entrena,banda,False,0.9336,no,no,p1,p1,1.0,gemini_grado,ninguno
 5837,CULTIVO MO. BLOQUE 07,CULTIVO MO. BLOQUE 17*,valida,banda,False,0.9517,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5838,TECNICO (A) DE ENFERMERIA,AUXILIAR DE ENFERMERIA/ TECNICO DE ENFERMERIA,entrena,banda,False,0.9434,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5839,SECRETARIA DE GERENCIA (E),SECRETARIA EJECUTIVA DE GERENCIA,entrena,banda,False,0.9414,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5840,GERENTE DE ESTRATEGIA,GERENTE DE DESARROLLO ESTRATEGICO,entrena,banda,False,0.9418,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5841,SUPERVISOR ELECTRICO 2,SUPERVISOR ELECTRICO 3,entrena,banda,False,0.9425,no,no,p1,p1,0.0,gemini,p1
+5841,SUPERVISOR ELECTRICO 2,SUPERVISOR ELECTRICO 3,entrena,banda,False,0.9425,no,no,p1,p1,1.0,gemini_grado,ninguno
 5842,ASISTENTE DEPARTAMENTO TECNICO,AYUDANTE DEPARTAMENTO TECNICO,entrena,banda,False,0.9491,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5843,OFICIAL CUMPLIMIENTO,OFICIAL CUMPLIMIENTO SUPLENTE,valida,banda,False,0.9511,no,no,p4,p3,0.0,gemini,p4
 5844,ANALISTA DE SOPORTE (TECNICO),ANALISTA DE SOPORTE OPERATIVO,entrena,banda,False,0.9433,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5870,7 +5870,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5869,AUXILIAR ADMINISTRATIVO MANTENIMIENTO,T.A AUXILIAR DE MANTENIMIENTO,entrena,bajo,False,0.9061,no,no,p4,p4,0.0,gemini,p4
 5870,JEFE DE COBRANZAS,JEFE DE COBRANZAS REGIONAL,entrena,banda,False,0.9325,no,no,p3,p3,0.0,gemini,p3
 5871,ANALISTA DE ADMINISTRACION DE VENTAS Y CONTRATIACION PUBLICA,ANALISTA DE CONTRATACION Y ADMINISTRACION DE PERSONAL,entrena,bajo,False,0.9014,no,no,p4,p4,0.0,gemini,p4
-5872,TECNICO DE CAMPO 1,TECNICO DE CAMPO III,entrena,banda,False,0.9308,no,no,p1,p1,0.0,gemini,p1
+5872,TECNICO DE CAMPO 1,TECNICO DE CAMPO III,entrena,banda,False,0.9308,no,no,p1,p1,1.0,gemini_grado,ninguno
 5873,SUPERVISOR DE POSTCOSECHA,SUPERVISOR DE POSTCOSECHA F3,valida,banda,False,0.9312,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5874,ASISTENTE DE COBRANZAS Y SERVICIO AL CLIENTE GYE,ASISTENTE DE SERVICIO AL CLIENTE GYE,entrena,banda,False,0.9404,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5875,EJECUTIVO COMERCIAL CORPORATIVO,EJECUTIVO DE GESTION COMERCIAL,entrena,banda,True,0.9441,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -5915,7 +5915,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 5914,ASESORA COMERCIAL,ASESORA COMERCIAL AUSTRO,entrena,banda,False,0.9406,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5915,ASISTENTE DE VALIDACIONES,ASISTENTE DE VERIFICACION,valida,banda,False,0.9353,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5916,INGENIERO DE PROYECT,INGENIERO PROYECTISTA,entrena,banda,False,0.9601,si,si,ninguno,ninguno,1.0,gemini,ninguno
-5917,ANALISTA FINANCIERO 2,ANALISTA FINANCIERO I,entrena,banda,False,0.9415,no,no,p1,p1,0.0,gemini,p1
+5917,ANALISTA FINANCIERO 2,ANALISTA FINANCIERO I,entrena,banda,False,0.9415,no,no,p1,p1,1.0,gemini_grado,ninguno
 5918,ASESOR DE TALLER,ASESOR TECNICO (EQUIPOS DE TALLER),valida,banda,False,0.9466,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5919,GERENTE DE GESTION DE PROYECTOS,GERENCIA DE PROYECTOS,entrena,banda,False,0.9442,si,si,ninguno,ninguno,1.0,gemini,ninguno
 5920,COORD. SERVICIO AL CLIENTE,DIRECCION SERVICIO AL CLIENTE,entrena,bajo,False,0.9038,no,no,p2,p2,0.0,gemini,p2
@@ -6220,7 +6220,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6219,ANALISTA DE CONTROL PRESUPUESTARIO PROYECTOS,JEFE CONTROL PRESUPUESTARIO PROYECTOS,entrena,banda,True,0.9381,no,no,p2,p2,0.0,gemini,p2
 6220,ASISTENTE DE TECNOLOGIA INFORMATICA,ASISTENTE TECNICO DE INFORMATICA,entrena,alto,True,0.978,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6221,SUBGERENTE DE VENTAS INDUSTRIAL,SUPERVISOR DE VENTAS INDUSTRIA,entrena,banda,True,0.9324,no,no,p2,p2,0.0,gemini,p2
-6222,OPERARIO 8,OPERARIO 9,entrena,banda,False,0.9316,no,no,p1,p1,0.0,gemini,p1
+6222,OPERARIO 8,OPERARIO 9,entrena,banda,False,0.9316,no,no,p1,p1,1.0,gemini_grado,ninguno
 6223,PRIMERO DE COCINA,PRIMER COCINERO,entrena,banda,False,0.9456,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6224,JEFE DE SERVICIO TECNICO,EJECUTIVO TECNICO DE SERVICIO,valida,bajo,True,0.9255,no,no,p2,p2,0.0,gemini,p2
 6225,JEFE DE MANTENIMIENTO Y OPERACIONES,JEFE DE SOPORTE Y MANTENIMIENTO,entrena,banda,False,0.9355,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6350,12 +6350,12 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6349,GERENTE DE CONTROL DE PROCESOS Y MEJORA CONTINUA,GERENTE DE MEJORA CONTINUA Y ASEGURAMIENTO DE CALIDAD,entrena,banda,False,0.9431,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6350,GERENTE ADMINISTRACION DE RIESGO,GERENTE DE CONTROL Y GESTION DE RIESGOS,entrena,banda,False,0.932,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6351,ASISTENTE DE SISTEMA,ASISTENTE DE SISTEMAS 2,entrena,bajo,False,0.9243,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6352,ANALISTA CONTABLE 2,ANALISTA CONTABLE 4,entrena,banda,False,0.9547,no,no,p1,p1,0.0,gemini,p1
+6352,ANALISTA CONTABLE 2,ANALISTA CONTABLE 4,entrena,banda,False,0.9547,no,no,p1,p1,1.0,gemini_grado,ninguno
 6353,JEFE PRODUCCION FABRICACION,JEFE PRODUCCION Y LOGISTICA,entrena,bajo,False,0.9023,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6354,JEFE DE CONTABILIDAD LOGISTICA,JEFE DE LOGISTICA-CONTROL,entrena,banda,False,0.9308,no,no,p4,p4,0.0,gemini,p4
 6355,ASISTENTE CONTROL CALIDAD,ASISTENTE DPTO. CALIDAD,entrena,banda,False,0.9426,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6356,COORDINADOR DE PROCESOS Y PROYECTOS,COORDINADOR DE PROYECTOS Y SERVICIOS,entrena,banda,False,0.9529,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6357,ALINEADOR 1,ALINEADOR 2,valida,banda,False,0.9386,no,no,p1,p1,0.0,gemini,p1
+6357,ALINEADOR 1,ALINEADOR 2,valida,banda,False,0.9386,no,no,p1,p1,1.0,gemini_grado,ninguno
 6358,JEFE DE BODEGA REPUESTOS,LIDER DE BODEGA REPUESTOS,entrena,banda,False,0.9578,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6359,GERENTE DE DESARROLLO HUMANO Y ORGANIZACIONAL,GERENTE DE DESARROLLO HUMANO Y ADMINISTRACION,entrena,banda,False,0.96,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6360,ASISTENTE CONTABLE,ASISTENTE CONTABLE (PROVEEDORES),entrena,banda,False,0.931,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6425,7 +6425,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6424,ANALISTA DE COMUNICACIONES E INFRAESTRUCTURA,ANALISTA DE INFRAESTRUCTURA Y TELECOMUNICACIONES SR,entrena,banda,True,0.9467,no,no,p3,p3,0.0,gemini,p3
 6425,ASISTENTE 2 - DE CONTABILIDAD,ASISTENTE CUENTAS CONTABLES,valida,bajo,False,0.9055,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6426,TELEVENDEDOR,TELEVENDEDOR/A,entrena,banda,False,0.9601,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6427,PAR PEDAGOGICO 3,PAR PEDAGOGICO 4,entrena,banda,False,0.9458,no,no,p1,p1,0.0,gemini,p1
+6427,PAR PEDAGOGICO 3,PAR PEDAGOGICO 4,entrena,banda,False,0.9458,no,no,p1,p1,1.0,gemini_grado,ninguno
 6428,JEFE DE CONTROL PRESUPUESTARIO,JEFE CONTROL PRESUPUESTARIO PROYECTOS,entrena,banda,False,0.9394,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6429,ANALISTA DE TECNOLOGIA,ANALISTA SEGURIDAD TECNOLOGICA,entrena,bajo,False,0.9029,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6430,ANALISTA FINANCIERO DE PROYECTOS,ANALISTA DE PROYECTOS Y PRESUPUESTOS,entrena,bajo,False,0.9169,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6510,7 +6510,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6509,ANALISTA DE DESARROLLO ORGANIZACIONAL,ESPECIALISTA DE DESARROLLO ORGANIZACIONAL,entrena,banda,True,0.9309,no,no,p2,p2,0.0,gemini,p2
 6510,ASISTENTE DE SUCURSAL,COORDINADORA ADMINISTRATIVA SUCURSAL,entrena,bajo,False,0.9004,no,no,p2,p2,0.0,gemini,p2
 6511,PROFESORES CON TITULO DE CUARTO NIVEL / SUPERIOR,PROFESORES CON TITULO DE CUARTO NIVEL,entrena,alto,False,0.9764,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6512,RECAUDADOR 2,RECAUDADOR 3,entrena,banda,False,0.9387,no,no,p1,p1,0.0,gemini,p1
+6512,RECAUDADOR 2,RECAUDADOR 3,entrena,banda,False,0.9387,no,no,p1,p1,1.0,gemini_grado,ninguno
 6513,ASISTENTE ADMINISTRA,ASISTENTE DE SERVICIO DE APOYO ADMINISTRACION,entrena,bajo,False,0.9087,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6514,ASISTENTE DE COMUNICACION CORPORATIVA,ASISTENTE DE COMUNICACION ORGANIZACIONAL,entrena,banda,True,0.9613,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6515,ASISTENTE COORDINADOR DE PRODUCCION,COORDINADOR DE PRODUCCION - A,entrena,banda,False,0.9434,no,no,p2,p2,0.0,gemini,p2
@@ -6564,7 +6564,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6563,COORDINADOR DE TINTEROS,COORDINADORA TINTEROS,entrena,banda,False,0.9427,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6564,ANALISTA DE ADMINISTRACION SALARIAL Y NOMINA,ANALISTA DE NOMINA Y ADMINISTRACION,entrena,banda,False,0.9407,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6565,SUPERVISOR DE MEJORA CONTINUA,SUPERVISOR DE CONTROL Y MEJORA CONTINUA,entrena,banda,False,0.9463,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6566,OPERARIO 1 DE PRODUCCION VETERINARIOS B,OPERARIO 2 DE PRODUCCION VETERINARIOS B,entrena,banda,False,0.969,no,no,p1,p1,0.0,gemini,p1
+6566,OPERARIO 1 DE PRODUCCION VETERINARIOS B,OPERARIO 2 DE PRODUCCION VETERINARIOS B,entrena,banda,False,0.969,no,no,p1,p1,1.0,gemini_grado,ninguno
 6567,AUXILIAR TECNICO MECANICO,AUXILIAR TALLER MECANICO,entrena,bajo,True,0.9139,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6568,COORDINADOR/A DE DESARROLLO IT,DIRECTOR DE DESARROLLO IT,entrena,banda,True,0.9382,no,no,p2,p2,0.0,gemini,p2
 6569,SUPERVISOR DE SERVICIO TECNICO,SUPERVISOR EN GESTION DEL SERVICIO,valida,bajo,False,0.92,no,no,p4,p4,0.0,gemini,p4
@@ -6575,7 +6575,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6574,AYUDANTE DE PRODUCCION MDF,SUPERVISOR DE PRODUCCION MDF,entrena,banda,True,0.9364,no,no,p2,p2,0.0,gemini,p2
 6575,AUXILIAR DE SERVICIOS A (COCINA),ASISTENTE/AYUDANTE DE COCINA,valida,banda,False,0.9361,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6576,SUPERVISOR DE MONTAJE,SUPERVISOR DE MONTAJES INDUSTRIALES,entrena,banda,False,0.9453,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6577,PROFESIONAL 1 DE CONTRATACION,PROFESIONAL 2 DE CONTRATACION,entrena,banda,False,0.9481,no,no,p1,p1,0.0,gemini,p1
+6577,PROFESIONAL 1 DE CONTRATACION,PROFESIONAL 2 DE CONTRATACION,entrena,banda,False,0.9481,no,no,p1,p1,1.0,gemini_grado,ninguno
 6578,JEFE DE INGENIERIA DE DATOS,INGENIERO DE BASES DE DATOS,entrena,bajo,False,0.9034,no,no,p4,p4,0.0,gemini,p4
 6579,SUPERVISOR DE SEGURIDAD INDUSTRIAL,DIRECTOR DE SEGURIDAD INDUSTRIAL,entrena,banda,True,0.9339,no,no,p2,p2,0.0,gemini,p2
 6580,COORDINADOR DE COSTOS Y PRESUPUESTO,"COORDINADOR DE COSTOS, PRESUPUESTO, PATRIMONIO Y BODEGA",entrena,banda,False,0.941,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6615,7 +6615,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6614,COORDINADOR DE INGENIERIA DE CAMPO,COORDINADOR DE TRABAJOS EN CAMPO,entrena,bajo,False,0.9151,si,no,ninguno,p4,0.0,humano_139,
 6615,ASISTENTE DE OPERACIONES / INVENTARIOS,ASISTENTE DE OPERACIONES Y ESTADISTICA,entrena,bajo,False,0.9015,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6616,JEFE DE CALIDAD Y SISTEMAS DE GESTION,DIRECTOR DE GESTION & CALIDAD,entrena,bajo,True,0.9123,no,no,p2,p2,0.0,gemini,p2
-6617,CAJERO/A 2,CAJERO/A 4,entrena,banda,False,0.9412,no,no,p1,p1,0.0,gemini,p1
+6617,CAJERO/A 2,CAJERO/A 4,entrena,banda,False,0.9412,no,no,p1,p1,1.0,gemini_grado,ninguno
 6618,ASIST. TECNICO,ASIST. SERVICIO TECNICO,valida,banda,False,0.944,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6619,ASESORA DE SALUD,ASESORA DE SALUD JR.,entrena,banda,True,0.9344,no,no,p3,p3,0.0,gemini,p3
 6620,DIRECTORA DEL AREA LEGAL Y PROTECCION DE DATOS. OFICIAL DE CUMPLIMIENTO SUPLENTE,DIRECTORA DEL AREA LEGAL. OFICIAL DE CUMPLIMIENTO SUPLENTE,entrena,banda,False,0.9443,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6627,7 +6627,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6626,ASISTENTE DE ELECTRONICO,ASISTENTE DE SERVICIOS ELECTRONICOS,entrena,banda,False,0.9571,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6627,ANALISTA COMUNICACION Y DESARROLLO,ANALISTA DE COMUNICACION EXTERNA,entrena,banda,False,0.9402,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6628,ASISTENTE DE CONTROL DE GESTION OPERACIONAL,ASISTENTE DE CONTROL OPERATIVO Y CONTABLE,entrena,banda,False,0.9301,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6629,OPERADOR DE LINEA 1,OPERADOR DE LINEA 2,entrena,banda,False,0.931,si,no,ninguno,p1,0.0,humano_139,
+6629,OPERADOR DE LINEA 1,OPERADOR DE LINEA 2,entrena,banda,False,0.931,si,no,ninguno,p1,1.0,humano_139,ninguno
 6630,COORDINADOR DE VENTAS NACIONAL,COORDINADORA VENTAS NACIONAL,entrena,banda,False,0.9509,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6631,INGENIERO INSPECTOR DE PROYECTOS 192,INGENIERO INSPECTOR DE PROYECTOS 264,entrena,banda,False,0.9542,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6632,JEFE DE MERCADEO Y NEGOCIOS,JEFE COMERCIAL Y MKT,entrena,bajo,False,0.9008,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6642,7 +6642,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6641,EJECUTIVO ASIST SENIOR (ANALISTA CSO),EJECUTIVO ASISTENTE (OFC 1) CSO,entrena,bajo,True,0.9009,no,no,p3,p2,0.0,gemini,p3
 6642,AGENTE LIDER DE SEGURIDAD,LIDER AREA SEGURIDAD,entrena,banda,False,0.9315,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6643,JEFE DE CAPACITACION Y ENTRENAMIENTO,LIDER DE ENTRENAMIENTO Y CAPACITACION,entrena,banda,False,0.9314,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6644,PREPARADOR DE COLORES 1,PREPARADOR DE COLORES 3,entrena,banda,False,0.9352,no,no,p1,p1,0.0,gemini,p1
+6644,PREPARADOR DE COLORES 1,PREPARADOR DE COLORES 3,entrena,banda,False,0.9352,no,no,p1,p1,1.0,gemini_grado,ninguno
 6645,ANALISTA DE INTELIGENCIA DE NEGOCIOS Y DATOS,ANALISTA DE INTELIGENCIA DE NEGOCIOS BI,entrena,banda,False,0.9342,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6646,ASISTENTE DE INVENTARIOS,ASISTENTE DE GESTION DE INVENTARIOS,entrena,banda,False,0.9448,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6647,ANALISTA CONTABILIDAD,ANALISTA ADMINISTRATIVA CONTABLE,entrena,bajo,False,0.9292,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6654,7 +6654,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6653,COORDINADOR DESARROLLO ORGANIZACIONAL,DIRECTOR DE DESARROLLO ORGANIZACIONAL,entrena,banda,True,0.957,no,no,p2,p2,0.0,gemini,p2
 6654,SUPERINTENDENTE DE MANTENIMIENTO,SUPERINTENDENTE DE MANTENIMIENTO MECANICO,entrena,banda,False,0.957,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6655,JEFE DE VENTAS GUAYAQUIL,SUPERVISOR DE VENTAS GUAYAQUIL,entrena,banda,True,0.9335,no,no,p2,p2,0.0,gemini,p2
-6656,ASISTENTE DE OFICINA 3,ASISTENTE DE OFICINA 4,entrena,banda,False,0.9497,no,no,p1,p1,0.0,gemini,p1
+6656,ASISTENTE DE OFICINA 3,ASISTENTE DE OFICINA 4,entrena,banda,False,0.9497,no,no,p1,p1,1.0,gemini_grado,ninguno
 6657,SERVICIO LIMPIEZA,SERVICIOS DE LIMPIEZA/SERVICIOS VARIOS,valida,banda,False,0.9339,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6658,JEFE DE CAMPO COSECHA,AUXILIAR DE CAMPO COSECHA,entrena,bajo,True,0.9044,no,no,p2,p2,0.0,gemini,p2
 6659,ADMINISTRADOR DE MARKETING,ANALISTA ADMINISTRATIVO DE MARKETING,entrena,banda,False,0.9423,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6717,7 +6717,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6716,LIMPIEZA EXTERIORES,LIMPIEZA INTERIORES Y EXTERIORES,entrena,banda,False,0.9453,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6717,DOCENTE INSPECTOR,DOCENTE-INSPECTORA,entrena,banda,False,0.9497,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6718,CHOFER: PARA AUTOMOVILES Y CAMIONETAS,CHOFER: PARA AUTOMOVILES,entrena,bajo,False,0.9222,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6719,OBRERO 3,OBRERO 4,entrena,banda,False,0.9436,no,no,p1,p1,0.0,gemini,p1
+6719,OBRERO 3,OBRERO 4,entrena,banda,False,0.9436,no,no,p1,p1,1.0,gemini_grado,ninguno
 6720,PESADOR EMPAQUE L2,PESADOR EMPAQUE L3,entrena,banda,False,0.9355,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6721,AUXILIAR CONTABILIDAD,AYUDANTE DE CONTABILIDAD,entrena,banda,False,0.9339,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6722,COORDINADOR DE CASH MANAGEMENT Y COBRANZAS,JEFE DE CASH MANAGEMENT,entrena,bajo,True,0.9184,no,no,p2,p2,0.0,gemini,p2
@@ -6784,7 +6784,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6783,MEDICAL SALES REPRESENTATIVE,"SALES REPRESENTATIVE - MEDICAL, PHARMA OR SPECIALITY",entrena,banda,False,0.9461,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6784,JEFE DEL DPTO. TECNICO,JEFE DEPARTAMENTO TECNICO,entrena,banda,False,0.9447,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6785,RESPONSABLE TECNICO DE BODEGA,SUPERVISOR TECNICO DE BODEGA,valida,banda,True,0.9329,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6786,TECNICO MANTENIMIENTO 1,TECNICO DE MANTENIMIENTO 2,entrena,banda,False,0.944,no,no,p1,p1,0.0,gemini,p1
+6786,TECNICO MANTENIMIENTO 1,TECNICO DE MANTENIMIENTO 2,entrena,banda,False,0.944,no,no,p1,p1,1.0,gemini_grado,ninguno
 6787,AUX. BODEGA,AUX. DE BODEGA,entrena,banda,False,0.9654,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6788,CONSEJE RESIDENTE,ADM. CONSERJE RESIDENTE,entrena,banda,False,0.9374,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6789,ASISTENETE DE MANTENIMIENTO,ASIST. MANTENIMIENTO,entrena,banda,False,0.9492,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6814,7 +6814,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6813,LIDER DE MANTENIMIENTO,LIDER TECNICO DE MANTENIMIENTO,entrena,banda,False,0.9591,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6814,GERENTE DE PLANIFICACION,GERENTE CORPORATIVO DE PLANEAMIENTO,entrena,banda,True,0.9491,no,no,p3,p3,0.0,gemini,p3
 6815,JEFE NACIONAL ADMINISTRATIVA,JEFE NACIONAL ADMINISTRATIVO Y GESTION DOCUMENTAL,entrena,banda,False,0.9327,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6816,ASISTENTE 1 DE OPERACIONES,ASISTENTE DE OPERACIONES 2,entrena,banda,False,0.9444,no,no,p1,p1,0.0,gemini,p1
+6816,ASISTENTE 1 DE OPERACIONES,ASISTENTE DE OPERACIONES 2,entrena,banda,False,0.9444,no,no,p1,p1,1.0,gemini_grado,ninguno
 6817,OPERARIO DE MANTENIMIENTO DE LABORATORIO,TECNICO DE MANTENIMIENTO LABORATORIO,entrena,banda,True,0.9375,no,no,p2,p2,0.0,gemini,p2
 6818,COORDINADOR DE PLANEACION Y ABASTECIMIENTO,LIDER DE PLANEACION Y ABASTECIMIENTO,entrena,banda,False,0.945,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6819,ASISTENTE ADMINISTRATIVO DISTRIBUCION JR,ASISTENTE ADMINISTRATIVO DISTRIBUIDORES,entrena,banda,True,0.9458,no,no,p3,p3,0.0,gemini,p3
@@ -6874,7 +6874,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6873,SUPERVISOR DE SEGURIDAD OCUPACIONAL,SUPERVISOR DE SEGURIDAD Y SALUD OCUPACIO,valida,banda,False,0.9414,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6874,GERENTE DE ESTRATEGIA Y NEGOCIOS,"GERENTE DE ESTRATEGIA DE NEGOCIO, PLANIFICACION Y FINANZAS",entrena,banda,False,0.9502,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6875,ASISTENTE CONTABLE Y TESORERIA,"ASISTENTE CONTABLE, CREDITO Y COBRANZA",entrena,banda,False,0.9469,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6876,ADMINISTRADOR DE IMPRESION 1,ADMINISTRADOR DE IMPRESION 4,valida,banda,False,0.9439,no,no,p1,p1,0.0,gemini,p1
+6876,ADMINISTRADOR DE IMPRESION 1,ADMINISTRADOR DE IMPRESION 4,valida,banda,False,0.9439,no,no,p1,p1,1.0,gemini_grado,ninguno
 6877,ASISTENTE A DE CONTABILIDAD,ASISTENTE SEMI-SENIOR DE CONTABILIDAD,valida,banda,True,0.9392,no,no,p3,p3,0.0,gemini,p3
 6878,ANALISTA DE MICROBIOLOGIA SENIOR,ANALISTA DE MICROBIOLOGIA JUNIOR,entrena,banda,True,0.9535,no,no,p3,p3,0.0,gemini,p3
 6879,ASISTENTE DE GARITA,AUXILIAR DE GARITA,entrena,banda,False,0.9445,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -6958,7 +6958,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 6957,ESPECIALISTA CONTROL DE GESTION,ESPECIALISTA DE GESTION,entrena,banda,False,0.9313,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6958,GERENTE DE RIESGOS INTEGRALES,GERENTE DE RIESGO INTEGRAL,valida,banda,False,0.9692,si,si,ninguno,ninguno,1.0,gemini,ninguno
 6959,JEFE DE TALLERES,JEFE DE SERVICIOS Y TALLERES,entrena,banda,False,0.9342,si,si,ninguno,ninguno,1.0,gemini,ninguno
-6960,DOCENTE TITULAR AUXILIAR 1,DOCENTE TITULAR AUXILIAR NIVEL 2 GRADO 2,entrena,banda,False,0.9309,no,no,p1,p1,0.0,gemini,p1
+6960,DOCENTE TITULAR AUXILIAR 1,DOCENTE TITULAR AUXILIAR NIVEL 2 GRADO 2,entrena,banda,False,0.9309,no,no,p1,p1,1.0,gemini_grado,ninguno
 6961,ASISTENTE DE MARKETING Y COMUNICACION,ASISTENTE DE TELEMARKETING,entrena,bajo,False,0.9037,no,no,p4,p4,0.0,gemini,p4
 6962,GERENTE DE ASUNTOS CORPORATIVOS,COORDINADOR DE ASUNTOS CORPORATIVOS,valida,banda,True,0.9355,no,no,p2,p2,0.0,gemini,p2
 6963,ADMINISTRADOR FINCA,ADMINISTRADOR GENERAL FINCA,entrena,banda,False,0.9612,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -7200,7 +7200,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7199,AGENTE VENDEDOR,AGENTE VENDEDOR EXTERNO,entrena,banda,False,0.9443,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7200,JEFE DE COMPRAS Y PLANEACION,JEFE DE COMPRAS VARIAS,entrena,bajo,False,0.902,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7201,AUDITOR - TALLER,AUDITOR DE TALLER,entrena,banda,False,0.943,si,si,ninguno,ninguno,1.0,gemini,ninguno
-7202,OPERADOR 970 - 1,OPERADOR 970 - 2,valida,banda,False,0.9479,no,no,p1,p1,0.0,gemini,p1
+7202,OPERADOR 970 - 1,OPERADOR 970 - 2,valida,banda,False,0.9479,no,no,p1,p1,1.0,gemini_grado,ninguno
 7203,GERENTE DE CIBERSEGURIDAD,JEFE DE CIBERSEGURIDAD E INFRAESTRUCTURA,entrena,banda,True,0.9301,no,no,p2,p2,0.0,gemini,p2
 7204,SUPERVISOR DE REFRIGERACION,SUPERVISOR DE REFRIGERACION 製冷技術員,valida,banda,False,0.9341,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7205,JEFE DE ADMISIONES,JEFE DE ADMISIONES Y CAJAS,entrena,banda,False,0.9303,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -7219,7 +7219,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7218,SUB JEFE MANTENIMIENTO,SUPERVISOR MANTENIMIENTO NIVEL 2,entrena,bajo,True,0.9038,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7219,ANALISTA CONTABLE Y DE REPORTES,ANALISTA SENIOR DE REPORTES Y SERVICIOS CONTABLES,entrena,bajo,True,0.9246,no,no,p3,p3,0.0,gemini,p3
 7220,ANALISTA CONCILIACION OPERATIVA DE TARJETA DE CREDITO,ANALISTA OPERATIVO TARJETA DE CREDITO,valida,banda,False,0.9387,si,si,ninguno,ninguno,1.0,gemini,ninguno
-7221,PROJECT MANAGER I,PROJECT MANAGER II,valida,banda,False,0.9453,no,no,p1,p1,0.0,gemini,p1
+7221,PROJECT MANAGER I,PROJECT MANAGER II,valida,banda,False,0.9453,no,no,p1,p1,1.0,gemini_grado,ninguno
 7222,COORD DE ADMISIONES,COORD. DE ADMISION,entrena,banda,False,0.9437,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7223,GERENTE DE TESORERIA,SUB GERENTE CORPORATIVO DE TESORERIA,valida,bajo,True,0.9083,no,no,p2,p2,0.0,gemini,p2
 7224,OPERADOR DE MEZCLA,OPERADOR DE SALA DE MEZCLA,entrena,bajo,False,0.9118,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -7367,7 +7367,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7366,OFICIAL DE CUENTA EXPORTACIONES,OFICIAL DE CUENTA IMPORTACIONES,entrena,banda,False,0.9436,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7367,RESPONSABLE CONTROL DE CALIDAD,ENCARGADO DE CONTROL DE CALIDAD,entrena,banda,False,0.9452,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7368,ANALISTA DE INFRAESTRUCTURA Y TELECOMUNICACIONES SR,ANALISTA TECNICO INFRAESTRUCTURA,entrena,bajo,True,0.9251,no,no,p3,p3,0.0,gemini,p3
-7369,COCINERO 1,2. COCINERO,entrena,banda,False,0.9322,no,no,p1,p1,0.0,gemini,p1
+7369,COCINERO 1,2. COCINERO,entrena,banda,False,0.9322,no,no,p1,p1,1.0,gemini_grado,ninguno
 7370,COORDINADOR AREA DEPORTES,JEFE AREA DEPORTES,valida,banda,True,0.9438,no,no,p2,p2,0.0,gemini,p2
 7371,JEFE DE GEOLOGIA,GERENTE DE GEOLOGIA,valida,banda,True,0.9582,no,no,p2,p2,0.0,gemini,p2
 7372,SUBGERENTE DE INDEMNIZACIONES,SUPERVISOR DE INDEMNIZACIONES,entrena,banda,True,0.9428,no,no,p2,p2,0.0,gemini,p2
@@ -7470,7 +7470,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7469,ANALISTA DE MERCADEO,ANALISTA COORDINADOR MERCADERISTAS,entrena,bajo,True,0.9041,no,no,p2,p2,0.0,gemini,p2
 7470,GERENTE DE SSA,GERENTE SSA Y RSE,entrena,bajo,False,0.9251,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7471,COORDINADOR DE COLISIONES,JEFE DE COLISIONES,valida,banda,True,0.9439,no,no,p2,p2,0.0,gemini,p2
-7472,REPRESENTANTE TECNICO I,REPRESENTANTE TECNICO III,entrena,banda,False,0.9443,no,no,p1,p1,0.0,gemini,p1
+7472,REPRESENTANTE TECNICO I,REPRESENTANTE TECNICO III,entrena,banda,False,0.9443,no,no,p1,p1,1.0,gemini_grado,ninguno
 7473,JEFE DE COMPRAS Y PLANEACION,GERENTE PLANEACION Y COMPRAS,entrena,banda,True,0.9385,no,no,p2,p2,0.0,gemini,p2
 7474,ASISTENTE DE FACTURACION Y VENTAS INDUSTRIAL,ASISTENTE FACTURACION & CONTROL DE INVENTARIOS,entrena,banda,False,0.9361,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7475,ASISTENTE COMERCIAL COSTA,ASISTENTE DE VENTAS COSTA,entrena,banda,False,0.9391,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -7486,7 +7486,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7485,ANALISTA DE CERTIFICACION,ANALISTA DE CERTIFICACION DE CALIDAD,entrena,banda,False,0.9427,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7486,ASISTENTE MATRICERIA,COORDINADOR DE MATRICERIA,entrena,bajo,True,0.9018,no,no,p2,p2,0.0,gemini,p2
 7487,ANALISTA DE PLATAFORMAS,ANALISTA DE SOPORTE DE PLATAFORMAS,entrena,banda,False,0.9487,si,si,ninguno,ninguno,1.0,gemini,ninguno
-7488,OPERARIO 2 DE PRODUCCION VETERINARIOS B,OPERARIO 3 DE PRODUCCION VETERINARIOS B,entrena,banda,False,0.9505,no,no,p1,p1,0.0,gemini,p1
+7488,OPERARIO 2 DE PRODUCCION VETERINARIOS B,OPERARIO 3 DE PRODUCCION VETERINARIOS B,entrena,banda,False,0.9505,no,no,p1,p1,1.0,gemini_grado,ninguno
 7489,EJECUTIVO SENIOR COBRANZAS,EJECUTIVO DE COBRANZAS Y PAGOS SENIOR,entrena,bajo,False,0.9007,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7490,JEFE COMERCIAL Y SERVICIO,GERENTE COMERCIAL & SERVICIO,valida,bajo,True,0.9132,no,no,p2,p2,0.0,gemini,p2
 7491,COORDINADOR DE PLANEACION MANTENIMIENTO,JEFE DE PLANIFICACION DE MANTENIMIENTO,entrena,banda,True,0.9453,no,no,p2,p2,0.0,gemini,p2
@@ -7526,7 +7526,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7525,JEFE DE PROYECTOS TI,COORDINADOR DE PROYECTOS TI,entrena,banda,True,0.9592,no,no,p2,p2,0.0,gemini,p2
 7526,AISTENTE / AYUDANTE / AUXILIAR DE SERVICIOS EN GENERAL,ASINTENTE/AUXILIAR DE SERVICIOS EN GENERAL,valida,banda,False,0.9474,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7527,JEFE DE OBRA,COORDINADOR DE OBRA,entrena,bajo,True,0.908,no,no,p2,p2,0.0,gemini,p2
-7528,OPERARIO 1 DE PRODUCCION VETERINARIOS B,OPERARIO 3 DE PRODUCCION VETERINARIOS B,entrena,banda,False,0.9502,no,no,p1,p1,0.0,gemini,p1
+7528,OPERARIO 1 DE PRODUCCION VETERINARIOS B,OPERARIO 3 DE PRODUCCION VETERINARIOS B,entrena,banda,False,0.9502,no,no,p1,p1,1.0,gemini_grado,ninguno
 7529,ASISTENTE TT HH,ASISTENTE DE TTHH,entrena,banda,False,0.941,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7530,ASISTENTE TECNICO DE CERTIFICACION,ASISTENTE TECNICO Y DE CALIDAD,valida,bajo,False,0.9063,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7531,COORDINADOR DE GESTION DE MANTENIMIENTO,COORDINADOR CORPORATIVO DE MANTENIMIENTO,entrena,banda,True,0.9567,no,no,p3,p3,0.0,gemini,p3
@@ -7635,7 +7635,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7634,AYUDANTE ADM PRODUCCION,ASISTENTE ADM. PRODUCCION,entrena,banda,False,0.9408,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7635,ANALISTA DE TI Y SOPORTE,ANALISTA IT Y SOPORTE AL USUARIO,entrena,bajo,False,0.9227,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7636,ANALISTA FINANCIERO CORPORATIVO,ANALISTA DE AUDITORIA FINANCIERA CONTABLE,valida,bajo,True,0.9033,no,no,p4,p4,0.0,gemini,p4
-7637,REPRESENTANTE DE VENTAS LIFE 1 COSTA,REPRESENTANTE DE VENTAS LIFE 4 COSTA,valida,banda,False,0.9393,no,no,p1,p1,0.0,gemini,p1
+7637,REPRESENTANTE DE VENTAS LIFE 1 COSTA,REPRESENTANTE DE VENTAS LIFE 4 COSTA,valida,banda,False,0.9393,no,no,p1,p1,1.0,gemini_grado,ninguno
 7638,SOLDADOR,SOLDADOR (BACK),entrena,bajo,False,0.9282,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7639,DOCENTE DE SECUNDARIA,PROFESOR DE SECUNDARIA,entrena,banda,False,0.9481,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7640,AUXILIAR DE RAMA,AYUDANTE DE RAMA,entrena,banda,False,0.9337,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -7796,7 +7796,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7795,EJECUTIVO GESTION DE INFORMACION,LIDER DE INFORMACION GERENCIAL,entrena,bajo,False,0.9001,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7796,JEFE NACIONAL DE TRADE MARKETING,COORDINADOR NACIONAL TRADE MARKETING,entrena,banda,True,0.9447,no,no,p2,p2,0.0,gemini,p2
 7797,ANALISTA DE INVENTARIOS Y LOGISTICA,ANALISTA DE LOGISTICA II,entrena,bajo,False,0.906,si,si,ninguno,ninguno,1.0,gemini,ninguno
-7798,MAQUINISTA 1 JOSELITO,MAQUINISTA 3 JOSELITO,entrena,banda,False,0.9437,no,no,p1,p1,0.0,gemini,p1
+7798,MAQUINISTA 1 JOSELITO,MAQUINISTA 3 JOSELITO,entrena,banda,False,0.9437,no,no,p1,p1,1.0,gemini_grado,ninguno
 7799,ASISTENTE DE LEGAL,ASISTENTE I LEGAL,entrena,banda,False,0.9518,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7800,COORDINADOR DE PACKAGING,GERENTE DE PACKAGING,entrena,banda,True,0.9349,no,no,p2,p2,0.0,gemini,p2
 7801,OPERADOR DE PEGADORA,OPERADOR DE PEGADORA DE PINAS,entrena,banda,False,0.9302,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -7985,7 +7985,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 7984,ASISTENTE DE CENTRO MEDICO,ASISTENTE DE DEPARTAMENTO MEDICO,entrena,banda,False,0.9328,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7985,ASISTENTE PLANEACION LOGISTICA,COORDINADOR DE LOGISTICA (PLANIFICACION REPUESTOS),entrena,bajo,True,0.9022,no,no,p2,p2,0.0,gemini,p2
 7986,GERENTE CORPORATIVO DE TI,GERENTE DE OPERACIONES TI,entrena,bajo,True,0.9096,no,no,p3,p3,0.0,gemini,p3
-7987,MARINERO 1,MARINERO 2,entrena,banda,False,0.941,no,no,p1,p1,0.0,gemini,p1
+7987,MARINERO 1,MARINERO 2,entrena,banda,False,0.941,no,no,p1,p1,1.0,gemini_grado,ninguno
 7988,COORDINADOR COMERCIAL DE SERVICIO AL CLIENTE,COORDINADOR ADMINISTRATIVO Y SERVICIO AL CLIENTE,entrena,banda,False,0.9352,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7989,ASISTENTE ADMINISTRATIVA CONTA,ASISTENTE ADMINISTRATIVO CONT,valida,banda,False,0.9302,si,si,ninguno,ninguno,1.0,gemini,ninguno
 7990,OPERADOR MECANICO AUTOMOTRIZ F,OPERADOR MECANICO AUTOMOTRIZ I,entrena,banda,False,0.9413,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -8023,7 +8023,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8022,JEFE (A) DE INFRAESTRUCTURA,JEFE DE INFRAESTRUCTURA TECNOLOGICA,entrena,banda,False,0.9419,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8023,DIRECTOR DE PLANEACION FINANCIERA,JEFE_DE_PLANEACION_FINANCIERA_Y_TESORERIA,entrena,bajo,False,0.9036,no,no,p2,p2,0.0,gemini,p2
 8024,ANALISTA DE DEMANDA Y DATOS,ANALISTA SENIOR DE DEMANDA Y DATOS,entrena,banda,True,0.9338,no,no,p3,p3,0.0,gemini,p3
-8025,ASISTENTE DE GESTION 2,ASISTENTE GESTION 1,entrena,bajo,False,0.9088,no,no,p1,p1,0.0,gemini,p1
+8025,ASISTENTE DE GESTION 2,ASISTENTE GESTION 1,entrena,bajo,False,0.9088,no,no,p1,p1,1.0,gemini_grado,ninguno
 8026,DIRECTOR DE PROYECTO,CODIRECTOR DE PROYECTO,entrena,banda,False,0.942,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8027,ADMINISTRADOR DE ASEGURAMIENTO DE LA CALIDAD,AGENTE DE CALIDAD Y PROCESOS,valida,bajo,False,0.9041,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8028,COORDINADOR DE RESPONSABILIDAD SOCIAL Y MARKETING,JEFE MARKETING Y SOSTENIBILIDAD,entrena,bajo,True,0.9046,no,no,p2,p2,0.0,gemini,p2
@@ -8047,7 +8047,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8046,SUBINSPECTOR EDUCATIVO BASICA MEDIA,SUBINSPECTOR EDUCATIVO BASICA ELEMENTAL,entrena,bajo,False,0.9146,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8047,ANALISTA DE NOMINA Y TALENTO HUMANO,ANALISTA DE TALENTO HUMANO (NOMINA),entrena,banda,False,0.9542,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8048,AYUDANTE ADMINISTRATIVA,ASISTENTE ADMINISTRATIVA SENIOR,entrena,bajo,True,0.9007,no,no,p3,p3,0.0,gemini,p3
-8049,ASISTENTE DE GERENCIA 1,ASISTENTE DE GERENCIA 3,valida,banda,False,0.9349,no,no,p1,p1,0.0,gemini,p1
+8049,ASISTENTE DE GERENCIA 1,ASISTENTE DE GERENCIA 3,valida,banda,False,0.9349,no,no,p1,p1,1.0,gemini_grado,ninguno
 8050,JEFE ADMINISTRATIVO Y OPERACIONES,JEFE ADMINISTRATIVO Y DE SERVICIOS GENERALES,entrena,banda,False,0.9391,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8051,ASESOR COMERCIAL,ASESOR COMERCIAL SENIOR,entrena,banda,True,0.9316,no,no,p3,p3,0.0,gemini,p3
 8052,JEFE SOPORTE TECNICO,TECNICO DE SOPORTE Y TECNOLOGIAS,entrena,bajo,True,0.9203,no,no,p2,p2,0.0,gemini,p2
@@ -8067,7 +8067,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8066,ACCOUNT DIRECTOR,"DIRECTOR, ACCOUNT",entrena,banda,False,0.9474,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8067,SUPERVISOR INGENIERIA Y MANTENIMIENTO NORTE,SUPERVISOR INGENIERIA Y MANTENIMIENTO SUR,entrena,banda,False,0.9458,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8068,TECNICO DE REFRIGERACION Y ELECTRICIDAD,TECNICO DE REFRIGERACION Y COCINAS,entrena,banda,False,0.9635,si,si,ninguno,ninguno,1.0,gemini,ninguno
-8069,LABORATORISTA 2,LABORATORISTA 1,entrena,banda,False,0.9388,no,no,p1,p1,0.0,gemini,p1
+8069,LABORATORISTA 2,LABORATORISTA 1,entrena,banda,False,0.9388,no,no,p1,p1,1.0,gemini_grado,ninguno
 8070,TRADE MARKETING CORDINATOR,TRADE MARKETING MANAGER,entrena,banda,False,0.9324,no,no,p2,p2,0.0,gemini,p2
 8071,GERENTE DE MERCADEO Y VENTAS,GERENTE DE MARKETING Y TIENDAS,entrena,bajo,False,0.9191,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8072,ASISTENTE DE PLANEACION Y LOGISTICA,ASESOR DE PLANEACION Y LOGISTICA,entrena,banda,False,0.9611,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -8112,7 +8112,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8111,JEFE DE CANALES DE ATENCION Y EXPERIENCIA AL SOCIO/CLIENTE,GESTOR OPERATIVO DE CANALES DE ATENCION Y EXPERIENCIA AL SOCIO/CLIENTE,entrena,banda,False,0.9442,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8112,ASISTENTE DE DIRECCION OPERACIONES,ASISTENTE DTO. DE OPERACIONES,entrena,banda,False,0.9329,no,no,p5,p5,0.0,gemini,p5
 8113,ASISTENTE DE MULTIMEDIA,ASISTENTE DE COMUNICACION Y MULTIMEDIA,entrena,banda,False,0.9414,si,si,ninguno,ninguno,1.0,gemini,ninguno
-8114,ESTIBADOR CAMION 1,ESTIBADOR CAMION 2,entrena,banda,False,0.9456,no,no,p1,p1,0.0,gemini,p1
+8114,ESTIBADOR CAMION 1,ESTIBADOR CAMION 2,entrena,banda,False,0.9456,no,no,p1,p1,1.0,gemini_grado,ninguno
 8115,CHOFER DE TANQUERO,CHOFER/TANQUERO,valida,banda,False,0.9352,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8116,EJECUTIVO DE INFRAESTRUCTURA,ESPECIALISTA SENIOR DE INFRAESTRUCTURA,entrena,bajo,True,0.9047,no,no,p2,p2,0.0,gemini,p2
 8117,ANALISTA DE GESTION ESTRATEGICA,JEFE DE GESTION ESTRATEGICA,valida,bajo,True,0.9151,no,no,p2,p2,0.0,gemini,p2
@@ -8136,7 +8136,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8135,JEFE DE COSTOS,JEFE SENIOR DE COSTOS,entrena,banda,True,0.9459,no,no,p3,p3,0.0,gemini,p3
 8136,COORDINADOR DE CAMPAMENTO,COORDINADOR SEMISENIOR DE ADMINISTRACION DE CAMPAMENTO,entrena,bajo,False,0.9205,no,no,p3,p3,0.0,gemini,p3
 8137,GERENTE DE SUPPLY CHAIN,JEFE DE SUPPLY CHAIN,entrena,banda,True,0.9559,no,no,p2,p2,0.0,gemini,p2
-8138,PROFESOR DE PADEL 1,PROFESOR DE PADEL 2,entrena,banda,False,0.9449,no,no,p1,p1,0.0,gemini,p1
+8138,PROFESOR DE PADEL 1,PROFESOR DE PADEL 2,entrena,banda,False,0.9449,no,no,p1,p1,1.0,gemini_grado,ninguno
 8139,EJECUTIVA EN VENTAS,EJECUTIVA DE VENTAS CORPORATIVO,entrena,banda,True,0.9319,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8140,COORDINADOR DE SISTEMA DE GESTION INTEGR,JEFE DE SISTEMA GESTION INTEG.,entrena,bajo,True,0.9135,no,no,p2,p2,0.0,gemini,p2
 8141,SUPERVISOR DE OBRA CIVIL,SUPERINTENDENTE DE OBRA CIVIL,entrena,banda,False,0.9321,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -8302,7 +8302,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8301,ESPECIALISTA SOPORTE TECNICO,TECNICO DE SOPORTE Y TECNOLOGIAS,entrena,bajo,True,0.9084,no,no,p2,p2,0.0,gemini,p2
 8302,ANALISTA DE SOPORTE TI,ANALISTA DE TI Y SOPORTE,entrena,banda,False,0.9575,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8303,ASISTENTE DE LOGISTICA DE VIAJES,AYUDANTE DE LOGISTICA Y TRANSPORTE,valida,banda,False,0.9323,si,si,ninguno,ninguno,1.0,gemini,ninguno
-8304,AUXILIAR DE ENFERMERIA 1,AUXILIAR DE ENFERMERIA 3,entrena,banda,False,0.9387,no,no,p1,p1,0.0,gemini,p1
+8304,AUXILIAR DE ENFERMERIA 1,AUXILIAR DE ENFERMERIA 3,entrena,banda,False,0.9387,no,no,p1,p1,1.0,gemini_grado,ninguno
 8305,ASISTENTE DE MEDIOS,AUXILIAR DE MEDIOS,valida,banda,False,0.9536,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8306,ASISTENTE TECNICO DE OBRAS,JEFE TECNICO DE OBRAS,entrena,bajo,True,0.9064,no,no,p2,p2,0.0,gemini,p2
 8307,DIRECTOR DE DESARROLLO ESTRATEGICO,DIRECTOR DE GESTION ESTRATEGICA,entrena,banda,False,0.9452,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -8374,12 +8374,12 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8373,ASISTENTE DE COORDINACION Y LOGISTICA,ASISTENTE DE LOGISTICA SR,valida,bajo,True,0.9001,no,no,p3,p3,0.0,gemini,p3
 8374,AYUDANTE DE CAMARA Y MASTERIZADO,SUPERVISOR DE CAMARA Y MASTERIZADO,entrena,bajo,True,0.9167,no,no,p2,p2,0.0,gemini,p2
 8375,JEFE ADMINISTRACION Y RECURSOS HUMANOS,JEFE DE RECURSOS HUMANOS Y SISTEMA DE GESTION,entrena,banda,False,0.9454,si,si,ninguno,ninguno,1.0,gemini,ninguno
-8376,EMPACADOR/CARGADOR 1,EMPACADOR/CARGADOR 6,entrena,banda,False,0.9314,no,no,p1,p1,0.0,gemini,p1
+8376,EMPACADOR/CARGADOR 1,EMPACADOR/CARGADOR 6,entrena,banda,False,0.9314,no,no,p1,p1,1.0,gemini_grado,ninguno
 8377,AUX. DE SECRETARIA,AUXI. SECRETARIA,valida,banda,False,0.9549,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8378,COORDINADOR CUMPLIMIENTO,SUB GERENTE DE CUMPLIMIENTO,entrena,bajo,True,0.9047,no,no,p2,p2,0.0,gemini,p2
 8379,EJECUTIVO DE ATENCION AL CLIENTE Y VENTAS,AGENTE DE SERVICIO AL CLIENTE Y OPERACIONES,entrena,bajo,False,0.904,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8380,CHOFER CAMIONETAS LIVIANAS O MIXTAS HASTA 3.5 TONELADAS,CHOFER: CAMIONES LIVIANOS O MIXTOS HASTA 3.5 TONELADAS,entrena,banda,False,0.9474,si,si,ninguno,ninguno,1.0,gemini,ninguno
-8381,EXPERTO (FUN 3 CSO),EXPERTO (FUN 4) CSO,entrena,banda,False,0.9433,no,no,p1,p1,0.0,gemini,p1
+8381,EXPERTO (FUN 3 CSO),EXPERTO (FUN 4) CSO,entrena,banda,False,0.9433,no,no,p1,p1,1.0,gemini_grado,ninguno
 8382,AUXILIAR DE ALMACEN,GERENTE DE ALMACEN,entrena,bajo,True,0.9016,no,no,p2,p2,0.0,gemini,p2
 8383,JEFE DE SEGURIDAD,JEFE DE SEGURIDAD Y COMUN,entrena,banda,False,0.9418,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8384,COORDINADOR DE SISTEMAS DE GESTION DE CALIDAD,COORDINADOR DE DESARROLLO Y GESTION DE CALIDAD,entrena,banda,False,0.932,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -8569,7 +8569,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8568,SUPERVISOR DE LIMPIEZA Y MANTENIMIENTO,COORDINADOR DE MANTENIMIENTO Y LIMPIEZA,entrena,banda,False,0.9321,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8569,JEFE DE REPUESTOS,GERENTE DE REPUESTOS,valida,banda,True,0.9375,no,no,p2,p2,0.0,gemini,p2
 8570,ANALISTA CREDITO,ANALISTA VERIFICADOR DE CREDITO,entrena,bajo,False,0.9085,si,si,ninguno,ninguno,1.0,gemini,ninguno
-8571,ELECTRICISTA RURAL 1,ELECTRICISTA RURAL 2,entrena,banda,False,0.9538,no,no,p1,p1,0.0,gemini,p1
+8571,ELECTRICISTA RURAL 1,ELECTRICISTA RURAL 2,entrena,banda,False,0.9538,no,no,p1,p1,1.0,gemini_grado,ninguno
 8572,AGENTE SENIOR DE SERVICIO AL CLIENTE,ASESOR SENIOR CENTRO ATENCION AL CLIENTE,valida,banda,False,0.9302,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8573,JEFE REGIONAL DE VENTAS SIERRA CENTRAL,SUPERVISOR DE VENTAS REGION SIERRA,entrena,banda,True,0.9445,no,no,p2,p2,0.0,gemini,p2
 8574,GERENTE DE RIESGO DE CREDITO,"GERENTE DE RIESGO, CREDITO Y COBRANZAS",valida,banda,False,0.9436,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -8895,7 +8895,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 8894,COORDINADOR DE PLANIFICACION Y PRECIOS,COORDINADOR DE PLANIFICACION Y PRESUPUESTO,valida,banda,False,0.9348,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8895,GERENTE DE TECNOLOGIA Y TRANSFORMACION DIGITAL,GERENTE DE ESTRATEGIA TRANSFORMACION DIGITAL Y DATOS,entrena,banda,False,0.9351,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8896,ESPECIALISTA JURIDICO,ABOGADO ESPECIALISTA,entrena,banda,False,0.9356,no,no,p3,p3,0.0,gemini,p3
-8897,LABORATORISTA 3,LABORATORISTA 6,entrena,bajo,False,0.9077,no,no,p1,p1,0.0,gemini,p1
+8897,LABORATORISTA 3,LABORATORISTA 6,entrena,bajo,False,0.9077,no,no,p1,p1,1.0,gemini_grado,ninguno
 8898,EJECUTIVO DE ATENCION AL CLIENTE Y VENTAS,EJECUTIVO DE NEGOCIOS Y SERVICIO AL CLIENTE,entrena,banda,False,0.9426,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8899,GESTOR DE CALIDAD Y PROCESOS,GESTOR DE CALIDAD Y SERVICIOS,entrena,banda,False,0.9472,si,si,ninguno,ninguno,1.0,gemini,ninguno
 8900,JEFE DE COMPRAS GENERALES,GERENTE DE COMPRAS Y DESARROLLO,entrena,bajo,True,0.9034,no,no,p2,p2,0.0,gemini,p2
@@ -9010,7 +9010,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9009,BAR / SALON,BAR SALON,entrena,banda,False,0.9305,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9010,COORDINADOR ADMINISTRATIVO DE MARKETING Y SERVICIO AL CLIENTE,COORDINADOR ADMINISTRATIVO Y SERVICIO AL CLIENTE,entrena,banda,False,0.9368,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9011,SUPERVISOR DE MEDIO AMBIENTE,SUPERVISOR DE AMBIENTE Y PERMISOS,entrena,bajo,False,0.9289,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9012,MAQUINISTA 4,MAQUINISTA 6,entrena,banda,False,0.9321,no,no,p1,p1,0.0,gemini,p1
+9012,MAQUINISTA 4,MAQUINISTA 6,entrena,banda,False,0.9321,no,no,p1,p1,1.0,gemini_grado,ninguno
 9013,ASISTENTE DE CUENTAS POR COBRAR,ASISTENTE DE CUENTAS POR COBRAR G,entrena,banda,False,0.9404,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9014,TRABAJADOR AGRICOLA (POSCOSECHA),TRABAJADOR DE POSCOSECHA,entrena,banda,False,0.9329,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9015,COORDINADOR DE PRODUCCION,COORDINADOR DE PRODUCTORA,entrena,banda,False,0.9552,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9123,7 +9123,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9122,ANALISTA DE INTELIGENCIA DE NEGOCIOS Y DATOS,JEFE DE INTELIGENCIA Y ANALITICA DE NEGOCIO,entrena,bajo,True,0.9036,no,no,p2,p2,0.0,gemini,p2
 9123,AYUDANTE DE TOPOGRAFIA,ASISTENTE DE TOPOGRAFIA,entrena,banda,False,0.9639,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9124,ARQUITECTO DE DATOS Y BI,ARQUITECTO TECNICO DE DATA,entrena,bajo,False,0.903,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9125,ASISTENTE GESTION 3,ASISTENTE GESTION 4,entrena,banda,False,0.941,no,no,p1,p1,0.0,gemini,p1
+9125,ASISTENTE GESTION 3,ASISTENTE GESTION 4,entrena,banda,False,0.941,no,no,p1,p1,1.0,gemini_grado,ninguno
 9126,INGENIERO DE AUTOMATIZACION,TECNICO EN AUTOMATIZACION,entrena,banda,False,0.9409,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9127,COORDINADOR DE LOGISTICA Y OPERACIONES,COORDINADOR ADMINISTRATIVO LOGISTICO,entrena,banda,False,0.9452,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9128,ESPECIALISTA MEDICO DE SALUD OCUPACIONAL,MEDICO EN SEGURIDAD Y SALUD OCUPACIONAL,valida,banda,False,0.9401,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9183,7 +9183,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9182,VICEPRESIDENTE CREDITO Y COBRANZAS,VICEPRESIDENTE DE CREDITO,entrena,banda,False,0.9494,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9183,JEFE DE OPERACIONES JR,COORDINADOR DE OPERACIONES JR,entrena,banda,True,0.9596,no,no,p2,p2,0.0,gemini,p2
 9184,JEFE IMPORTACIONES,JEFE DE OPERACIONES IMPORTACION,entrena,banda,False,0.9596,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9185,OPERADOR MAQUINA 1,OPERADOR MAQUINA 3,entrena,bajo,False,0.9071,no,no,p1,p1,0.0,gemini,p1
+9185,OPERADOR MAQUINA 1,OPERADOR MAQUINA 3,entrena,bajo,False,0.9071,no,no,p1,p1,1.0,gemini_grado,ninguno
 9186,AUXILIAR DE POSTCOSECHA,OPERARIO/A DE POSTCOSECHA,entrena,banda,False,0.9418,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9187,PLANIFICADOR DE DEMANDA,PLANIFICADOR DE LA DEMANDA (MD),valida,banda,False,0.9471,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9188,SECRETARIO/A ABOGADO/A,SECRETARIA ABOGADO,entrena,banda,False,0.9401,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9222,14 +9222,14 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9221,COORDINADOR DE OBRA,COORDINADOR ADMINISTRATIVO DE OBRA,entrena,banda,False,0.9534,no,si,p4,ninguno,0.0,humano_139,
 9222,SUPERVISOR LOGISTICA Y OPERACIONES,SUBGERENTE DE OPERACIONES LOGISTICA,entrena,banda,True,0.9389,no,no,p2,p2,0.0,gemini,p2
 9223,PROGRAMADOR,PROGRAMADOR MAESTRO,entrena,bajo,False,0.9222,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9224,ENCARGADO 2,ENCARGADO 3,entrena,banda,False,0.9437,no,no,p1,p1,0.0,gemini,p1
+9224,ENCARGADO 2,ENCARGADO 3,entrena,banda,False,0.9437,no,no,p1,p1,1.0,gemini_grado,ninguno
 9225,COORDINADOR CALIDAD,COORDINADOR DE GESTION DE LA CALIDAD Y MEJORA CONT,entrena,banda,False,0.9353,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9226,AYUDANTE DEL SECTOR METALMECANICO 182,AYUDANTE DEL SECTOR METALMECANICO 225,entrena,banda,False,0.939,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9227,OBRERO DE BODEGA,EMPLEADO DE BODEGA,entrena,banda,False,0.9315,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9228,ASISTENTE ESTIBADOR,AYUDANTE DE ESTIBADOR,entrena,banda,False,0.9485,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9229,AUXILIAR DE CHOFER,AUXILIAR SUPLENCIA CHOFER,entrena,banda,False,0.9331,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9230,AUXILIAR DE VENTAS Y ATENCION AL CLIENTE,AUXILIAR DE OFICINA DE VENTAS,entrena,banda,False,0.9386,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9231,SUPERVISOR DE CONTROL DE CALIDAD MECANICO 1,SUPERVISOR DE CONTROL DE CALIDAD MECANICO 3,valida,banda,False,0.9443,no,no,p1,p1,0.0,gemini,p1
+9231,SUPERVISOR DE CONTROL DE CALIDAD MECANICO 1,SUPERVISOR DE CONTROL DE CALIDAD MECANICO 3,valida,banda,False,0.9443,no,no,p1,p1,1.0,gemini_grado,ninguno
 9232,SUBGERENTE DE TALENTO HUMANO,SUBGERENTE TALENTO HUMANO,entrena,banda,False,0.9466,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9233,ANALISTA DE SOPORTE (TECNICO),ANALISTA DE TECNOLOGIA Y SOPORTE TECNICO,entrena,banda,False,0.9448,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9234,JEFE DE CENTRO DE SERVICIOS,SUPERVISOR DEL CENTRO DE SERVICIOS,entrena,banda,True,0.9322,no,no,p2,p2,0.0,gemini,p2
@@ -9323,7 +9323,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9322,ASISTENTE DE COMUNICACION Y MULTIMEDIA,ASISTENTE DE MERCADEO Y DE COMUNICACION,entrena,bajo,False,0.9001,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9323,ASISTENTE ADMINISTRATIVO FINANZAS,ASISTENTE ADM.FINANCIERO SENIOR,entrena,bajo,True,0.9067,no,no,p3,p3,0.0,gemini,p3
 9324,PROFESOR DE FISICA,PROFESOR DE EDUCACIУN FISICA,entrena,banda,False,0.9354,no,no,p4,p4,0.0,gemini,p4
-9325,INGENIERO DE SOFTWARE L1,INGENIERO DE SOFTWARE L3,entrena,banda,False,0.9332,no,no,p1,p1,0.0,gemini,p1
+9325,INGENIERO DE SOFTWARE L1,INGENIERO DE SOFTWARE L3,entrena,banda,False,0.9332,no,no,p1,p1,1.0,gemini_grado,ninguno
 9326,PROFESOR DE MUSICA,PROF. DE MUSICA,entrena,banda,False,0.9689,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9327,JEFE DE EMPACADORA,SUPERVISOR DE EMPACADORA,entrena,bajo,True,0.9238,no,no,p2,p2,0.0,gemini,p2
 9328,DOCENTE DE EGB ELEMENTAL CAHCV,DOCENTE EGB ELEMENTAL (2DO-3ERO) CAHC,valida,banda,False,0.9405,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9380,7 +9380,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9379,ASISTENTE GENERAL QUITO,ASISTENTE QUITO,entrena,banda,False,0.9351,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9380,JEFE DE PLANIFICACION Y CONTROL PROYECTOS,JEFE DE SERVICIO AL CLIENTE Y CONTROL DE PROYECTOS,valida,bajo,False,0.9121,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9381,ASESOR DE ENDEREZADA Y PINTURA,ASESOR DE SERVICIO ENDEREZADA Y PINTURA,entrena,banda,False,0.947,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9382,INGENIERA DE ASEGURAMIENTO DE CALIDAD I,INGENIERA DE ASEGURAMIENTO DE CALIDAD II,entrena,alto,False,0.9722,no,no,p1,p1,0.0,gemini,p1
+9382,INGENIERA DE ASEGURAMIENTO DE CALIDAD I,INGENIERA DE ASEGURAMIENTO DE CALIDAD II,entrena,alto,False,0.9722,no,no,p1,p1,1.0,gemini_grado,ninguno
 9383,ANALISTA DE NOMINA,ANALISTA DE NOMINA Y COMISIONES,entrena,banda,False,0.944,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9384,TECNICO DE REPARACION Y MANTENIMIENTO DE EQUIPOS ESPECIALIZADOS PROPIOS DE LA INDUSTRIA,TECNICO DE REPARACION Y MANTENIMIENTO,entrena,banda,False,0.9431,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9385,COORDINADOR DE CONTABILIDAD E IMPUESTOS,JEFE/A DE CONTABILIDAD Y TRIBUTACION,entrena,bajo,True,0.9069,no,no,p2,p2,0.0,gemini,p2
@@ -9448,7 +9448,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9447,JEFE ADMINISTRADOR,JEFE ADMINISTRATIVO CORPORATIVO,entrena,banda,True,0.9378,no,no,p3,p3,0.0,gemini,p3
 9448,GERENTE DE LABORATORIO,GERENTE / DIRECTOR TECNICO DE LABORATORIO,valida,banda,False,0.9528,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9449,ANALISTA DE MARKETING DIGITAL,ANALISTA DE COMUNICACION Y MARKETING,entrena,bajo,False,0.9046,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9450,DOCTOR LEVEL I,DOCTOR LEVEL II,valida,banda,False,0.9343,no,no,p1,p1,0.0,gemini,p1
+9450,DOCTOR LEVEL I,DOCTOR LEVEL II,valida,banda,False,0.9343,no,no,p1,p1,1.0,gemini_grado,ninguno
 9451,JEFE DE OPERACIONES SERVICIOS INTEGRADOS,SUPERVISOR DE OPERACIONES SERVICIOS INTEGRADOS,entrena,banda,True,0.9482,no,no,p2,p2,0.0,gemini,p2
 9452,LIDER DE PROTECCION PORTUARIA,LIDER DE SEGURIDAD PORTUARIA,entrena,banda,False,0.934,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9453,OPERADOR DE MAQUINARIA 1,OPERADOR DE MAQUINARIA MENOR,valida,bajo,False,0.9066,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9595,13 +9595,13 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9594,DISENADOR (A) GRAFICO,DISENADOR GRAFICO Y AUDIOVISUALES,valida,bajo,False,0.9048,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9595,TRABAJADOR OPERATIVO POLIFUNCIONAL,OBRERO POLIFUNCIONAL,entrena,bajo,False,0.9109,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9596,LIDER CONTROL DE CALIDAD,LIDER ASEGURAMIENTO Y CONTROL DE CALIDAD,entrena,banda,False,0.9633,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9597,LABORATORISTA 3,LABORATORISTA 4,entrena,banda,False,0.9437,no,no,p1,p1,0.0,gemini,p1
+9597,LABORATORISTA 3,LABORATORISTA 4,entrena,banda,False,0.9437,no,no,p1,p1,1.0,gemini_grado,ninguno
 9598,OFICIAL DE SEGURIDAD DE LA INFORMACION Y DELEGADO DE PROTECCION DE DATOS,OFICIAL DE SEGURIDAD INTEGRAL Y PROTECCION DE DATOS,entrena,banda,False,0.937,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9599,ANALISTA DE ASEGURAMIENTO Y CONTROL DE CALIDAD,ANALISTA DE CALIDAD Y REGULATORIO,entrena,banda,False,0.9544,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9600,EJECUTIVO MARKETING,EJECUTIVO MARKETING DIGITAL,entrena,banda,False,0.9354,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9601,DIRECTOR DE PROYECTOS,DIRECTOR DE PROYECTO,entrena,banda,False,0.9671,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9602,JEFE DE ZARPE E INSPECCION,SUPERVISOR DE ZARPES E INSPECCION,entrena,banda,True,0.932,no,no,p2,p2,0.0,gemini,p2
-9603,GESTOR DE COBRANZAS 1,GESTOR DE COBRANZAS 3,entrena,banda,False,0.9429,no,no,p1,p1,0.0,gemini,p1
+9603,GESTOR DE COBRANZAS 1,GESTOR DE COBRANZAS 3,entrena,banda,False,0.9429,no,no,p1,p1,1.0,gemini_grado,ninguno
 9604,COORDINADOR CONTABILIDAD,COORDINADOR ADMINISTRATIVO CONTABLE,entrena,banda,False,0.9365,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9605,COORDINADOR DE CANALES COMERCIALES,COORDINADOR DE CANALES MERCADEO,entrena,bajo,False,0.9023,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9606,JEFE DE VENTAS REGION COSTA,JEFE COMERCIAL REGION COSTA,entrena,banda,False,0.9435,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9656,7 +9656,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9655,COORDINADOR CREDITO,COORDINADOR DE CREDITOS,entrena,banda,False,0.9478,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9656,GERENTE DE SERVICIO AL CLIENTE Y LOGISTICA,JEFE DE LOGISTICA Y SERVICIO AL CLIENTE,entrena,banda,True,0.9454,no,no,p2,p2,0.0,gemini,p2
 9657,ANALISTA OPERATIVO COMERCIAL,ANALISTA OPERATIVO DE COMERCIO EXTERIOR,valida,bajo,False,0.9255,no,no,p4,p4,0.0,gemini,p4
-9658,1. JEFE DE COMPRAS,JEFE DE COMPRAS IV,entrena,bajo,False,0.9239,si,no,ninguno,p1,0.0,humano_139,
+9658,1. JEFE DE COMPRAS,JEFE DE COMPRAS IV,entrena,bajo,False,0.9239,si,no,ninguno,p1,1.0,humano_139,ninguno
 9659,ASESOR DE AUTOPLAN,ASISTENTE DE AUTOPLAN,valida,bajo,False,0.9293,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9660,SUPERVISOR DE EQUIPO PESADO,SUPERVISOR MECANICO EQUIPO PESADO,valida,banda,False,0.9337,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9661,DIRECTORA COMERCIAL Y DE SERVICIO AL CLIENTE,DIRECTORA DE RELACIONAMIENTO CON EL CLIENTE,entrena,banda,False,0.9405,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9665,14 +9665,14 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9664,ANALISTA DE ENTRENAMIENTO,ANALISTA DE ENTRENAMIENTO Y PROFESIONALIZACION,entrena,banda,False,0.9429,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9665,GERENTE DE PRODUCTO HOGAR,JEFE DE PRODUCTO HOGAR,entrena,banda,True,0.9584,no,no,p2,p2,0.0,gemini,p2
 9666,JEFE DE AREA DE MANTENIMIENTO,COORDINADOR DE MANTENIMIENTO JR,entrena,bajo,True,0.9107,no,no,p2,p2,0.0,gemini,p2
-9667,JEFE DE CREDITO 1,JEFE DE CREDITO 5,entrena,banda,False,0.9347,no,no,p1,p1,0.0,gemini,p1
+9667,JEFE DE CREDITO 1,JEFE DE CREDITO 5,entrena,banda,False,0.9347,no,no,p1,p1,1.0,gemini_grado,ninguno
 9668,JEFE DE OPERACIONES Y SERVICIOS,JEFE DPTO. OPERACIONES,entrena,bajo,False,0.9043,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9669,ASISTENTE DE BODEGAS,ASISTENTE DE BODEGAS DE CONSIGNA,entrena,banda,False,0.9351,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9670,ANALISTA COMUNICACION,ANALISTA DE COMUNICACION Y RELACIONAMIENTO,entrena,banda,False,0.9472,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9671,GERENTE DE GESTION DE PROYECTOS,ASISTENTE DE GESTION DE PROYECTOS,entrena,banda,True,0.9394,no,no,p2,p2,0.0,gemini,p2
 9672,ANALISTA DE PLANIFICACION (R),ANALISTA DE PLANIFICACION DE L,entrena,banda,False,0.9382,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9673,"GERENTE RECURSOS HUMANOS, ADMINISTRACION",JEFE ADMINISTRACION Y RECURSOS HUMANOS,entrena,banda,True,0.9311,no,no,p2,p2,0.0,gemini,p2
-9674,1 LANCHERO,3 LANCHERO,entrena,banda,False,0.9436,no,no,p1,p1,0.0,gemini,p1
+9674,1 LANCHERO,3 LANCHERO,entrena,banda,False,0.9436,no,no,p1,p1,1.0,gemini_grado,ninguno
 9675,ANALISTA CONTABLE FINANCIERA,ANALISTA FINANCIERO COMERCIAL,entrena,banda,False,0.9317,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9676,ASISTENTE DE FINANCIERO,ASISTENTE FINANCIERO SENIOR,entrena,banda,True,0.9339,no,no,p3,p3,0.0,gemini,p3
 9677,ASISTENTE DISTRIBUCION,AUXILIAR DE DISTRIBUCION,entrena,banda,False,0.9444,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9906,7 +9906,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9905,ASISTENTE DE DESARROLLO,ASISTENTE 1 DE DESARROLLO,entrena,banda,False,0.9393,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9906,LOGISTIC COORDINADOR,LOGISTIC COORDINATOR LEVEL III,valida,bajo,False,0.9236,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9907,DOCENTE TITULAR TIEMPO COMPLETO,DOCENTE NO TITULAR TIEMPO COMPLETO,entrena,banda,False,0.9329,si,si,ninguno,ninguno,1.0,gemini,ninguno
-9908,SUPERVISOR DE CONTROL DE PROYECTOS 1,SUPERVISOR DE CONTROL DE PROYECTOS 3,entrena,banda,False,0.9434,no,no,p1,p1,0.0,gemini,p1
+9908,SUPERVISOR DE CONTROL DE PROYECTOS 1,SUPERVISOR DE CONTROL DE PROYECTOS 3,entrena,banda,False,0.9434,no,no,p1,p1,1.0,gemini_grado,ninguno
 9909,GERENTE REGIONAL AMERICA LATINA - SOUTH,GERENTE REGIONAL LATAM,entrena,bajo,False,0.9187,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9910,ASISTENTE DE FACTURACION Y FINANZAS,ASISTENTE DE VENTAS Y FACTURACION,valida,banda,False,0.9346,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9911,TECNICO PROYECTOS,TECNICO INGENIERIA & PROYECTOS,entrena,banda,False,0.9401,si,si,ninguno,ninguno,1.0,gemini,ninguno
@@ -9967,7 +9967,7 @@ n,comun,raro,particion,estrato,dificil,sim,mismo_ab,mismo_ba,paso_ab,paso_ba,eti
 9966,DIRECTOR DE EXCELENCIA COMERCIAL,JEFE DE EXCELENCIA COMERCIAL,entrena,banda,True,0.9342,no,no,p2,p2,0.0,gemini,p2
 9967,COMERCIAL SALES MANAGER ECUADOR,SALES MANAGER DEALERS ECUADOR,entrena,banda,False,0.9331,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9968,COORDINADOR (A) ADMINISTRATIVA,COORDINADOR DE ADMINISTRACION DE PERSONAL,entrena,bajo,False,0.9133,no,si,p4,ninguno,1.0,humano_139,ninguno
-9969,ANALISTA DE ASUNTOS REGULATORIOS II,ANALISTA DE ASUNTOS REGULATORIOS III,entrena,banda,False,0.9494,no,no,p1,p1,0.0,gemini,p1
+9969,ANALISTA DE ASUNTOS REGULATORIOS II,ANALISTA DE ASUNTOS REGULATORIOS III,entrena,banda,False,0.9494,no,no,p1,p1,1.0,gemini_grado,ninguno
 9970,ANALISTA DE SISTEMAS DE INFORMACION,ANALISTA DE SISTEMAS INFORMATICOS 1,entrena,banda,False,0.9312,si,si,ninguno,ninguno,1.0,gemini,ninguno
 9971,COORDINADOR DE SERVICIO Y ATENCION CLIENTE,DIRECTOR DE SERVICIOS Y CUSTOMER CARE,entrena,bajo,True,0.9022,no,no,p2,p2,0.0,gemini,p2
 9972,ANALISTA CONTABLE Y DE INVENTARIOS,ANALISTA DE INVENTARIOS Y FACTURACION,entrena,banda,False,0.9446,si,si,ninguno,ninguno,1.0,gemini,ninguno

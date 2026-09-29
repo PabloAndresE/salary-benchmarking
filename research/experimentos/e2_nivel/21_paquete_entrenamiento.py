@@ -50,6 +50,8 @@ INC_META = SAL / "18_meta.csv"
 ORO_META = SAL / "13e_pares_400.csv"
 ORO_JUZ = SAL / "13e_para_juzgar.csv"
 NUEVOS_META = SAL / "20_pares_400.csv"
+CORR_GRADO = SAL / "23_correcciones_plata.csv"   # Enmienda 5: el grado ya no separa
+FUERA = SAL / "23_fuera_por_capa0.csv"           # Enmienda 5: los fusiona la capa 0
 RUBRICA = AQUI / "rubrica_mismo_cargo.md"
 DESTINO = SAL / "21_paquete"
 PLANTILLA = "El puesto de trabajo es {}."        # con el titulo en .title(); Enmienda 2
@@ -92,6 +94,19 @@ def main():
     p.loc[coherente, "motivo"] = p.loc[coherente, "paso_ab"].where(
         p.loc[coherente, "mismo_ab"] == "no", "ninguno")
 
+    # --- Enmienda 5: `no` de Gemini que solo difieren en el grado pasan a `si` (`23`) ---
+    n_grado = 0
+    if CORR_GRADO.exists():
+        cg = pd.read_csv(CORR_GRADO)
+        k = p["n"].isin(cg["n"]) & coherente
+        if int(k.sum()) != len(cg):
+            raise SystemExit("ALTO: {} correcciones de grado y {} pares coherentes que las "
+                             "reciben. Vuelve a correr `23`.".format(len(cg), int(k.sum())))
+        p.loc[k, "etiqueta"] = 1.0
+        p.loc[k, "motivo"] = "ninguno"
+        p.loc[k, "origen"] = "gemini_grado"
+        n_grado = int(k.sum())
+
     # --- los 139: lo ya juzgado a mano manda -------------------------------------------
     juz = leer(INC_JUZ, dtype=str, keep_default_na=False)
     meta = leer(INC_META)
@@ -118,6 +133,12 @@ def main():
     cal = oro[oro["particion"] == "calibra"].copy()
     cal["mismo"] = cal["mismo"].str.strip().str.lower()
     cal = cal[cal["mismo"].isin(["si", "no"])]
+    n_fuera_cal = 0
+    if FUERA.exists():
+        fu = pd.read_csv(FUERA, dtype=str)
+        fu = set(fu.loc[(fu["conjunto"] == "13e") & (fu["particion"] == "calibra"), "n"])
+        n_fuera_cal = int(cal["n"].astype(str).isin(fu).sum())
+        cal = cal[~cal["n"].astype(str).isin(fu)]
     calibra = cal[["n", "comun", "raro", "sim", "estrato", "mismo"]]
 
     # --- comprobacion dura: nada de `prueba` -----------------------------------------
@@ -142,7 +163,7 @@ def main():
     rub = RUBRICA.read_text(encoding="utf-8").split("\n## Historial")[0]
     man = {
         "creado": dt.datetime.now().isoformat(timespec="seconds"),
-        "decision": "D-036, enmiendas 1 y 2",
+        "decision": "D-036, enmiendas 1, 2 y 5",
         "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
         "plantilla": PLANTILLA,
         "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
@@ -154,17 +175,20 @@ def main():
             "incoherentes": n_inc,
             "incoherentes_juzgados_a_mano": int(len(hechos)),
             "incoherentes_con_etiqueta_blanda": n_inc - int(len(hechos)),
+            "corregidos_por_grado": n_grado,
             "tasa_si_coherentes": round(float(p.loc[coherente, "etiqueta"].mean()), 4),
             "dificil": int(plata["dificil"].sum()),
         },
         "calibra": {"pares": len(calibra),
                     "si": int((calibra["mismo"] == "si").sum()),
-                    "no": int((calibra["mismo"] == "no").sum())},
+                    "no": int((calibra["mismo"] == "no").sum()),
+                    "fuera_por_capa0": n_fuera_cal},
         "prueba_en_el_paquete": 0,
         "prueba_comprobada_contra": {"pares_de_grupos": len(pr_g),
                                      "pares_de_titulos": len(pr_t)},
         "fuentes_sha256_12": {f.name: sha(f) for f in (PARES, RESP, INC_JUZ, INC_META,
-                                                      ORO_META, NUEVOS_META)},
+                                                      ORO_META, ORO_JUZ, NUEVOS_META)
+                              + tuple(f for f in (CORR_GRADO, FUERA) if f.exists())},
     }
     (DESTINO / "manifiesto.json").write_text(json.dumps(man, ensure_ascii=False, indent=2),
                                              encoding="utf-8")

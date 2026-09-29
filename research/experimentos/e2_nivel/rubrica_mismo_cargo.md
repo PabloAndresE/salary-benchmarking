@@ -254,3 +254,16 @@ La rúbrica y `src/benchmarking/producto/nivel.py` ya no dicen lo mismo:
   `ZONAL`.
 
 Cambiarlo obliga a reconstruir la base y a volver a medir, así que es una decisión aparte.
+
+### El grado ya no separa (2026-09-29, Enmienda 5 de D-036)
+
+**La excepción del grado del paso 1 queda sin efecto.** Un número que marca el grado dentro
+del cargo (del 1 al 9, del I al X, `NIVEL 2`…) lo borra la normalización, aunque esté en los
+dos títulos con valor distinto: `AUXILIAR 1 DE COCINA` = `AUXILIAR 2 DE COCINA`.
+
+El texto de arriba **no se cambia**: su hash (`118be8eb1105`) identifica las respuestas de
+Gemini, que se dieron con la regla vieja. En lugar de repetir el piloto, lo ya etiquetado se
+corrige de forma mecánica con `23_correccion_grado.py`, y los pares que solo difieren en el
+grado salen de `calibra` y `prueba` porque la capa 0 los fusiona antes del juez. Quien juzgue
+a mano de aquí en adelante aplica la regla nueva. Si alguna vez se escribe una v4, este
+cambio entra en el paso 1.

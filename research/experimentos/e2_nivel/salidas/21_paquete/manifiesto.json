@@ -1,6 +1,6 @@
 {
-  "creado": "2026-09-29T11:40:14",
-  "decision": "D-036, enmiendas 1 y 2",
+  "creado": "2026-09-29T20:53:32",
+  "decision": "D-036, enmiendas 1, 2 y 5",
   "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
   "plantilla": "El puesto de trabajo es {}.",
   "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
@@ -15,13 +15,15 @@
     "incoherentes": 139,
     "incoherentes_juzgados_a_mano": 139,
     "incoherentes_con_etiqueta_blanda": 0,
-    "tasa_si_coherentes": 0.6551,
+    "corregidos_por_grado": 137,
+    "tasa_si_coherentes": 0.669,
     "dificil": 2665
   },
   "calibra": {
-    "pares": 200,
-    "si": 144,
-    "no": 56
+    "pares": 194,
+    "si": 142,
+    "no": 52,
+    "fuera_por_capa0": 6
   },
   "prueba_en_el_paquete": 0,
   "prueba_comprobada_contra": {
@@ -29,11 +31,14 @@
     "pares_de_titulos": 600
   },
   "fuentes_sha256_12": {
-    "16_pares_10000.csv": "93743dc85353",
-    "16_respuestas_llm.csv": "a03dca489eaa",
-    "18_para_juzgar.csv": "761318b5397d",
-    "18_meta.csv": "4ca7da661e1a",
-    "13e_pares_400.csv": "db94399109ad",
-    "20_pares_400.csv": "674338c99b59"
+    "16_pares_10000.csv": "08f26fd0a9ef",
+    "16_respuestas_llm.csv": "c36235cef251",
+    "18_para_juzgar.csv": "7aa89a26514e",
+    "18_meta.csv": "5593112c0181",
+    "13e_pares_400.csv": "8f85de15492d",
+    "13e_para_juzgar.csv": "9a7187487211",
+    "20_pares_400.csv": "ba0c38cd8fed",
+    "23_correcciones_plata.csv": "a8bbd612f6ce",
+    "23_fuera_por_capa0.csv": "291be032a8fc"
   }
 }

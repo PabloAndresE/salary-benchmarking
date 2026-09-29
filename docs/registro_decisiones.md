@@ -3806,7 +3806,8 @@ base, solo `calibra`). Diagrama: <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeS
 sigue se ha medido contra `prueba`. **La Enmienda 1, al final, cambia la selección de
 modelo a `calibra` y añade el oro lejano y la capa A0; la Enmienda 2 amplía `prueba` a 600
 pares y añade H1b; la Enmienda 3 fija cómo se entrena B; la Enmienda 4 deja
-`prueba` en 591.**
+`prueba` en 591; la Enmienda 5 hace que el grado no separe y deja `calibra` en 194 y
+`prueba` en 560.**
 
 ### El cambio de eje
 
@@ -4421,3 +4422,102 @@ de `prueba` se puede tocar.
 
 Los guiones ya tratan cualquier valor que no sea `si` o `no` como fuera del conjunto, así
 que no hace falta cambiar código. La comparación principal de H1 es sobre los **591**.
+
+### Enmienda 5 (2026-09-29, antes de abrir `prueba` y de entrenar): el número de grado ya no separa
+
+**Origen:** decisión del autor. Un número que marca el grado dentro del cargo
+(`AUXILIAR 1` / `AUXILIAR 2`, `QUIMICO I` / `QUIMICO II`, `NIVEL 2`) no hace distinto el
+puesto: **la normalización (capa 0) lo borra.** Reemplaza la excepción del grado del paso 1
+de la rúbrica v3, que decía `no` cuando el ordinal estaba en los dos títulos con valor
+distinto. Lo ya etiquetado se corrige.
+**Evidencia:** `research/experimentos/e2_nivel/23_correccion_grado.py`, y `19`, `21` y `22`
+vueltos a correr.
+
+#### 1. Qué es un grado, y la corrección
+
+Un número del 1 al 9 suelto (también `04`, `# 3` o `1.` al principio), un romano del I al X
+suelto, un dígito pegado al final de una palabra (`CONTABLE1`) y `NIVEL` / `LEVEL` /
+`GRADO` / `CATEGORIA` justo antes de uno de ellos. Los números de dos cifras no se tocan.
+
+La corrección es **mecánica y en un solo sentido**: un `no` pasa a `si` cuando, borrados los
+grados, los dos títulos tienen las mismas palabras (sin conectores y en cualquier orden, que
+ya eran ruido en la v3). Si queda otra diferencia, no se decide por regla: el par va a
+`23_revisar_grado.csv`. Un `si` y una `duda` nunca se tocan.
+
+| conjunto | pares | `no` → `si` |
+|---|---|---|
+| `13e` `calibra` | 200 | 4 (#104, #188, #350, #396) |
+| `13e` `prueba` | 200 | 2 (#111, #290) |
+| `20` `prueba` | 400 | 9 (#46, #53, #56, #61, #88, #113, #185, #217, #314) |
+| `18` incoherentes | 139 | 2 (#66, #76) |
+| `13a` | 48 | 0 |
+| plata de Gemini (`16`), pares coherentes | 10.000 | 137 (117 `entrena`, 20 `valida`), todos con motivo `p1` |
+
+En los juicios humanos, `mismo` se corrige en su sitio y la etiqueta de antes queda en
+`mismo_v3`, como `mismo_v1` en la v2. Las respuestas de Gemini no se tocan: `21` aplica
+`23_correcciones_plata.csv` al armar el paquete, con `origen = gemini_grado` y motivo
+`ninguno`. Se comprobó que en el paquete solo cambian esas 139 etiquetas (137 + los 2 de `18`)
+y 4 de `calibra`.
+
+**Al revisar `20` apareció que los juicios ya mezclaban criterios:** 4 `no` con número en un
+solo título (#56, #113, #217, #314), que la v3 ya trataba como ruido, y 3 `si` con grado
+distinto (#190, #329, #364), que la v3 marcaba `no`. El criterio nuevo vuelve coherentes los
+siete.
+
+#### 2. Los pares que fusiona la capa 0 salen de la evaluación
+
+Corregir la etiqueta no basta. El NLI sin entrenar da **0,001** a `AUXILIAR 1 DE
+CONTABILIDAD` / `AUXILIAR 2 DE CONTABILIDAD`, y con la etiqueta en `si` su AUC en `calibra`
+cae de 0,748 a 0,711 por cuatro pares. Pero esos pares **nunca llegan al juez**: la capa 0 los
+fusiona antes. Dejarlos sería medir al juez en lo que ya hace la normalización, y B, que
+aprende de los 137 corregidos de la plata, ganaría una ventaja que no es suya.
+
+**Decisión del autor (opción B):** un par que, borrado el grado, queda con las mismas
+palabras, **sale de `calibra` y de `prueba`**, sea `si` o `no`. Están en
+`23_fuera_por_capa0.csv`, sacados de los títulos sin mirar ningún puntaje, y los leen `19`,
+`21` y el guion de H1.
+
+| | antes | fuera | queda |
+|---|---|---|---|
+| `calibra` | 200 | 6 | **194** (142 `si` / 52 `no`) |
+| `prueba` (`13e` + `20`, sin las 9 `duda`) | 591 | 31 (7 + 24) | **560** |
+
+En la plata se quedan los 323 pares que la capa 0 fusionaría (275 `entrena`, 48 `valida`):
+enseñan que el grado no separa, por si la capa 0 no atrapa alguna forma.
+
+#### 3. La vara, medida otra vez en `calibra`
+
+| en `calibra` | n | coseno | NLI congelado | NLI − coseno |
+|---|---|---|---|---|
+| v3 (Enmienda 2) | 200 | 0,688 | 0,748 | +0,061 [−0,039, +0,159] |
+| corregido, con todo (opción A, descartada) | 200 | 0,694 | 0,711 | +0,017 |
+| **corregido, sin lo que fusiona la capa 0** | **194** | **0,694** | **0,7285** | **+0,035 [−0,064, +0,137]** |
+
+- **El candado de `22` pasa a `AUC_BASE = 0,7285`**, y la prueba `--rapido` en GPU lo
+  reproduce (0,7285).
+- **La ventaja del NLI congelado sobre el coseno baja de +0,061 a +0,035.** Parte de lo que
+  el NLI sin entrenar le ganaba al coseno era separar grados. H1 se sigue midiendo igual,
+  pero el efecto de referencia de la tabla de potencia es menor. Con 560 pares, H1 tiene
+  ~91 % de potencia para un efecto de +0,10, ~70 % para +0,075 y ~21 % para el +0,035 del
+  NLI sin entrenar (`19`, ee escalado de 194 a 560).
+- La rúbrica pierde casi toda la clase `p1` como motivo de `no` en la plata: de 129 en
+  `entrena` quedan unos 10. La cabeza de motivo lo ve así.
+
+#### 4. Lo que queda pendiente, y lo que hay que declarar
+
+- **14 pares** con grado distinto y otra diferencia, en `23_revisar_grado.csv` (12 de la
+  plata, 1 de `20` y 1 de `18`), conservan su etiqueta hasta que se juzguen a mano.
+- **Dos correcciones discutibles**, aplicadas por la regla y a declarar: `20` #46
+  (`PROF/TITULO III` / `IV NIVEL BASICO`), donde el romano puede ser el nivel del título
+  académico y no un grado, y `13e` #290 (`PROFESOR TITULAR AGREGADO 1` / `2`), un escalafón
+  universitario con sueldos distintos. **Fusionar grados puede mezclar bandas**, y la
+  utilidad aguas abajo lo tiene que medir.
+- **La capa 0 del producto todavía no borra el grado.** `quitar_grado` en `23` es el
+  borrador de la regla. Llevarla a `nivel.py` y reconstruir la base (v16) es una decisión de
+  producto aparte: cambia los grupos de los que salen todos los conjuntos, y se hace después
+  de H1.
+- **El piloto de Gemini (D-035) se midió con la v3.** Su acuerdo con el juez (kappa 0,79)
+  queda como estaba; no se repite el piloto porque la corrección es mecánica.
+- **`calibra` y `prueba` se tocan antes de abrir `prueba`**, como en la Enmienda 4, y sin
+  mirar ningún puntaje de `prueba`. Desde que corra H1, ningún juicio ni exclusión de
+  `prueba` se puede tocar.
