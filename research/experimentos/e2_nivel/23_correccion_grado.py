@@ -18,6 +18,11 @@ grados, los dos titulos tienen las mismas palabras (sin conectores y en cualquie
 que ya eran ruido en la v3). Si queda cualquier otra diferencia, no se decide aqui: el par
 va a `23_revisar_grado.csv` para juicio humano. Un `si` nunca se toca, ni una `duda`.
 
+LA REVISION A MANO. En `23_revisar_grado.csv` se rellena `mismo_nuevo` con `si` o `no`
+(rubrica v3 con el grado borrado). Al volver a correr, lo rellenado se conserva y se aplica:
+en `20` y `18`, `mismo` toma ese valor (`mismo_v3` sigue guardando el de antes); en la plata,
+un `si` entra en `23_correcciones_plata.csv` con `regla = revision`. Vacio: nada cambia.
+
 QUE TOCA
     juicios humanos (13e, 20, 18, 13a): se corrige `mismo` EN SU SITIO y la etiqueta de
         antes queda en `mismo_v3`, como `mismo_v1` en la v2. Se respeta el separador y el
@@ -63,6 +68,20 @@ ROMANOS = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"}
 ANTES_DE_GRADO = {"NIVEL", "LEVEL", "GRADO", "CATEGORIA", "CAT"}
 CONECTORES = {"DE", "DEL", "Y", "E", "EN", "EL", "LA", "LOS", "LAS", "A", "AL"}
 NOTA = "grado->si (Enm. 5 D-036)"
+NOTA_REV = "revisado a mano (Enm. 5 D-036)"
+
+
+def leer_revision():
+    """Lo ya rellenado en `mismo_nuevo`, para no perderlo al reescribir el archivo."""
+    if not REVISAR.exists():
+        return {}
+    r = pd.read_csv(REVISAR, sep=None, engine="python", encoding="utf-8-sig", dtype=str,
+                    keep_default_na=False)
+    v = r["mismo_nuevo"].str.strip().str.lower()
+    raros = sorted(set(v) - {"", "si", "no"})
+    if raros:
+        raise SystemExit("ALTO: `mismo_nuevo` solo admite si / no / vacio; hay {}".format(raros))
+    return {(c, str(n)): x for c, n, x in zip(r["conjunto"], r["n"], v) if x}
 
 
 def palabras(t):
@@ -114,7 +133,7 @@ def formato(p):
     return bom, csv.Sniffer().sniff(cabecera, delimiters=",;").delimiter
 
 
-def corregir_humanos():
+def corregir_humanos(rev):
     revisar, resumen = [], []
     for nom in HUMANOS:
         p = SAL / nom
@@ -124,7 +143,9 @@ def corregir_humanos():
             d.insert(d.columns.get_loc("mismo") + 1, "mismo_v3", d["mismo"])
         antes = d["mismo_v3"].str.strip().str.lower()
         d["mismo"] = d["mismo_v3"]
-        d["nota"] = d["nota"].str.replace(r"\s*;?\s*" + re.escape(NOTA), "", regex=True)
+        for n_ in (NOTA, NOTA_REV):
+            d["nota"] = d["nota"].str.replace(r"\s*;?\s*" + re.escape(n_), "", regex=True)
+            d["nota"] = d["nota"].str.replace(r"^\s*;\s*", "", regex=True)
         sg = [solo_el_grado(a, b) for a, b in zip(d["comun"], d["raro"])]
         cambia = (antes == "no") & pd.Series(sg, index=d.index)
         d.loc[cambia, "mismo"] = "si"
@@ -132,10 +153,18 @@ def corregir_humanos():
                                  for n in d.loc[cambia, "nota"]]
         con_grado = [grado_distinto(a, b) for a, b in zip(d["comun"], d["raro"])]
         otra = (antes == "no") & pd.Series(con_grado, index=d.index) & ~pd.Series(sg, index=d.index)
-        for _, f in d[otra].iterrows():
-            revisar.append({"conjunto": nom.split("_")[0], "n": f["n"], "comun": f["comun"],
+        conj = nom.split("_")[0]
+        revisados = []
+        for i, f in d[otra].iterrows():
+            nuevo = rev.get((conj, str(f["n"])), "")
+            revisar.append({"conjunto": conj, "n": f["n"], "comun": f["comun"],
                             "raro": f["raro"], "mismo_v3": f["mismo_v3"], "nota": f["nota"],
-                            "mismo_nuevo": ""})
+                            "mismo_nuevo": nuevo})
+            if nuevo and nuevo != antes[i]:
+                d.loc[i, "mismo"] = nuevo
+                d.loc[i, "nota"] = (f["nota"] + "; " if f["nota"].strip() else "") + NOTA_REV
+                revisados.append(f["n"])
+        cambia = cambia | d["n"].isin(revisados)
         if cambia.any() or "mismo_v3" in pd.read_csv(p, sep=sep, nrows=0,
                                                       encoding="utf-8-sig"):
             d.to_csv(p, index=False, sep=sep, encoding="utf-8-sig" if bom else "utf-8",
@@ -144,7 +173,7 @@ def corregir_humanos():
     return resumen, revisar
 
 
-def corregir_plata():
+def corregir_plata(rev):
     pares = pd.read_csv(PARES, sep=None, engine="python", encoding="utf-8-sig")
     r = pd.read_csv(RESP, dtype=str, keep_default_na=False)
     r = r[(r["error"] == "") & r["mismo"].isin(["si", "no"])]
@@ -155,18 +184,21 @@ def corregir_plata():
     coh_no = (p["mismo_ab"] == "no") & (p["mismo_ba"] == "no")
     sg = pd.Series([solo_el_grado(a, b) for a, b in zip(p["comun"], p["raro"])],
                    index=p.index)
-    c = p[coh_no & sg]
-    corr = pd.DataFrame({"n": c["n"], "particion": c["particion"],
-                         "etiqueta_v3": 0.0, "etiqueta": 1.0,
-                         "motivo_v3": c["paso_ab"], "motivo": "ninguno",
-                         "regla": "grado"})
-    corr.to_csv(CORR_PLATA, index=False, encoding="utf-8")
     con_grado = pd.Series([grado_distinto(a, b) for a, b in zip(p["comun"], p["raro"])],
                           index=p.index)
     otra = p[coh_no & con_grado & ~sg & (p["paso_ab"] == "p1")]
     revisar = [{"conjunto": "16", "n": str(f["n"]), "comun": f["comun"], "raro": f["raro"],
-                "mismo_v3": "no", "nota": "gemini p1", "mismo_nuevo": ""}
+                "mismo_v3": "no", "nota": "gemini p1",
+                "mismo_nuevo": rev.get(("16", str(f["n"])), "")}
                for _, f in otra.iterrows()]
+    si_rev = otra[[rev.get(("16", str(n))) == "si" for n in otra["n"]]]
+    filas = [(p[coh_no & sg], "grado"), (si_rev, "revision")]
+    corr = pd.concat([pd.DataFrame({"n": c["n"], "particion": c["particion"],
+                                    "etiqueta_v3": 0.0, "etiqueta": 1.0,
+                                    "motivo_v3": c["paso_ab"], "motivo": "ninguno",
+                                    "regla": regla}) for c, regla in filas],
+                     ignore_index=True)
+    corr.to_csv(CORR_PLATA, index=False, encoding="utf-8")
     return corr, revisar
 
 
@@ -192,18 +224,20 @@ def main():
     print("=" * 78)
     print("23 · EL GRADO YA NO SEPARA: CORRECCION DE LO ETIQUETADO (Enmienda 5, D-036)")
     print("=" * 78)
-    res, rev_h = corregir_humanos()
-    print("\njuicios humanos: `no` que pasan a `si` porque solo cambia el grado")
+    rev = leer_revision()
+    res, rev_h = corregir_humanos(rev)
+    print("\njuicios humanos: cambios por el grado y por la revision a mano")
     for nom, n, k, ns in res:
         print("   {:<22} {:>4} pares   {:>2} corregidos   {}".format(nom, n, k, ns))
-    corr, rev_p = corregir_plata()
-    print("\nplata (Gemini coherente `no`, solo cambia el grado): {} pares -> `si`".format(
-        len(corr)))
+    corr, rev_p = corregir_plata(rev)
+    print("\nplata (Gemini coherente `no` -> `si`): {} pares {}".format(
+        len(corr), corr["regla"].value_counts().to_dict()))
     print("   por particion:", corr["particion"].value_counts().to_dict())
     print("   motivo de Gemini antes:", corr["motivo_v3"].value_counts().to_dict())
     rev = pd.DataFrame(rev_h + rev_p)
     rev.to_csv(REVISAR, index=False, sep=";", encoding="utf-8-sig")
-    print("\npara revisar a mano (`no` con grado y otra diferencia): {}".format(len(rev)))
+    print("\npara revisar a mano (`no` con grado y otra diferencia): {}, {} ya revisados".format(
+        len(rev), int((rev["mismo_nuevo"] != "").sum()) if len(rev) else 0))
     if len(rev):
         print("   por conjunto:", rev["conjunto"].value_counts().to_dict())
     fu = fuera_por_capa0()
