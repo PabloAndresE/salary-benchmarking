@@ -80,7 +80,7 @@ añaden aquí con el número que les toque, `24_…` en adelante.
 | `salidas/23_correcciones_plata.csv` | los 149 `no` de Gemini que pasan a `si` (137 por la regla del grado, 12 por la revisión a mano); los aplica `21` | versionado (-f) |
 | `salidas/23_fuera_por_capa0.csv` | los 37 pares de `13e` y `20` que salen de `calibra` (6) y `prueba` (31) porque la capa 0 los fusiona. **Lo lee el guion de H1** | versionado (-f) |
 | `salidas/23_revisar_grado.csv` | 14 `no` con grado distinto y otra diferencia, **juzgados a mano** en `mismo_nuevo` (13 `si`, 1 `no`). `23` los conserva y los aplica. Irreemplazable | versionado (-f) |
-| `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
+| `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. `estado/` guarda cada corrida terminada para poder retomar (`huella.json`, y los pesos solo mientras hacen falta); `corrida.log`, el registro. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)
 

@@ -52,9 +52,21 @@ hashes del modelo y de los datos. En GPU el entrenamiento no es identico bit a b
 maquinas (sumas en otro orden, bf16); lo que es exacto es la evaluacion del modelo
 guardado, y H1 se corre sobre ese modelo.
 
+REANUDABLE
+==============================================================================
+Cada corrida (paso 1, paso 2 y las 18 de la grilla) se guarda en `estado/` al terminar. Si
+el proceso se corta, se vuelve a lanzar el MISMO comando y las corridas hechas se leen del
+disco: se pierde como mucho la corrida en curso. Solo se retoma si la huella coincide
+(commit de git y cambios sin commitear, paquete, modelo, hiperparametros y versiones); si
+no, se detiene en vez de mezclar corridas distintas. `--desde-cero` borra el estado.
+Los pesos de cada semilla de la grilla se guardan hasta elegir el representante de su
+configuracion; los demas se borran. Al terminar se borran todos los de `estado/`: los
+que importan ya estan en `elegido/` y `corridas/`.
+
 USO
     python 22_entrenar_cross.py --modelo modelos/mdeberta-xnli              (servidor)
     python 22_entrenar_cross.py --modelo <ruta> --rapido --dispositivo cpu  (prueba)
+    (el mismo comando otra vez retoma; --desde-cero empieza de nuevo)
 
 SALIDA: salidas/22_modelos/ (en .gitignore: pesos de ~1 GB por modelo)
     elegido/            el modelo de H1: pesos, tokenizador, cabeza de motivo, info.json
@@ -71,6 +83,7 @@ import pathlib
 import platform
 import random
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -421,11 +434,78 @@ def entrenar(nombre, modo, w, con_aumento, con_motivo, semilla, datos, ctx):
             "historia": historia, "mejor": mejor}
 
 
+# ---------------------------------------------------------------------------------------
+# reanudar
+# ---------------------------------------------------------------------------------------
+def huella(args, hashes, dispositivo):
+    """Lo que tiene que coincidir para retomar corridas guardadas."""
+    import torch
+    import transformers
+
+    def git(*c):
+        try:
+            return subprocess.run(["git", *c], cwd=RAIZ, capture_output=True, text=True,
+                                  check=True).stdout
+        except Exception:
+            return None
+    h = {"git_commit": (git("rev-parse", "HEAD") or "").strip(),
+         "git_diff_sha256": hashlib.sha256((git("diff", "HEAD") or "").encode()).hexdigest(),
+         "datos_sha256": hashes, "modelo_sha256": SHA_SAFETENSORS, "plantilla": PLANTILLA,
+         "hiper": {"LR": LR, "LR_CABEZA": LR_CABEZA, "BATCH": BATCH, "EPOCAS": EPOCAS,
+                   "CALENTAMIENTO": CALENTAMIENTO, "DECAIMIENTO": DECAIMIENTO,
+                   "MAXLEN": MAXLEN, "PESO_MOTIVO": PESO_MOTIVO, "P_ERRATA": P_ERRATA,
+                   "PESOS_W": PESOS_W, "AUMENTOS": AUMENTOS, "SEMILLAS": SEMILLAS},
+         "rapido": args.rapido, "dispositivo": dispositivo,
+         "torch": torch.__version__, "transformers": transformers.__version__}
+    return json.loads(json.dumps(h))
+
+
+def punto_guardar(estado, c, con_pesos):
+    """Guarda una corrida terminada. El directorio aparece entero o no aparece."""
+    import torch
+    d = estado / c["nombre"]
+    tmp = estado / (c["nombre"] + ".tmp")
+    shutil.rmtree(tmp, ignore_errors=True)
+    tmp.mkdir(parents=True)
+    m = c["mejor"]
+    if con_pesos:
+        torch.save(m["estado"], tmp / "estado.pt")
+    np.savez(tmp / "puntajes.npz", s_cal=m["s_cal"], cab=m["cab"], cba=m["cba"])
+    meta = {k: c[k] for k in ("nombre", "modo", "w", "aumento", "motivo", "semilla",
+                              "n_entrena", "historia")}
+    meta["mejor"] = {k: m[k] for k in ("epoca", "perdida", "auc_calibra", "auc_valida",
+                                       "segundos")}
+    (tmp / "corrida.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    shutil.rmtree(d, ignore_errors=True)
+    tmp.rename(d)
+
+
+def punto_leer(estado, nombre):
+    d = estado / nombre
+    if not (d / "corrida.json").exists():
+        return None
+    c = json.loads((d / "corrida.json").read_text(encoding="utf-8"))
+    z = np.load(d / "puntajes.npz")
+    c["mejor"].update(s_cal=z["s_cal"], cab=z["cab"], cba=z["cba"])
+    if (d / "estado.pt").exists():
+        c["mejor"]["estado_ruta"] = d / "estado.pt"
+    return c
+
+
+def soltar_pesos(estado, c):
+    c["mejor"].pop("estado", None)
+    c["mejor"].pop("estado_ruta", None)
+    (estado / c["nombre"] / "estado.pt").unlink(missing_ok=True)
+
+
 def guardar(corrida, destino, ctx, extra=None):
     import torch
     destino.mkdir(parents=True, exist_ok=True)
     juez = construir(ctx["modelo"], corrida["motivo"], "cpu")
-    juez.load_state_dict(corrida["mejor"]["estado"])
+    pesos = corrida["mejor"].get("estado")
+    if pesos is None:
+        pesos = torch.load(corrida["mejor"]["estado_ruta"], map_location="cpu")
+    juez.load_state_dict(pesos)
     juez.base.save_pretrained(destino)
     ctx["tok"].save_pretrained(destino)
     if juez.motivo is not None:
@@ -476,6 +556,8 @@ def main():
     ap.add_argument("--dispositivo", default="auto", choices=["auto", "cuda", "cpu"])
     ap.add_argument("--rapido", action="store_true",
                     help="prueba de punta a punta: 200 pares, 1 epoca, 1 semilla, 2 configs")
+    ap.add_argument("--desde-cero", action="store_true",
+                    help="borra las corridas guardadas y empieza de nuevo")
     args = ap.parse_args()
 
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
@@ -527,9 +609,39 @@ def main():
     auc_cos = auc(y_cal, cal["sim"].to_numpy(float))
     print("   coseno en los mismos pares: {:.4f}".format(auc_cos))
 
+    # --- reanudar: solo si la huella coincide -------------------------------------------
+    estado = args.salida / ("estado_rapido" if args.rapido else "estado")
+    if args.desde_cero and estado.exists():
+        shutil.rmtree(estado)
+        print("\n--desde-cero: estado anterior borrado")
+    hu = huella(args, hashes, dev)
+    if (estado / "huella.json").exists():
+        vieja = json.loads((estado / "huella.json").read_text(encoding="utf-8"))
+        if vieja != hu:
+            dif = sorted(k for k in set(vieja) | set(hu) if vieja.get(k) != hu.get(k))
+            raise SystemExit("ALTO: hay corridas guardadas en {} de otra configuracion "
+                             "(cambia: {}). No se mezclan. Para empezar de nuevo: "
+                             "--desde-cero".format(estado, ", ".join(dif)))
+        hechas = sorted(p.parent.name for p in estado.glob("*/corrida.json"))
+        print("\nREANUDANDO: {} corrida(s) ya hechas en {}".format(len(hechas), estado))
+    else:
+        estado.mkdir(parents=True, exist_ok=True)
+        (estado / "huella.json").write_text(json.dumps(hu, indent=2), encoding="utf-8")
+    retomadas = []
+
+    def correr(nombre, modo, w, aum, motivo, semilla):
+        c = punto_leer(estado, nombre)
+        if c is not None:
+            retomadas.append(nombre)
+            print("    {:<28} ya hecha: ep {}  AUC calibra {:.4f}  valida {:.4f}  (retomada)"
+                  .format(nombre, c["mejor"]["epoca"], c["mejor"]["auc_calibra"],
+                          c["mejor"]["auc_valida"]), flush=True)
+            return c, False
+        return entrenar(nombre, modo, w, aum, motivo, semilla, datos, ctx), True
+
     res = {"ficha": ficha(args, dev), "datos_sha256": hashes,
            "paquete_manifiesto": man, "auc_sin_entrenar": auc0, "auc_coseno": auc_cos,
-           "corridas": [], "grilla": {}}
+           "corridas": [], "grilla": {}, "retomadas": retomadas}
     semillas = SEMILLAS[:1] if args.rapido else SEMILLAS
     grilla = [(1, False), (2, True)] if args.rapido else [(w, a) for w in PESOS_W
                                                            for a in AUMENTOS]
@@ -547,12 +659,14 @@ def main():
     print("\n2. PASOS 1 Y 2 (ablacion: una semilla, sin aumento)")
     ablacion = {}
     for modo in ("simetrico", "direccional"):
-        c = entrenar("paso_" + modo, modo, 1, False, False, SEMILLAS[0], datos, ctx)
+        c, nueva = correr("paso_" + modo, modo, 1, False, False, SEMILLAS[0])
         registrar(c)
         ablacion[modo] = c
-        if not args.rapido:
-            guardar(c, args.salida / "corridas" / c["nombre"], ctx)
-        c["mejor"].pop("estado")
+        if nueva:
+            if not args.rapido:
+                guardar(c, args.salida / "corridas" / c["nombre"], ctx)
+            punto_guardar(estado, c, con_pesos=False)
+        c["mejor"].pop("estado", None)
 
     # --- 3. paso 3: la grilla, tres semillas --------------------------------------------
     print("\n3. PASO 3: grilla w x aumento, {} semilla(s) por configuracion".format(
@@ -562,7 +676,9 @@ def main():
         nom = "completo_w{}_{}".format(w, "con_aum" if aum else "sin_aum")
         corr = []
         for s in semillas:
-            c = entrenar("{}_s{}".format(nom, s), "direccional", w, aum, True, s, datos, ctx)
+            c, nueva = correr("{}_s{}".format(nom, s), "direccional", w, aum, True, s)
+            if nueva:
+                punto_guardar(estado, c, con_pesos=not args.rapido)
             registrar(c)
             corr.append(c)
         aucs = [c["mejor"]["auc_calibra"] for c in corr]
@@ -570,7 +686,7 @@ def main():
         rep = min(corr, key=lambda c: abs(c["mejor"]["auc_calibra"] - media))
         for c in corr:
             if c is not rep:
-                c["mejor"].pop("estado")
+                soltar_pesos(estado, c)
         reps[(w, aum)] = rep
         res["grilla"][nom] = {"w": w, "aumento": aum, "auc_por_semilla": aucs,
                               "auc_media": media, "auc_sd": float(np.std(aucs)),
@@ -638,6 +754,10 @@ def main():
     (args.salida / ("resultados_rapido.json" if args.rapido else "resultados.json")
      ).write_text(json.dumps(res, ensure_ascii=False, indent=2, default=float),
                   encoding="utf-8")
+    for f in estado.glob("*/estado.pt"):      # ya estan en `elegido/` y `corridas/`
+        f.unlink()
+    if retomadas:
+        print("\n({} corrida(s) retomadas del disco)".format(len(retomadas)))
     print("\nresultados -> {}".format(args.salida))
     if args.rapido:
         print("(--rapido: no se guardan pesos; los numeros NO sirven para decidir nada)")
