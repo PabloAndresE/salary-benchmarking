@@ -3805,7 +3805,8 @@ base, solo `calibra`). Diagrama: <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeS
 **Estado:** **diseño registrado antes de entrenar.** H1 queda fija aquí; nada de lo que
 sigue se ha medido contra `prueba`. **La Enmienda 1, al final, cambia la selección de
 modelo a `calibra` y añade el oro lejano y la capa A0; la Enmienda 2 amplía `prueba` a 600
-pares y añade H1b; la Enmienda 3 fija cómo se entrena B.**
+pares y añade H1b; la Enmienda 3 fija cómo se entrena B; la Enmienda 4 deja
+`prueba` en 591.**
 
 ### El cambio de eje
 
@@ -4394,3 +4395,29 @@ guardado**, y H1 se corre sobre esos pesos congelados, en cualquier máquina.
 cada configuración y de los pasos 1 y 2 en `corridas/`, y `resultados.json`. Los números de
 `calibra` que reporta son **optimistas**: `calibra` también eligió la época, la semilla y la
 configuración. La vara sigue siendo `prueba`, que se corre aparte.
+
+### Enmienda 4 (2026-09-29, antes de abrir `prueba`): 9 pares de `prueba` quedan fuera por duda
+
+**Origen:** al revisar el estado del repo apareció que `20_para_juzgar.csv` difería del
+commiteado en `26cb1d3`. El autor volvió sobre 10 pares de los 400 nuevos y marcó 9 como
+`duda` en `mismo` (antes: 8 `si` y 1 `no`); en el décimo (#119) solo añadió la nota
+«jerarquia», sin cambiar el juicio.
+
+**Decisión del autor:** esos 9 pares **quedan fuera de `prueba`**, en vez de forzarles un
+`si`/`no`. `prueba` pasa de 600 a **591**: 200 de `13e` y 391 de `20`. Los 9 son 4 del
+estrato bajo y 5 de la banda. Por eso los 391 nuevos quedan en bajo 56, banda 329 y alto 6.
+
+**Por qué es legítimo ahora y no después:** todavía no se abrió `prueba` ni hay un modelo
+entrenado. Nadie vio cómo puntúa ningún juez esos pares. Desde que corra H1, ningún juicio
+de `prueba` se puede tocar.
+
+**Lo que hay que declarar:**
+- Quitar los pares que el juez humano no sabe resolver deja `prueba` algo más **fácil**.
+  Afecta igual a B y al coseno, porque la comparación es pareada, pero los AUC absolutos
+  salen algo optimistas.
+- La potencia prácticamente no cambia (591 frente a 600).
+- La rúbrica pedía elegir y anotar la duda en `nota`. Estos 9 no la siguen; se deja
+  constancia de la excepción.
+
+Los guiones ya tratan cualquier valor que no sea `si` o `no` como fuera del conjunto, así
+que no hace falta cambiar código. La comparación principal de H1 es sobre los **591**.
