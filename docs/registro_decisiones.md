@@ -4297,3 +4297,30 @@ están completos). Lo que D-035 llama «juzgar `prueba` con la v3» es correr **
 `prueba` una sola vez con `15_piloto_llm.py`, para reportar su acuerdo con el juez; no es
 trabajo a mano ni abre `prueba` para elegir modelo. La Enmienda 1 lo nombraba igual y debe
 leerse así.
+
+---
+
+### Enmienda 1 de D-035 (2026-09-29): lo que costó de verdad, y a qué proyecto
+
+**Origen:** el informe de facturación de Google Cloud del 25 al 29 de septiembre.
+
+| | |
+|---|---|
+| **proyecto** | `act-poc-gemini`, con facturación activa: nivel **de pago**. Resuelve la mitad del pendiente de D-035; el permiso para mandar títulos de clientes sigue sin estar por escrito |
+| **total** | **86,31 USD**, todo el día 25 (85,71 de la API de Gemini) |
+| **entrada de `gemini-3.8-flash`** | 53,66 USD: ~71,5 M de tokens a 0,75 USD/M |
+| **salida y pensamiento** | ~32 USD: ~8,5 M de tokens a 3,75 USD/M |
+| **ahorro por caché** | **0,00**: la rúbrica, ~3.000 de los 3.009 tokens de cada petición, se cobró entera las ~20.800 veces |
+
+Incluye el piloto v2 y v3, `prueba` y los 10.000. **Contra lo que contaron los guiones**
+(~65 M de entrada) sobran ~6 M, un 9 %. La explicación probable, sin confirmar, es la corrida
+que se congeló (`2c195e3`): peticiones que el servidor procesó y cobró sin que la respuesta
+llegara, y que se volvieron a pedir. La previsión de 181 USD que muestra el informe es una
+extrapolación de ese día, no gasto.
+
+**Para la tesis:** etiquetar 10.000 pares costó unos 86 USD con el piloto incluido, frente a
+~28 h de juicio a mano al ritmo medido en `13e`.
+
+**Si se repite** (una v4, más plata, la capa A0): dos tercios del gasto fueron la rúbrica
+repetida. El modo por lotes o una caché explícita de la instrucción son la primera palanca,
+antes que cambiar de modelo. Y hace falta una alerta de presupuesto en el proyecto.
