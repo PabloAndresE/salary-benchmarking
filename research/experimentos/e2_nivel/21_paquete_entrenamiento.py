@@ -60,7 +60,9 @@ def sha(p):
 
 
 def leer(p, **kw):
-    return pd.read_csv(p, sep=";", encoding="utf-8-sig", **kw)
+    # Separador detectado: Excel guarda con `,` o `;` segun la configuracion regional, y
+    # un juicio a mano vuelve con el que tenga la maquina de quien juzga.
+    return pd.read_csv(p, sep=None, engine="python", encoding="utf-8-sig", **kw)
 
 
 def paso_de_nota(nota):
