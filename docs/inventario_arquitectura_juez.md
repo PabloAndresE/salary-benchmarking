@@ -53,9 +53,10 @@ del repositorio.**
 
 | `research/experimentos/e2_nivel/19_potencia_h1.py` | potencia de H1 con el NLI congelado sobre `calibra`; motivo de ampliar `prueba` a 600 | versionado |
 | `research/experimentos/e2_nivel/20_ampliar_prueba.py` | los 400 pares nuevos de `prueba`, del censo de `16`, sin grupos de la plata | versionado |
+| `research/experimentos/e2_nivel/21_paquete_entrenamiento.py` | arma el paquete para entrenar el cross en el servidor: plata + los 139 + `calibra`, **sin `prueba` y sin sueldos**, con comprobación dura | versionado |
 
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `21_…` en adelante.
+añaden aquí con el número que les toque, `22_…` en adelante.
 
 ## 4. Salidas de los guiones
 
@@ -71,6 +72,7 @@ añaden aquí con el número que les toque, `21_…` en adelante.
 | `salidas/17_lineas_base.txt` | líneas base de D-036; solo agregados, sin títulos | versionado |
 | `salidas/19_potencia_h1.txt` | tabla de potencia de H1; solo agregados | versionado |
 | `salidas/19_puntajes_nli_calibra.csv` | puntajes del NLI congelado sobre `calibra` (caché de `19`) | local |
+| `salidas/21_paquete/` | `plata.csv`, `calibra.csv`, `manifiesto.json`: lo que se copia al servidor. Se regenera con `21` | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)
 

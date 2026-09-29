@@ -67,3 +67,6 @@ corrida_universo*.log
 docs/tesis/.rev/
 # logs de las corridas locales de la base
 demo/log_*.txt
+
+# modelos descargados de Hugging Face para entrenar el cross (D-036)
+modelos/
