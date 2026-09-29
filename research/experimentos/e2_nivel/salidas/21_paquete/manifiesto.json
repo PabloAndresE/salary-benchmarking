@@ -1,5 +1,5 @@
 {
-  "creado": "2026-09-29T20:53:32",
+  "creado": "2026-09-29T21:14:08",
   "decision": "D-036, enmiendas 1, 2 y 5",
   "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
   "plantilla": "El puesto de trabajo es {}.",
@@ -15,8 +15,8 @@
     "incoherentes": 139,
     "incoherentes_juzgados_a_mano": 139,
     "incoherentes_con_etiqueta_blanda": 0,
-    "corregidos_por_grado": 137,
-    "tasa_si_coherentes": 0.669,
+    "corregidos_por_grado": 149,
+    "tasa_si_coherentes": 0.6702,
     "dificil": 2665
   },
   "calibra": {
@@ -38,7 +38,7 @@
     "13e_pares_400.csv": "8f85de15492d",
     "13e_para_juzgar.csv": "9a7187487211",
     "20_pares_400.csv": "ba0c38cd8fed",
-    "23_correcciones_plata.csv": "a8bbd612f6ce",
+    "23_correcciones_plata.csv": "ce7fabaeb4f5",
     "23_fuera_por_capa0.csv": "291be032a8fc"
   }
 }

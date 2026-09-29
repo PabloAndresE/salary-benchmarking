@@ -23,7 +23,7 @@ del repositorio.**
 | `research/experimentos/e2_nivel/salidas/16_respuestas_llm.csv` | **la plata**: respuestas de Gemini sobre el lote de 10.000 | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/18_para_juzgar.csv` | los 139 pares en que Gemini se contradijo, **juzgados a mano** (89 `si` / 50 `no` tras la Enmienda 5, que corrigió 2; `mismo_v3` guarda la de antes; entran a la plata con etiqueta dura, Enmienda 3 de D-036). Irreemplazable | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/18_meta.csv` | metadatos de los 139: par de `16` y lo que dijo Gemini en cada orden. No abrir antes de juzgar | versionado (-f) |
-| `research/experimentos/e2_nivel/salidas/20_para_juzgar.csv` | **los 400 pares nuevos de `prueba`** (Enmienda 2 de D-036), **juzgados a mano** (324 `si` / 67 `no` / 9 `duda` tras la Enmienda 5, que corrigió 9; `mismo_v3` guarda la de antes. Las `duda` salen por la Enmienda 4 y 24 pares más por la 5). Irreemplazable | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/20_para_juzgar.csv` | **los 400 pares nuevos de `prueba`** (Enmienda 2 de D-036), **juzgados a mano** (325 `si` / 66 `no` / 9 `duda` tras la Enmienda 5, que corrigió 10, uno a mano; `mismo_v3` guarda la de antes. Las `duda` salen por la Enmienda 4 y 24 pares más por la 5). Irreemplazable | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/20_pares_400.csv` | metadatos de los 400: grupos, `sim`, estrato, tramo. No abrir antes de juzgar | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/15_respuestas_llm.csv` | respuestas del piloto sobre los 400 (validan el montaje, D-035) | versionado (-f) |
 
@@ -77,9 +77,9 @@ añaden aquí con el número que les toque, `24_…` en adelante.
 | `salidas/19_potencia_h1.txt` | tabla de potencia de H1; solo agregados | versionado |
 | `salidas/19_puntajes_nli_calibra.csv` | puntajes del NLI congelado sobre `calibra` (caché de `19`) | versionado (-f) |
 | `salidas/21_paquete/` | `plata.csv`, `calibra.csv`, `manifiesto.json`: lo que se copia al servidor. Se regenera con `21` | versionado (-f) |
-| `salidas/23_correcciones_plata.csv` | los 137 `no` de Gemini que pasan a `si` por el grado; los aplica `21` | versionado (-f) |
+| `salidas/23_correcciones_plata.csv` | los 149 `no` de Gemini que pasan a `si` (137 por la regla del grado, 12 por la revisión a mano); los aplica `21` | versionado (-f) |
 | `salidas/23_fuera_por_capa0.csv` | los 37 pares de `13e` y `20` que salen de `calibra` (6) y `prueba` (31) porque la capa 0 los fusiona. **Lo lee el guion de H1** | versionado (-f) |
-| `salidas/23_revisar_grado.csv` | 14 `no` con grado distinto y otra diferencia, para juzgar a mano (`mismo_nuevo`) | versionado (-f) |
+| `salidas/23_revisar_grado.csv` | 14 `no` con grado distinto y otra diferencia, **juzgados a mano** en `mismo_nuevo` (13 `si`, 1 `no`). `23` los conserva y los aplica. Irreemplazable | versionado (-f) |
 | `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)

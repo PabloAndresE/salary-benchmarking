@@ -4506,7 +4506,15 @@ enseñan que el grado no separa, por si la capa 0 no atrapa alguna forma.
 #### 4. Lo que queda pendiente, y lo que hay que declarar
 
 - **14 pares** con grado distinto y otra diferencia, en `23_revisar_grado.csv` (12 de la
-  plata, 1 de `20` y 1 de `18`), conservan su etiqueta hasta que se juzguen a mano.
+  plata, 1 de `20` y 1 de `18`), **juzgados a mano el mismo día** con la rúbrica v3 y el grado
+  borrado. `20` #237 lo juzgó el autor solo, sin ver ninguna lectura del modelo, porque es de
+  `prueba`: `si`. En los otros 13 el autor confirmó una lectura propuesta: 18#93 sigue `no`
+  (el «2» son años de experiencia y `CONTADOR` es otro oficio), y los 12 de la plata pasan a
+  `si` (códigos de sede u oficina, `COORDINADOR` / `COORDINATOR`, `ASISTENTE` / `AUXILIAR` del
+  mismo nivel, y dos escalas con números de dos cifras). Dos quedan `si` con duda: 16#6165
+  (`MAQUINISTA # 3` / `#2`, que en marina mercante pueden ser rangos certificados) y 16#5325
+  (`AYUDANTE DE RUTA` con licencia E frente a C). La plata suma así 149 correcciones (137 por
+  regla y 12 por revisión).
 - **Dos correcciones discutibles**, aplicadas por la regla y a declarar: `20` #46
   (`PROF/TITULO III` / `IV NIVEL BASICO`), donde el romano puede ser el nivel del título
   académico y no un grado, y `13e` #290 (`PROFESOR TITULAR AGREGADO 1` / `2`), un escalafón
