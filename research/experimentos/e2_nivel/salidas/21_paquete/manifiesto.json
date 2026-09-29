@@ -1,0 +1,39 @@
+{
+  "creado": "2026-09-29T11:23:33",
+  "decision": "D-036, enmiendas 1 y 2",
+  "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+  "plantilla": "El puesto de trabajo es {}.",
+  "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
+  "rubrica_v3_sha256_12": "83b03d04c400",
+  "plata": {
+    "pares": 10000,
+    "sin_respuesta_en_los_dos_ordenes": 0,
+    "por_particion": {
+      "entrena": 8500,
+      "valida": 1500
+    },
+    "incoherentes": 139,
+    "incoherentes_juzgados_a_mano": 13,
+    "incoherentes_con_etiqueta_blanda": 126,
+    "tasa_si_coherentes": 0.6551,
+    "dificil": 2665
+  },
+  "calibra": {
+    "pares": 200,
+    "si": 144,
+    "no": 56
+  },
+  "prueba_en_el_paquete": 0,
+  "prueba_comprobada_contra": {
+    "pares_de_grupos": 600,
+    "pares_de_titulos": 600
+  },
+  "fuentes_sha256_12": {
+    "16_pares_10000.csv": "93743dc85353",
+    "16_respuestas_llm.csv": "a03dca489eaa",
+    "18_para_juzgar.csv": "7a0b4ff9fe99",
+    "18_meta.csv": "4ca7da661e1a",
+    "13e_pares_400.csv": "db94399109ad",
+    "20_pares_400.csv": "674338c99b59"
+  }
+}
