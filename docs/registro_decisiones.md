@@ -2580,6 +2580,13 @@ Tres razones, y ninguna es que el resultado saliera bien:
 
 ---
 
+### Nota posterior (2026-09-29): el escalón ya no se protege
+
+La Enmienda 5 de D-036 decide que el grado (dígito, romano o letra suelta) no hace distinto el
+puesto, y lo borra en la capa 0. Revierte lo que aquí se excluyó como «escalón por dígito»,
+«escalón romano» y «letra de grado». La escalera de antigüedad pasa a la banda. La fusión por
+errata en sí no cambia.
+
 ## D-026 — Las grafías de género se fusionan, y la brecha queda visible
 
 **Fecha:** 2026-09-09
@@ -3806,8 +3813,8 @@ base, solo `calibra`). Diagrama: <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeS
 sigue se ha medido contra `prueba`. **La Enmienda 1, al final, cambia la selección de
 modelo a `calibra` y añade el oro lejano y la capa A0; la Enmienda 2 amplía `prueba` a 600
 pares y añade H1b; la Enmienda 3 fija cómo se entrena B; la Enmienda 4 deja
-`prueba` en 591; la Enmienda 5 hace que el grado no separe y deja `calibra` en 194 y
-`prueba` en 560.**
+`prueba` en 591; la Enmienda 5 hace que el grado (número, romano o letra) no separe,
+revierte esa parte de D-025 y deja `calibra` en 191 y `prueba` en 555.**
 
 ### El cambio de eje
 
@@ -4531,3 +4538,48 @@ enseñan que el grado no separa, por si la capa 0 no atrapa alguna forma.
 - **`calibra` y `prueba` se tocan antes de abrir `prueba`**, como en la Enmienda 4, y sin
   mirar ningún puntaje de `prueba`. Desde que corra H1, ningún juicio ni exclusión de
   `prueba` se puede tocar.
+
+#### 5. Añadido el mismo día: las letras de grado, y lo que esto revierte de D-025
+
+**Esta enmienda revierte parte de D-025.** Al revisar la fusión por errata, D-025 excluyó a
+propósito el «escalón por dígito» (`OPERARIO 1` / `2`, 1.570 pares) y el «escalón romano»
+(`ANALISTA I` / `II`, 188) porque «borraría la escalera de antigüedad», y fijó con test la
+«letra de grado» (`AYUDANTE B` / `C`) como escalafón. La Enmienda 5 decide lo contrario: el
+grado no hace distinto el puesto. **La escalera no se pierde, cambia de sitio:** deja de estar
+en el nombre del cargo y tiene que recogerla la banda, con la antigüedad (`producto/
+antiguedad.py`). Medir si la banda de una celda fusionada mejora al ajustar por tramo de
+antigüedad queda como trabajo de producto, después de H1.
+
+**Decisión del autor: las letras de grado también se borran.** La regla de `23` pasa a
+tratar como grado una letra **suelta entre espacios o entre paréntesis** (`AYUDANTE B`,
+`PLANIFICADOR (R)`), salvo `E`, `Y`, `O`, `U`; la `A` solo al final (`SOLDADOR A`, no
+`ASISTENTE A GERENCIA`); nunca junto a `&` (`COORDINADOR M & R` / `M&P` son siglas de áreas
+distintas, juzgado `no`), ni tras `LICENCIA` o `TIPO` (`LICENCIA C` es un tipo de licencia).
+Una letra pegada a `.`, `/` o `&` (`T.A`, `COORDINADOR/A`, `T&L`) no es grado. La primera
+versión de la regla, sin estas guardas, habría pasado `M & R` / `M&P` a `si`; se vio al medir
+y no llegó a aplicarse.
+
+**Qué cambia:**
+- **Etiquetas: nada.** Todos los pares del oro que solo difieren en una letra ya eran `si`,
+  porque la v3 trataba las letras como código (paso 1). La plata queda idéntica.
+- **La evaluación:** salen los pares que la capa 0 fusionaría ahora. `calibra` pasa de 194 a
+  **191** (salen #141, #142, #193, los tres `si`) y `prueba` de 560 a **555** (salen 13e #220,
+  #339 y 20 #157, #229, #326, los cinco `si`): 191 de `13e` y 364 de `20`, 432 `si` / 123 `no`.
+  La lista está en `23_fuera_por_capa0.csv` (45 pares: 9 de `calibra`, 36 de `prueba`).
+- **La vara en `calibra` (191):** coseno 0,690, NLI congelado **0,7259**, diferencia +0,036
+  [−0,067, +0,137]. `AUC_BASE` de `22` pasa a 0,7259, y `--rapido` lo reproduce en GPU.
+- **Un par nuevo de `prueba` para juzgar a mano:** `20` #14 (`COORDINADOR DE VENTAS - B` /
+  `COORDINADOR SUPERVISOR VENTAS P BB`), hoy `no`. Lo juzga el autor solo, antes de abrir
+  `prueba`.
+
+**El primer entrenamiento queda sustituido.** La corrida completa de `22` (commit `1bdc855`)
+eligió época, semilla, configuración y temperatura con los 194 pares de `calibra`. La plata no
+cambia, pero `calibra` sí, así que se reentrena desde cero con los 191. Sus números quedan como
+referencia, no como el modelo de H1: elegida w = 1 sin aumento, semilla 20261001, época 1,
+AUC 0,9232 en `calibra` (194), T = 1,70; ablación 0,937 (paso 1) / 0,931 (paso 2) / 0,923
+(paso 3), y casi todas las corridas eligieron la época 1.
+
+**Un fallo de `23` que se corrigió de paso:** si un par salía de la lista de revisión (porque
+la regla pasaba a cubrirlo), su juicio a mano se perdía al reescribir el archivo. Le pasó a
+16#5325 y se recuperó del commit anterior. Ahora esos juicios se conservan con
+`vigente = no`.

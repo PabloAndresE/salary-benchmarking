@@ -9,9 +9,14 @@ QUE ES UN GRADO AQUI, y nada mas:
     - un numero del 1 al 9 suelto (tambien `04`, `# 3`, `1.` al principio);
     - un romano del I al X suelto;
     - un digito del 1 al 9 pegado al final de una palabra (`CONTABLE1`);
+    - una LETRA suelta entre espacios, o entre parentesis (`AYUDANTE B`, `PLANIFICADOR (R)`),
+      salvo `E`, `Y`, `O`, `U`; la `A` solo al final (`SOLDADOR A`, no `ASISTENTE A
+      GERENCIA`); nunca junto a `&` (`M & R` es una sigla), ni tras `LICENCIA` o `TIPO`;
     - `NIVEL`, `LEVEL`, `GRADO`, `CATEGORIA` o `CAT` justo antes de uno de los anteriores.
-Las letras (`A`, `B`) ya eran ruido en la v3, y los numeros de 3 cifras o mas, codigos. Los
-de dos cifras (`# 10`, `24 HORAS`) no se tocan: pueden no ser un grado.
+Una letra pegada a `.`, `/` o `&` (`T.A`, `COORDINADOR/A`, `T&L`) no es grado. Los numeros de
+3 cifras o mas ya eran codigos en la v3. Los de dos cifras (`# 10`, `24 HORAS`) no se tocan:
+pueden no ser un grado. La letra revierte, igual que el numero, lo que D-025 excluyo de la
+fusion por errata ("escalon por digito", "escalon romano", "letra de grado").
 
 LA CORRECCION ES MECANICA Y SOLO EN UN SENTIDO. Un `no` pasa a `si` cuando, borrados los
 grados, los dos titulos tienen las mismas palabras (sin conectores y en cualquier orden,
@@ -84,8 +89,39 @@ def leer_revision():
     return {(c, str(n)): x for c, n, x in zip(r["conjunto"], r["n"], v) if x}
 
 
+NO_LETRA = {"E", "Y", "O", "U"}
+NO_GRADO_DESPUES = {"LICENCIA", "TIPO"}      # `LICENCIA C` es un tipo de licencia, no un grado
+
+
+def _letras_de_grado(toks):
+    """Indices de los tokens (separados por espacios) que son una letra de grado."""
+    fuera = set()
+    for i, tk in enumerate(toks):
+        m = re.fullmatch(r"\(?([A-ZÑ])\)?", tk)
+        junto_amp = (i > 0 and toks[i - 1] == "&") or (i + 1 < len(toks) and toks[i + 1] == "&")
+        tras_tipo = i > 0 and toks[i - 1] in NO_GRADO_DESPUES
+        if (m and m.group(1) not in NO_LETRA and not junto_amp and not tras_tipo
+                and (m.group(1) != "A" or i == len(toks) - 1)):
+            fuera.add(i)
+            if i > 0 and toks[i - 1] in ANTES_DE_GRADO:
+                fuera.add(i - 1)
+    return fuera
+
+
+def letras(t):
+    toks = str(t).upper().split()
+    return [re.sub(r"[()]", "", toks[i]) for i in sorted(_letras_de_grado(toks))
+            if toks[i] not in ANTES_DE_GRADO]
+
+
+def sin_letras(t):
+    toks = str(t).upper().split()
+    fuera = _letras_de_grado(toks)
+    return " ".join(tk for i, tk in enumerate(toks) if i not in fuera)
+
+
 def palabras(t):
-    t = re.sub(r"([A-ZÁÉÍÓÚÑ])([1-9])\b", r"\1 \2", str(t).upper())
+    t = re.sub(r"([A-ZÁÉÍÓÚÑ])([1-9])\b", r"\1 \2", sin_letras(t))
     return re.findall(r"[A-ZÁÉÍÓÚÑÜ0-9]+", t)
 
 
@@ -102,14 +138,15 @@ def quitar_grado(t):
 
 
 def tiene_grado(t):
-    return any(es_grado(w) for w in palabras(t))
+    return any(es_grado(w) for w in palabras(t)) or bool(letras(t))
 
 
 def grados(t):
     """Los valores de grado del titulo, con el romano pasado a numero (`I` = `1`)."""
     rom = {r: i + 1 for i, r in enumerate(["I", "II", "III", "IV", "V", "VI", "VII",
                                            "VIII", "IX", "X"])}
-    return {rom.get(w) or int(w) for w in palabras(t) if es_grado(w)}
+    return ({rom.get(w) or int(w) for w in palabras(t) if es_grado(w)}
+            | {"letra_" + x for x in letras(t)})
 
 
 def grado_distinto(a, b):
@@ -235,11 +272,31 @@ def main():
     print("   por particion:", corr["particion"].value_counts().to_dict())
     print("   motivo de Gemini antes:", corr["motivo_v3"].value_counts().to_dict())
     rev = pd.DataFrame(rev_h + rev_p)
+    rev["vigente"] = "si"
+    # un juicio a mano no se pierde aunque su par salga de la lista (p. ej. porque la regla
+    # pasa a cubrirlo): queda con `vigente = no` y vuelve a aplicarse si el par regresa
+    if REVISAR.exists():
+        viejo = pd.read_csv(REVISAR, sep=None, engine="python", encoding="utf-8-sig",
+                            dtype=str, keep_default_na=False)
+        viejo = viejo[viejo["mismo_nuevo"].str.strip() != ""]
+        ya = set(zip(rev["conjunto"].astype(str), rev["n"].astype(str)))
+        fuera = viejo[[(c, n) not in ya for c, n in zip(viejo["conjunto"], viejo["n"])]].copy()
+        if len(fuera):
+            fuera["vigente"] = "no"
+            rev = pd.concat([rev, fuera[rev.columns]], ignore_index=True)
     rev.to_csv(REVISAR, index=False, sep=";", encoding="utf-8-sig")
+    vig = rev[rev["vigente"] == "si"]
     print("\npara revisar a mano (`no` con grado y otra diferencia): {}, {} ya revisados".format(
-        len(rev), int((rev["mismo_nuevo"] != "").sum()) if len(rev) else 0))
-    if len(rev):
-        print("   por conjunto:", rev["conjunto"].value_counts().to_dict())
+        len(vig), int((vig["mismo_nuevo"] != "").sum())))
+    if len(vig):
+        print("   por conjunto:", vig["conjunto"].value_counts().to_dict())
+        falta = vig[vig["mismo_nuevo"] == ""]
+        for _, f in falta.iterrows():
+            print("   FALTA JUZGAR: {} #{}  {} || {}".format(f["conjunto"], f["n"], f["comun"],
+                                                          f["raro"]))
+    if (rev["vigente"] == "no").any():
+        print("   juicios guardados de pares que ya no estan en la lista:",
+              int((rev["vigente"] == "no").sum()))
     fu = fuera_por_capa0()
     print("\nfuera de la evaluacion (la capa 0 los fusiona): {}".format(len(fu)))
     print("   ", fu.groupby(["conjunto", "particion"]).size().to_dict())

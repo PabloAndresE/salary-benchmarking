@@ -78,9 +78,9 @@ añaden aquí con el número que les toque, `24_…` en adelante.
 | `salidas/19_puntajes_nli_calibra.csv` | puntajes del NLI congelado sobre `calibra` (caché de `19`) | versionado (-f) |
 | `salidas/21_paquete/` | `plata.csv`, `calibra.csv`, `manifiesto.json`: lo que se copia al servidor. Se regenera con `21` | versionado (-f) |
 | `salidas/23_correcciones_plata.csv` | los 149 `no` de Gemini que pasan a `si` (137 por la regla del grado, 12 por la revisión a mano); los aplica `21` | versionado (-f) |
-| `salidas/23_fuera_por_capa0.csv` | los 37 pares de `13e` y `20` que salen de `calibra` (6) y `prueba` (31) porque la capa 0 los fusiona. **Lo lee el guion de H1** | versionado (-f) |
-| `salidas/23_revisar_grado.csv` | 14 `no` con grado distinto y otra diferencia, **juzgados a mano** en `mismo_nuevo` (13 `si`, 1 `no`). `23` los conserva y los aplica. Irreemplazable | versionado (-f) |
-| `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. `estado/` guarda cada corrida terminada para poder retomar (`huella.json`, y los pesos solo mientras hacen falta); `corrida.log`, el registro. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
+| `salidas/23_fuera_por_capa0.csv` | los 45 pares de `13e` y `20` que salen de `calibra` (9) y `prueba` (36) porque la capa 0 los fusiona (números, romanos y letras de grado). **Lo lee el guion de H1** | versionado (-f) |
+| `salidas/23_revisar_grado.csv` | `no` con grado distinto y otra diferencia, **juzgados a mano** en `mismo_nuevo`. `23` los conserva (también los que salen de la lista, con `vigente = no`) y los aplica. Irreemplazable | versionado (-f) |
+| `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. El primer entrenamiento (commit `1bdc855`, `calibra` de 194) quedó sustituido por la Enmienda 5 y se rehace. `estado/` guarda cada corrida terminada para poder retomar (`huella.json`, y los pesos solo mientras hacen falta); `corrida.log`, el registro. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)
 
