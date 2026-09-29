@@ -3805,7 +3805,7 @@ base, solo `calibra`). Diagrama: <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeS
 **Estado:** **diseño registrado antes de entrenar.** H1 queda fija aquí; nada de lo que
 sigue se ha medido contra `prueba`. **La Enmienda 1, al final, cambia la selección de
 modelo a `calibra` y añade el oro lejano y la capa A0; la Enmienda 2 amplía `prueba` a 600
-pares y añade H1b.**
+pares y añade H1b; la Enmienda 3 fija cómo se entrena B.**
 
 ### El cambio de eje
 
@@ -4324,3 +4324,73 @@ extrapolación de ese día, no gasto.
 **Si se repite** (una v4, más plata, la capa A0): dos tercios del gasto fueron la rúbrica
 repetida. El modo por lotes o una caché explícita de la instrucción son la primera palanca,
 antes que cambiar de modelo. Y hace falta una alerta de presupuesto en el proyecto.
+
+### Enmienda 3 (2026-09-29, antes de la corrida real): cómo se entrena B, y qué queda fijo
+
+**Origen:** escribir el guion de entrenamiento obliga a decidir detalles que las enmiendas 1
+y 2 no fijaban. Se registran aquí antes de correrlo en el servidor.
+**Evidencia:** `research/experimentos/e2_nivel/21_paquete_entrenamiento.py`,
+`22_entrenar_cross.py` y `requirements-cross.txt`.
+
+#### 1. Qué ve el entrenamiento
+
+Solo el paquete de `21`: la plata (8.500 `entrena` / 1.500 `valida`), los 139 incoherentes
+**ya con juicio humano** (87 `si`, 52 `no`; no queda ninguna etiqueta blanda) y `calibra`.
+`21` comprueba contra los 600 pares de `prueba`, por grupos y por títulos, y se detiene si
+alguno aparece. `22` se niega a correr si el manifiesto no lo certifica, y no tiene ninguna
+opción para leer `13e_*` ni `20_*`. No viajan sueldos: la señal de nivel (`dificil`) ya va
+calculada.
+
+#### 2. Tres decisiones nuevas, aprobadas por el autor
+
+- **Tres semillas por configuración de la grilla.** Con 200 pares en `calibra`, dos
+  semillas de la misma configuración pueden diferir tanto como dos configuraciones. Se
+  elige por el **AUC medio** de las tres y se guarda la semilla **más cercana a la media**,
+  no la mejor, para no quedarse con un golpe de suerte.
+- **Aumento:** una copia con errata real (letra cambiada, borrada o transpuesta, en palabras
+  de 5 letras o más, nunca la primera) en el **30 %** de los pares, más una copia permutada
+  en todos los pares donde aplique la permutación controlada (3.109 de 8.500). Es un valor
+  de partida, no medido.
+- **Pasos 1 y 2** (simétrico y direccional): una semilla y sin aumento. Son la ablación
+  que mide cuánto aporta la dirección.
+
+#### 3. Detalles fijados en el guion
+
+| qué | valor |
+|---|---|
+| probabilidad de inclusión | la salida `entailment` del NLI; se arranca de 0,748, no de cero |
+| simétrico al evaluar | media de los dos órdenes |
+| cabeza de motivo | lineal sobre el `[CLS]` medio de los dos pases; peso 0,3; ignora los pares sin paso conocido |
+| peso w | sobre los 2.665 pares `dificil` |
+| optimizador | AdamW, 2·10⁻⁵ (cabeza de motivo 10⁻⁴), decaimiento 0,01, lotes de 32, 10 % de calentamiento, recorte de gradiente 1,0 |
+| épocas | hasta 4; se queda la de mayor AUC en `calibra` |
+| longitud máxima | 64 tokens |
+| precisión | bf16 en GPU; la comprobación inicial siempre en fp32 |
+| desempate | bootstrap pareado estratificado, 2.000 remuestreos |
+
+#### 4. Comprobación antes de entrenar
+
+`22` evalúa el modelo **sin entrenar** sobre `calibra`, en fp32 y con la plantilla fija, y
+se detiene si no da el **0,748 ± 0,005** de `19`. Si la plantilla, el tokenizador o el
+modelo cambiaran, se vería aquí y no después de entrenar.
+
+#### 5. Reproducibilidad
+
+- **El modelo, fijado:** revisión `b5113eb38ab63efdd7f280f8c144ea8b13f978ce`, y `22`
+  exige el SHA-256 de `model.safetensors` (`7c8e29f1…4a8541`).
+- **Las librerías:** `requirements-cross.txt`, con versiones exactas (torch 2.14.0,
+  transformers 5.17.0, tokenizers 0.23.2, …).
+- **Semillas fijas y algoritmos deterministas de PyTorch.**
+- **Una ficha por corrida** en `resultados.json`: commit de git (y si había cambios sin
+  commitear), versiones, CUDA, GPU, hashes del modelo y de los datos.
+
+**Límite declarado:** en GPU el entrenamiento no es idéntico bit a bit entre máquinas
+(sumas en otro orden, redondeo de bf16). Lo que sí es exacto es la **evaluación del modelo
+guardado**, y H1 se corre sobre esos pesos congelados, en cualquier máquina.
+
+#### 6. Qué sale
+
+`salidas/22_modelos/elegido/` (el modelo de H1, con su temperatura), el representante de
+cada configuración y de los pasos 1 y 2 en `corridas/`, y `resultados.json`. Los números de
+`calibra` que reporta son **optimistas**: `calibra` también eligió la época, la semilla y la
+configuración. La vara sigue siendo `prueba`, que se corre aparte.

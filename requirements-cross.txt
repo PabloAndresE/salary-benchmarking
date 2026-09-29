@@ -1,0 +1,25 @@
+# Entrenar y evaluar el cross-encoder de D-036 (`research/experimentos/e2_nivel/22_*`).
+# Versiones EXACTAS, las mismas con que se midieron `13c` y `19`: un cambio de version
+# puede mover los numeros sin avisar.
+#
+# torch se fija a la misma version, pero la edicion depende de la maquina. En el servidor
+# con GPU, instalarlo ANTES y aparte, con el indice de la CUDA que tenga:
+#     pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cu<version>
+# y despues:
+#     pip install -r requirements-cross.txt
+#
+# El modelo tambien va fijado, por revision y por hash (ver `22_entrenar_cross.py`):
+#     hf download MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7 \
+#         --revision b5113eb38ab63efdd7f280f8c144ea8b13f978ce \
+#         --local-dir modelos/mdeberta-xnli
+torch==2.14.0
+transformers==5.17.0
+scikit-learn==1.9.0
+pandas==3.0.3
+numpy==2.4.6
+tokenizers==0.23.2
+safetensors==0.8.0
+sentencepiece==0.2.2
+protobuf==6.33.6
+huggingface_hub==1.32.0
+scipy==1.17.1

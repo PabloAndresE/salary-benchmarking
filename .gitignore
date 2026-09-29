@@ -70,3 +70,5 @@ demo/log_*.txt
 
 # modelos descargados de Hugging Face para entrenar el cross (D-036)
 modelos/
+# pesos del cross entrenado (~1 GB cada uno); resultados.json se commitea con -f
+research/experimentos/e2_nivel/salidas/22_modelos/
