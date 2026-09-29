@@ -6,6 +6,7 @@ Actualízala cada vez que se cree un guion o una salida de esta línea de trabaj
 Leyenda de la columna *git*:
 - **versionado**: está en el repositorio.
 - **local**: está en `.gitignore` (títulos de clientes, LOPDP) y **solo existe en esta máquina**. Si se borra, no hay copia.
+- **versionado (-f)**: sigue en `.gitignore`, para que una regeneración no entre sola, pero se añadió a mano con `git add -f` (`26cb1d3`, decisión del autor: títulos sueltos, conteos, cosenos y juicios, sin RUC ni sueldos). Si un guion lo regenera, el cambio aparece en `git status` y hay que decidir si se commitea.
 
 ---
 
@@ -16,15 +17,15 @@ del repositorio.**
 
 | archivo | qué es | git |
 |---|---|---|
-| `research/experimentos/e2_nivel/salidas/13e_para_juzgar.csv` | **el patrón de oro**: 400 pares juzgados a mano (`mismo`, `mismo_v1`, `revision`) | local |
-| `research/experimentos/e2_nivel/salidas/13e_pares_400.csv` | metadatos del oro: grupos, `sim`, estrato y la partición `calibra`/`prueba` | local |
-| `research/experimentos/e2_nivel/salidas/13_para_juzgar.csv` | los 48 juicios anteriores (`13a`); los excluye `16` | local |
-| `research/experimentos/e2_nivel/salidas/16_respuestas_llm.csv` | **la plata**: respuestas de Gemini sobre el lote de 10.000 | local |
-| `research/experimentos/e2_nivel/salidas/18_para_juzgar.csv` | los 139 pares en que Gemini se contradijo, **para juzgar a mano** (Enmienda 1 de D-036). Una vez juzgados son irreemplazables | local |
-| `research/experimentos/e2_nivel/salidas/18_meta.csv` | metadatos de los 139: par de `16` y lo que dijo Gemini en cada orden. No abrir antes de juzgar | local |
-| `research/experimentos/e2_nivel/salidas/20_para_juzgar.csv` | **los 400 pares nuevos de `prueba`** (Enmienda 2 de D-036), para juzgar a mano. Bloquean H1. Una vez juzgados son irreemplazables | local |
-| `research/experimentos/e2_nivel/salidas/20_pares_400.csv` | metadatos de los 400: grupos, `sim`, estrato, tramo. No abrir antes de juzgar | local |
-| `research/experimentos/e2_nivel/salidas/15_respuestas_llm.csv` | respuestas del piloto sobre los 400 (validan el montaje, D-035) | local |
+| `research/experimentos/e2_nivel/salidas/13e_para_juzgar.csv` | **el patrón de oro**: 400 pares juzgados a mano (`mismo`, `mismo_v1`, `revision`) | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/13e_pares_400.csv` | metadatos del oro: grupos, `sim`, estrato y la partición `calibra`/`prueba` | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/13_para_juzgar.csv` | los 48 juicios anteriores (`13a`); los excluye `16` | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/16_respuestas_llm.csv` | **la plata**: respuestas de Gemini sobre el lote de 10.000 | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/18_para_juzgar.csv` | los 139 pares en que Gemini se contradijo, **juzgados a mano** (87 `si` / 52 `no`; entran a la plata con etiqueta dura, Enmienda 3 de D-036). Irreemplazable | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/18_meta.csv` | metadatos de los 139: par de `16` y lo que dijo Gemini en cada orden. No abrir antes de juzgar | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/20_para_juzgar.csv` | **los 400 pares nuevos de `prueba`** (Enmienda 2 de D-036), **juzgados a mano** (315 `si` / 76 `no` / 9 `duda`, fuera de `prueba` por la Enmienda 4: quedan 591). Irreemplazable | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/20_pares_400.csv` | metadatos de los 400: grupos, `sim`, estrato, tramo. No abrir antes de juzgar | versionado (-f) |
+| `research/experimentos/e2_nivel/salidas/15_respuestas_llm.csv` | respuestas del piloto sobre los 400 (validan el montaje, D-035) | versionado (-f) |
 
 ## 2. Diseño y decisiones
 
@@ -65,16 +66,16 @@ añaden aquí con el número que les toque, `23_…` en adelante.
 | archivo | qué es | git |
 |---|---|---|
 | `salidas/13b_arbitros.txt`, `13c_arbitros.txt`, `13d_rerankers.txt` | resultados de D-034 | versionado |
-| `salidas/13c_puntajes_cross.csv`, `13d_puntajes_rerank.csv` | puntajes por par de los árbitros congelados | local |
-| `salidas/13_pares_ambiguos.csv` | metadatos de los 48 | local |
-| `salidas/15_piloto_evaluacion.txt`, `15_piloto_evaluacion_v3.txt` | evaluación del piloto v2 y v3 contra `calibra` (D-035). **Contienen títulos**: no commitear sin revisar | sin versionar aún |
-| `salidas/16_pares_10000.csv` | el lote completo con grupos, `sim`, estrato, partición y señal léxica | local |
-| `salidas/16_para_llm.csv` | lo único que ve el LLM: `n`, `comun`, `raro` | local |
-| `salidas/16_censo.parquet` | censo de pares de donde sale el lote | local |
+| `salidas/13c_puntajes_cross.csv`, `13d_puntajes_rerank.csv` | puntajes por par de los árbitros congelados | versionado (-f) |
+| `salidas/13_pares_ambiguos.csv` | metadatos de los 48 | versionado (-f) |
+| `salidas/15_piloto_evaluacion.txt`, `15_piloto_evaluacion_v3.txt` | evaluación del piloto v2 y v3 contra `calibra` (D-035). **Contienen títulos**; commiteados en `3fbd80b` | versionado |
+| `salidas/16_pares_10000.csv` | el lote completo con grupos, `sim`, estrato, partición y señal léxica | versionado (-f) |
+| `salidas/16_para_llm.csv` | lo único que ve el LLM: `n`, `comun`, `raro` | versionado (-f) |
+| `salidas/16_censo.parquet` | censo de pares de donde sale el lote | versionado (-f) |
 | `salidas/17_lineas_base.txt` | líneas base de D-036; solo agregados, sin títulos | versionado |
 | `salidas/19_potencia_h1.txt` | tabla de potencia de H1; solo agregados | versionado |
-| `salidas/19_puntajes_nli_calibra.csv` | puntajes del NLI congelado sobre `calibra` (caché de `19`) | local |
-| `salidas/21_paquete/` | `plata.csv`, `calibra.csv`, `manifiesto.json`: lo que se copia al servidor. Se regenera con `21` | local |
+| `salidas/19_puntajes_nli_calibra.csv` | puntajes del NLI congelado sobre `calibra` (caché de `19`) | versionado (-f) |
+| `salidas/21_paquete/` | `plata.csv`, `calibra.csv`, `manifiesto.json`: lo que se copia al servidor. Se regenera con `21` | versionado (-f) |
 | `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)
