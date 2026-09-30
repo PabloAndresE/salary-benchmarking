@@ -3,8 +3,10 @@
 La siguen igual quien juzga a mano y el LLM. Si las dos partes aplican reglas distintas, el
 acuerdo entre ellas no mide nada.
 
-**Versión 3 — 2026-09-25.** Todo lo que va antes de «Historial» es la rúbrica, y es lo que
-recibe el LLM. El historial explica de dónde sale cada regla.
+**Versión 4 — 2026-09-30.** La vigente para juzgar a mano. Cambia solo el grado (paso 1):
+ya no separa. La v3, con la que Gemini etiquetó la plata, sigue congelada en
+`rubrica_mismo_cargo.md`; lo ya etiquetado se corrigió con `23_correccion_grado.py`
+(Enmienda 5 de D-036). Todo lo que va antes de «Historial» es la rúbrica.
 
 ---
 
@@ -45,8 +47,8 @@ Recorre los pasos en orden. El primero que diga `no` decide. Si ninguno lo dice,
 - **Conectores, relleno y orden de las palabras**: `DE`, `DEL`, `Y`, `/`, `-`, `EN EL AREA
   DE`. Las mismas palabras en otro orden son el mismo título.
   `ASISTENTE DE BODEGA` = `ASISTENTE EN EL AREA DE BODGA`.
-- **Códigos internos de la empresa**: letras sueltas, números de tres cifras o más, y
-  números pegados a una abreviatura. `SOLDADOR A` = `SOLDADOR I`,
+- **Códigos internos de la empresa**: números de tres cifras o más, y números pegados a una
+  abreviatura. `SOLDADOR A` = `SOLDADOR I` (ver el grado, abajo),
   `INGENIERO INSPECTOR DE PROYECTOS 132` = `... 108`, `SENIOR` = `SENIOR C`, `PORTERO BR`,
   `AYUDANTE DE BODEGA DEV`, `PLANIFICADOR (R)`, `OPERARIO LT.4` = `OPERARIO LT.7`.
 - **La unidad o el lugar donde se trabaja**, si la tarea es la misma:
@@ -56,12 +58,29 @@ Recorre los pasos en orden. El primero que diga `no` decide. Si ninguno lo dice,
 - **`GENERAL`** no es un nivel: `SUPERVISOR DE EMPAQUE` = `SUPERVISOR GENERAL DE EMPAQUE`,
   `JEFE SERVICIOS` = `JEFE DE SERVICIOS GENERAL`.
 
-**Excepción: el grado.** Un ordinal pequeño (del 1 al 9, o del I al X) que aparece en
-**los dos** títulos con valor **distinto** es un grado de la escala interna, y separa →
-`no`. `AUXILIAR 1 DE COCINA` ≠ `AUXILIAR 2 DE COCINA`, `LABORATORISTA I` ≠
-`LABORATORISTA II`, `CAJERO 3` ≠ `CAJERO 5`. Si el número está en un solo
-título, es ruido: `OPERARIO 2 DE EMPAQUE` = `OPERARIO DE EMPAQUE`. Una letra no es un
-grado: `A` frente a `I` sigue siendo ruido.
+- **El grado dentro del cargo.** Un número o una letra que marca el grado de la escala
+  interna **no hace distinto el puesto**, esté en uno solo de los títulos o en los dos con
+  valor distinto. Es grado:
+  - un número del 1 al 9 suelto (también `04`, `# 3`, o `1.` al principio);
+  - un romano del I al X suelto;
+  - una letra suelta, sola o entre paréntesis, salvo `E`, `Y`, `O`, `U`; la `A` solo al
+    final del título;
+  - `NIVEL`, `GRADO`, `CATEGORIA` o `LEVEL` delante de cualquiera de los anteriores.
+
+  `AUXILIAR 1 DE COCINA` = `AUXILIAR 2 DE COCINA`, `LABORATORISTA I` = `LABORATORISTA II`,
+  `CAJERO 3` = `CAJERO 5`, `AYUDANTE B DE MANTENIMIENTO` = `AYUDANTE C DE MANTENIMIENTO`,
+  `OPERARIO CATEGORIA B` = `OPERARIO CATEGORIA C`, `TECNICO NIVEL 2` = `TECNICO NIVEL 4`,
+  `OPERARIO 2 DE EMPAQUE` = `OPERARIO DE EMPAQUE`.
+
+  **No es grado**, y se juzga como cualquier otra palabra:
+  - una letra pegada a `.`, `/` o `&`, o junto a un `&`: son siglas o abreviaturas
+    (`ANALISTA DE PLANTA R & D` ≠ `ANALISTA DE PLANTA R&M` si las áreas son otras);
+  - la letra de un tipo: `CHOFER LICENCIA C` / `CHOFER LICENCIA E` se decide por la
+    licencia, no como grado;
+  - un número de dos cifras (`# 10`, `24 HORAS`): puede no ser un grado.
+
+  La escalera de sueldos que marcaba el grado no se pierde: la recoge la banda, con la
+  antigüedad, no el nombre del cargo.
 
 ### Paso 2. El escalón: si las palabras de rango están en niveles distintos, `no`
 
@@ -176,94 +195,15 @@ No separa:
 
 ## Historial
 
-> **La v3 está CONGELADA (D-035, 2026-09-25).** No se toca nada de lo que va antes de este
-> historial, ni una tilde: su hash (`118be8eb1105`) es lo que identifica las respuestas del
-> LLM, y cambiarlo las deja huérfanas. Cualquier cambio es una v4, y obliga a repetir el
-> piloto. Las notas nuevas van aquí, debajo.
+### v4 (2026-09-30): el grado ya no separa
 
-### v1 (2026-09-23): cuatro contradicciones de los 48 de `13a`
+Decisión del autor, registrada en la Enmienda 5 de D-036 antes de abrir `prueba`. El paso 1
+de la v3 tenía una «excepción del grado»: un ordinal del 1 al 9 o del I al X en los dos
+títulos con valor distinto separaba. La v4 la quita y extiende la regla a las letras, que en
+la v3 ya eran ruido de código. Revierte también lo que D-025 había excluido de la fusión por
+errata (escalón por dígito, escalón romano, letra de grado).
 
-1. **Escalón**: `ASISTENTE` < `ANALISTA` < `COORDINADOR`, y distinto nivel es distinto
-   puesto.
-2. **Función añadida**: el mismo puesto, salvo que lo añadido sea otro oficio.
-3. **Especialidades hermanas**: distinto puesto si el mercado las paga distinto.
-4. **`ESPECIALISTA` junto a otra palabra de rango** equivale a `SR`.
+Nada más cambia respecto de la v3. Los ejemplos nuevos son inventados y no coinciden con
+ningún título de `13e` ni de `20` (comprobado por búsqueda).
 
-### v2 (2026-09-23): revisión con los 400 de `13e` a la vista
-
-La v1 dejaba sin cubrir casos que el juez resolvió de forma coherente, y en otros el juez
-se contradecía. Lo decidió el autor:
-
-- **`TECNICO` como adjetivo**, **`REGIONAL`/`ZONAL` como ámbito** y **el paso 5 solo para
-  mandos**: salen de juicios coherentes del juez (11, 4 y 3 casos).
-- **Palabras fuera de la tabla**: se les asigna nivel. La tabla es la única que no
-  contradice ninguna de las 400 etiquetas; por eso `EJECUTIVO` queda en 1. `GESTOR` se
-  queda fuera: `ANALISTA` = `GESTOR` y `GERENTE` = `GESTOR` no caben en un mismo nivel.
-- **`CORPORATIVO` separa**, como en D-033; salvo como nombre de área o negocio.
-- **`GENERAL` no separa.**
-- **Un grado distinto separa.**
-
-**Etiquetas corregidas en los 400** (su valor original queda en `mismo_v1`): 13. Cuatro
-en la revisión con la v1 (#65, #182, #329 a `no`; #114 a `si`) y nueve al cerrar la v2
-(#164, #205, #308, #320, #188, #350, #290 a `no`; #35, #192 a `si`).
-
-**Comprobación.** Un verificador mecánico de los pasos 1, 2, 3 y 5 reproduce las 400
-etiquetas salvo dos, que lee mal y la rúbrica aplicada a mano resuelve: un código
-pegado a una abreviatura (#286) y una errata por un espacio que falta (#338). En
-los 48 de `13a` reproduce 47; el #38 (`ASISTENTE` / `ANALISTA`) es la regla del escalón.
-
-**Aviso de método.** La v2 se escribió viendo también la mitad de `prueba`. El acuerdo del
-LLM en `prueba` sale por eso algo optimista, y hay que decirlo al reportarlo. En el texto
-que recibe el LLM no aparece ningún título de `prueba`: se comprobó por búsqueda, y tres
-que se habían colado (uno ya en la v1) se cambiaron por ejemplos inventados.
-
-### v3 (2026-09-25): el paso 4, tras el piloto con `gemini-3.8-flash`
-
-**El piloto con la v2 pasó la compuerta por poco** (kappa 0,640 / 0,662, recall de `no`
-0,93 / 0,95, coherencia 0,970, AUC 0,880 sobre `calibra`). Y lo hizo con la medición
-inflada: la v2 usaba 34 títulos de `calibra` como ejemplos, con su respuesta, y el LLM los
-veía. Se habían elegido de `calibra` para proteger `prueba`, sin ver que así se contaminaba
-la mitad con la que se decide.
-
-**El desacuerdo tenía una sola dirección.** De 33, 29 eran «juez `si`, LLM `no`», casi
-todos en el paso 4: el juez junta dos títulos que comparten la función principal aunque la
-segunda sea otra, y el texto de la v2 («otro oficio», «especialidades que el mercado paga
-distinto») era más estricto que ese criterio. Etiquetar 10.000 así habría enseñado al
-modelo a separar de más, justo donde el producto ya se queda corto (estrato `bajo`).
-
-**Qué cambia:**
-
-- **El paso 4 se reescribe** alrededor de la función principal compartida, y en la duda
-  dice `si`. Lo aprobó el autor.
-- **Todos los ejemplos que ve el LLM son inventados**, sin ningún título de los 400. Así
-  el acuerdo en `calibra` de la v3 mide la rúbrica, y no la memoria de sus ejemplos.
-- **Choca con dos de los 48** de `13a`, que no son el patrón de oro: #32 (`JEFE DE
-  INGENIERIA Y MANTENIMIENTO` / `… INFRAESTRUCTURA Y MANTENIMIENTO`) y #22 (`JEFE DE
-  PROCESOS Y SISTEMA` / `JEFE ORGANIZACION Y PROCESOS`), juzgados `no` aunque comparten
-  una función. En los 400 el juez resolvió igual casos así con `si` (#296, #300).
-
-### Pendiente en el código del producto, no en la rúbrica
-
-La rúbrica y `src/benchmarking/producto/nivel.py` ya no dicen lo mismo:
-
-- `RANGOS` no tiene las palabras nuevas (`ASESOR`, `EJECUTIVO`, `ADMINISTRADOR`,
-  `CONTROLLER`, `CONSULTOR`, `ENCARGADO`, `SUBJEFE`), ni las reglas de `TECNICO` como
-  adjetivo o de «lo que va tras `DE`».
-- `SENIORIDAD` separa `TECNICO ESPECIALISTA` de `TECNICO ... SR` (el único falso positivo
-  de D-033), cuenta `CORPORATIVO` también como nombre de área, y no tiene `REGIONAL` /
-  `ZONAL`.
-
-Cambiarlo obliga a reconstruir la base y a volver a medir, así que es una decisión aparte.
-
-### El grado ya no separa (2026-09-29, Enmienda 5 de D-036)
-
-**La excepción del grado del paso 1 queda sin efecto.** Un número que marca el grado dentro
-del cargo (del 1 al 9, del I al X, `NIVEL 2`…) lo borra la normalización, aunque esté en los
-dos títulos con valor distinto: `AUXILIAR 1 DE COCINA` = `AUXILIAR 2 DE COCINA`.
-
-El texto de arriba **no se cambia**: su hash (`118be8eb1105`) identifica las respuestas de
-Gemini, que se dieron con la regla vieja. En lugar de repetir el piloto, lo ya etiquetado se
-corrige de forma mecánica con `23_correccion_grado.py`, y los pares que solo difieren en el
-grado salen de `calibra` y `prueba` porque la capa 0 los fusiona antes del juez. Quien juzgue
-a mano de aquí en adelante aplica la regla nueva, que está escrita en la **v4**
-(`rubrica_mismo_cargo_v4.md`, 2026-09-30): el mismo texto con el paso 1 cambiado.
+La historia anterior (v1 a v3) está en `rubrica_mismo_cargo.md`.

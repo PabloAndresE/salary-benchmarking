@@ -34,6 +34,7 @@ del repositorio.**
 | `docs/registro_decisiones.md` | D-034 (árbitros), D-035 (plata con LLM), **D-036 (esta arquitectura y su prerregistro)** | versionado |
 | `docs/inventario_arquitectura_juez.md` | este archivo | versionado |
 | `research/experimentos/e2_nivel/rubrica_mismo_cargo.md` | la rúbrica v3 congelada; su hash va en cada respuesta del LLM | versionado |
+| `research/experimentos/e2_nivel/rubrica_mismo_cargo_v4.md` | **la rúbrica vigente para juzgar a mano**: la v3 con el paso 1 cambiado (el grado no separa, Enmienda 5) | versionado |
 | `research/experimentos/e2_nivel/README.md` | índice de los guiones de E2 | versionado |
 | diagrama de la arquitectura | <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeSfZW> (privado) | fuera del repo |
 

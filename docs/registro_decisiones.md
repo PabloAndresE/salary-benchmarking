@@ -4529,7 +4529,8 @@ enseñan que el grado no separa, por si la capa 0 no atrapa alguna forma.
   dejó** (`si` y fuera de `prueba`), sin lista de excepciones, por coherencia con la
   normalización, que borra el número en los dos casos. **Fusionar grados puede mezclar
   bandas**, y la utilidad aguas abajo lo tiene que medir.
-- **La capa 0 del producto todavía no borra el grado.** `quitar_grado` en `23` es el
+- **La rúbrica v4** (`rubrica_mismo_cargo_v4.md`, 2026-09-30) escribe la regla nueva en el
+  paso 1; la v3 queda congelada para la plata. **La capa 0 del producto todavía no borra el grado.** `quitar_grado` en `23` es el
   borrador de la regla. Llevarla a `nivel.py` y reconstruir la base (v16) es una decisión de
   producto aparte: cambia los grupos de los que salen todos los conjuntos, y se hace después
   de H1.
