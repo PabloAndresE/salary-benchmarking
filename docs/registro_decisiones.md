@@ -4619,3 +4619,37 @@ elegido, el NLI congelado, el coseno y los 8 modelos de la ablación, y reporta 
 estratos, las dos mitades (`13e` / `20`) con la heterogeneidad del coseno, la ablación y la
 calibración. `--ensayo` corre lo mismo sobre `calibra`, sin leer `prueba`; se probó con el
 primer entrenamiento y el modo real se detuvo en el primer candado, como debe.
+
+### Resultado del entrenamiento del cross-encoder (2026-09-30, antes de abrir `prueba`)
+
+**Evidencia:** `salidas/22_modelos/resultados.json` y `corrida.log` (commit `1d776f0`, repo
+limpio, `calibra` de 191, 20 corridas, ninguna retomada). Es el cross-encoder de H1.
+
+| en `calibra` (191; optimista: eligió época, semilla y configuración) | AUC |
+|---|---|
+| coseno | 0,6897 |
+| NLI congelado | 0,7259 |
+| paso 1, simétrico (1 semilla) | 0,9366 |
+| paso 2, direccional (1 semilla) | 0,9296 |
+| **paso 3, elegido: w = 1, sin aumento, semilla 20261001, época 1** | **0,9222** |
+
+- **Grilla:** w1 sin aumento 0,9244 · w2 sin 0,9257 · w3 sin 0,9268 · w1 con 0,9219 · w2 con
+  0,9186 · w3 con 0,9180 (media de 3 semillas, sd ≤ 0,005). La mejor por media, w = 3 sin
+  aumento, no le gana a la simple: IC 95 % [−0,011, +0,021]. **Queda la simple.**
+- **El aumento no ayuda:** peor con cada w, y tarda el doble.
+- **Época:** 17 de 20 corridas eligieron la 1; después `calibra` baja mientras `valida` (la
+  plata de Gemini) sube. Más épocas acercan el cross-encoder a Gemini y lo alejan del juicio
+  humano. Límite declarado: con la mejor en la época 1, una tasa de aprendizaje menor o una
+  evaluación a mitad de época quizá sirvieran; no se prueba, porque se elegiría con los mismos
+  191 pares.
+- **Ablación:** ni la dirección ni la cabeza de motivo mejoran en `calibra` (0,937 / 0,930 /
+  0,922), dentro del ruido de 191 pares. Dato para H3, no veredicto.
+- **Calibración:** T = 1,70 (salía sobreconfiado); ECE 0,040 → 0,025.
+- **Por estrato** (cross-encoder frente a coseno): alto 1,00 / 0,40 (n = 29), banda 0,91 / 0,65
+  (132), bajo 0,89 / 0,57 (30).
+- **Coincide con el primer entrenamiento** (`1bdc855`, `calibra` de 194): misma configuración,
+  mismas semillas representantes, diferencias ≤ 0,001.
+
+Un incidente sin efecto en el resultado: en una primera relanzada quedaron dos procesos del
+entrenamiento en la misma terminal (uno suspendido); se detuvieron los dos y se entrenó desde
+cero una sola vez.
