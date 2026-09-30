@@ -53,8 +53,12 @@ NUEVOS_META = SAL / "20_pares_400.csv"
 CORR_GRADO = SAL / "23_correcciones_plata.csv"   # Enmienda 5: el grado ya no separa
 FUERA = SAL / "23_fuera_por_capa0.csv"           # Enmienda 5: los fusiona la capa 0
 CORR_V5 = SAL / "27_correcciones_v5.csv"         # D-038: rubrica v5, juicio humano
+LOTE_J = SAL / "30_lote_para_juzgar.csv"         # D-038: lote de la zona dificil, a mano
+LOTE_M = SAL / "30_lote_pares.csv"
+PRUEBA2 = SAL / "29_prueba2_pares.csv"           # D-038: el examen de la v2
 RUBRICA = AQUI / "rubrica_mismo_cargo.md"
 DESTINO = SAL / "21_paquete"
+sys.path.insert(0, str(AQUI.parents[2] / "src"))
 PLANTILLA = "El puesto de trabajo es {}."        # con el titulo en .title(); Enmienda 2
 
 
@@ -136,6 +140,40 @@ def main():
             p.loc[k, "origen"] = p.loc[k, "origen"] + "_v5"
         n_v5 = len(cv)
 
+    # --- D-038: el lote de la zona dificil, juzgado a mano, entra entero en `entrena` ------
+    n_lote = 0
+    if LOTE_J.exists():
+        lj = leer(LOTE_J, dtype=str, keep_default_na=False)
+        lj["mismo"] = lj["mismo"].str.strip().str.lower()
+        hechos_l = lj["mismo"].isin(["si", "no"])
+        if hechos_l.any() and not hechos_l.all():
+            raise SystemExit("ALTO: el lote de `30` esta a medio juzgar ({} de {}). No se usa "
+                             "hasta que este completo.".format(int(hechos_l.sum()), len(lj)))
+        if hechos_l.all():
+            lm = leer(LOTE_M)
+            lm["n"] = lm["n"].astype(str)
+            lo = lj.merge(lm[["n", "g_comun", "g_raro", "sim", "estrato"]], on="n",
+                          validate="one_to_one")
+            from benchmarking.producto.nivel import nivel_lexico, seniority_lexica
+
+            def dificil(a, b):                     # la misma senal que `16`
+                na, nb = nivel_lexico(a), nivel_lexico(b)
+                esc = na is not None and nb is not None and na == na and nb == nb and na != nb
+                return bool(esc or seniority_lexica(a) != seniority_lexica(b))
+            filas = pd.DataFrame({
+                "n": 100_000 + lo["n"].astype(int), "comun": lo["comun"], "raro": lo["raro"],
+                "g_comun": lo["g_comun"], "g_raro": lo["g_raro"], "particion": "entrena",
+                "estrato": lo["estrato"],
+                "dificil": [dificil(a, b) for a, b in zip(lo["comun"], lo["raro"])],
+                "sim": lo["sim"], "mismo_ab": "", "mismo_ba": "", "paso_ab": "", "paso_ba": "",
+                "etiqueta": (lo["mismo"] == "si").astype(float), "origen": "humano_lote",
+                "motivo": [("ninguno" if m == "si" else paso_de_nota(nt))
+                           for m, nt in zip(lo["mismo"], lo["nota"])]})
+            if set(filas["n"]) & set(p["n"]):
+                raise SystemExit("ALTO: los `n` del lote chocan con los de la plata")
+            p = pd.concat([p, filas], ignore_index=True)
+            n_lote = len(filas)
+
     plata = p[["n", "comun", "raro", "particion", "estrato", "dificil", "sim",
                "mismo_ab", "mismo_ba", "paso_ab", "paso_ba", "etiqueta", "origen",
                "motivo"]]
@@ -159,6 +197,8 @@ def main():
     # --- comprobacion dura: nada de `prueba` -----------------------------------------
     pr = [oro.loc[oro["particion"] == "prueba", ["g_comun", "g_raro", "comun", "raro"]],
           leer(NUEVOS_META)[["g_comun", "g_raro", "comun", "raro"]]]
+    if PRUEBA2.exists():                       # D-038: `prueba 2` tampoco puede viajar
+        pr.append(leer(PRUEBA2)[["g_comun", "g_raro", "comun", "raro"]])
     pr = pd.concat(pr, ignore_index=True)
     pr_g = {frozenset(x) for x in zip(pr["g_comun"], pr["g_raro"])}
     pr_t = {frozenset(x) for x in zip(pr["comun"], pr["raro"])}
@@ -189,10 +229,12 @@ def main():
             "por_particion": plata["particion"].value_counts().to_dict(),
             "incoherentes": n_inc,
             "incoherentes_juzgados_a_mano": int(len(hechos)),
+            "lote_zona_dificil": n_lote,
             "incoherentes_con_etiqueta_blanda": n_inc - int(len(hechos)),
             "corregidos_por_grado": n_grado,
             "corregidos_por_v5": n_v5,
-            "tasa_si_coherentes": round(float(p.loc[coherente, "etiqueta"].mean()), 4),
+            "tasa_si_coherentes": round(float(
+                p.loc[coherente[coherente].index, "etiqueta"].mean()), 4),
             "dificil": int(plata["dificil"].sum()),
         },
         "calibra": {"pares": len(calibra),
@@ -204,7 +246,9 @@ def main():
                                      "pares_de_titulos": len(pr_t)},
         "fuentes_sha256_12": {f.name: sha(f) for f in (PARES, RESP, INC_JUZ, INC_META,
                                                       ORO_META, ORO_JUZ, NUEVOS_META)
-                              + tuple(f for f in (CORR_GRADO, FUERA, CORR_V5) if f.exists())},
+                              + tuple(f for f in (CORR_GRADO, FUERA, CORR_V5, PRUEBA2)
+                                      if f.exists())
+                              + ((LOTE_J, LOTE_M) if n_lote else ())},
     }
     (DESTINO / "manifiesto.json").write_text(json.dumps(man, ensure_ascii=False, indent=2),
                                              encoding="utf-8")

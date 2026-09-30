@@ -97,6 +97,7 @@ añaden aquí con el número que les toque, `31_…` en adelante.
 | `salidas/29_prueba2_para_juzgar.csv`, `29_prueba2_pares.csv` | **`prueba 2`** para juzgar a ciegas con la v5, y sus metadatos (**no abrir antes de juzgar**). Una vez juzgada, irreemplazable | versionado (-f) |
 | `salidas/30_lote_para_juzgar.csv`, `30_lote_pares.csv` | el lote de entrenamiento para juzgar a ciegas, y sus metadatos con la P del modelo (**no abrir antes de juzgar**). Una vez juzgado, irreemplazable. `30_candidatos.csv` queda local | versionado (-f) |
 | `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. El primer entrenamiento (commit `1bdc855`, `calibra` de 194) quedó sustituido por la Enmienda 5 y se rehace. `estado/` guarda cada corrida terminada para poder retomar (`huella.json`, y los pesos solo mientras hacen falta); `corrida.log`, el registro. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
+| `salidas/22_modelos_v2/` | el cross-encoder **v2** (D-038, `22 --grilla v2`): `elegido/`, `corridas/`, `semillas/` (las tres de la configuración elegida, para el ensamble) y `resultados.json`. Pesos fuera de git | local; `resultados.json` se commitea |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)
 

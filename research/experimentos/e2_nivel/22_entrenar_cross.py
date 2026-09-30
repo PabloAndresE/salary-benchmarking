@@ -110,6 +110,7 @@ TOL_BASE = 0.005
 
 MOTIVOS = ["ninguno", "p1", "p2", "p3", "p4", "p5"]
 PESOS_W = (1, 2, 3)
+PESOS_HUMANO = (1, 3)            # D-038: peso de los pares con juicio humano (grilla v2)
 AUMENTOS = (False, True)
 SEMILLAS = (20260929, 20260930, 20261001)
 LR = 2e-5
@@ -342,7 +343,7 @@ def puntaje(modo, ab, ba):
 # ---------------------------------------------------------------------------------------
 # una corrida
 # ---------------------------------------------------------------------------------------
-def entrenar(nombre, modo, w, con_aumento, con_motivo, semilla, datos, ctx):
+def entrenar(nombre, modo, w, con_aumento, con_motivo, semilla, datos, ctx, w_humano=1.0):
     import torch
     from transformers import get_linear_schedule_with_warmup
 
@@ -378,7 +379,12 @@ def entrenar(nombre, modo, w, con_aumento, con_motivo, semilla, datos, ctx):
         for i in range(0, len(orden), BATCH):
             f = tr.iloc[orden[i:i + BATCH]]
             y = torch.tensor(f["etiqueta"].to_numpy(), dtype=torch.float32, device=dev)
-            peso = torch.tensor(np.where(f["dificil"].to_numpy(), w, 1.0),
+            # D-038: los pares con juicio humano (el lote de `30`, los 139 y las
+            # correcciones v5) pesan `w_humano` veces; con 1 es la v1 tal cual.
+            humano = (f["origen"].str.startswith("humano")
+                      | f["origen"].str.endswith("_v5")).to_numpy()
+            peso = torch.tensor(np.where(f["dificil"].to_numpy(), w, 1.0)
+                                * np.where(humano, w_humano, 1.0),
                                 dtype=torch.float32, device=dev)
             a, b = f["comun"].tolist(), f["raro"].tolist()
             with autocast():
@@ -457,7 +463,8 @@ def huella(args, hashes, dispositivo):
                    "CALENTAMIENTO": CALENTAMIENTO, "DECAIMIENTO": DECAIMIENTO,
                    "MAXLEN": MAXLEN, "PESO_MOTIVO": PESO_MOTIVO, "P_ERRATA": P_ERRATA,
                    "PESOS_W": PESOS_W, "AUMENTOS": AUMENTOS, "SEMILLAS": SEMILLAS},
-         "rapido": args.rapido, "dispositivo": dispositivo,
+         "rapido": args.rapido, "grilla": getattr(args, "grilla", "v1"),
+         "dispositivo": dispositivo,
          "torch": torch.__version__, "transformers": transformers.__version__}
     return json.loads(json.dumps(h))
 
@@ -558,9 +565,15 @@ def main():
     ap.add_argument("--dispositivo", default="auto", choices=["auto", "cuda", "cpu"])
     ap.add_argument("--rapido", action="store_true",
                     help="prueba de punta a punta: 200 pares, 1 epoca, 1 semilla, 2 configs")
+    ap.add_argument("--grilla", default="v1", choices=["v1", "v2"],
+                    help="v1: la de D-036. v2 (D-038): arquitectura de la v1 fija, solo "
+                         "w_humano en {1, 3}; sin pasos 1-2; guarda las 3 semillas elegidas")
     ap.add_argument("--desde-cero", action="store_true",
                     help="borra las corridas guardadas y empieza de nuevo")
     args = ap.parse_args()
+    v2 = args.grilla == "v2"
+    if v2 and args.salida == SALIDA:
+        args.salida = SALIDA.parent / "22_modelos_v2"      # la v1 no se toca
 
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
@@ -631,7 +644,7 @@ def main():
         (estado / "huella.json").write_text(json.dumps(hu, indent=2), encoding="utf-8")
     retomadas = []
 
-    def correr(nombre, modo, w, aum, motivo, semilla):
+    def correr(nombre, modo, w, aum, motivo, semilla, wh=1.0):
         c = punto_leer(estado, nombre)
         if c is not None:
             retomadas.append(nombre)
@@ -639,14 +652,22 @@ def main():
                   .format(nombre, c["mejor"]["epoca"], c["mejor"]["auc_calibra"],
                           c["mejor"]["auc_valida"]), flush=True)
             return c, False
-        return entrenar(nombre, modo, w, aum, motivo, semilla, datos, ctx), True
+        return entrenar(nombre, modo, w, aum, motivo, semilla, datos, ctx, wh), True
 
     res = {"ficha": ficha(args, dev), "datos_sha256": hashes,
            "paquete_manifiesto": man, "auc_sin_entrenar": auc0, "auc_coseno": auc_cos,
            "corridas": [], "grilla": {}, "retomadas": retomadas}
     semillas = SEMILLAS[:1] if args.rapido else SEMILLAS
-    grilla = [(1, False), (2, True)] if args.rapido else [(w, a) for w in PESOS_W
-                                                           for a in AUMENTOS]
+    if v2:
+        grilla = [(1, False, wh) for wh in PESOS_HUMANO]
+    else:
+        grilla = [(1, False, 1), (2, True, 1)] if args.rapido else [(w, a, 1) for w in PESOS_W
+                                                                     for a in AUMENTOS]
+
+    def nombre_config(k):
+        w, aum, wh = k
+        base = "completo_w{}_{}".format(w, "con_aum" if aum else "sin_aum")
+        return base + "_h{}".format(wh) if v2 else base
 
     def registrar(c):
         m = c["mejor"]
@@ -658,9 +679,10 @@ def main():
                                   "auc_valida": m["auc_valida"]})
 
     # --- 2. pasos 1 y 2: ablacion, una semilla, sin aumento ------------------------------
-    print("\n2. PASOS 1 Y 2 (ablacion: una semilla, sin aumento)")
     ablacion = {}
-    for modo in ("simetrico", "direccional"):
+    print("\n2. PASOS 1 Y 2 (ablacion: una semilla, sin aumento)" if not v2 else
+          "\n2. PASOS 1 Y 2: no (v2, D-038: la arquitectura es la de la v1)")
+    for modo in (("simetrico", "direccional") if not v2 else ()):
         c, nueva = correr("paso_" + modo, modo, 1, False, False, SEMILLAS[0])
         registrar(c)
         ablacion[modo] = c
@@ -671,14 +693,15 @@ def main():
         c["mejor"].pop("estado", None)
 
     # --- 3. paso 3: la grilla, tres semillas --------------------------------------------
-    print("\n3. PASO 3: grilla w x aumento, {} semilla(s) por configuracion".format(
-        len(semillas)))
-    reps = {}
-    for w, aum in grilla:
-        nom = "completo_w{}_{}".format(w, "con_aum" if aum else "sin_aum")
+    print("\n3. PASO 3: grilla {}, {} semilla(s) por configuracion".format(
+        "w_humano" if v2 else "w x aumento", len(semillas)))
+    reps, todas = {}, {}
+    for k in grilla:
+        w, aum, wh = k
+        nom = nombre_config(k)
         corr = []
         for s in semillas:
-            c, nueva = correr("{}_s{}".format(nom, s), "direccional", w, aum, True, s)
+            c, nueva = correr("{}_s{}".format(nom, s), "direccional", w, aum, True, s, wh)
             if nueva:
                 punto_guardar(estado, c, con_pesos=not args.rapido)
             registrar(c)
@@ -686,11 +709,12 @@ def main():
         aucs = [c["mejor"]["auc_calibra"] for c in corr]
         media = float(np.mean(aucs))
         rep = min(corr, key=lambda c: abs(c["mejor"]["auc_calibra"] - media))
-        for c in corr:
-            if c is not rep:
-                soltar_pesos(estado, c)
-        reps[(w, aum)] = rep
-        res["grilla"][nom] = {"w": w, "aumento": aum, "auc_por_semilla": aucs,
+        if not v2:                          # en v2 se sueltan tras elegir (ensamble)
+            for c in corr:
+                if c is not rep:
+                    soltar_pesos(estado, c)
+        reps[k], todas[k] = rep, corr
+        res["grilla"][nom] = {"w": w, "aumento": aum, "w_humano": wh, "auc_por_semilla": aucs,
                               "auc_media": media, "auc_sd": float(np.std(aucs)),
                               "semilla_representante": rep["semilla"],
                               "auc_valida_representante": rep["mejor"]["auc_valida"]}
@@ -698,10 +722,8 @@ def main():
             nom, media, float(np.std(aucs)), rep["semilla"]), flush=True)
 
     # --- 4. eleccion con desempate a favor de la mas simple ----------------------------
-    simple = (1, False)
-    medias = {k: res["grilla"]["completo_w{}_{}".format(k[0], "con_aum" if k[1]
-                                                        else "sin_aum")]["auc_media"]
-              for k in reps}
+    simple = (1, False, 1)
+    medias = {k: res["grilla"][nombre_config(k)]["auc_media"] for k in reps}
     mejor_k = max(medias, key=medias.get)
     rng = np.random.default_rng(SEMILLAS[0])
     eleccion = {"mejor_por_media": list(mejor_k), "simple": list(simple)}
@@ -716,7 +738,8 @@ def main():
         else:
             elegido_k, motivo = simple, "no le gana a la simple con IC95 sobre cero"
     eleccion.update({"elegida": list(elegido_k), "razon": motivo})
-    print("\n4. ELECCION: w={} aumento={}  ({})".format(elegido_k[0], elegido_k[1], motivo))
+    print("\n4. ELECCION: w={} aumento={} w_humano={}  ({})".format(
+        elegido_k[0], elegido_k[1], elegido_k[2], motivo))
 
     # --- 5. calibracion ---------------------------------------------------------------
     elegido = reps[elegido_k]
@@ -736,10 +759,11 @@ def main():
         if g["y"].nunique() == 2:
             por_estrato[e] = {"n": len(ix), "auc_elegido": auc(y_cal[ix], s[ix]),
                               "auc_coseno": auc(y_cal[ix], cal["sim"].to_numpy(float)[ix])}
-    abl = {"sin_entrenar": auc0, "coseno": auc_cos,
-           "paso1_simetrico": ablacion["simetrico"]["mejor"]["auc_calibra"],
-           "paso2_direccional": ablacion["direccional"]["mejor"]["auc_calibra"],
-           "paso3_elegido": elegido["mejor"]["auc_calibra"]}
+    abl = {"sin_entrenar": auc0, "coseno": auc_cos}
+    for modo, nom in (("simetrico", "paso1_simetrico"), ("direccional", "paso2_direccional")):
+        if modo in ablacion:
+            abl[nom] = ablacion[modo]["mejor"]["auc_calibra"]
+    abl["paso3_elegido"] = elegido["mejor"]["auc_calibra"]
     print("\n6. ABLACION en calibra (optimista: calibra tambien eligio la epoca)")
     for k, v in abl.items():
         print("   {:<20} {:.4f}".format(k, v))
@@ -751,8 +775,12 @@ def main():
         guardar(elegido, args.salida / "elegido", ctx, {"temperatura": t,
                                                          "eleccion": eleccion})
         for k, c in reps.items():
-            guardar(c, args.salida / "corridas" / "completo_w{}_{}".format(
-                k[0], "con_aum" if k[1] else "sin_aum"), ctx)
+            guardar(c, args.salida / "corridas" / nombre_config(k), ctx)
+        if v2:
+            # D-038: las tres semillas de la configuracion elegida, para el ensamble
+            for c in todas[elegido_k]:
+                guardar(c, args.salida / "semillas" / c["nombre"], ctx,
+                        {"temperatura": t})
     (args.salida / ("resultados_rapido.json" if args.rapido else "resultados.json")
      ).write_text(json.dumps(res, ensure_ascii=False, indent=2, default=float),
                   encoding="utf-8")
