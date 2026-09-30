@@ -4851,3 +4851,22 @@ Como dato descriptivo, el cross-encoder v1 da 0,976 en esta `calibra` (0,923 con
 Es optimista (v1 se eligió con la `calibra` anterior, muy parecida) y no dice nada de
 `prueba`: muestra que buena parte de lo que parecía error del modelo era inconsistencia del
 oro en el paso 4.
+
+### `prueba 2`, armada antes de entrenar la v2 (2026-09-30)
+
+**Evidencia:** `research/experimentos/e2_nivel/29_prueba2.py`.
+
+400 pares nuevos, el examen de la v2. Mismo marco que `20` (censo de `16`, coseno 0,90–1,01,
+entre grupos distintos). Excluidos: cualquier par que toque un grupo de la plata, los ya
+juzgados (`13e`, `13a`, `20`) y los que la capa 0 fusiona por el grado (598). Comprobado: cero
+pares con grupos de la plata y cero ya juzgados.
+
+**Composición:** bajo 60, banda 340 (111 / 111 / 110 / 8 por tramo), alto 0. El estrato alto y
+el tramo alto de la banda (0,96–0,97) se agotaron en `20`; por la regla de `16` y `20`, lo que
+un tramo no llena pasa a los demás. Mediana del coseno 0,942 (0,947 en `20`): algo más
+difícil que `prueba`. La comparación v2 / v1 es sobre los mismos pares y no se sesga, pero se
+declara. 764 grupos distintos: algunos grupos aparecen en más de un par.
+
+**Se juzga a ciegas con la rúbrica v5**, en 8 lotes de 50, sin `sim`, estrato ni tramo, y
+**antes de entrenar la v2**. El lote de entrenamiento de la zona difícil excluirá los grupos de
+`prueba 2`.
