@@ -4938,3 +4938,15 @@ revisión queda en `mismo_original`.
 **`prueba 2` final: 332 `si` / 68 `no`, sin `duda`.** Queda **congelada con este commit**:
 desde aquí ninguna etiqueta, exclusión ni criterio se toca, y se abre una sola vez con el
 cross-encoder v2 ya entrenado y congelado.
+
+### Lote de entrenamiento juzgado, y el paquete de la v2 (2026-09-30)
+
+Los 400 pares de `30`, juzgados a ciegas por el autor con la v5: **366 `si` / 34 `no`**. Sin
+conflictos con los pasos 2-3 (el lote se eligió sin ellos). En la mitad elegida por la duda del
+cross-encoder v1, el autor dijo `si` en el 88 % y la v1 acierta el 50 % (azar); en la mitad al
+azar, 94 % `si` y la v1 acierta el 92 %. En la zona difícil el autor junta más de lo que la v1
+se atreve: es lo que la v2 tiene que aprender.
+
+**Paquete de la v2 (`21`):** plata de 10.400 (8.900 `entrena` / 1.500 `valida`): la de Gemini con
+el grado (149) y la v5 (49) corregidos, los 139 a mano y los 400 del lote (`humano_lote`).
+`calibra` 191 (148 / 43). Comprobado que no viaja nada de `prueba` ni de `prueba 2`.
