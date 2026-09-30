@@ -4648,7 +4648,12 @@ limpio, `calibra` de 191, 20 corridas, ninguna retomada). Es el cross-encoder de
 - **Por estrato** (cross-encoder frente a coseno): alto 1,00 / 0,40 (n = 29), banda 0,91 / 0,65
   (132), bajo 0,89 / 0,57 (30).
 - **Coincide con el primer entrenamiento** (`1bdc855`, `calibra` de 194): misma configuración,
-  mismas semillas representantes, diferencias ≤ 0,001.
+  mismas semillas representantes, y **los mismos pesos bit a bit**: el SHA-256 de
+  `elegido/model.safetensors` es `040b4dc4a6c5…` en los dos. Con semillas fijas, algoritmos
+  deterministas y la misma GPU (H200, CUDA 13.0), el entrenamiento se reproduce exacto; el
+  límite de la Enmienda 3 (no idéntico entre máquinas distintas) sigue en pie.
+- **Ensayo de `24` sobre `calibra`** (no lee `prueba`): los cinco candados pasan; el
+  cross-encoder en fp32 da 0,9227 (0,9222 en bf16 durante el entrenamiento).
 
 Un incidente sin efecto en el resultado: en una primera relanzada quedaron dos procesos del
 entrenamiento en la misma terminal (uno suspendido); se detuvieron los dos y se entrenó desde
