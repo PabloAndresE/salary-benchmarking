@@ -4980,3 +4980,34 @@ resultado: la v2 se eligió con ella. **La comparación es H4, en `prueba 2`.**
 El autor declara tener el permiso para mandar títulos de clientes a Gemini, pendiente desde
 D-035. Habilita la capa A0 (descripciones) y a Gemini como fuente de candidatos del oro lejano.
 Pendiente: dejar referenciado el documento del permiso, sin datos personales.
+
+### Resultado de H4 (2026-09-30): `prueba 2` abierta una vez
+
+**Evidencia:** `salidas/31_h4.txt` y `31_puntajes_prueba2.csv`, de `31` sobre `48b4549` (repo
+limpio). v1 `040b4dc4a6c5…`, v2 `ed6979378599…`, fp32. `prueba 2`: 400 pares (332 `si` / 68 `no`).
+
+| juez | AUC en `prueba 2` |
+|---|---|
+| coseno | 0,565 |
+| NLI congelado | 0,820 |
+| **cross-encoder v1** | **0,977** |
+| **cross-encoder v2** | **0,985** |
+| ensamble de las 3 semillas de la v2 | 0,987 |
+
+- **H4: no demostrada.** v2 − v1 = +0,008, IC 95 % [−0,003, +0,021]. El IC cruza el cero:
+  **la v1 sigue siendo el cross-encoder de referencia**, como fija el prerregistro.
+- **H1 se replica, y con más margen:** v1 − coseno = **+0,412, IC [+0,334, +0,489]**.
+- **H4b:** v2 − NLI congelado = +0,166 [+0,115, +0,223]; v2 − coseno = +0,420.
+- **El ensamble no aporta:** +0,002 sobre la v2 sola, IC [−0,003, +0,009].
+- **Por estrato:** bajo v2 0,964 / v1 0,948 / coseno 0,564; banda v2 0,988 / v1 0,981 / 0,531.
+- **Calibración y errores (descriptivo, P calibrada, umbral 0,5):** v1 ECE 0,071, junta mal 8/68,
+  separa mal 18/332; **v2 ECE 0,027**, junta mal 7/68, **separa mal 10/332**. La v2 ordena casi
+  igual, pero sus probabilidades son más fiables y se equivoca menos al decidir.
+
+**Lectura.** Las dos versiones ya ordenan casi perfecto en `prueba 2`, y queda poco margen de
+AUC que ganar. Lo que las etiquetas humanas cambiaron es la calibración. **El AUC de la v1 en
+`prueba 2` (0,977) es muy superior al de `prueba` (0,890)** aunque `prueba 2` tiene coseno algo
+más bajo: `prueba 2` se juzgó con la v5, con el paso 4 consistente, mientras que `prueba` arrastra
+la inconsistencia del paso 4 que encontró `25`. **Parte del error medido en H1 era ruido de las
+etiquetas, no del modelo.** Se declara en la tesis: los dos exámenes miden cosas algo distintas,
+y los dos confirman H1.

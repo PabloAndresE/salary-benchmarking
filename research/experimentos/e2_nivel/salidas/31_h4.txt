@@ -1,0 +1,27 @@
+==============================================================================
+31 · H4 SOBRE `prueba 2`: CROSS-ENCODER v2 CONTRA v1 (D-038)
+==============================================================================
+
+comprobaciones: repo limpio | v1 040b4dc4a6c5 | v2 ed6979378599 (commit db0a28b, calibra 191) | NLI en calibra 0.7346
+
+prueba 2: 400 pares (332 si / 68 no)
+
+AUC:  v2 0.9850   v1 0.9770   ensamble v2 0.9868   NLI 0.8195   coseno 0.5652
+
+H4   v2 - v1     +0.0080   IC95 [-0.0033, +0.0211]   -> NO DEMOSTRADO (el IC toca o cruza 0)
+H1r  v1 - coseno +0.4117   IC95 [+0.3344, +0.4891]   -> SE ADOPTA (IC entero sobre 0)
+H4b  v2 - NLI    +0.1655   IC95 [+0.1151, +0.2226]
+H4b  v2 - coseno +0.4198   IC95 [+0.3450, +0.4971]
+desc ensamble-v2 +0.0019   IC95 [-0.0033, +0.0086]
+     bootstrap pareado por par, 10,000 remuestreos, semilla 20261005
+
+POR ESTRATO (descriptivo)
+  bajo   n= 60 (15 no)   v2 0.9644   v1 0.9481   NLI 0.8000   coseno 0.5637
+  banda  n=340 (53 no)   v2 0.9877   v1 0.9811   NLI 0.8224   coseno 0.5309
+
+CALIBRACION Y ERRORES (P calibrada, umbral 0,5; descriptivo)
+  v1  T 1.704  ECE 0.071   junta mal  8/68   separa mal 18/332
+  v2  T 1.206  ECE 0.027   junta mal  7/68   separa mal 10/332
+  ensamble v2        ECE 0.044   junta mal 11/68   separa mal 15/332
+
+ficha: {"fecha": "2026-09-30T22:16:39", "git_commit": "48b454974f203f4dd7083f5e57d1a78a88d61d4b", "git_sin_commitear": false, "v1_sha256": "040b4dc4a6c5ce4338d4c2ea7b8430999993d3d9da7c8414ef2cf599b13507e0", "v2_sha256": "ed6979378599a83cf3d43dc358e4f6cc59cf54d5cd4ebffd6dfdf6755e4d2bb5", "v2_commit_entrenamiento": "db0a28b86594523246bed745a1716b25de9b5dbd", "torch": "2.14.0+cu130", "dispositivo": "cuda"}
