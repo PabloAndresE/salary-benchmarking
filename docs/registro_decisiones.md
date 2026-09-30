@@ -4889,3 +4889,38 @@ sesgado solo hacia lo que el modelo no sabe; la mitad por duda es la que más en
 
 **Se juzga a ciegas con la v5.** Cómo entran al entrenamiento (partición, peso frente a la
 plata) se fija en el prerregistro de la v2, antes de entrenar.
+
+### Prerregistro del cross-encoder v2 (2026-09-30, aprobado por el autor antes de entrenar)
+
+1. **Solo cambian los datos.** Arquitectura y configuración, las de la v1: direccional, cabeza
+   de motivo, w = 1, sin aumento, mismos hiperparámetros. La ablación de H1 mostró que esas
+   piezas no importan; fijarlas deja que la comparación mida el efecto de las etiquetas.
+2. **Datos de entrenamiento:** la plata con sus correcciones (grado 149, v5 49, los 139 a mano)
+   **más los 400 pares del lote de la zona difícil (`30`), todos en `entrena`.** `valida`
+   sigue siendo la plata de Gemini; la validación humana es `calibra`.
+3. **Grilla: solo el peso de las etiquetas humanas, `w_humano` ∈ {1, 3}**, tres semillas cada
+   uno (las de la v1). Elección en `calibra` (191, rejuzgada con la v5) con la regla de la v1:
+   `w_humano = 3` solo gana si le gana a `1` con un IC 95 % sobre cero (bootstrap pareado
+   estratificado); si no, queda `1`. Época y semilla como en la v1. Temperatura reajustada en
+   `calibra`. Candado del NLI congelado: 0,7346. `w_humano` pesa sobre los pares con juicio
+   humano del lote y de los 139.
+4. **`prueba 2`, antes de abrirla:** los 400 juicios del autor con la v5, más la revisión de
+   consistencia de los pasos 2-3 (como `28`, sin mirar ningún modelo); `duda` fuera (como en la
+   Enmienda 4); se congela con un commit **antes de entrenar la v2**.
+5. **Hipótesis:**
+   - **H4 (confirmatoria): AUC(v2) − AUC(v1) en `prueba 2`.** Bootstrap pareado por par,
+     10.000 remuestreos, IC 95 % bilateral. **Se adopta la v2 si el IC queda entero sobre
+     cero.** Un nulo se lee como «no demostrado», y la v1 sigue siendo la referencia.
+   - **Réplica de H1:** v1 − coseno en `prueba 2`, con el criterio de H1.
+   - **H4b (secundaria):** v2 contra NLI congelado y contra coseno, con IC, sin criterio.
+   - **Descriptivos:** el **ensamble** (media de las P de las tres semillas de la
+     configuración elegida) contra la v2 sola; AUC por estrato; calibración (ECE); errores por
+     tipo de par (como `25`).
+   - v1 es exactamente el cross-encoder de H1 (SHA-256 `040b4dc4a6c5…`), sin reajustar nada.
+6. **Potencia:** v1 y v2 estarán muy correlacionadas, lo que achica el error de la diferencia,
+   pero el efecto esperado es pequeño (quizá +0,01 a +0,03). **No se promete significancia.**
+7. **`prueba 2` se abre una sola vez**, con un guion como `24`: candados que no la leen,
+   todos los jueces a la vez, y se niega a correr dos veces.
+8. **Código:** `22` guarda también los pesos de las tres semillas de la configuración elegida
+   (para el ensamble) y admite la grilla de `w_humano`; `21` añade el lote a la plata. No cambia
+   ningún número de la v1.
