@@ -1,0 +1,72 @@
+==============================================================================
+22 · ENTRENAR EL CROSS-ENCODER (D-036)   dispositivo cuda, bf16
+==============================================================================
+paquete: plata 10,400 ({'entrena': 8900, 'valida': 1500}), calibra 191 (148 si / 43 no). prueba en el paquete: 0
+
+1. JUEZ SIN ENTRENAR sobre calibra, fp32 (tiene que dar 0.7346)
+/root/salary-benchmarking/.venv/lib/python3.11/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2264.93it/s]
+   AUC 0.7346
+   coseno en los mismos pares: 0.6438
+
+2. PASOS 1 Y 2: no (v2, D-038: la arquitectura es la de la v1)
+
+3. PASO 3: grilla w_humano, 3 semilla(s) por configuracion
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2073.77it/s]
+/root/salary-benchmarking/research/experimentos/e2_nivel/22_entrenar_cross.py:417: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  perdidas.append(float(perdida))
+    completo_w1_sin_aum_h1_s20260929 ep 1  perdida 0.4713  AUC calibra 0.9657  valida 0.9831  20s
+    completo_w1_sin_aum_h1_s20260929 ep 2  perdida 0.1659  AUC calibra 0.9739  valida 0.9890  39s
+    completo_w1_sin_aum_h1_s20260929 ep 3  perdida 0.1066  AUC calibra 0.9816  valida 0.9849  58s
+    completo_w1_sin_aum_h1_s20260929 ep 4  perdida 0.0636  AUC calibra 0.9753  valida 0.9852  78s
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2045.16it/s]
+    completo_w1_sin_aum_h1_s20260930 ep 1  perdida 0.4790  AUC calibra 0.9807  valida 0.9793  19s
+    completo_w1_sin_aum_h1_s20260930 ep 2  perdida 0.1723  AUC calibra 0.9841  valida 0.9845  38s
+    completo_w1_sin_aum_h1_s20260930 ep 3  perdida 0.1078  AUC calibra 0.9824  valida 0.9834  59s
+    completo_w1_sin_aum_h1_s20260930 ep 4  perdida 0.0669  AUC calibra 0.9802  valida 0.9825  78s
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2113.97it/s]
+    completo_w1_sin_aum_h1_s20261001 ep 1  perdida 0.4722  AUC calibra 0.9871  valida 0.9833  19s
+    completo_w1_sin_aum_h1_s20261001 ep 2  perdida 0.1668  AUC calibra 0.9822  valida 0.9861  38s
+    completo_w1_sin_aum_h1_s20261001 ep 3  perdida 0.1058  AUC calibra 0.9857  valida 0.9853  58s
+    completo_w1_sin_aum_h1_s20261001 ep 4  perdida 0.0707  AUC calibra 0.9821  valida 0.9845  78s
+   completo_w1_sin_aum_h1     AUC calibra medio 0.9843 (sd 0.0022)  representante s20260930
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2839.16it/s]
+    completo_w1_sin_aum_h3_s20260929 ep 1  perdida 0.4980  AUC calibra 0.9794  valida 0.9842  20s
+    completo_w1_sin_aum_h3_s20260929 ep 2  perdida 0.2051  AUC calibra 0.9830  valida 0.9876  39s
+    completo_w1_sin_aum_h3_s20260929 ep 3  perdida 0.1355  AUC calibra 0.9855  valida 0.9833  59s
+    completo_w1_sin_aum_h3_s20260929 ep 4  perdida 0.0834  AUC calibra 0.9844  valida 0.9839  78s
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights:  88%|████████▊ | 177/202 [00:00<00:00, 1751.22it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 1907.50it/s]
+    completo_w1_sin_aum_h3_s20260930 ep 1  perdida 0.5024  AUC calibra 0.9755  valida 0.9796  19s
+    completo_w1_sin_aum_h3_s20260930 ep 2  perdida 0.2024  AUC calibra 0.9885  valida 0.9838  39s
+    completo_w1_sin_aum_h3_s20260930 ep 3  perdida 0.1314  AUC calibra 0.9811  valida 0.9849  59s
+    completo_w1_sin_aum_h3_s20260930 ep 4  perdida 0.0823  AUC calibra 0.9816  valida 0.9840  78s
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2497.58it/s]
+    completo_w1_sin_aum_h3_s20261001 ep 1  perdida 0.4969  AUC calibra 0.9877  valida 0.9788  19s
+    completo_w1_sin_aum_h3_s20261001 ep 2  perdida 0.1958  AUC calibra 0.9796  valida 0.9844  39s
+    completo_w1_sin_aum_h3_s20261001 ep 3  perdida 0.1368  AUC calibra 0.9821  valida 0.9836  58s
+    completo_w1_sin_aum_h3_s20261001 ep 4  perdida 0.0875  AUC calibra 0.9827  valida 0.9833  77s
+   completo_w1_sin_aum_h3     AUC calibra medio 0.9873 (sd 0.0013)  representante s20261001
+
+4. ELECCION: w=1 aumento=False w_humano=1  (no le gana a la simple con IC95 sobre cero)
+5. CALIBRACION: T = 1.206   ECE 0.025 -> 0.018
+
+6. ABLACION en calibra (optimista: calibra tambien eligio la epoca)
+   sin_entrenar         0.7346
+   coseno               0.6438
+   paso3_elegido        0.9841
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 3188.20it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.98it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.97it/s]
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2756.72it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.97it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.97it/s]
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2553.98it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.97it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.96it/s]
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2793.74it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.93it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.93it/s]
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2640.34it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  2.00it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  2.00it/s]
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2358.40it/s]
+Writing model shards:   0%|          | 0/1 [00:00<?, ?it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.95it/s]Writing model shards: 100%|██████████| 1/1 [00:00<00:00,  1.95it/s]
+
+resultados -> /root/salary-benchmarking/research/experimentos/e2_nivel/salidas/22_modelos_v2

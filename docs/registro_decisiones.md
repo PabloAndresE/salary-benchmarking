@@ -4950,3 +4950,33 @@ se atreve: es lo que la v2 tiene que aprender.
 **Paquete de la v2 (`21`):** plata de 10.400 (8.900 `entrena` / 1.500 `valida`): la de Gemini con
 el grado (149) y la v5 (49) corregidos, los 139 a mano y los 400 del lote (`humano_lote`).
 `calibra` 191 (148 / 43). Comprobado que no viaja nada de `prueba` ni de `prueba 2`.
+
+### Resultado del entrenamiento del cross-encoder v2 (2026-09-30, antes de abrir `prueba 2`)
+
+**Evidencia:** `salidas/22_modelos_v2/resultados.json` y `22_modelos_v2.log` (`22 --grilla v2`,
+commit `db0a28b`, repo limpio, 6 corridas, ninguna retomada).
+
+| en `calibra` (191; optimista: eligió época, semilla y configuración) | AUC medio (3 semillas) |
+|---|---|
+| NLI congelado / coseno | 0,7346 / 0,6438 |
+| **v2, `w_humano = 1`** | **0,9843** (sd 0,002) |
+| v2, `w_humano = 3` | 0,9873 (sd 0,001) |
+
+- **Elección: `w_humano = 1`.** `3` no le gana con IC sobre cero ([−0,001, +0,013]): queda la
+  simple, por la regla prerregistrada. Representante: semilla 20260930 (0,9841), SHA-256
+  `ed6979378599…`.
+- **Épocas:** ahora la mejor es la 1, 2 o 3 (en la v1 casi siempre la 1). Con etiquetas más
+  cercanas al criterio del autor, entrenar más ya no aleja de él.
+- **Calibración:** T = 1,21; ECE 0,025 → 0,018.
+- **Por estrato** (v2 frente a coseno): alto 0,98 / 0,41, banda 0,99 / 0,62, bajo 0,95 / 0,69.
+- Las tres semillas quedan en `semillas/` para el ensamble. Respaldo en
+  `/home/pencalada/respaldo/22_modelos_v2/`, verificado.
+
+El 0,984 no se compara con el 0,976 de la v1 sobre la misma `calibra` como si fuera un
+resultado: la v2 se eligió con ella. **La comparación es H4, en `prueba 2`.**
+
+### Permiso para Gemini con títulos de clientes (2026-09-30)
+
+El autor declara tener el permiso para mandar títulos de clientes a Gemini, pendiente desde
+D-035. Habilita la capa A0 (descripciones) y a Gemini como fuente de candidatos del oro lejano.
+Pendiente: dejar referenciado el documento del permiso, sin datos personales.
