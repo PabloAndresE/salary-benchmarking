@@ -1,0 +1,46 @@
+{
+  "nombre": "completo_w1_con_aum_s20260930",
+  "modo": "direccional",
+  "w": 1,
+  "aumento": true,
+  "motivo": true,
+  "semilla": 20260930,
+  "n_entrena": 14058,
+  "historia": [
+    {
+      "epoca": 1,
+      "perdida": 0.400738250925629,
+      "auc_calibra": 0.9230769230769231,
+      "auc_valida": 0.9800518003148647,
+      "segundos": 35.2
+    },
+    {
+      "epoca": 2,
+      "perdida": 0.13267136287388645,
+      "auc_calibra": 0.9008667388949079,
+      "auc_valida": 0.9807912244172465,
+      "segundos": 68.7
+    },
+    {
+      "epoca": 3,
+      "perdida": 0.07272727869937874,
+      "auc_calibra": 0.8992416034669557,
+      "auc_valida": 0.982142095373521,
+      "segundos": 100.6
+    },
+    {
+      "epoca": 4,
+      "perdida": 0.04186285784896675,
+      "auc_calibra": 0.8926056338028169,
+      "auc_valida": 0.9822304606165252,
+      "segundos": 132.3
+    }
+  ],
+  "mejor": {
+    "epoca": 1,
+    "perdida": 0.400738250925629,
+    "auc_calibra": 0.9230769230769231,
+    "auc_valida": 0.9800518003148647,
+    "segundos": 35.2
+  }
+}

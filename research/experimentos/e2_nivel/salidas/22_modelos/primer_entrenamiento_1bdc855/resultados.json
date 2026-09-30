@@ -1,0 +1,1050 @@
+{
+  "ficha": {
+    "fecha": "2026-09-29T21:26:05",
+    "git_commit": "1bdc8559030a8436aecf67403ba6c81d384449e0",
+    "git_sin_commitear": false,
+    "python": "3.11.12",
+    "plataforma": "Linux-6.8.0-60-generic-x86_64-with-glibc2.35",
+    "torch": "2.14.0+cu130",
+    "cuda": "13.0",
+    "gpu": "NVIDIA H200",
+    "transformers": "5.17.0",
+    "sklearn": "1.9.0",
+    "numpy": "2.4.6",
+    "pandas": "3.0.3",
+    "modelo_id": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+    "modelo_revision": "b5113eb38ab63efdd7f280f8c144ea8b13f978ce",
+    "modelo_sha256": "7c8e29f1115986d032e92b0fbaa0bdef1062a46f658b08705f237c05014a8541",
+    "argumentos": {
+      "modelo": "modelos/mdeberta-xnli",
+      "paquete": "/root/salary-benchmarking/research/experimentos/e2_nivel/salidas/21_paquete",
+      "salida": "/root/salary-benchmarking/research/experimentos/e2_nivel/salidas/22_modelos",
+      "dispositivo": "cuda",
+      "rapido": "False",
+      "desde_cero": "False"
+    }
+  },
+  "datos_sha256": {
+    "plata.csv": "ca127fb2ec188c7433e2ca582c24f7953b0afaa535a07d5a551307deff5975ab",
+    "calibra.csv": "e7a022a1669a0a783206240d9a968c1ade77be9c7cbbafb4812e11febcfa55c5",
+    "manifiesto.json": "239fcb84a8182829cf31fb466aa91245382a436027f1edafbe771ddca8666895"
+  },
+  "paquete_manifiesto": {
+    "creado": "2026-09-29T21:14:08",
+    "decision": "D-036, enmiendas 1, 2 y 5",
+    "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+    "plantilla": "El puesto de trabajo es {}.",
+    "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
+    "rubrica_v3_sha256_12": "83b03d04c400",
+    "plata": {
+      "pares": 10000,
+      "sin_respuesta_en_los_dos_ordenes": 0,
+      "por_particion": {
+        "entrena": 8500,
+        "valida": 1500
+      },
+      "incoherentes": 139,
+      "incoherentes_juzgados_a_mano": 139,
+      "incoherentes_con_etiqueta_blanda": 0,
+      "corregidos_por_grado": 149,
+      "tasa_si_coherentes": 0.6702,
+      "dificil": 2665
+    },
+    "calibra": {
+      "pares": 194,
+      "si": 142,
+      "no": 52,
+      "fuera_por_capa0": 6
+    },
+    "prueba_en_el_paquete": 0,
+    "prueba_comprobada_contra": {
+      "pares_de_grupos": 600,
+      "pares_de_titulos": 600
+    },
+    "fuentes_sha256_12": {
+      "16_pares_10000.csv": "08f26fd0a9ef",
+      "16_respuestas_llm.csv": "c36235cef251",
+      "18_para_juzgar.csv": "7aa89a26514e",
+      "18_meta.csv": "5593112c0181",
+      "13e_pares_400.csv": "8f85de15492d",
+      "13e_para_juzgar.csv": "9a7187487211",
+      "20_pares_400.csv": "ba0c38cd8fed",
+      "23_correcciones_plata.csv": "ce7fabaeb4f5",
+      "23_fuera_por_capa0.csv": "291be032a8fc"
+    }
+  },
+  "auc_sin_entrenar": 0.7284669555796317,
+  "auc_coseno": 0.6939328277356447,
+  "corridas": [
+    {
+      "nombre": "paso_simetrico",
+      "modo": "simetrico",
+      "w": 1,
+      "aumento": false,
+      "motivo": false,
+      "semilla": 20260929,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.2959974314317219,
+          "auc_calibra": 0.937296858071506,
+          "auc_valida": 0.9786013914986543,
+          "segundos": 17.1
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.13262994200537415,
+          "auc_calibra": 0.9355362946912242,
+          "auc_valida": 0.9842405159717638,
+          "segundos": 35.0
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.0849256136374114,
+          "auc_calibra": 0.9245666305525461,
+          "auc_valida": 0.9871291452948048,
+          "segundos": 57.9
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.06073035556329344,
+          "auc_calibra": 0.9284940411700975,
+          "auc_valida": 0.9860382916053019,
+          "segundos": 75.8
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.937296858071506,
+      "auc_valida": 0.9786013914986543
+    },
+    {
+      "nombre": "paso_direccional",
+      "modo": "direccional",
+      "w": 1,
+      "aumento": false,
+      "motivo": false,
+      "semilla": 20260929,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.3010578337580638,
+          "auc_calibra": 0.9305254604550379,
+          "auc_valida": 0.9810085826011884,
+          "segundos": 18.9
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.11944158935544774,
+          "auc_calibra": 0.9298483206933912,
+          "auc_valida": 0.9828022954649331,
+          "segundos": 38.7
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.07070170865084317,
+          "auc_calibra": 0.9226706392199351,
+          "auc_valida": 0.9844578741557057,
+          "segundos": 57.7
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.043971187046674756,
+          "auc_calibra": 0.9200975081256771,
+          "auc_valida": 0.9837925956020518,
+          "segundos": 76.8
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9305254604550379,
+      "auc_valida": 0.9810085826011884
+    },
+    {
+      "nombre": "completo_w1_sin_aum_s20260929",
+      "modo": "direccional",
+      "w": 1,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20260929,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.482823432696269,
+          "auc_calibra": 0.9314734561213434,
+          "auc_valida": 0.9771428571428571,
+          "segundos": 19.2
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.1767939501652088,
+          "auc_calibra": 0.926056338028169,
+          "auc_valida": 0.9828612056269361,
+          "segundos": 39.0
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.10457546384374898,
+          "auc_calibra": 0.9242280606717226,
+          "auc_valida": 0.9836514143517344,
+          "segundos": 58.5
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.06890081285842155,
+          "auc_calibra": 0.9183369447453955,
+          "auc_valida": 0.9845787415570565,
+          "segundos": 79.4
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9314734561213434,
+      "auc_valida": 0.9771428571428571
+    },
+    {
+      "nombre": "completo_w1_sin_aum_s20260930",
+      "modo": "direccional",
+      "w": 1,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20260930,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.4807589730822054,
+          "auc_calibra": 0.9214517876489707,
+          "auc_valida": 0.9846813264943375,
+          "segundos": 24.2
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.16768330174911403,
+          "auc_calibra": 0.9129198266522209,
+          "auc_valida": 0.9824061754100858,
+          "segundos": 52.7
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.10373391209194731,
+          "auc_calibra": 0.9152221018418201,
+          "auc_valida": 0.9856309989335229,
+          "segundos": 71.9
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.06339334421335979,
+          "auc_calibra": 0.9075027085590466,
+          "auc_valida": 0.9856381087806613,
+          "segundos": 92.5
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9214517876489707,
+      "auc_valida": 0.9846813264943375
+    },
+    {
+      "nombre": "completo_w1_sin_aum_s20261001",
+      "modo": "direccional",
+      "w": 1,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20261001,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.48613530359602064,
+          "auc_calibra": 0.9232123510292525,
+          "auc_valida": 0.9822477273881469,
+          "segundos": 19.0
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.17416170871942618,
+          "auc_calibra": 0.9188786565547129,
+          "auc_valida": 0.9821817073790056,
+          "segundos": 38.5
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.10714649145239334,
+          "auc_calibra": 0.9184046587215602,
+          "auc_valida": 0.9850093951551471,
+          "segundos": 58.2
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.0639223842347685,
+          "auc_calibra": 0.9115655471289275,
+          "auc_valida": 0.9856472500126962,
+          "segundos": 77.6
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9232123510292525,
+      "auc_valida": 0.9822477273881469
+    },
+    {
+      "nombre": "completo_w1_con_aum_s20260929",
+      "modo": "direccional",
+      "w": 1,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20260929,
+      "n_entrena": 14150,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.39591775614238484,
+          "auc_calibra": 0.9225352112676056,
+          "auc_valida": 0.969222487430806,
+          "segundos": 41.6
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.130057782213294,
+          "auc_calibra": 0.9236186348862405,
+          "auc_valida": 0.9807191102534153,
+          "segundos": 75.1
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.07268227453676786,
+          "auc_calibra": 0.9141386782231853,
+          "auc_valida": 0.9836696968158042,
+          "segundos": 109.5
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.03957887042684872,
+          "auc_calibra": 0.9053358613217768,
+          "auc_valida": 0.9827139302219288,
+          "segundos": 142.1
+        }
+      ],
+      "epoca_elegida": 2,
+      "auc_calibra": 0.9236186348862405,
+      "auc_valida": 0.9807191102534153
+    },
+    {
+      "nombre": "completo_w1_con_aum_s20260930",
+      "modo": "direccional",
+      "w": 1,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20260930,
+      "n_entrena": 14058,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.400738250925629,
+          "auc_calibra": 0.9230769230769231,
+          "auc_valida": 0.9800518003148647,
+          "segundos": 35.2
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.13267136287388645,
+          "auc_calibra": 0.9008667388949079,
+          "auc_valida": 0.9807912244172465,
+          "segundos": 68.7
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.07272727869937874,
+          "auc_calibra": 0.8992416034669557,
+          "auc_valida": 0.982142095373521,
+          "segundos": 100.6
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.04186285784896675,
+          "auc_calibra": 0.8926056338028169,
+          "auc_valida": 0.9822304606165252,
+          "segundos": 132.3
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9230769230769231,
+      "auc_valida": 0.9800518003148647
+    },
+    {
+      "nombre": "completo_w1_con_aum_s20261001",
+      "modo": "direccional",
+      "w": 1,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20261001,
+      "n_entrena": 14083,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.4063141701876053,
+          "auc_calibra": 0.921180931744312,
+          "auc_valida": 0.9805210502259916,
+          "segundos": 32.2
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.1375856348492898,
+          "auc_calibra": 0.9133261105092092,
+          "auc_valida": 0.9859103143568129,
+          "segundos": 63.5
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.0734309029095973,
+          "auc_calibra": 0.9111592632719393,
+          "auc_valida": 0.9857193641765273,
+          "segundos": 96.7
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.042123085148146805,
+          "auc_calibra": 0.9089924160346696,
+          "auc_valida": 0.9841755116550709,
+          "segundos": 129.4
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.921180931744312,
+      "auc_valida": 0.9805210502259916
+    },
+    {
+      "nombre": "completo_w2_sin_aum_s20260929",
+      "modo": "direccional",
+      "w": 2,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20260929,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.454575981608683,
+          "auc_calibra": 0.9332340195016252,
+          "auc_valida": 0.978081356965111,
+          "segundos": 19.5
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.16325944695355638,
+          "auc_calibra": 0.9272751895991331,
+          "auc_valida": 0.982170534762074,
+          "segundos": 38.7
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.09394993417094552,
+          "auc_calibra": 0.9278169014084507,
+          "auc_valida": 0.9842852064394902,
+          "segundos": 58.0
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.0641053702885327,
+          "auc_calibra": 0.9232800650054171,
+          "auc_valida": 0.984710781575339,
+          "segundos": 77.3
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9332340195016252,
+      "auc_valida": 0.978081356965111
+    },
+    {
+      "nombre": "completo_w2_sin_aum_s20260930",
+      "modo": "direccional",
+      "w": 2,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20260930,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.4543436965940142,
+          "auc_calibra": 0.9203683640303358,
+          "auc_valida": 0.9807729419531767,
+          "segundos": 20.5
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.15808578490461678,
+          "auc_calibra": 0.9198266522210184,
+          "auc_valida": 0.9841419938042761,
+          "segundos": 40.9
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.09745103589353621,
+          "auc_calibra": 0.9039815817984832,
+          "auc_valida": 0.9857071758671475,
+          "segundos": 60.7
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.05826500141502995,
+          "auc_calibra": 0.9072318526543879,
+          "auc_valida": 0.9867066172363008,
+          "segundos": 81.4
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9203683640303358,
+      "auc_valida": 0.9807729419531767
+    },
+    {
+      "nombre": "completo_w2_sin_aum_s20261001",
+      "modo": "direccional",
+      "w": 2,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20261001,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.45684717916988565,
+          "auc_calibra": 0.924566630552546,
+          "auc_valida": 0.9821156873698644,
+          "segundos": 20.4
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.15818022377088778,
+          "auc_calibra": 0.9257854821235103,
+          "auc_valida": 0.9807597379513483,
+          "segundos": 40.3
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.10039060564162,
+          "auc_calibra": 0.9161700975081257,
+          "auc_valida": 0.9843400538316998,
+          "segundos": 60.7
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.05624107213575337,
+          "auc_calibra": 0.9087215601300108,
+          "auc_valida": 0.9853344167386116,
+          "segundos": 80.4
+        }
+      ],
+      "epoca_elegida": 2,
+      "auc_calibra": 0.9257854821235103,
+      "auc_valida": 0.9807597379513483
+    },
+    {
+      "nombre": "completo_w2_con_aum_s20260929",
+      "modo": "direccional",
+      "w": 2,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20260929,
+      "n_entrena": 14150,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.37809099913963684,
+          "auc_calibra": 0.9233477789815818,
+          "auc_valida": 0.9719750139657711,
+          "segundos": 31.8
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.11948016820408185,
+          "auc_calibra": 0.9171180931744312,
+          "auc_valida": 0.9816179980701843,
+          "segundos": 65.1
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.06584316290469323,
+          "auc_calibra": 0.9083152762730228,
+          "auc_valida": 0.9816738611548423,
+          "segundos": 97.0
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.03686521084491441,
+          "auc_calibra": 0.9096695557963164,
+          "auc_valida": 0.9808044284190747,
+          "segundos": 128.8
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9233477789815818,
+      "auc_valida": 0.9719750139657711
+    },
+    {
+      "nombre": "completo_w2_con_aum_s20260930",
+      "modo": "direccional",
+      "w": 2,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20260930,
+      "n_entrena": 14058,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.37939289078243416,
+          "auc_calibra": 0.9121072589382448,
+          "auc_valida": 0.9793956629932457,
+          "segundos": 31.5
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.12350358611544256,
+          "auc_calibra": 0.9020855904658722,
+          "auc_valida": 0.9808440404245594,
+          "segundos": 65.3
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.06933242506003642,
+          "auc_calibra": 0.9001895991332611,
+          "auc_valida": 0.9820100553552383,
+          "segundos": 98.3
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.038807612194531514,
+          "auc_calibra": 0.9065547128927411,
+          "auc_valida": 0.9831882585952973,
+          "segundos": 130.9
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9121072589382448,
+      "auc_valida": 0.9793956629932457
+    },
+    {
+      "nombre": "completo_w2_con_aum_s20261001",
+      "modo": "direccional",
+      "w": 2,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20261001,
+      "n_entrena": 14083,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.3819428342574037,
+          "auc_calibra": 0.9225352112676056,
+          "auc_valida": 0.9783515311563659,
+          "segundos": 31.7
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.12416287023434733,
+          "auc_calibra": 0.9060130010834235,
+          "auc_valida": 0.9836107866538013,
+          "segundos": 63.7
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.06630750706835381,
+          "auc_calibra": 0.9084507042253522,
+          "auc_valida": 0.984860088365243,
+          "segundos": 95.8
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.03866307455357354,
+          "auc_calibra": 0.9123781148429037,
+          "auc_valida": 0.9841684018079326,
+          "segundos": 128.9
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9225352112676056,
+      "auc_valida": 0.9783515311563659
+    },
+    {
+      "nombre": "completo_w3_sin_aum_s20260929",
+      "modo": "direccional",
+      "w": 3,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20260929,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.4340968546002431,
+          "auc_calibra": 0.9245666305525461,
+          "auc_valida": 0.9794078513026256,
+          "segundos": 19.3
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.1535221208114513,
+          "auc_calibra": 0.9255146262188515,
+          "auc_valida": 0.9852399573409172,
+          "segundos": 40.9
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.08727590401334814,
+          "auc_calibra": 0.9238894907908992,
+          "auc_valida": 0.9847747701995836,
+          "segundos": 61.2
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.05956322796593763,
+          "auc_calibra": 0.9238894907908992,
+          "auc_valida": 0.9849027474480728,
+          "segundos": 81.8
+        }
+      ],
+      "epoca_elegida": 2,
+      "auc_calibra": 0.9255146262188515,
+      "auc_valida": 0.9852399573409172
+    },
+    {
+      "nombre": "completo_w3_sin_aum_s20260930",
+      "modo": "direccional",
+      "w": 3,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20260930,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.4355254401277779,
+          "auc_calibra": 0.9275460455037919,
+          "auc_valida": 0.9814879894367985,
+          "segundos": 20.5
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.14889932800560518,
+          "auc_calibra": 0.9194203683640303,
+          "auc_valida": 0.9819084861104058,
+          "segundos": 40.1
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.09241165059244022,
+          "auc_calibra": 0.9032367280606717,
+          "auc_valida": 0.9852673810370218,
+          "segundos": 59.6
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.057676461667060516,
+          "auc_calibra": 0.8975487540628386,
+          "auc_valida": 0.9843359910619065,
+          "segundos": 80.5
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9275460455037919,
+      "auc_valida": 0.9814879894367985
+    },
+    {
+      "nombre": "completo_w3_sin_aum_s20261001",
+      "modo": "direccional",
+      "w": 3,
+      "aumento": false,
+      "motivo": true,
+      "semilla": 20261001,
+      "n_entrena": 8500,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.4320191741970025,
+          "auc_calibra": 0.9301191765980498,
+          "auc_valida": 0.9832106038291606,
+          "segundos": 20.3
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.14446985344157406,
+          "auc_calibra": 0.9233477789815818,
+          "auc_valida": 0.9812818038697882,
+          "segundos": 41.1
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.09153994878043274,
+          "auc_calibra": 0.9099404117009751,
+          "auc_valida": 0.9858889848153978,
+          "segundos": 61.1
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.0508832241657113,
+          "auc_calibra": 0.9068255687973997,
+          "auc_valida": 0.986104311614443,
+          "segundos": 81.3
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9301191765980498,
+      "auc_valida": 0.9832106038291606
+    },
+    {
+      "nombre": "completo_w3_con_aum_s20260929",
+      "modo": "direccional",
+      "w": 3,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20260929,
+      "n_entrena": 14150,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.3659389430644415,
+          "auc_calibra": 0.919284940411701,
+          "auc_valida": 0.9729866436443045,
+          "segundos": 33.7
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.11040093568805395,
+          "auc_calibra": 0.9134615384615384,
+          "auc_valida": 0.9802935351175663,
+          "segundos": 65.6
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.05948400876587824,
+          "auc_calibra": 0.9106175514626219,
+          "auc_valida": 0.9816830023868772,
+          "segundos": 100.5
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.03358915254461072,
+          "auc_calibra": 0.9092632719393282,
+          "auc_valida": 0.9825189172718501,
+          "segundos": 135.7
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.919284940411701,
+      "auc_valida": 0.9729866436443045
+    },
+    {
+      "nombre": "completo_w3_con_aum_s20260930",
+      "modo": "direccional",
+      "w": 3,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20260930,
+      "n_entrena": 14058,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.3642712615070526,
+          "auc_calibra": 0.9119718309859155,
+          "auc_valida": 0.9821989741506272,
+          "segundos": 31.5
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.11353635158315724,
+          "auc_calibra": 0.8961267605633804,
+          "auc_valida": 0.9820974049057946,
+          "segundos": 65.0
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.06277952128254004,
+          "auc_calibra": 0.9007313109425786,
+          "auc_valida": 0.9829211314813874,
+          "segundos": 98.3
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.036408580223426475,
+          "auc_calibra": 0.894704767063922,
+          "auc_valida": 0.9841501193438628,
+          "segundos": 133.6
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9119718309859155,
+      "auc_valida": 0.9821989741506272
+    },
+    {
+      "nombre": "completo_w3_con_aum_s20261001",
+      "modo": "direccional",
+      "w": 3,
+      "aumento": true,
+      "motivo": true,
+      "semilla": 20261001,
+      "n_entrena": 14083,
+      "historia": [
+        {
+          "epoca": 1,
+          "perdida": 0.3673903190418909,
+          "auc_calibra": 0.9249729144095341,
+          "auc_valida": 0.9757716723376162,
+          "segundos": 32.7
+        },
+        {
+          "epoca": 2,
+          "perdida": 0.11665422659654534,
+          "auc_calibra": 0.9022210184182016,
+          "auc_valida": 0.9849332182215225,
+          "segundos": 66.7
+        },
+        {
+          "epoca": 3,
+          "perdida": 0.0627525079078854,
+          "auc_calibra": 0.9123781148429035,
+          "auc_valida": 0.9854522370626174,
+          "segundos": 100.3
+        },
+        {
+          "epoca": 4,
+          "perdida": 0.03334551443986789,
+          "auc_calibra": 0.9098049837486457,
+          "auc_valida": 0.9841531664212078,
+          "segundos": 133.8
+        }
+      ],
+      "epoca_elegida": 1,
+      "auc_calibra": 0.9249729144095341,
+      "auc_valida": 0.9757716723376162
+    }
+  ],
+  "grilla": {
+    "completo_w1_sin_aum": {
+      "w": 1,
+      "aumento": false,
+      "auc_por_semilla": [
+        0.9314734561213434,
+        0.9214517876489707,
+        0.9232123510292525
+      ],
+      "auc_media": 0.9253791982665222,
+      "auc_sd": 0.004368819821933944,
+      "semilla_representante": 20261001,
+      "auc_valida_representante": 0.9822477273881469
+    },
+    "completo_w1_con_aum": {
+      "w": 1,
+      "aumento": true,
+      "auc_por_semilla": [
+        0.9236186348862405,
+        0.9230769230769231,
+        0.921180931744312
+      ],
+      "auc_media": 0.9226254965691586,
+      "auc_sd": 0.0010451279254956886,
+      "semilla_representante": 20260930,
+      "auc_valida_representante": 0.9800518003148647
+    },
+    "completo_w2_sin_aum": {
+      "w": 2,
+      "aumento": false,
+      "auc_por_semilla": [
+        0.9332340195016252,
+        0.9203683640303358,
+        0.9257854821235103
+      ],
+      "auc_media": 0.9264626218851572,
+      "auc_sd": 0.005274160999254249,
+      "semilla_representante": 20261001,
+      "auc_valida_representante": 0.9807597379513483
+    },
+    "completo_w2_con_aum": {
+      "w": 2,
+      "aumento": true,
+      "auc_por_semilla": [
+        0.9233477789815818,
+        0.9121072589382448,
+        0.9225352112676056
+      ],
+      "auc_media": 0.9193300830624774,
+      "auc_sd": 0.005118069806717261,
+      "semilla_representante": 20261001,
+      "auc_valida_representante": 0.9783515311563659
+    },
+    "completo_w3_sin_aum": {
+      "w": 3,
+      "aumento": false,
+      "auc_por_semilla": [
+        0.9255146262188515,
+        0.9275460455037919,
+        0.9301191765980498
+      ],
+      "auc_media": 0.9277266161068978,
+      "auc_sd": 0.0018841311623970032,
+      "semilla_representante": 20260930,
+      "auc_valida_representante": 0.9814879894367985
+    },
+    "completo_w3_con_aum": {
+      "w": 3,
+      "aumento": true,
+      "auc_por_semilla": [
+        0.919284940411701,
+        0.9119718309859155,
+        0.9249729144095341
+      ],
+      "auc_media": 0.9187432286023834,
+      "auc_sd": 0.005321474188620926,
+      "semilla_representante": 20260929,
+      "auc_valida_representante": 0.9729866436443045
+    }
+  },
+  "retomadas": [],
+  "eleccion": {
+    "mejor_por_media": [
+      3,
+      false
+    ],
+    "simple": [
+      1,
+      false
+    ],
+    "ic95_mejor_menos_simple": [
+      -0.009344528710725886,
+      0.01936619718309862
+    ],
+    "elegida": [
+      1,
+      false
+    ],
+    "razon": "no le gana a la simple con IC95 sobre cero"
+  },
+  "calibracion": {
+    "temperatura": 1.7041648496360602,
+    "nll": 0.20845541122795508,
+    "ece_antes": 0.039778825690124905,
+    "ece_despues": 0.024007928356067413
+  },
+  "por_estrato_calibra": {
+    "alto": {
+      "n": 30,
+      "auc_elegido": 1.0,
+      "auc_coseno": 0.3827160493827161
+    },
+    "bajo": {
+      "n": 30,
+      "auc_elegido": 0.8883928571428572,
+      "auc_coseno": 0.5736607142857144
+    },
+    "banda": {
+      "n": 134,
+      "auc_elegido": 0.9108225108225109,
+      "auc_coseno": 0.6509379509379509
+    }
+  },
+  "ablacion_calibra": {
+    "sin_entrenar": 0.7284669555796317,
+    "coseno": 0.6939328277356447,
+    "paso1_simetrico": 0.937296858071506,
+    "paso2_direccional": 0.9305254604550379,
+    "paso3_elegido": 0.9232123510292525
+  }
+}

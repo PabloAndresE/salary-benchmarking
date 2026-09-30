@@ -1,0 +1,40 @@
+{
+  "git_commit": "1bdc8559030a8436aecf67403ba6c81d384449e0",
+  "git_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "datos_sha256": {
+    "plata.csv": "ca127fb2ec188c7433e2ca582c24f7953b0afaa535a07d5a551307deff5975ab",
+    "calibra.csv": "e7a022a1669a0a783206240d9a968c1ade77be9c7cbbafb4812e11febcfa55c5",
+    "manifiesto.json": "239fcb84a8182829cf31fb466aa91245382a436027f1edafbe771ddca8666895"
+  },
+  "modelo_sha256": "7c8e29f1115986d032e92b0fbaa0bdef1062a46f658b08705f237c05014a8541",
+  "plantilla": "El puesto de trabajo es {}.",
+  "hiper": {
+    "LR": 2e-05,
+    "LR_CABEZA": 0.0001,
+    "BATCH": 32,
+    "EPOCAS": 4,
+    "CALENTAMIENTO": 0.1,
+    "DECAIMIENTO": 0.01,
+    "MAXLEN": 64,
+    "PESO_MOTIVO": 0.3,
+    "P_ERRATA": 0.3,
+    "PESOS_W": [
+      1,
+      2,
+      3
+    ],
+    "AUMENTOS": [
+      false,
+      true
+    ],
+    "SEMILLAS": [
+      20260929,
+      20260930,
+      20261001
+    ]
+  },
+  "rapido": false,
+  "dispositivo": "cuda",
+  "torch": "2.14.0+cu130",
+  "transformers": "5.17.0"
+}

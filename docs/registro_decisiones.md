@@ -4577,7 +4577,15 @@ eligió época, semilla, configuración y temperatura con los 194 pares de `cali
 cambia, pero `calibra` sí, así que se reentrena desde cero con los 191. Sus números quedan como
 referencia, no como el modelo de H1: elegida w = 1 sin aumento, semilla 20261001, época 1,
 AUC 0,9232 en `calibra` (194), T = 1,70; ablación 0,937 (paso 1) / 0,931 (paso 2) / 0,923
-(paso 3), y casi todas las corridas eligieron la época 1.
+(paso 3), y casi todas las corridas eligieron la época 1. Guardados en
+`22_modelos/primer_entrenamiento_1bdc855/` (resultados, registro y puntajes de cada corrida).
+
+**Comprobado con esos puntajes antes de reentrenar:** sobre los 191 pares, todas las
+configuraciones bajan ~0,001, el orden no cambia, la simple sigue elegida y el representante
+de cada configuración es la misma semilla. Lo que no se puede comprobar es la época (solo se
+guardó la mejor de cada corrida), y la temperatura cambiaría un poco. Se reentrena igual
+(decisión del autor), para que el modelo de H1 quede elegido entero con la `calibra`
+definitiva y sin salvedades; cuesta una hora de GPU.
 
 **Un fallo de `23` que se corrigió de paso:** si un par salía de la lista de revisión (porque
 la regla pasaba a cubrirlo), su juicio a mano se perdía al reescribir el archivo. Le pasó a

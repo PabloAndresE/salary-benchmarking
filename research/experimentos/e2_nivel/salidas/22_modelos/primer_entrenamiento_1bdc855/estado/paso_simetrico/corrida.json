@@ -1,0 +1,46 @@
+{
+  "nombre": "paso_simetrico",
+  "modo": "simetrico",
+  "w": 1,
+  "aumento": false,
+  "motivo": false,
+  "semilla": 20260929,
+  "n_entrena": 8500,
+  "historia": [
+    {
+      "epoca": 1,
+      "perdida": 0.2959974314317219,
+      "auc_calibra": 0.937296858071506,
+      "auc_valida": 0.9786013914986543,
+      "segundos": 17.1
+    },
+    {
+      "epoca": 2,
+      "perdida": 0.13262994200537415,
+      "auc_calibra": 0.9355362946912242,
+      "auc_valida": 0.9842405159717638,
+      "segundos": 35.0
+    },
+    {
+      "epoca": 3,
+      "perdida": 0.0849256136374114,
+      "auc_calibra": 0.9245666305525461,
+      "auc_valida": 0.9871291452948048,
+      "segundos": 57.9
+    },
+    {
+      "epoca": 4,
+      "perdida": 0.06073035556329344,
+      "auc_calibra": 0.9284940411700975,
+      "auc_valida": 0.9860382916053019,
+      "segundos": 75.8
+    }
+  ],
+  "mejor": {
+    "epoca": 1,
+    "perdida": 0.2959974314317219,
+    "auc_calibra": 0.937296858071506,
+    "auc_valida": 0.9786013914986543,
+    "segundos": 17.1
+  }
+}
