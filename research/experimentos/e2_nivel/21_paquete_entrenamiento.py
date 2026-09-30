@@ -52,6 +52,7 @@ ORO_JUZ = SAL / "13e_para_juzgar.csv"
 NUEVOS_META = SAL / "20_pares_400.csv"
 CORR_GRADO = SAL / "23_correcciones_plata.csv"   # Enmienda 5: el grado ya no separa
 FUERA = SAL / "23_fuera_por_capa0.csv"           # Enmienda 5: los fusiona la capa 0
+CORR_V5 = SAL / "27_correcciones_v5.csv"         # D-038: rubrica v5, juicio humano
 RUBRICA = AQUI / "rubrica_mismo_cargo.md"
 DESTINO = SAL / "21_paquete"
 PLANTILLA = "El puesto de trabajo es {}."        # con el titulo en .title(); Enmienda 2
@@ -121,6 +122,20 @@ def main():
         p.loc[k, "motivo"] = "ninguno" if f["mismo"] == "si" else paso_de_nota(f["nota"])
     n_inc = int((~coherente).sum())
 
+    # --- D-038: la rubrica v5, al final: es el criterio mas reciente y ya juzgado a mano --
+    n_v5 = 0
+    if CORR_V5.exists():
+        cv = pd.read_csv(CORR_V5)
+        for _, f in cv.iterrows():
+            k = p.index[p["n"] == int(f["n"])]
+            if len(k) != 1:
+                raise SystemExit("ALTO: la correccion v5 del par {} no esta en la plata".format(
+                    f["n"]))
+            p.loc[k, "etiqueta"] = float(f["etiqueta"])
+            p.loc[k, "motivo"] = f["motivo"]
+            p.loc[k, "origen"] = p.loc[k, "origen"] + "_v5"
+        n_v5 = len(cv)
+
     plata = p[["n", "comun", "raro", "particion", "estrato", "dificil", "sim",
                "mismo_ab", "mismo_ba", "paso_ab", "paso_ba", "etiqueta", "origen",
                "motivo"]]
@@ -163,7 +178,7 @@ def main():
     rub = RUBRICA.read_text(encoding="utf-8").split("\n## Historial")[0]
     man = {
         "creado": dt.datetime.now().isoformat(timespec="seconds"),
-        "decision": "D-036, enmiendas 1, 2 y 5",
+        "decision": "D-036, enmiendas 1, 2 y 5; D-038",
         "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
         "plantilla": PLANTILLA,
         "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
@@ -176,6 +191,7 @@ def main():
             "incoherentes_juzgados_a_mano": int(len(hechos)),
             "incoherentes_con_etiqueta_blanda": n_inc - int(len(hechos)),
             "corregidos_por_grado": n_grado,
+            "corregidos_por_v5": n_v5,
             "tasa_si_coherentes": round(float(p.loc[coherente, "etiqueta"].mean()), 4),
             "dificil": int(plata["dificil"].sum()),
         },
@@ -188,7 +204,7 @@ def main():
                                      "pares_de_titulos": len(pr_t)},
         "fuentes_sha256_12": {f.name: sha(f) for f in (PARES, RESP, INC_JUZ, INC_META,
                                                       ORO_META, ORO_JUZ, NUEVOS_META)
-                              + tuple(f for f in (CORR_GRADO, FUERA) if f.exists())},
+                              + tuple(f for f in (CORR_GRADO, FUERA, CORR_V5) if f.exists())},
     }
     (DESTINO / "manifiesto.json").write_text(json.dumps(man, ensure_ascii=False, indent=2),
                                              encoding="utf-8")

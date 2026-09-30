@@ -4803,8 +4803,14 @@ paso 4 que la v5 resuelve.
 ### Lo que falta, en orden
 
 1. Rejuzgar `calibra` (~1,5 h) y aplicar (`26 aplicar`), y luego `21`, `19` y el `AUC_BASE`.
-2. Llevar la v5 a la plata donde es mecánica (función añadida y ámbito), con revisión a mano
-   de lo que no lo sea.
+2. Llevar la v5 a la plata. **No es mecánica:** se probó la regla «un título contiene al
+   otro → `si`» y confunde una función añadida con un modificador que cambia el sentido
+   (`COORDINADOR DE VENTA` / `… POST VENTA`, `… RIESGOS FINANCIEROS` / `… NO FINANCIEROS`,
+   `SUPERVISOR` / `ASST SUPERVISOR`); y `TRANSPORTE INTERNACIONAL` es una función, no un
+   ámbito. La regla solo propone: de los 1.862 pares de la plata de esos tipos, **60 (0,6 % de
+   la plata)** tienen una etiqueta distinta de la que daría la v5, y van a juicio humano a
+   ciegas (`27_plata_v5.py`, `27_revisar_v5.csv`). El 97 % ya cumple la v5. `21` aplica las
+   correcciones al final, después del grado y de los 139.
 3. Armar `prueba 2` (~400 pares nuevos, juzgados a ciegas con la v5, congelados) y el lote de
    entrenamiento de la zona difícil, sin cruces entre ellos.
 4. Prerregistro de la v2 (esta decisión, antes de entrenar): cross-encoder v2 contra v1 en

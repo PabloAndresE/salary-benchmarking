@@ -62,10 +62,11 @@ del repositorio.**
 | `research/experimentos/e2_nivel/24_h1_prueba.py` | **H1**: abre `prueba` una sola vez, tras cinco candados; cross-encoder elegido contra coseno (H1) y contra NLI congelado (H1b), más estratos, mitades, ablación y calibración. `--ensayo` sobre `calibra` | versionado |
 | `research/experimentos/e2_nivel/25_analisis_errores.py` | dónde se equivoca el cross-encoder de H1, por rasgo del par (solo `calibra` y `valida`) | versionado |
 | `research/experimentos/e2_nivel/26_rejuzgar_calibra.py` | `calibra` a ciegas para rejuzgar con la v5 (`armar`) y pasar los juicios al oro (`aplicar`) | versionado |
+| `research/experimentos/e2_nivel/27_plata_v5.py` | los pares de la plata que la rúbrica v5 podría cambiar (60), a juicio humano a ciegas (`armar`), y sus correcciones (`aplicar`), que `21` aplica al final | versionado |
 | `requirements-cross.txt` | versiones exactas para entrenar y evaluar el cross (Enmienda 3) | versionado |
 
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `27_…` en adelante.
+añaden aquí con el número que les toque, `28_…` en adelante.
 
 ## 4. Salidas de los guiones
 
@@ -88,6 +89,7 @@ añaden aquí con el número que les toque, `27_…` en adelante.
 | `salidas/24_h1.txt`, `24_puntajes_prueba.csv` | **el resultado de H1** y los puntajes de cada juez en `prueba` (sin títulos). Se escriben una sola vez | versionado (-f) al crearse |
 | `salidas/25_analisis_errores.txt` | agregados del análisis de errores (sin títulos). Los pares, en `25_errores_*.csv` | versionado; los CSV, local |
 | `salidas/26_calibra_ciega.csv`, `26_calibra_mapa.csv` | `calibra` para rejuzgar a ciegas, y el mapa al `n` de `13e` (**no abrir antes de juzgar**). Una vez juzgada, irreemplazable | versionado (-f) |
+| `salidas/27_revisar_v5.csv`, `27_revisar_v5_mapa.csv`, `27_correcciones_v5.csv` | los 60 pares de la plata para juzgar con la v5, el mapa (**no abrir antes**) y las correcciones que salgan. Una vez juzgados, irreemplazables | versionado (-f) |
 | `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. El primer entrenamiento (commit `1bdc855`, `calibra` de 194) quedó sustituido por la Enmienda 5 y se rehace. `estado/` guarda cada corrida terminada para poder retomar (`huella.json`, y los pesos solo mientras hacen falta); `corrida.log`, el registro. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)
