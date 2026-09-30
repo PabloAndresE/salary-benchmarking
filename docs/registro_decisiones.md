@@ -4564,13 +4564,14 @@ y no llegó a aplicarse.
   porque la v3 trataba las letras como código (paso 1). La plata queda idéntica.
 - **La evaluación:** salen los pares que la capa 0 fusionaría ahora. `calibra` pasa de 194 a
   **191** (salen #141, #142, #193, los tres `si`) y `prueba` de 560 a **555** (salen 13e #220,
-  #339 y 20 #157, #229, #326, los cinco `si`): 191 de `13e` y 364 de `20`, 432 `si` / 123 `no`.
+  #339 y 20 #157, #229, #326, los cinco `si`): 191 de `13e` y 364 de `20`, 433 `si` / 122 `no`
+  (con 20 #14 ya juzgado, abajo).
   La lista está en `23_fuera_por_capa0.csv` (45 pares: 9 de `calibra`, 36 de `prueba`).
 - **La vara en `calibra` (191):** coseno 0,690, NLI congelado **0,7259**, diferencia +0,036
   [−0,067, +0,137]. `AUC_BASE` de `22` pasa a 0,7259, y `--rapido` lo reproduce en GPU.
 - **Un par nuevo de `prueba` para juzgar a mano:** `20` #14 (`COORDINADOR DE VENTAS - B` /
-  `COORDINADOR SUPERVISOR VENTAS P BB`), hoy `no`. Lo juzga el autor solo, antes de abrir
-  `prueba`.
+  `COORDINADOR SUPERVISOR VENTAS P BB`), antes `no`. **Juzgado `si` por el autor, solo y sin
+  ninguna lectura del modelo, el 2026-09-30**, antes de abrir `prueba`.
 
 **El primer entrenamiento queda sustituido.** La corrida completa de `22` (commit `1bdc855`)
 eligió época, semilla, configuración y temperatura con los 194 pares de `calibra`. La plata no
