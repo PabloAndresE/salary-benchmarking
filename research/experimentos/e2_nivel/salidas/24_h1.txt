@@ -1,0 +1,37 @@
+==============================================================================
+24 · H1 SOBRE `prueba` (D-036)
+==============================================================================
+
+comprobaciones: repo limpio | elegido completo_w1_sin_aum_s20261001 (commit 1d776f0, calibra 191) | NLI en calibra 0.7259
+
+prueba: 555 pares (433 si / 122 no); por conjunto {'20': 364, '13e': 191}
+
+AUC:  B 0.8902   NLI congelado 0.8125   coseno 0.6211
+
+H1   B - coseno   +0.2691   IC95 [+0.2018, +0.3370]   -> SE ADOPTA (IC entero sobre 0)
+H1b  B - NLI      +0.0777   IC95 [+0.0377, +0.1184]   (sin criterio de adopcion)
+     bootstrap pareado por par, 10,000 remuestreos, semilla 20261002
+
+POR ESTRATO (descriptivo)
+  alto   n= 34 (  2 no)   B 0.9688   NLI 0.8750   coseno 0.5469
+  bajo   n= 82 ( 29 no)   B 0.7476   NLI 0.6370   coseno 0.4538
+  banda  n=439 ( 91 no)   B 0.9077   NLI 0.8388   coseno 0.5730
+
+POR MITAD (descriptivo; Enmienda 2)
+  13e  n=191   B 0.8917   NLI 0.7515   coseno 0.6330
+  20   n=364   B 0.9029   NLI 0.8516   coseno 0.6256
+  coseno 13e - 20: IC95 [-0.1042, +0.1154]  -> sin heterogeneidad detectable
+
+ABLACION (descriptivo; `corridas/`)
+  completo_w1_con_aum    AUC 0.8779
+  completo_w1_sin_aum    AUC 0.8902
+  completo_w2_con_aum    AUC 0.9007
+  completo_w2_sin_aum    AUC 0.8939
+  completo_w3_con_aum    AUC 0.8828
+  completo_w3_sin_aum    AUC 0.8899
+  paso_direccional       AUC 0.9067
+  paso_simetrico         AUC 0.8959
+
+CALIBRACION de B (T = 1.704, ajustada en calibra): ECE 0.108 sin T, 0.067 con T
+
+ficha: {"fecha": "2026-09-30T15:23:56", "git_commit": "12b778747d6ffc6f87a08f47c9713c547b8df1c9", "git_sin_commitear": false, "elegido": "completo_w1_sin_aum_s20261001", "elegido_commit_entrenamiento": "1d776f0190d1d0fb3dc2d222f56b24b0a8b342ef", "modelo_elegido_sha256": "040b4dc4a6c5ce4338d4c2ea7b8430999993d3d9da7c8414ef2cf599b13507e0", "torch": "2.14.0+cu130", "dispositivo": "cuda"}

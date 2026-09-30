@@ -4658,3 +4658,43 @@ limpio, `calibra` de 191, 20 corridas, ninguna retomada). Es el cross-encoder de
 Un incidente sin efecto en el resultado: en una primera relanzada quedaron dos procesos del
 entrenamiento en la misma terminal (uno suspendido); se detuvieron los dos y se entrenó desde
 cero una sola vez.
+
+### Resultado de H1 (2026-09-30): `prueba` abierta una vez
+
+**Evidencia:** `salidas/24_h1.txt` y `24_puntajes_prueba.csv`, de `24` sobre el commit
+`12b7787` (repo limpio), cross-encoder `completo_w1_sin_aum_s20261001` (SHA-256
+`040b4dc4a6c5…`), fp32. `prueba`: 555 pares (433 `si` / 122 `no`; 191 de `13e`, 364 de `20`).
+
+| juez | AUC en `prueba` |
+|---|---|
+| coseno (el producto) | 0,6211 |
+| NLI congelado | 0,8125 |
+| **cross-encoder ajustado** | **0,8902** |
+
+- **H1 se adopta.** Cross-encoder − coseno = **+0,269, IC 95 % [+0,202, +0,337]**, entero sobre
+  cero (bootstrap pareado por par, 10.000 remuestreos).
+- **H1b:** cross-encoder − NLI congelado = **+0,078, IC 95 % [+0,038, +0,118]**. Sin criterio de
+  adopción registrado, pero el IC no toca el cero: el ajuste con la plata aporta sobre el
+  modelo sin ajustar. La potencia prevista para +0,05 era ~40 %; el efecto fue mayor.
+- **Por estrato:** alto 0,969 (n = 34, solo 2 `no`), banda 0,908 (439), **bajo 0,748** (82). El
+  estrato bajo, donde el producto hoy no fusiona, sigue siendo el difícil; ahí el coseno da
+  0,454, peor que el azar.
+- **Por mitad:** `13e` 0,892 y `20` 0,903. El coseno no difiere entre mitades (IC de la
+  diferencia [−0,104, +0,115]): sin heterogeneidad.
+- **`calibra` era optimista, como se esperaba:** 0,922 allí frente a 0,890 aquí. En cambio el
+  NLI congelado y el coseno se movieron en sentidos opuestos entre `calibra` y `prueba`
+  (0,726 → 0,813 y 0,690 → 0,621): con 191 pares, `calibra` es ruidosa.
+- **Ablación (descriptiva):** paso 1 simétrico 0,896, paso 2 direccional 0,907, paso 3
+  elegido 0,890; las 6 configuraciones entre 0,878 y 0,901. Ni la dirección, ni la cabeza de
+  motivo, ni w, ni el aumento muestran una ganancia consistente: en `calibra` el orden era otro.
+  Para H3 y para la arquitectura, lo que funciona es ajustar el NLI con la plata; lo demás no
+  se distingue del ruido.
+- **Calibración:** ECE 0,108 sin temperatura y 0,067 con T = 1,70. Transfiere solo en parte
+  (en `calibra` quedaba en 0,025). Importa para el correlation clustering, que usa log-odds.
+
+**Límites que se declaran con el resultado:** un solo juez humano; `prueba` solo cubre pares
+con coseno 0,90–1,01 (no mide los sinónimos lejanos); un mismo título puede aparecer en varios
+pares; la regla del grado (Enmienda 5) se decidió antes de abrir, pero después de ver `calibra`.
+
+**`prueba` ya está abierta.** Desde aquí, ningún juicio, exclusión ni modelo se ajusta mirándola;
+todo lo que se mida después sobre ella es exploratorio.
