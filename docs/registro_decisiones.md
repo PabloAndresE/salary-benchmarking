@@ -4592,3 +4592,30 @@ definitiva y sin salvedades; cuesta una hora de GPU.
 la regla pasaba a cubrirlo), su juicio a mano se perdía al reescribir el archivo. Le pasó a
 16#5325 y se recuperó del commit anterior. Ahora esos juicios se conservan con
 `vigente = no`.
+
+### Enmienda 6 (2026-09-30, antes de abrir `prueba`): cómo se corre H1
+
+**Origen:** escribir el guion de H1 obliga a fijar tres detalles que el prerregistro no
+cerraba del todo. Aprobados por el autor antes de abrir `prueba`.
+**Evidencia:** `research/experimentos/e2_nivel/24_h1_prueba.py`.
+
+1. **Bootstrap pareado por par**, como dice el texto de H1: 10.000 remuestreos de los pares
+   con reemplazo, los dos jueces sobre el mismo remuestreo, IC 95 % por percentiles, semilla
+   fija. No estratificado por clase (lo que usó `19` para la potencia): así lo decía H1, y es
+   algo más conservador. **Límite:** un mismo título puede aparecer en varios pares, así que
+   los pares no son del todo independientes y el IC puede quedar algo estrecho.
+2. **El cross-encoder se evalúa en fp32**, no en bf16 como durante el entrenamiento, para que
+   la medición sea exacta en cualquier máquina. La diferencia observada en `calibra` es de
+   ~0,0005 (0,9227 frente a 0,9232 con el primer entrenamiento).
+3. **Gemini sobre `prueba` va aparte** (`15_piloto_llm.py`, una vez, rúbrica v3 congelada):
+   mide la calidad de la plata, no H1, y depende de la API y del permiso LOPDP, pendiente
+   desde D-035. `24` no depende de ninguna red.
+
+**Lo que hace `24`:** antes de leer `prueba` comprueba que el repo esté limpio, que el
+cross-encoder elegido venga del paquete vigente y de la `calibra` de 191, que no quede ningún
+par de `prueba` por juzgar, que el NLI congelado dé el `AUC_BASE` en `calibra`, y que no exista
+ya `24_h1.txt` (**`prueba` no se abre dos veces**). Luego puntúa a la vez el cross-encoder
+elegido, el NLI congelado, el coseno y los 8 modelos de la ablación, y reporta H1, H1b, los
+estratos, las dos mitades (`13e` / `20`) con la heterogeneidad del coseno, la ablación y la
+calibración. `--ensayo` corre lo mismo sobre `calibra`, sin leer `prueba`; se probó con el
+primer entrenamiento y el modo real se detuvo en el primer candado, como debe.
