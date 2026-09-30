@@ -27,6 +27,15 @@ del repositorio.**
 | `research/experimentos/e2_nivel/salidas/20_pares_400.csv` | metadatos de los 400: grupos, `sim`, estrato, tramo. No abrir antes de juzgar | versionado (-f) |
 | `research/experimentos/e2_nivel/salidas/15_respuestas_llm.csv` | respuestas del piloto sobre los 400 (validan el montaje, D-035) | versionado (-f) |
 
+**Respaldo fuera del contenedor.** El repo vive en `/root/…`, dentro del contenedor Docker: si
+el contenedor se reconstruye, se pierde lo que no esté en git. `/home/pencalada` es la carpeta
+del servidor y persiste. Ahí hay (2026-09-30) una copia de `salidas/22_modelos/` en
+`/home/pencalada/respaldo/22_modelos/` (9,5 GB, 148 archivos, verificada byte a byte; el
+cross-encoder de H1 con su SHA-256 `040b4dc4a6c5…`). Repetir tras cada entrenamiento que
+importe (la v2 irá a `/home/pencalada/respaldo/22_modelos_v2/`). `demo/base_v15.npz` y
+`demo/emb_base.npz` (la caché de Vertex, idéntica a la `Z` de la base) llegaron el mismo día
+desde la computadora del autor, que guarda el original.
+
 ## 2. Diseño y decisiones
 
 | archivo | qué es | git |
