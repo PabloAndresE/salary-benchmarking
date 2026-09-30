@@ -4924,3 +4924,17 @@ plata) se fija en el prerregistro de la v2, antes de entrenar.
 8. **Código:** `22` guarda también los pesos de las tres semillas de la configuración elegida
    (para el ensamble) y admite la grilla de `w_humano`; `21` añade el lote a la plata. No cambia
    ningún número de la v1.
+
+### `prueba 2` juzgada y congelada (2026-09-30, antes de entrenar la v2)
+
+400 pares juzgados a ciegas por el autor con la v5 (uno quedó en blanco, #7, y lo contestó
+aparte: `si`). Revisión de consistencia con los pasos 2-3 sobre todos los `si`, sin mirar
+ningún modelo (`28 --conjunto prueba2`): 9 avisos; el autor devolvió 6 a `no` (niveles
+distintos y marcas de seniority) y mantuvo 3 en `si` porque la regla leía mal: un espacio mal
+puesto (`INSPECTOR/S UPERVISOR`), `CORPORATIVAS` como nombre de área (`SOLUCIONES
+CORPORATIVAS`) y `LOGISTICA INTERNACIONAL` como función, no ámbito. La etiqueta de antes de la
+revisión queda en `mismo_original`.
+
+**`prueba 2` final: 332 `si` / 68 `no`, sin `duda`.** Queda **congelada con este commit**:
+desde aquí ninguna etiqueta, exclusión ni criterio se toca, y se abre una sola vez con el
+cross-encoder v2 ya entrenado y congelado.

@@ -20,6 +20,10 @@ USO
     python 28_consistencia_calibra.py armar     `28_revisar_consistencia.csv`
     (poner en `mismo_nuevo` si / no; vacio = se queda como esta)
     python 28_consistencia_calibra.py aplicar   pasa lo marcado a `13e_para_juzgar.csv`
+
+    con `--conjunto prueba2` hace lo mismo sobre `prueba 2` (`29_prueba2_para_juzgar.csv`,
+    el prerregistro de D-038 lo pide antes de congelarla): la lista va a
+    `28_revisar_consistencia_prueba2.csv` y la etiqueta de antes queda en `mismo_original`.
 """
 import argparse
 import csv
@@ -107,10 +111,33 @@ def conflicto(a, b):
     return None
 
 
-def armar():
-    cal = pd.read_csv(CALIBRA, dtype={"n": str}, keep_default_na=False)
-    oro = pd.read_csv(ORO, sep=";", encoding="utf-8-sig", dtype=str, keep_default_na=False)
-    d = cal[["n"]].merge(oro[["n", "comun", "raro", "mismo", "mismo_v4"]], on="n")
+PRUEBA2 = SAL / "29_prueba2_para_juzgar.csv"
+REVISAR_P2 = SAL / "28_revisar_consistencia_prueba2.csv"
+
+
+def rutas(conjunto):
+    return (ORO, REVISAR) if conjunto == "calibra" else (PRUEBA2, REVISAR_P2)
+
+
+def leer_oro(ruta):
+    crudo = ruta.read_bytes()
+    sep = csv.Sniffer().sniff(crudo.decode("utf-8-sig").splitlines()[0], ";,").delimiter
+    return pd.read_csv(ruta, sep=sep, encoding="utf-8-sig", dtype=str,
+                       keep_default_na=False), sep
+
+
+def armar(conjunto="calibra"):
+    oro_ruta, revisar = rutas(conjunto)
+    oro, _ = leer_oro(oro_ruta)
+    oro["mismo"] = oro["mismo"].str.strip().str.lower()
+    if conjunto == "calibra":
+        cal = pd.read_csv(CALIBRA, dtype={"n": str}, keep_default_na=False)
+        d = cal[["n"]].merge(oro[["n", "comun", "raro", "mismo", "mismo_v4"]], on="n")
+    else:
+        if not oro["mismo"].isin(["si", "no"]).all():
+            raise SystemExit("ALTO: `prueba 2` no esta juzgada entera: {}".format(
+                oro.loc[~oro["mismo"].isin(["si", "no"]), "n"].tolist()))
+        d = oro[["n", "comun", "raro", "mismo"]].assign(mismo_v4="")
     d = d[d["mismo"] == "si"]
     filas = []
     for _, f in d.iterrows():
@@ -120,26 +147,30 @@ def armar():
                           "mismo_v5": f["mismo"], "mismo_v4": f["mismo_v4"],
                           "mismo_nuevo": ""})
     r = pd.DataFrame(filas)
-    r.to_csv(REVISAR, index=False, sep=";", encoding="utf-8-sig")
-    print("{} pares `si` de calibra que la regla dice `no` -> {}".format(len(r), REVISAR.name))
-    print("  de ellos, eran `si` ya antes de rejuzgar (v4):", int((r["mismo_v4"] == "si").sum()))
+    r.to_csv(revisar, index=False, sep=";", encoding="utf-8-sig")
+    print("{} pares `si` de {} que la regla dice `no` -> {}".format(len(r), conjunto,
+                                                                   revisar.name))
+    if conjunto == "calibra":
+        print("  de ellos, eran `si` ya antes de rejuzgar (v4):",
+              int((r["mismo_v4"] == "si").sum()))
 
 
-def aplicar():
-    r = pd.read_csv(REVISAR, sep=None, engine="python", encoding="utf-8-sig", dtype=str,
+def aplicar(conjunto="calibra"):
+    oro_ruta, revisar = rutas(conjunto)
+    r = pd.read_csv(revisar, sep=None, engine="python", encoding="utf-8-sig", dtype=str,
                     keep_default_na=False)
     r["mismo_nuevo"] = r["mismo_nuevo"].str.strip().str.lower()
     if not r["mismo_nuevo"].isin(["", "si", "no"]).all():
         raise SystemExit("ALTO: `mismo_nuevo` solo admite si / no / vacio")
     cambia = r[r["mismo_nuevo"].isin(["si", "no"]) & (r["mismo_nuevo"] != r["mismo_v5"])]
-    crudo = ORO.read_bytes()
-    sep = csv.Sniffer().sniff(crudo.decode("utf-8-sig").splitlines()[0], ";,").delimiter
-    oro = pd.read_csv(ORO, sep=sep, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    oro, sep = leer_oro(oro_ruta)
+    if conjunto == "prueba2" and "mismo_original" not in oro:
+        oro.insert(oro.columns.get_loc("mismo") + 1, "mismo_original", oro["mismo"])
     for _, f in cambia.iterrows():
         k = oro["n"] == f["n"]
         oro.loc[k, "mismo"] = f["mismo_nuevo"]
         oro.loc[k, "nota"] = [(x + "; " if x.strip() else "") + NOTA for x in oro.loc[k, "nota"]]
-    oro.to_csv(ORO, index=False, sep=sep, encoding="utf-8-sig", lineterminator="\n")
+    oro.to_csv(oro_ruta, index=False, sep=sep, encoding="utf-8-sig", lineterminator="\n")
     print("revisados {}; cambian {} ({})".format(
         int((r["mismo_nuevo"] != "").sum()), len(cambia),
         cambia["mismo_nuevo"].value_counts().to_dict()))
@@ -149,5 +180,6 @@ def aplicar():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("accion", choices=["armar", "aplicar"])
+    ap.add_argument("--conjunto", default="calibra", choices=["calibra", "prueba2"])
     a = ap.parse_args()
-    armar() if a.accion == "armar" else aplicar()
+    armar(a.conjunto) if a.accion == "armar" else aplicar(a.conjunto)
