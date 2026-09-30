@@ -1,0 +1,114 @@
+==============================================================================
+25 · DONDE SE EQUIVOCA EL CROSS-ENCODER DE H1   (completo_w1_sin_aum_s20261001, T = 1.704)
+==============================================================================
+P = probabilidad calibrada; 'junta mal' = P >= 0,5 con etiqueta no;
+'separa mal' = P < 0,5 con etiqueta si. `prueba` no se mira.
+
+CALIBRA (juicio humano): 191 pares (139 si / 52 no)   AUC 0.923   junta mal 10   separa mal 1
+
+  por estrato:
+                         n   % si     AUC   junta mal  separa mal
+    alto                29    90%   1.000     0/3         0/26   
+    bajo                30    53%   0.888     3/14        0/16   
+    banda              132    73%   0.911     7/35        1/97   
+
+  por escalon:
+                         n   % si     AUC   junta mal  separa mal
+    False              168    80%   0.885    10/34        1/134  
+    True                23    22%   1.000     0/18        0/5    
+
+  por seniority:
+                         n   % si     AUC   junta mal  separa mal
+    False              180    77%   0.902    10/41        1/139  
+    True                11     0%       —     0/11        0/0    
+
+  por grado:
+                         n   % si     AUC   junta mal  separa mal
+    False              189    72%   0.923    10/52        1/137  
+    True                 2   100%       —     0/0         0/2    
+
+  por contenido:
+                         n   % si     AUC   junta mal  separa mal
+    False              136    68%   0.933     8/43        0/93   
+    True                55    84%   0.879     2/9         1/46   
+
+  por misma_cabeza:
+                         n   % si     AUC   junta mal  separa mal
+    False               48    42%   0.996     2/28        0/20   
+    True               143    83%   0.838     8/24        1/119  
+
+  por sigla:
+                         n   % si     AUC   junta mal  separa mal
+    False              166    73%   0.931     7/45        1/121  
+    True                25    72%   0.921     3/7         0/18   
+
+  por ingles:
+                         n   % si     AUC   junta mal  separa mal
+    False              179    75%   0.916     9/45        1/134  
+    True                12    42%   1.000     1/7         0/5    
+
+  por solapamiento:
+                         n   % si     AUC   junta mal  separa mal
+    alto (>=2/3)        62    85%   0.881     2/9         1/53   
+    bajo (<1/3)         30    63%   0.952     3/11        0/19   
+    medio               99    68%   0.917     5/32        0/67   
+  -> 25_errores_calibra.csv (con titulos; en .gitignore)
+
+VALIDA (etiqueta de Gemini): 1500 pares (1015 si / 485 no)   AUC 0.982   junta mal 48   separa mal 42
+
+  por estrato:
+                         n   % si     AUC   junta mal  separa mal
+    alto                 9    89%   1.000     0/1         0/8    
+    bajo               441    49%   0.965    27/226      19/215  
+    banda             1050    75%   0.988    21/258      23/792  
+
+  por escalon:
+                         n   % si     AUC   junta mal  separa mal
+    False             1222    81%   0.963    48/227      40/995  
+    True               278     7%   1.000     0/258       2/20   
+
+  por seniority:
+                         n   % si     AUC   junta mal  separa mal
+    False             1382    73%   0.981    43/377      42/1005 
+    True               118     8%   0.979     5/108       0/10   
+
+  por grado:
+                         n   % si     AUC   junta mal  separa mal
+    False             1354    66%   0.980    46/459      40/895  
+    True               146    82%   0.996     2/26        2/120  
+
+  por contenido:
+                         n   % si     AUC   junta mal  separa mal
+    False             1175    62%   0.980    46/442      34/733  
+    True               325    87%   0.998     2/43        8/282  
+
+  por misma_cabeza:
+                         n   % si     AUC   junta mal  separa mal
+    False              564    43%   0.995     6/323      24/241  
+    True               936    83%   0.959    42/162      18/774  
+
+  por sigla:
+                         n   % si     AUC   junta mal  separa mal
+    False             1307    66%   0.983    42/446      36/861  
+    True               193    80%   0.971     6/39        6/154  
+
+  por ingles:
+                         n   % si     AUC   junta mal  separa mal
+    False             1394    70%   0.982    43/417      36/977  
+    True               106    36%   0.973     5/68        6/38   
+
+  por solapamiento:
+                         n   % si     AUC   junta mal  separa mal
+    alto (>=2/3)       324    86%   0.999     2/46        6/278  
+    bajo (<1/3)        320    63%   0.967    16/119      13/201  
+    medio              856    63%   0.983    30/320      23/536  
+
+  por paso_gemini:
+                         n   % si     AUC   junta mal  separa mal
+    (sin paso)           7     0%       —     4/7         0/0    
+    ninguno           1015   100%       —     0/0        42/1015 
+    p2                 299     0%       —     1/299       0/0    
+    p3                 109     0%       —     5/109       0/0    
+    p4                  57     0%       —    37/57        0/0    
+    p5                  13     0%       —     1/13        0/0    
+  -> 25_errores_valida.csv (con titulos; en .gitignore)
