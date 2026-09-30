@@ -116,6 +116,87 @@ def nivel_lexico(etiqueta):
     return max((RANGOS[h] for h in hallados), default=None)
 
 
+# --- EL GRADO NO HACE DISTINTO EL PUESTO (D-037; Enmienda 5 de D-036) -------------------
+# `AUXILIAR 1` / `AUXILIAR 2`, `QUIMICO I` / `QUIMICO II`, `AYUDANTE B` / `AYUDANTE C`,
+# `NIVEL 2`: el numero o la letra marca el grado de la escala interna de UNA empresa, no
+# otro puesto. Revierte lo que D-025 protegia como "escalon": la escalera de sueldos que
+# marcaba el grado la recoge la banda (con la antiguedad), no el nombre del cargo.
+#
+# Es la MISMA regla con que se corrigieron las etiquetas y se armo `prueba` para H1
+# (`research/experimentos/e2_nivel/23_correccion_grado.py`), mas una guarda: la primera
+# palabra, la que nombra el puesto, tiene que coincidir (`GERENTE ASISTENTE 1` no es
+# `ASISTENTE GERENTE 2`). Sobre los 433 pares de la plata y los 182 de la evaluacion que la
+# regla junta, la guarda no excluye ninguno.
+ROMANOS_GRADO = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
+ANTES_DE_GRADO = {"NIVEL", "LEVEL", "GRADO", "CATEGORIA", "CAT"}
+NO_LETRA_GRADO = {"E", "Y", "O", "U"}               # conectores, no grados
+NO_GRADO_DESPUES = {"LICENCIA", "TIPO"}             # `LICENCIA C` es un tipo, no un grado
+CONECTORES = {"DE", "DEL", "Y", "E", "EN", "EL", "LA", "LOS", "LAS", "A", "AL"}
+
+
+def _letras_de_grado(toks):
+    """Indices de los tokens (separados por espacios) que son una letra de grado.
+
+    Una letra SUELTA, sola o entre parentesis: `AYUDANTE B`, `PLANIFICADOR (R)`. No lo es
+    pegada a `.`, `/` o `&` (`T.A`, `COORDINADOR/A`, `T&L`), ni junto a un `&` (`M & R` es
+    una sigla), ni tras `LICENCIA`/`TIPO`. La `A` solo al final: `SOLDADOR A`, pero no
+    `ASISTENTE A GERENCIA`.
+    """
+    fuera = set()
+    for i, tk in enumerate(toks):
+        m = re.fullmatch(r"\(?([A-ZÑ])\)?", tk)
+        junto_amp = (i > 0 and toks[i - 1] == "&") or (i + 1 < len(toks) and toks[i + 1] == "&")
+        tras_tipo = i > 0 and toks[i - 1] in NO_GRADO_DESPUES
+        if (m and m.group(1) not in NO_LETRA_GRADO and not junto_amp and not tras_tipo
+                and (m.group(1) != "A" or i == len(toks) - 1)):
+            fuera.add(i)
+            if i > 0 and toks[i - 1] in ANTES_DE_GRADO:
+                fuera.add(i - 1)
+    return fuera
+
+
+def _palabras_grado(etiqueta):
+    toks = str(etiqueta).upper().split()
+    letras = _letras_de_grado(toks)
+    t = " ".join(tk for i, tk in enumerate(toks) if i not in letras)
+    t = re.sub(r"([A-ZÁÉÍÓÚÑ])([1-9])\b", r"\1 \2", t)       # CONTABLE1 -> CONTABLE 1
+    return re.findall(r"[A-ZÁÉÍÓÚÑÜ0-9]+", t), bool(letras)
+
+
+def _es_grado(w):
+    return (w.isdigit() and len(w) <= 2 and 1 <= int(w) <= 9) or w in ROMANOS_GRADO
+
+
+def quitar_grado(etiqueta):
+    """Las palabras del titulo sin el grado (numero 1-9, romano I-X, letra suelta, y el
+    `NIVEL`/`GRADO`/`CATEGORIA` que los precede). Los numeros de dos cifras se quedan."""
+    ws, _ = _palabras_grado(etiqueta)
+    return [w for i, w in enumerate(ws)
+            if not _es_grado(w)
+            and not (w in ANTES_DE_GRADO and i + 1 < len(ws) and _es_grado(ws[i + 1]))]
+
+
+def tiene_grado(etiqueta):
+    ws, hay_letra = _palabras_grado(etiqueta)
+    return hay_letra or any(_es_grado(w) for w in ws)
+
+
+def clave_grado(etiqueta):
+    """Clave con la que se juntan las grafias que solo difieren en el grado: la palabra
+    del puesto y el conjunto de las demas, sin conectores ni orden (que ya eran ruido en
+    la rubrica). None si no queda nada."""
+    ws = [w for w in quitar_grado(etiqueta) if w not in CONECTORES]
+    return (ws[0], frozenset(ws)) if ws else None
+
+
+def mismo_salvo_grado(a, b):
+    """True si `a` y `b` son el mismo titulo en cuanto se borra el grado, y alguno lo tenia."""
+    if not (tiene_grado(a) or tiene_grado(b)):
+        return False
+    ka = clave_grado(a)
+    return ka is not None and ka == clave_grado(b)
+
+
 def enmascarar(etiqueta, marca="PUESTO"):
     """Quita la palabra de rango del titulo: `AUXILIAR DE BODEGA` -> `PUESTO DE BODEGA`.
 

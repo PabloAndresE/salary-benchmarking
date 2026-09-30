@@ -66,7 +66,8 @@ from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
                                      cuantiles_de_empresa, cuantiles_de_persona,
                                      sigma2_por_celda,
                                      tabla_votos, tau2_por_celda)
-from .nivel import efecto_nivel, nivel_lexico, seniority_lexica
+from .nivel import (clave_grado, efecto_nivel, mismo_salvo_grado, nivel_lexico,
+                    seniority_lexica, tiene_grado)
 
 VECINOS = 25
 MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
@@ -778,7 +779,7 @@ class BaseReferencia:
     @classmethod
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
-                  genero=True, mapa_genero=None, scvs=None):
+                  genero=True, mapa_genero=None, grado=True, mapa_grado=None, scvs=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
@@ -791,6 +792,10 @@ class BaseReferencia:
         vez de calcularlas —lo usa el PLACEBO del experimento, que junta pares al azar
         del mismo tamano: si fusionar al azar costara lo mismo, la regla de genero no
         estaria identificando oficios equivalentes.
+
+        `grado=False` apaga la cuarta pasada de D-037, que junta las grafias que solo
+        difieren en el grado (`AUXILIAR 1` / `AUXILIAR 2`). `mapa_grado` inyecta las
+        uniones, para el PLACEBO, igual que los otros dos mapas.
 
         `mapa_erratas` inyecta las absorciones en vez de calcularlas —un dict grupo_raro
         -> grupo_comun—. Lo usa el PLACEBO del experimento, que absorbe los mismos grupos
@@ -910,6 +915,18 @@ class BaseReferencia:
                 # esa es la descomposicion Oaxaca de D-011, que usa la columna `sexo`.
                 brecha_gen = _brecha_por_grafia(marco, col, celdas,
                                                 antes_gen, fem_masc, grupo)
+            # CUARTA PASADA: EL GRADO (D-037). Despues de las otras tres, con recuento
+            # fresco, porque el superviviente se elige por numero de empresas.
+            if mapa_grado is not None:
+                grupo = np.array([mapa_grado.get(int(g), int(g)) for g in grupo],
+                                 dtype=np.int64)
+                print(f"fusion por grado: {len(mapa_grado):,} uniones INYECTADAS")
+            elif grado:
+                g2 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
+                emp_g2 = (marco.assign(_g=g2).groupby("_g")["empresa_ruc"]
+                          .nunique().to_dict())
+                grupo, n_gra = _fusionar_grado(celdas, grupo, niv, emp_g2)
+                print(f"fusion por grado: {n_gra:,} grupos unidos")
 
             g_por_etiqueta = dict(zip(celdas, grupo))
             d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
@@ -995,6 +1012,27 @@ class BaseReferencia:
         if f is None:
             return np.zeros(0, dtype=np.int32)
         return self.pad_idx[self.pad_ptr[f]:self.pad_ptr[f + 1]]
+
+    def _por_grado(self, titulo):
+        """La celda de la base que es `titulo` salvo el grado (D-037), o None.
+
+        Solo si alguno de los dos lleva grado —es la regla de `mismo_salvo_grado`—, y entre
+        varias candidatas la de mas empresas. El indice se arma la primera vez: no hace
+        falta guardarlo en el `.npz`, sale de las celdas.
+        """
+        if getattr(self, "_idx_grado", None) is None:
+            idx = {}
+            for i, c in enumerate(self.celdas):
+                k = clave_grado(c)
+                if k is not None:
+                    idx.setdefault(k, []).append(i)
+            self._idx_grado = idx
+        k = clave_grado(titulo)
+        if k is None:
+            return None
+        cands = [i for i in self._idx_grado.get(k, ())
+                 if mismo_salvo_grado(titulo, self.celdas[i])]
+        return max(cands, key=lambda i: self.emp[i]) if cands else None
 
     def grupos_de_empresa(self, ruc) -> set[int]:
         """Los grupos de fusion que la empresa `ruc` respalda. Vacio si no esta.
@@ -1255,6 +1293,13 @@ class BaseReferencia:
         filas = {}
         for k, t in enumerate(unicos):
             propio = self.idx.get(t)
+            cargo_base = ""
+            if propio is None:
+                # D-037: `AUXILIAR 3 DE CONTABILIDAD` de un cliente es el mismo puesto que
+                # el `AUXILIAR 1 DE CONTABILIDAD` de la base. Misma regla que al construir.
+                propio = self._por_grado(t)
+                if propio is not None:
+                    cargo_base = self.celdas[propio]
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
             banda = banda_per = None
             directo = (propio is not None
@@ -1441,6 +1486,9 @@ class BaseReferencia:
                         "p10per_log": banda_per[0.10], "p25per_log": banda_per[0.25],
                         "p75per_log": banda_per[0.75], "p90per_log": banda_per[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
+                        # Con que titulo de la base se emparejo, cuando fue solo por el
+                        # grado (D-037). Vacio si el titulo estaba tal cual.
+                        "cargo_base": cargo_base,
                         "incert_centro": round(incert, 4),
                         "segmento": seg or "", "rubro": usado,
                         # A QUE NIVEL se comparo: el front tiene que poder decir
@@ -1881,6 +1929,58 @@ def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
         return np.asarray(grupo), []
     nuevo = np.array([raiz(int(g)) for g in grupo], dtype=np.int64)
     return nuevo, fem_masc
+
+
+def _fusionar_grado(celdas, grupo, niveles, emp_por_grupo):
+    """Junta las grafias que solo difieren en el GRADO. Cuarta pasada (D-037).
+
+    `AUXILIAR 1 DE CONTABILIDAD`, `AUXILIAR 2 DE CONTABILIDAD` y `AUXILIAR DE CONTABILIDAD`
+    son el mismo puesto: el numero es el escalafon interno de cada empresa. D-025 los
+    protegia como escalones; la Enmienda 5 de D-036 decidio lo contrario, y la escalera que
+    marcaban pasa a la banda. La regla es `nivel.clave_grado`, la misma con que se
+    corrigieron las etiquetas y se armo `prueba` para H1.
+
+    Se unen los grupos cuyas celdas comparten clave, SOLO si alguna de esas celdas lleva
+    grado: dos grafias sin grado que difieren en el orden no son cosa de esta pasada. Sin
+    regla de asimetria, como en genero: las dos grafias son legitimas. Sobrevive el grupo
+    con mas empresas. Con nivel lexico conocido y distinto no se une (no deberia pasar:
+    el grado no cambia la palabra de rango, pero es barato comprobarlo).
+    """
+    por_clave = defaultdict(list)
+    for i, c in enumerate(celdas):
+        k = clave_grado(c)
+        if k is not None:
+            por_clave[k].append(i)
+
+    padre = {}
+
+    def raiz(x):
+        while padre.get(x, x) != x:
+            padre[x] = padre.get(padre[x], padre[x])
+            x = padre[x]
+        return x
+
+    uniones = 0
+    for miembros in por_clave.values():
+        if len(miembros) < 2 or not any(tiene_grado(celdas[i]) for i in miembros):
+            continue
+        base = miembros[0]
+        for i in miembros[1:]:
+            ni, nb = niveles[i], niveles[base]
+            if np.isfinite(ni) and np.isfinite(nb) and ni != nb:
+                continue
+            ri, rb = raiz(int(grupo[i])), raiz(int(grupo[base]))
+            if ri == rb:
+                continue
+            if emp_por_grupo.get(ri, 0) >= emp_por_grupo.get(rb, 0):
+                padre[rb] = ri
+            else:
+                padre[ri] = rb
+            uniones += 1
+
+    if not padre:
+        return np.asarray(grupo), 0
+    return np.array([raiz(int(g)) for g in grupo], dtype=np.int64), uniones
 
 
 def _brecha_por_grafia(marco, col, celdas, antes, pares_fem_masc, despues,

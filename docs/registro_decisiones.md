@@ -4699,3 +4699,53 @@ pares; la regla del grado (Enmienda 5) se decidió antes de abrir, pero después
 
 **`prueba` ya está abierta.** Desde aquí, ningún juicio, exclusión ni modelo se ajusta mirándola;
 todo lo que se mida después sobre ella es exploratorio.
+
+---
+
+## D-037 — La capa 0 borra el grado: cuarta pasada de fusión y la misma regla al consultar
+
+**Fecha:** 2026-09-30
+**Origen:** la Enmienda 5 de D-036 decidió que el grado (número, romano o letra suelta) no hace
+distinto el puesto, y lo aplicó a las etiquetas y a la evaluación. Quedaba el producto: la base
+`base_v15` sigue separando `AUXILIAR 1` de `AUXILIAR 2`. Decisión del autor, tras H1.
+**Evidencia:** `src/benchmarking/producto/nivel.py` (`quitar_grado`, `clave_grado`,
+`mismo_salvo_grado`), `base_referencia.py` (`_fusionar_grado`, `_por_grado`) y sus tests.
+**Estado:** **código listo y probado; la base no se ha reconstruido.** Falta `base_v16` y su
+medición, en la máquina que tiene los datos.
+
+### Qué hace
+
+1. **Cuarta pasada de fusión**, después de la semántica, la de erratas (D-025) y la de género
+   (D-026), con la misma forma que esas dos: une los grupos cuyas celdas son el mismo título
+   salvo el grado, si alguna lo lleva. Sin asimetría, como en género: sobrevive el grupo con
+   más empresas. `grado=False` la apaga y `mapa_grado` inyecta uniones para el **placebo**.
+2. **Al consultar:** si el título del cliente no está en la base, se busca el mismo título
+   salvo el grado (`AUXILIAR 3 DE CONTABILIDAD` → `AUXILIAR 1 DE CONTABILIDAD`). La columna
+   nueva `cargo_base` dice con qué título se emparejó; `base` no cambia, porque la lee la API.
+
+### La regla es la de la evaluación, más una guarda
+
+Es la misma que corrigió las etiquetas y armó `prueba` (`23_correccion_grado.py`), para que
+lo que H1 excluyó por «la capa 0 lo fusiona» sea lo que el producto de verdad fusiona. Se
+comprobó sobre los **10.987 pares etiquetados** (oro, plata y los 48 de `13a`): cero
+diferencias. La guarda añadida —la primera palabra, la que nombra el puesto, tiene que
+coincidir— evita `GERENTE ASISTENTE 1` = `ASISTENTE GERENTE 2`, y no excluye ninguno de los
+433 pares de la plata ni de los 182 de la evaluación que la regla junta.
+
+### Lo que falta, y cómo se mide
+
+1. **Reconstruir la base (`base_v16`)** con la pasada activa, donde están los datos. Contar
+   cuántos grupos se unen y cuántas personas pasan de analogía a datos directos, como en D-025.
+2. **Medición pareada de pinball con placebo**, el protocolo de siempre: base con y sin la
+   pasada, y una con uniones al azar del mismo tamaño (`mapa_grado`). Si fusionar al azar
+   costara lo mismo, la regla no estaría identificando puestos equivalentes.
+3. **La escalera que marcaba el grado:** medir si la banda de las celdas fusionadas mejora al
+   ajustar por tramo de antigüedad (`producto/antiguedad.py`). Es la razón por la que D-025
+   protegía el escalón, y la que hay que contestar ahora.
+
+### Reversibilidad
+
+Total hasta que se reconstruya la base: `grado=False` deja el comportamiento de `base_v15`.
+Un test de fusión semántica usaba títulos sintéticos `PUESTO A` / `B` / `C`, que con esta
+regla son el mismo puesto; se renombraron (`PUESTO ALFA` / `BETA` / `GAMA`) sin cambiar lo que
+comprueba.

@@ -347,17 +347,19 @@ def test_el_enlace_completo_no_encadena():
     # El defecto que se midio: union-find junta A con C si existe la cadena A~B~C aunque
     # A y C no se parezcan. Tres puntos en fila, cada uno cerca del siguiente y lejos del
     # tercero, no pueden acabar en un solo grupo.
+    # (Nombres sin letra suelta: con D-037, `PUESTO A` y `PUESTO C` serian el mismo puesto
+    # por el grado, y la cuarta pasada los juntaria con razon.)
     a = np.array([1.0, 0.0, 0.0])
     b = np.array([1.0, 0.25, 0.0])
     c = np.array([1.0, 0.52, 0.0])
-    emb = {"PUESTO A": a, "PUESTO B": b, "PUESTO C": c}
+    emb = {"PUESTO ALFA": a, "PUESTO BETA": b, "PUESTO GAMA": c}
     filas = [(f"E{n}{e}", n, 0.5) for n in emb for e in range(4)]
     base = _base(filas, emb)
     g = {n: int(base.grupo[base.idx[n]]) for n in emb}
     cos = lambda u, v: float(u @ v / (np.linalg.norm(u) * np.linalg.norm(v)))
     assert cos(a, b) > 0.95 and cos(b, c) > 0.95, "la cadena existe"
     assert cos(a, c) < 0.95, "y los extremos no se parecen"
-    assert g["PUESTO A"] != g["PUESTO C"], "el enlace completo no debe encadenar"
+    assert g["PUESTO ALFA"] != g["PUESTO GAMA"], "el enlace completo no debe encadenar"
 
 
 def test_la_confianza_baja_cuando_hay_MENOS_empresas_aunque_el_mercado_sea_igual():
@@ -1073,3 +1075,51 @@ def test_sin_ciiu_el_veredicto_sigue_saliendo_de_la_seccion():
     b = BaseReferencia.construir(marco, emb, _sbu)
     r = b.referenciar(["VENDEDOR"], emb, rubro="G").iloc[0]
     assert r["rubro"] == "G" and r["rubro_nivel"] == "seccion"
+
+
+# --- D-037: el grado no hace distinto el puesto -----------------------------------------
+def _marco_grado():
+    """`AUXILIAR 1` y `AUXILIAR 2 DE CONTABILIDAD`, en empresas distintas."""
+    filas = [(f"U{i}", "AUXILIAR 1 DE CONTABILIDAD", 1.00 + 0.01 * (i % 5)) for i in range(14)]
+    filas += [(f"D{i}", "AUXILIAR 2 DE CONTABILIDAD", 1.10 + 0.01 * (i % 5)) for i in range(12)]
+    return _marco(filas)
+
+
+def _emb_grado():
+    # ortogonales: sin la cuarta pasada, la fusion semantica no los junta
+    return {"AUXILIAR 1 DE CONTABILIDAD": np.array([1.0, 0.0]),
+            "AUXILIAR 2 DE CONTABILIDAD": np.array([0.0, 1.0]),
+            "AUXILIAR 3 DE CONTABILIDAD": np.array([0.7, 0.7])}
+
+
+def test_las_grafias_que_solo_difieren_en_el_grado_van_a_la_misma_celda():
+    emb = _emb_grado()
+    sin = BaseReferencia.construir(_marco_grado(), emb, _sbu, grado=False)
+    con = BaseReferencia.construir(_marco_grado(), emb, _sbu, grado=True)
+    a, b = "AUXILIAR 1 DE CONTABILIDAD", "AUXILIAR 2 DE CONTABILIDAD"
+    assert sin.grupo[sin.idx[a]] != sin.grupo[sin.idx[b]], "sin la pasada quedan sueltas"
+    assert con.grupo[con.idx[a]] == con.grupo[con.idx[b]]
+
+
+def test_un_grado_que_la_base_no_tiene_se_referencia_con_su_puesto():
+    # El cliente escribe `AUXILIAR 3`; la base solo tiene 1 y 2. Es el mismo puesto.
+    emb = _emb_grado()
+    con = BaseReferencia.construir(_marco_grado(), emb, _sbu, grado=True)
+    r = con.referenciar(["AUXILIAR 3 DE CONTABILIDAD"], emb).iloc[0]
+    assert r["base"] == "datos directos"
+    assert r["cargo_base"] == "AUXILIAR 1 DE CONTABILIDAD", "el de mas empresas"
+    # y un titulo que esta tal cual no lleva `cargo_base`
+    r1 = con.referenciar(["AUXILIAR 2 DE CONTABILIDAD"], emb).iloc[0]
+    assert r1["cargo_base"] == ""
+
+
+def test_el_grado_no_junta_puestos_distintos():
+    from benchmarking.producto.base_referencia import _fusionar_grado
+    celdas = ["GERENTE ASISTENTE 1", "ASISTENTE GERENTE 2",      # otra palabra de puesto
+              "ANALISTA R & D", "ANALISTA R&M",                  # siglas, no grados
+              "CHOFER LICENCIA C", "CHOFER LICENCIA E",          # tipo de licencia
+              "JEFE DE VENTAS Y MARKETING", "JEFE DE MARKETING Y VENTAS"]  # sin grado
+    grupo = np.arange(len(celdas))
+    niv = np.full(len(celdas), np.nan)
+    nuevo, n = _fusionar_grado(celdas, grupo, niv, {})
+    assert n == 0 and (nuevo == grupo).all()

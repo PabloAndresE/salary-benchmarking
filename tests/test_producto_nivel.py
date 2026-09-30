@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 from benchmarking.producto.nivel import (ClasificadorNivel, escalera_salarial,
-                                         etiquetar, nivel_lexico,
-                                         seniority_lexica)
+                                         etiquetar, mismo_salvo_grado, nivel_lexico,
+                                         quitar_grado, seniority_lexica, tiene_grado)
 
 
 def test_lee_el_rango_del_titulo():
@@ -193,3 +193,31 @@ def test_no_confunde_subcadenas_de_seniority():
     assert seniority_lexica("ASESORA DE SERVICIOS") == 0
     assert seniority_lexica("SENIORITY MANAGER") == 0
     assert seniority_lexica("JEFE DE CORPORATIVIDAD") == 0
+
+
+def test_el_grado_no_hace_distinto_el_puesto():
+    # D-037 (Enmienda 5 de D-036): numero, romano, letra suelta y NIVEL/CATEGORIA delante
+    for a, b in [("AUXILIAR 1 DE COCINA", "AUXILIAR 2 DE COCINA"),
+                 ("LABORATORISTA I", "LABORATORISTA II"),
+                 ("SOLDADOR A", "SOLDADOR I"),
+                 ("AYUDANTE B DE MANTENIMIENTO", "AYUDANTE C DE MANTENIMIENTO"),
+                 ("OPERARIO CATEGORIA B", "OPERARIO CATEGORIA C"),
+                 ("TECNICO NIVEL 2", "TECNICO NIVEL 4"),
+                 ("OPERARIO 2 DE EMPAQUE", "OPERARIO DE EMPAQUE"),
+                 ("PLANIFICADOR", "PLANIFICADOR (R)"),
+                 ("ASISTENTE CONTABLE1", "ASISTENTE CONTABLE 2")]:
+        assert mismo_salvo_grado(a, b), (a, b)
+
+
+def test_lo_que_no_es_grado():
+    for a, b in [("COORDINADOR M & R", "COORDINADOR M&P"),     # siglas
+                 ("T.A BOMBERO", "T/A BOMBERO"),               # letra pegada a . o /
+                 ("COORDINADOR", "COORDINADOR/A"),             # forma inclusiva
+                 ("CHOFER LICENCIA C", "CHOFER LICENCIA E"),   # tipo, no grado
+                 ("ASISTENTE A GERENCIA", "ASISTENTE DE GERENCIA"),  # `A` preposicion
+                 ("GERENTE ASISTENTE 1", "ASISTENTE GERENTE 2"),     # otra palabra de puesto
+                 ("MAQUINISTA # 10", "MAQUINISTA # 11"),       # dos cifras: no se toca
+                 ("JEFE DE VENTAS", "JEFE DE COMPRAS 1")]:
+        assert not mismo_salvo_grado(a, b), (a, b)
+    assert not tiene_grado("JEFE DE VENTAS Y MARKETING")
+    assert quitar_grado("OPERARIO CATEGORIA B DE PLANTA") == ["OPERARIO", "DE", "PLANTA"]

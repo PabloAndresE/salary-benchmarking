@@ -23,6 +23,7 @@ logarítmica:
 | `incert_centro` | cuánto puede moverse la referencia, en tanto por uno |
 | `ancho_rel` | media anchura de la banda, en tanto por uno |
 | `base` | `datos directos` o `por analogia` |
+| `cargo_base` | el título de la base con que se emparejó cuando solo difería en el **grado** (`AUXILIAR 3` → `AUXILIAR 1`, D-037); vacío si estaba tal cual |
 | `empresas`, `personas` | respaldo real, sin contar dos veces las grafías del mismo puesto |
 | `lectura_mercado` | dónde cae **dentro de la banda de su cargo**, no a qué % de la referencia |
 | `vs_mercado` | cuánto se aleja del mercado, en % |
