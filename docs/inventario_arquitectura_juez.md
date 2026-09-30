@@ -75,10 +75,11 @@ desde la computadora del autor, que guarda el original.
 | `research/experimentos/e2_nivel/28_consistencia_calibra.py` | los `si` de `calibra` que los pasos 2-3 de la rúbrica dicen `no`, sin mirar el modelo (`armar`), y su corrección (`aplicar`) | versionado |
 | `research/experimentos/e2_nivel/29_prueba2.py` | **`prueba 2`**: 400 pares nuevos para el examen del cross-encoder v2 (D-038). Python del sistema (necesita `pyarrow`) | versionado |
 | `research/experimentos/e2_nivel/30_lote_entrenamiento.py` | el lote de entrenamiento de la zona difícil: 400 pares (mitad por duda del cross-encoder, mitad al azar) para juzgar con la v5 (D-038) | versionado |
+| `research/experimentos/e2_nivel/31_h4_prueba2.py` | **H4**: abre `prueba 2` una sola vez, tras cinco candados; v2 contra v1 (H4), réplica de H1, H4b, ensamble, estratos y calibración. `--ensayo` sobre `calibra` | versionado |
 | `requirements-cross.txt` | versiones exactas para entrenar y evaluar el cross (Enmienda 3) | versionado |
 
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `31_…` en adelante.
+añaden aquí con el número que les toque, `32_…` en adelante.
 
 ## 4. Salidas de los guiones
 
@@ -106,6 +107,7 @@ añaden aquí con el número que les toque, `31_…` en adelante.
 | `salidas/28_revisar_consistencia_prueba2.csv` | los 9 avisos de consistencia de `prueba 2`, juzgados | versionado (-f) |
 | `salidas/29_prueba2_para_juzgar.csv`, `29_prueba2_pares.csv` | **`prueba 2`, juzgada y congelada** (332 `si` / 68 `no`; `mismo_original` antes de la revisión de consistencia), y sus metadatos. Irreemplazable | versionado (-f) |
 | `salidas/30_lote_para_juzgar.csv`, `30_lote_pares.csv` | el lote de entrenamiento para juzgar a ciegas, y sus metadatos con la P del modelo (**no abrir antes de juzgar**). Una vez juzgado, irreemplazable. `30_candidatos.csv` queda local | versionado (-f) |
+| `salidas/31_h4.txt`, `31_puntajes_prueba2.csv` | **el resultado de H4** y los puntajes de cada juez en `prueba 2` (sin títulos). Se escriben una sola vez | versionado (-f) al crearse |
 | `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. El primer entrenamiento (commit `1bdc855`, `calibra` de 194) quedó sustituido por la Enmienda 5 y se rehace. `estado/` guarda cada corrida terminada para poder retomar (`huella.json`, y los pesos solo mientras hacen falta); `corrida.log`, el registro. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 | `salidas/22_modelos_v2/` | el cross-encoder **v2** (D-038, `22 --grilla v2`): `elegido/`, `corridas/`, `semillas/` (las tres de la configuración elegida, para el ensamble) y `resultados.json`. Pesos fuera de git | local; `resultados.json` se commitea |
 
