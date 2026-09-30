@@ -4870,3 +4870,22 @@ declara. 764 grupos distintos: algunos grupos aparecen en más de un par.
 **Se juzga a ciegas con la rúbrica v5**, en 8 lotes de 50, sin `sim`, estrato ni tramo, y
 **antes de entrenar la v2**. El lote de entrenamiento de la zona difícil excluirá los grupos de
 `prueba 2`.
+
+### Lote de entrenamiento de la zona difícil (2026-09-30)
+
+**Evidencia:** `research/experimentos/e2_nivel/30_lote_entrenamiento.py`.
+
+400 pares para juzgar a mano con la v5 y **entrenar** la v2 (mejora 1). Del censo de `16`, sin
+ningún grupo de `prueba 2`, `prueba`, `calibra` ni `13a` (comprobado: cero grupos en común), sin
+pares que ya estén en la plata y sin los que la capa 0 fusiona por el grado. Solo la **zona
+difícil** del análisis de errores: la misma palabra de puesto, sin nivel ni marcas de
+seniority o ámbito distintas, y con palabras distintas (41.155 candidatos, 89 % del estrato
+bajo).
+
+**Selección:** 240 del estrato bajo y 160 de la banda; en cada uno, la mitad donde el
+cross-encoder de H1 duda (P calibrada más cerca de 0,5; mediana 0,50) y la mitad al azar
+(mediana 0,95). Cada grupo como mucho dos veces. La mitad al azar evita que el lote quede
+sesgado solo hacia lo que el modelo no sabe; la mitad por duda es la que más enseña.
+
+**Se juzga a ciegas con la v5.** Cómo entran al entrenamiento (partición, peso frente a la
+plata) se fija en el prerregistro de la v2, antes de entrenar.
