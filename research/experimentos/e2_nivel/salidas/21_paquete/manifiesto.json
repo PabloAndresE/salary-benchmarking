@@ -1,6 +1,6 @@
 {
-  "creado": "2026-09-29T22:23:07",
-  "decision": "D-036, enmiendas 1, 2 y 5",
+  "creado": "2026-09-30T17:30:38",
+  "decision": "D-036, enmiendas 1, 2 y 5; D-038",
   "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
   "plantilla": "El puesto de trabajo es {}.",
   "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
@@ -16,13 +16,14 @@
     "incoherentes_juzgados_a_mano": 139,
     "incoherentes_con_etiqueta_blanda": 0,
     "corregidos_por_grado": 149,
-    "tasa_si_coherentes": 0.6702,
+    "corregidos_por_v5": 49,
+    "tasa_si_coherentes": 0.6745,
     "dificil": 2665
   },
   "calibra": {
     "pares": 191,
-    "si": 139,
-    "no": 52,
+    "si": 148,
+    "no": 43,
     "fuera_por_capa0": 9
   },
   "prueba_en_el_paquete": 0,
@@ -36,9 +37,10 @@
     "18_para_juzgar.csv": "7aa89a26514e",
     "18_meta.csv": "5593112c0181",
     "13e_pares_400.csv": "8f85de15492d",
-    "13e_para_juzgar.csv": "9a7187487211",
+    "13e_para_juzgar.csv": "e7e9277a64d8",
     "20_pares_400.csv": "ba0c38cd8fed",
     "23_correcciones_plata.csv": "ce7fabaeb4f5",
-    "23_fuera_por_capa0.csv": "b97297d9cedd"
+    "23_fuera_por_capa0.csv": "b97297d9cedd",
+    "27_correcciones_v5.csv": "b9f98d9804ad"
   }
 }

@@ -4815,3 +4815,39 @@ paso 4 que la v5 resuelve.
    entrenamiento de la zona difícil, sin cruces entre ellos.
 4. Prerregistro de la v2 (esta decisión, antes de entrenar): cross-encoder v2 contra v1 en
    `prueba 2`, con el ensamble como variante.
+
+### `calibra` rejuzgada y la plata con la v5 (2026-09-30)
+
+**`calibra`, a ciegas con la v5 (`26`):** 191 pares. El autor dejó un par sin juzgar (#320) y
+lo contestó aparte. Primer resultado: 20 cambios (18 `no` → `si`, 2 `si` → `no`).
+
+**Revisión de consistencia (`28`), independiente del modelo.** Aplicando mecánicamente los
+pasos 2 y 3 de la rúbrica a **todos** los `si` de `calibra` (no a los errores del
+cross-encoder) salieron 7 pares con niveles o marcas distintas (`COORDINADOR` / `DIRECTOR`,
+`SUPERVISOR` / `SUPERVISOR JEFE`, `CORPORATIVO`...), los 7 `no` antes de rejuzgar. El autor
+los atribuye a descuido y los devuelve a `no`. Un octavo del paso 5 (`ASISTENTE
+ADMINISTRATIVO DE GERENCIA` / `ASESOR ADMINISTRATIVO`) lo mantiene en `si`, por decisión
+propia.
+
+**`calibra` definitiva: 148 `si` / 43 `no`.** Frente al juicio anterior (v4) cambian **13**:
+11 `no` → `si` (casi todos de función añadida: `SUPERVISOR DE PLANTA` / `… Y PROYECTO`,
+`GERENTE DE ABASTECIMIENTO` / `… PLANEACION DE ABASTECIMIENTO`) y 2 `si` → `no`. La
+etiqueta anterior queda en `mismo_v4` de `13e_para_juzgar.csv`.
+
+**`CORPORATIVO` sigue separando.** El autor se preguntó si debería. D-033 lo decidió con 48
+pares juzgados, sin sueldos. Queda como está (rúbrica, D-033 y la plata coinciden) hasta
+medir con la base si `X CORPORATIVO` paga distinto de `X`, empresa contra empresa: pendiente
+de producto, con `base_v15`.
+
+**La plata, con la v5 (`27`):** los 60 candidatos juzgados a mano; **49 cambian** (46 de
+función añadida pasan a `si`, 1 de `NACIONAL` a `si`, 2 de ámbito a `no`). En 11 de los 60 la
+regla mecánica se habría equivocado (`POST VENTA`, `NO FINANCIEROS`, `ASSISTANT MANAGER`,
+`SEMISENIOR`...). Aparecieron dos huecos del léxico del producto: rangos en inglés
+(`ASSISTANT`, `MANAGER`) y `SEMISENIOR`. Pendiente de producto.
+
+**La vara nueva en `calibra`:** coseno 0,644, NLI congelado **0,7346** (`AUC_BASE` de `22`).
+Como dato descriptivo, el cross-encoder v1 da 0,976 en esta `calibra` (0,923 con la anterior):
+8 errores en vez de 11, y ya no en una sola dirección (4 juntan de más, 4 separan de más).
+Es optimista (v1 se eligió con la `calibra` anterior, muy parecida) y no dice nada de
+`prueba`: muestra que buena parte de lo que parecía error del modelo era inconsistencia del
+oro en el paso 4.
