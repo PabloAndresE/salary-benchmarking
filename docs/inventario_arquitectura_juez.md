@@ -35,6 +35,7 @@ del repositorio.**
 | `docs/inventario_arquitectura_juez.md` | este archivo | versionado |
 | `research/experimentos/e2_nivel/rubrica_mismo_cargo.md` | la rúbrica v3 congelada; su hash va en cada respuesta del LLM | versionado |
 | `research/experimentos/e2_nivel/rubrica_mismo_cargo_v4.md` | **la rúbrica vigente para juzgar a mano**: la v3 con el paso 1 cambiado (el grado no separa, Enmienda 5) | versionado |
+| `research/experimentos/e2_nivel/rubrica_mismo_cargo_v5.md` | **la rúbrica vigente para juzgar a mano** (D-038): la v4 con el ámbito (paso 3) y la función (paso 4) afinados | versionado |
 | `research/experimentos/e2_nivel/README.md` | índice de los guiones de E2 | versionado |
 | diagrama de la arquitectura | <https://claude.ai/artifact/2xH4KY8WVVo9AkKoaeSfZW> (privado) | fuera del repo |
 
@@ -59,10 +60,12 @@ del repositorio.**
 | `research/experimentos/e2_nivel/22_entrenar_cross.py` | **entrena el cross-encoder B** en el servidor: pasos 1–3, grilla con 3 semillas, elección y calibración en `calibra`. Solo lee `21_paquete/` | versionado |
 | `research/experimentos/e2_nivel/23_correccion_grado.py` | **el grado ya no separa** (Enmienda 5): corrige en su sitio los juicios de `13e`, `20` y `18` (guarda `mismo_v3`), escribe las correcciones de la plata y la lista de pares que la capa 0 fusiona. `quitar_grado` es el borrador de la regla de la capa 0 | versionado |
 | `research/experimentos/e2_nivel/24_h1_prueba.py` | **H1**: abre `prueba` una sola vez, tras cinco candados; cross-encoder elegido contra coseno (H1) y contra NLI congelado (H1b), más estratos, mitades, ablación y calibración. `--ensayo` sobre `calibra` | versionado |
+| `research/experimentos/e2_nivel/25_analisis_errores.py` | dónde se equivoca el cross-encoder de H1, por rasgo del par (solo `calibra` y `valida`) | versionado |
+| `research/experimentos/e2_nivel/26_rejuzgar_calibra.py` | `calibra` a ciegas para rejuzgar con la v5 (`armar`) y pasar los juicios al oro (`aplicar`) | versionado |
 | `requirements-cross.txt` | versiones exactas para entrenar y evaluar el cross (Enmienda 3) | versionado |
 
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `25_…` en adelante.
+añaden aquí con el número que les toque, `27_…` en adelante.
 
 ## 4. Salidas de los guiones
 
@@ -83,6 +86,8 @@ añaden aquí con el número que les toque, `25_…` en adelante.
 | `salidas/23_fuera_por_capa0.csv` | los 45 pares de `13e` y `20` que salen de `calibra` (9) y `prueba` (36) porque la capa 0 los fusiona (números, romanos y letras de grado). **Lo lee el guion de H1** | versionado (-f) |
 | `salidas/23_revisar_grado.csv` | `no` con grado distinto y otra diferencia, **juzgados a mano** en `mismo_nuevo`. `23` los conserva (también los que salen de la lista, con `vigente = no`) y los aplica. Irreemplazable | versionado (-f) |
 | `salidas/24_h1.txt`, `24_puntajes_prueba.csv` | **el resultado de H1** y los puntajes de cada juez en `prueba` (sin títulos). Se escriben una sola vez | versionado (-f) al crearse |
+| `salidas/25_analisis_errores.txt` | agregados del análisis de errores (sin títulos). Los pares, en `25_errores_*.csv` | versionado; los CSV, local |
+| `salidas/26_calibra_ciega.csv`, `26_calibra_mapa.csv` | `calibra` para rejuzgar a ciegas, y el mapa al `n` de `13e` (**no abrir antes de juzgar**). Una vez juzgada, irreemplazable | versionado (-f) |
 | `salidas/22_modelos/` | el cross entrenado: `elegido/` (el de H1), `corridas/` y `resultados.json`. El primer entrenamiento (commit `1bdc855`, `calibra` de 194) quedó sustituido por la Enmienda 5 y se rehace. `estado/` guarda cada corrida terminada para poder retomar (`huella.json`, y los pesos solo mientras hacen falta); `corrida.log`, el registro. Pesos de ~1 GB: fuera de git; `resultados.json` se commitea | local |
 
 (`salidas/` = `research/experimentos/e2_nivel/salidas/`)

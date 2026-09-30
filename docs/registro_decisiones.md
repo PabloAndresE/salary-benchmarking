@@ -4749,3 +4749,63 @@ Total hasta que se reconstruya la base: `grado=False` deja el comportamiento de 
 Un test de fusión semántica usaba títulos sintéticos `PUESTO A` / `B` / `C`, que con esta
 regla son el mismo puesto; se renombraron (`PUESTO ALFA` / `BETA` / `GAMA`) sin cambiar lo que
 comprueba.
+
+---
+
+## D-038 — Cross-encoder v2: el paso 4 afinado, `calibra` rejuzgada y etiquetas donde falla
+
+**Fecha:** 2026-09-30
+**Origen:** tras H1 (D-036), el autor quiere mejorar el cross-encoder: (1) etiquetas humanas en
+la zona difícil y (3) ensamble. Antes, un análisis de errores.
+**Evidencia:** `research/experimentos/e2_nivel/25_analisis_errores.py` (solo `calibra` y
+`valida`; `prueba` no se mira).
+**Estado:** **en curso.** Rúbrica v5 escrita y `calibra` lista para rejuzgar a ciegas. El
+prerregistro de la v2 (qué se entrena, qué se compara, con qué examen) se escribe **antes** de
+entrenarla.
+
+### Lo que dijo el análisis de errores
+
+- **Los pasos 1–3 ya están aprendidos:** con escalón distinto, cero errores en `calibra` y 2
+  de 278 en `valida`; con seniority distinta, cero en `calibra`; el grado, las erratas y el
+  género, prácticamente sin errores.
+- **Casi todo el error es el paso 4, y en una dirección: juntar de más.** En `calibra`, 10 de 11
+  errores; casi todos con la misma palabra de puesto y otra función (`SUPERVISOR DE PLANTA` /
+  `… Y PROYECTO`). En `valida`, junta 37 de los 57 `no` que Gemini dio por el paso 4, con
+  falsos amigos léxicos (`PRODUCTO` / `PRODUCCION`, `PROCESOS` / `PROCESAMIENTO`).
+- **Y parte de ese error es del oro, no del modelo.** En `calibra`, para el mismo tipo de par
+  (misma palabra de puesto y una función añadida, sin escalón ni seniority), 45 `si` y 2 `no`.
+  Los dos `no` contradicen la regla del paso 4 de la v3/v4. Probablemente vienen de juicios
+  hechos con la v1/v2, más estrictas.
+- **Gemini, con la v3, es muy permisivo en el paso 4:** 99 % `si` con función añadida, 93 % con
+  acotación, 88 % con una función por otra.
+
+### Rúbrica v5 (decisiones del autor)
+
+- **Función añadida: nunca separa**, aunque sea otro oficio (`JEFE DE MONTAJE` = `JEFE DE
+  MONTAJE Y SOLDADURA`, que la v3/v4 separaba).
+- **Una función por otra: mismo si es la misma área con otro nombre**, distinto si son áreas o
+  departamentos distintos; los falsos amigos léxicos separan.
+- **Ámbito:** `NACIONAL` y `LOCAL` no son marca (coherente con los 139); `INTERNACIONAL`,
+  `LATAM` y `GLOBAL` se suman a `REGIONAL` y `ZONAL`.
+
+`rubrica_mismo_cargo_v5.md`, vigente para juzgar a mano. La v3 sigue congelada para la plata;
+la v4 queda como registro del grado.
+
+### `calibra` se rejuzga entera y a ciegas
+
+El autor propuso corregir las inconsistencias de `calibra`. Corregir solo los pares donde el
+modelo falló sesgaría las etiquetas hacia el modelo e inflaría su AUC. **Se rejuzgan los 191,
+en orden aleatorio, sin `sim`, sin la etiqueta anterior y sin predicción** (`26`). La etiqueta
+anterior queda en `mismo_v4`. Si cambia, cambia por la regla. **`prueba` no se toca**: su
+resultado (H1) queda como está, y se declara que parte de su error medido es la ambigüedad del
+paso 4 que la v5 resuelve.
+
+### Lo que falta, en orden
+
+1. Rejuzgar `calibra` (~1,5 h) y aplicar (`26 aplicar`), y luego `21`, `19` y el `AUC_BASE`.
+2. Llevar la v5 a la plata donde es mecánica (función añadida y ámbito), con revisión a mano
+   de lo que no lo sea.
+3. Armar `prueba 2` (~400 pares nuevos, juzgados a ciegas con la v5, congelados) y el lote de
+   entrenamiento de la zona difícil, sin cruces entre ellos.
+4. Prerregistro de la v2 (esta decisión, antes de entrenar): cross-encoder v2 contra v1 en
+   `prueba 2`, con el ensamble como variante.
