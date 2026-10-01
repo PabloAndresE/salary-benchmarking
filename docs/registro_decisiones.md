@@ -5199,3 +5199,20 @@ autor separó. (Que la fila de abreviaturas baje respecto de la de texto en `cal
 expansión de un lado deshace una coincidencia accidental del otro.) `prueba` y `prueba 2` **ya se
 abrieron** (H1 y H4): esto no cambia esos resultados; decide cómo se leen y qué se evalúa en
 adelante. **Qué hacer con estos pares se registra antes de recalcular nada.**
+
+### Qué se hace con los pares del oro que colapsan (2026-10-01, antes de recalcular nada)
+
+Decisión del autor:
+
+1. **H1 (D-036) y H4 (D-038) se quedan como el resultado confirmatorio**, tal cual se registraron.
+2. **Sensibilidad (exploratoria y declarada como tal):** H1 y H4 se recalculan sin los pares que
+   colapsan con la capa 0 v1. Se reporta, igual que en el original:
+   - la **diferencia** frente al coseno (cross-encoder − coseno) con su IC 95 % por bootstrap
+     pareado por par, 10.000 remuestreos, no solo el AUC del cross-encoder; y para H4, v2 − v1 con
+     el mismo método;
+   - **cómo cambia la proporción de `si` y `no`** al sacar los pares.
+   Se calcula cuando estén aprobados los diccionarios y decidido el criterio A.
+3. **De aquí en adelante, la exclusión va atada a la versión de la capa 0:** «se excluyen los pares
+   que colapsan con la **capa 0 v1**», es decir, las reglas adoptadas y los diccionarios que el autor
+   apruebe ahora. Si después hay una capa 0 v2, se reporta cuántos pares más colapsan con ella, **sin
+   redefinir lo anterior**: cada evaluación dice con qué versión de la capa 0 se excluyó.
