@@ -5130,3 +5130,20 @@ Una sola reconstrucción con todo. Reporte de cambio **por regla**: cuántas fus
 una, % de personas que cambia de grupo, cuánto se mueve la mediana por banda y qué bandas se mueven
 más de un 5 %. Las enmiendas (D-015, el criterio de D-037, el léxico) se registran antes de
 reconstruir.
+
+### Mediciones de D-040, primera parte (2026-10-01)
+
+**Criterio B, primera condición: se cumple.** De las 24.654 fusiones por coseno de `base_v15`, el
+cross-encoder v2 rechaza **727 (2,95 %)**, por encima del 1 % (`32_fusion_coseno_cross.py`).
+Ninguno de los 727 es un par que la capa 0 de texto juntaría igual: todos dependen solo de D-015.
+Mediana de P en los pares unidos 0,991; percentil 5, 0,934. **La segunda condición la decide la
+revisión a ciegas** de 50 rechazados y 50 aceptados barajados (`32_revisar_coseno.csv`).
+
+**Criterio A, adelanto entre empresas (no decide):** 31 familias con dos o más grados ordinales en
+grupos distintos y celdas de al menos 3 empresas. Diferencia media +2,7 %, IC 95 % [−4,3 %,
++10,0 %]; el grado mayor paga más en el 45 % de las familias. Lectura con los tres resultados:
+**inconcluso**. Se excluyeron 18 familias cuyos grados ya compartían grupo (y por tanto centro:
+`m` es del grupo); la primera versión del adelanto las incluía y daba +1,1 %, sesgado hacia cero.
+**Aviso:** con tan pocas familias, también la versión dentro de empresa puede salir inconclusa, y
+por el criterio eso significa **no fusionar el grado** y revisar la Enmienda 5 (etiquetas,
+evaluación y reentrenamiento). Se sabrá al reconstruir con BigQuery.

@@ -1,0 +1,13 @@
+==============================================================================
+32 · CRITERIO B DE D-040: LA FUSION POR COSENO >= 0,95 PASADA POR EL CROSS v2
+==============================================================================
+pares unidos por la fusion semantica en base_v15: 24,654
+rechazados por el cross v2 (P calibrada < 0,5): 727 = 2.95%   (umbral del criterio: 1 %)
+  primera condicion del criterio B: SE CUMPLE
+
+descriptivo: pares que la capa 0 de texto juntaria igual (prefijo, puntuacion, grado): 2,844
+  sin ellos (los que dependen solo de D-015): 21,810, rechazados 727 = 3.33%
+P del cross v2 en los pares unidos: mediana 0.991; percentil 5 0.934
+
+revision a ciegas: 50 rechazados + 50 aceptados, barajados -> 32_revisar_coseno.csv
+  (mapa: 32_revisar_coseno_mapa.csv, NO abrir antes de juzgar)

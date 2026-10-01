@@ -1,0 +1,11 @@
+==============================================================================
+33 · CRITERIO A DE D-040, ADELANTO ENTRE EMPRESAS (NO DECIDE)
+==============================================================================
+familias con >= 2 grados ordinales al final en grupos distintos (celdas con >= 3 empresas): 31
+diferencia media (grado mayor - menor, consecutivos): +2.7%   IC95 [-4.3%, +10.0%]
+familias donde el grado mayor paga mas: 45%
+familias excluidas porque sus grados ya estaban en el mismo grupo (mismo centro): 18
+lectura con los tres resultados del criterio: INCONCLUSO   (solo adelanto)
+familias con >= 2 letras al final (no deciden): 36
+
+La version que decide compara las MISMAS empresas con los dos grados (BigQuery).
