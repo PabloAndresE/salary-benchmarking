@@ -1,0 +1,42 @@
+==============================================================================
+36 · CAPA 0: LISTAS PARA APROBAR (v1 de los diccionarios) Y COLAPSOS DEL ORO
+==============================================================================
+
+GENERO POR PALABRA: 385 pares
+   -> 36_aprobar_genero.csv: 385 filas; hasta el 95 % de las personas: 126
+
+ERRATAS (sin la regla de 3 empresas): 2,241 candidatas; descartadas por menos de 5 letras 128, por el diccionario 608; con algun titulo corregido que existe: 884
+   -> 36_aprobar_erratas.csv: 884 filas; hasta el 95 % de las personas: 331
+
+ABREVIATURAS (minimo de 1 letra mas, dominio >= 80 %, rango): 307
+   BODEG -> BODEGA
+   -> 36_aprobar_abreviaturas.csv: 307 filas; hasta el 95 % de las personas: 113
+
+COLAPSOS DEL ORO: pares que la capa 0 nueva convertiria en el mismo titulo
+(acumulado regla a regla; entre parentesis, cuantos eran `no`: esos serian errores)
+
+   calibra (191)
+      1. texto (codigo inicial y puntuacion)                 4 (0 no)
+      2. + abreviaturas (todas las propuestas)               3 (0 no)
+      3. + plural simple                                     9 (0 no)
+      4. + erratas (todas las propuestas)                   10 (0 no)
+      5. + genero por palabra (todos los pares)             11 (0 no)
+      6. + grado al final (si el criterio A lo activa)      12 (0 no)
+
+   prueba (555, H1)
+      1. texto (codigo inicial y puntuacion)                12 (0 no)
+      2. + abreviaturas (todas las propuestas)              13 (0 no)
+      3. + plural simple                                    28 (0 no)
+      4. + erratas (todas las propuestas)                   36 (0 no)
+      5. + genero por palabra (todos los pares)             38 (0 no)
+      6. + grado al final (si el criterio A lo activa)      42 (0 no)
+
+   prueba 2 (400, H4)
+      1. texto (codigo inicial y puntuacion)                 3 (0 no)
+      2. + abreviaturas (todas las propuestas)               4 (0 no)
+      3. + plural simple                                     7 (0 no)
+      4. + erratas (todas las propuestas)                   10 (0 no)
+      5. + genero por palabra (todos los pares)             14 (0 no)
+      6. + grado al final (si el criterio A lo activa)      18 (0 no)
+
+   pares `no` que colapsarian (errores de alguna regla):

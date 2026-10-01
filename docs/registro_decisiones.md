@@ -5147,3 +5147,55 @@ grupos distintos y celdas de al menos 3 empresas. Diferencia media +2,7 %, IC 95
 **Aviso:** con tan pocas familias, también la versión dentro de empresa puede salir inconclusa, y
 por el criterio eso significa **no fusionar el grado** y revisar la Enmienda 5 (etiquetas,
 evaluación y reentrenamiento). Se sabrá al reconstruir con BigQuery.
+
+### Capa 0 a nivel de palabra: lo adoptado y las listas para aprobar (2026-10-01)
+
+**Evidencia:** `34_capa0_palabras.py`, `35_capa0_v2.py` y `36_capa0_listas_y_colapsos.py`.
+
+**Adoptado:**
+- **Plural, regla simple:** una palabra de 5+ letras en -S/-ES pasa a su singular si el singular
+  existe en la base; no las terminadas en -IS/-US. Une 425 grupos. **spaCy, descartado:** aporta
+  54 grupos más que la regla simple, casi todos de género, y en mayúsculas sin tildes funciona mal.
+
+**Ajustado tras medir:**
+- **Erratas: se quita la regla de «3 empresas».** En `base_v15` las empresas son por grupo: una
+  errata dentro de un grupo grande heredaba sus empresas (`NERERAL` 774, `COODINADORA` 503) y
+  quedaba protegida, mientras los oficios raros reales (`CLAVADOR`, `PRORECTOR`, `SUBCONTRALOR`,
+  `CUADRADOR`, de 1-2 empresas) seguían corrigiéndose mal. Ninguna regla de frecuencia separa
+  «raro pero real» de «errata»: **el filtro es la aprobación del autor.** Quedan: menos de 5
+  letras, diccionario es+en, y que el título corregido exista en la base.
+- **Abreviaturas:** la expansión puede tener una sola letra más (`BODEG` → `BODEGA`, antes
+  `BODEGUERO`); dominio ≥ 80 % con o sin punto; no se expande si es ambigua entre una palabra de
+  rango y otra que no lo es (`ADMIN`, `TEC`, `OP`, `DIREC`: 20 casos).
+- **Género por palabra,** solo -ERO/-ERA, -OR/-ORA, -IVO/-IVA, -ADO/-ADA, -ICO/-ICA: 385 pares,
+  a revisar uno por uno (hay pares que no son género: `LOGISTICA` / `LOGISTICO`, `FISICA` /
+  `FISICO`, `ELECTRICA` / `ELECTRICO`).
+
+**Protocolo de aprobación (versión 1 de los diccionarios):** las reglas proponen y el autor
+aprueba. Tres listas (`36_aprobar_erratas.csv` 884, `36_aprobar_abreviaturas.csv` 307,
+`36_aprobar_genero.csv` 385), con ejemplos de títulos (antes → después), títulos afectados y
+personas **estimadas** (la base guarda personas por grupo; se reparten por igual entre los
+títulos del grupo; las exactas necesitan los datos crudos), ordenadas por personas con la
+cobertura acumulada. **El autor revisa hasta el 95 % de las personas en cada lista (331, 113 y
+126 filas); lo que no se revisa no se aplica.** Los diccionarios aprobados se guardan versionados
+y se aplican igual al construir y al consultar.
+
+### Colapsos del oro con la capa 0 nueva (2026-10-01)
+
+Pares que la capa 0 convertiría en el mismo título, acumulado regla a regla (las reglas pendientes
+se cuentan con todas sus propuestas: es una cota):
+
+| regla | `calibra` (191) | `prueba` (555, H1) | `prueba 2` (400, H4) |
+|---|---|---|---|
+| texto (código inicial, puntuación) | 4 | 12 | 3 |
+| + abreviaturas | 3 | 13 | 4 |
+| + plural simple | 9 | 28 | 7 |
+| + erratas | 10 | 36 | 10 |
+| + género por palabra | 11 | 38 | 14 |
+| + grado al final (si el criterio A lo activa) | **12** | **42** | **18** |
+
+**Ninguno de los pares que colapsan es un `no`**: las reglas no juntan, en el oro, nada que el
+autor separó. (Que la fila de abreviaturas baje respecto de la de texto en `calibra` es porque la
+expansión de un lado deshace una coincidencia accidental del otro.) `prueba` y `prueba 2` **ya se
+abrieron** (H1 y H4): esto no cambia esos resultados; decide cómo se leen y qué se evalúa en
+adelante. **Qué hacer con estos pares se registra antes de recalcular nada.**
