@@ -5011,3 +5011,38 @@ más bajo: `prueba 2` se juzgó con la v5, con el paso 4 consistente, mientras q
 la inconsistencia del paso 4 que encontró `25`. **Parte del error medido en H1 era ruido de las
 etiquetas, no del modelo.** Se declara en la tesis: los dos exámenes miden cosas algo distintas,
 y los dos confirman H1.
+
+---
+
+## D-039 — La v1 queda como resultado confirmatorio; la v2 es el juez operativo
+
+**Fecha:** 2026-10-01
+**Origen:** H4 no demostrada (D-038): en `prueba 2` la v2 no le gana a la v1 en AUC con IC sobre
+cero. Pero lo que viene —correlation clustering (capa C), el flujo de un cargo nuevo, el producto—
+no usa solo el orden de los puntajes sino las **probabilidades**, y ahí la v2 es claramente
+mejor. Decisión del autor.
+**Estado:** adoptada.
+
+### Qué se decide
+
+- **Para la tesis, el resultado confirmatorio es el de la v1:** H1 en `prueba` (+0,269) y su
+  réplica en `prueba 2` (+0,412). Nada de esto cambia.
+- **El juez operativo es la v2** (`22_modelos_v2/elegido/`, SHA-256 `ed6979378599…`, T = 1,21):
+  el que alimenta el correlation clustering, el diagnóstico de recall del bi-encoder y, en su
+  momento, el producto.
+
+### Por qué, y con qué salvedad
+
+En `prueba 2`, con P calibrada y umbral 0,5 (descriptivo): ECE **0,027** frente a 0,071; separa
+de más **10** de 332 frente a 18; junta de más 7 de 68 frente a 8. El correlation clustering usa
+los log-odds de P(mismo): una probabilidad mejor calibrada es una entrada mejor, aunque el orden
+sea casi el mismo.
+
+**Es una elección exploratoria, no confirmada:** H4 no respalda a la v2 en AUC, y la ventaja de
+calibración se ve en el mismo `prueba 2` que ya se abrió, sin criterio fijado de antemano. Se
+declara así en la tesis. Si la capa C se evalúa con un oro nuevo, se puede comparar ahí con la v1
+como control.
+
+### Reversibilidad
+
+Total: la v1 sigue guardada y respaldada; cambiar de juez es cambiar una ruta.
