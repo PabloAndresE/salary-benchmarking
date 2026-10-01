@@ -5046,3 +5046,87 @@ como control.
 ### Reversibilidad
 
 Total: la v1 sigue guardada y respaldada; cambiar de juez es cambiar una ruta.
+
+---
+
+## D-040 — La capa 0 es una sola función de texto; criterios fijados antes de medir
+
+**Fecha:** 2026-10-01
+**Origen:** el autor revisa la normalización antes de reconstruir la base (`base_v16`). Principio:
+**la capa 0 solo hace transformaciones de texto, deterministas y auditables, en una sola función
+que se usa igual al construir y al consultar.** Nada semántico pasa ahí: eso lo decide el
+cross-encoder.
+**Estado:** **criterios registrados antes de mirar ningún número** (este commit). Las
+mediciones y su resultado van debajo, en apartados posteriores.
+
+### Orden de la capa 0
+
+1. **Limpieza de texto:** lo que hace `_norm` (mayúsculas, sin tildes, espacios), más quitar la
+   puntuación, más quitar el código o la numeración al inicio (`09.01 ANALISTA DE COSTOS`,
+   `1. JEFE DE COMPRAS`, `3 LANCHERO`): es formato de planilla, no grado.
+2. **Erratas:** como D-025/D-031, y **el diccionario que sale de la construcción también se aplica
+   al consultar** (hoy un título de cliente con errata no se corrige).
+3. **Género:** como D-026.
+4. **Grado real, al final del título** (`AUXILIAR 2`, `QUIMICO II`, `AYUDANTE C`), **opción (a):**
+   solo junta títulos idénticos salvo el grado, sin conectores ni orden. Sujeto al criterio A.
+5. **Léxico de nivel** (criterio C).
+
+**La fusión por coseno ≥ 0,95 (D-015) sale de la capa 0 si se cumple el criterio B.** Es el
+embedding decidiendo donde nadie lo revisa: sus errores no los ve el cross ni el clustering, y al
+consultar no se aplica igual que al construir. Los conectores y el orden («clave dura») siguen
+fuera; se pueden medir aparte.
+
+Lo medido antes de fijar esto, solo descriptivo, sobre los 50.296 grupos de `base_v15`, con las
+reglas en orden: el código o la numeración al inicio une 127 grupos, la puntuación 262, el grado al
+final (opción a) 1.340. La D-037 tal como estaba unía además unas 250 familias solo por conectores
+u orden, efecto secundario que la opción (a) elimina.
+
+### Criterio A — ¿el grado es un escalón salarial? (decide si se activa el paso 4)
+
+- **Familias:** títulos idénticos (tras la limpieza) salvo un grado **ordinal** al final: números
+  1–9 y romanos I–X. Las letras no tienen un orden fiable: se reportan aparte, sin decidir.
+- **Medida:** para cada par de grados consecutivos de una familia, la diferencia de sueldo en log
+  (grado mayor − grado menor). **Decide la versión DENTRO DE EMPRESA** (las mismas empresas con los
+  dos grados, con los datos crudos de BigQuery, al reconstruir). La versión entre empresas sobre
+  `base_v15` (centros de celda) es solo un adelanto y no decide.
+- **Tres resultados** (IC 95 % por bootstrap de familias):
+  - **Escalón:** diferencia media ≥ 5 % y el IC entero sobre cero → **no se fusiona.**
+  - **Equivalente:** el IC entero dentro de ±5 % → **se fusiona.**
+  - **Inconcluso:** cualquier otro caso → **no se fusiona**; esas celdas pueden agregarse solo
+    cuando tienen pocos datos, como las inclusiones. La falta de evidencia no termina en fusión.
+- **Consecuencia si no es «equivalente»:** el cross-encoder se entrenó con los pares de grado como
+  `si` (las 149 correcciones y ~320 pares de la plata que la capa 0 fusionaría) y la evaluación los
+  excluyó (Enmienda 5 de D-036). Habría que revertir la Enmienda 5 y la v5 en ese punto, pasar esos
+  pares a `no`, sumarlos a la evaluación y **reentrenar**. Se quiere saber antes de seguir
+  invirtiendo en el cross-encoder v2.
+
+### Criterio B — ¿sale la fusión por coseno (D-015)?
+
+- Todos los pares que la fusión semántica unió en `base_v15` (coseno ≥ 0,95 dentro del mismo
+  grupo: 24.654) pasan por el cross-encoder v2 (juez operativo, D-039), con P calibrada.
+- **Revisión a ciegas, mezclada:** 50 pares rechazados (P < 0,5) y 50 aceptados, al azar,
+  barajados y sin marcar cuál es cuál. El autor juzga los 100 con la rúbrica v5.
+- **Se confirma, y D-015 se enmienda, si:** el cross-encoder rechaza **al menos el 1 %** de los
+  pares **y** al menos la mitad de los 50 rechazados revisados son de verdad distintos. Entonces
+  esos pares los resuelven el cross-encoder y el clustering. Umbral bajo a propósito: sacarla cuesta
+  poco, porque el cross y el clustering vuelven a juntar lo equivalente, y un 1 % ya son ~250
+  fusiones malas que nadie revisa. Los 50 aceptados dicen además si el cross acepta lo que no
+  debería.
+
+### Criterio C — el léxico de nivel (aprobado tal cual)
+
+- Se añaden a `RANGOS`: `SUBJEFE` (3), `ASESOR` (1), `EJECUTIVO` (1), `CONSULTOR` (2), `ENCARGADO`
+  (3), `ASSISTANT` (1), `MANAGER` (5; `ASSISTANT MANAGER` = 4); y `SEMISENIOR` a la seniority.
+  Medido sobre las 24.654 fusiones por coseno: cada uno bloquearía entre 0 y 16 (< 0,1 %). Ninguno
+  es ambiguo por volumen (umbral: más del 1 %).
+- Se alinea con la rúbrica: `TECNICO` y `ESPECIALISTA` solo cuentan como rango si abren el título;
+  lo que va tras `DE`/`DEL` no cuenta.
+- Confirmado: el candado solo bloquea cuando los dos títulos tienen nivel conocido y distinto
+  (`VENDEDOR` / `ASESOR COMERCIAL` no se bloquea: `VENDEDOR` no tiene nivel).
+
+### base_v16
+
+Una sola reconstrucción con todo. Reporte de cambio **por regla**: cuántas fusiones aporta cada
+una, % de personas que cambia de grupo, cuánto se mueve la mediana por banda y qué bandas se mueven
+más de un 5 %. Las enmiendas (D-015, el criterio de D-037, el léxico) se registran antes de
+reconstruir.
