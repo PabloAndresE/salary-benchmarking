@@ -1,0 +1,184 @@
+==============================================================================
+35 · CAPA 0, SEGUNDA RONDA: GENERO POR PALABRA, ERRATAS Y ABREVIATURAS (descriptivo)
+==============================================================================
+todo se cuenta encima de lo actual (base_v15) y de las reglas de texto acordadas.
+
+plural, regla simple (adoptada): 425 grupos; lo siguiente va ENCIMA del plural
+
+GENERO POR PALABRA (-ERO/-ERA, -OR/-ORA, -IVO/-IVA, -ADO/-ADA, -ICO/-ICA): 385 pares A/O; une 113 grupos mas
+   por terminacion: {'ADA': 24, 'ICA': 65, 'IVA': 33, 'ORA': 219, 'ERA': 44}
+   los 25 con mas personas (lista completa en 35_pares_genero.csv):
+        TRABAJADOR             / TRABAJADORA            (267 / 29 titulos)
+        VENDEDOR               / VENDEDORA              (460 / 45 titulos)
+        ADMINISTRATIVO         / ADMINISTRATIVA         (769 / 387 titulos)
+        ASESOR                 / ASESORA                (927 / 135 titulos)
+        EJECUTIVO              / EJECUTIVA              (975 / 291 titulos)
+        VENDEROR               / VENDERORA              (1 / 1 titulos)
+        SUPERVISOR             / SUPERVISORA            (2771 / 226 titulos)
+        COORDINADOR            / COORDINADORA           (4019 / 1029 titulos)
+        TRABAJOR               / TRABAJORA              (3 / 2 titulos)
+        OBRERO                 / OBRERA                 (235 / 7 titulos)
+        GENERO                 / GENERA                 (7 / 9 titulos)
+        CAJERO                 / CAJERA                 (104 / 66 titulos)
+        ALMACENERO             / ALMACENERA             (1 / 3 titulos)
+        OPERADOR               / OPERADORA              (1781 / 24 titulos)
+        ADMINISTRAIVO          / ADMINISTRAIVA          (2 / 1 titulos)
+        TECNICO                / TECNICA                (2598 / 206 titulos)
+        LOGISTICO              / LOGISTICA              (110 / 666 titulos)
+        PERCHADOR              / PERCHADORA             (2 / 1 titulos)
+        MECANICO               / MECANICA               (444 / 94 titulos)
+        FINANCIERO             / FINANCIERA             (362 / 239 titulos)
+        CONTADOR               / CONTADORA              (105 / 33 titulos)
+        PROFESOR               / PROFESORA              (222 / 166 titulos)
+        ENFERMERO              / ENFERMERA              (15 / 65 titulos)
+        ADMINISTRADOR          / ADMINISTRADORA         (444 / 75 titulos)
+        BODEGUERO              / BODEGUERA              (182 / 3 titulos)
+   -ICO/-ICA, los mas sospechosos de no ser genero (disciplina / persona): ACADEMICO/ACADEMICA, ACEDEMICO/ACEDEMICA, AERONAUTICO/AERONAUTICA, ANALITICO/ANALITICA, ARQUITECTONICO/ARQUITECTONICA, ASFALTICO/ASFALTICA, AUTOMATICO/AUTOMATICA, BASICO/BASICA, BIOLOGICO/BIOLOGICA, BIOQUIMICO/BIOQUIMICA, CARNICO/CARNICA, CIENTIFICO/CIENTIFICA, CLINICO/CLINICA, CRITICO/CRITICA, CTRICO/CTRICA, DERMATOLOGICO/DERMATOLOGICA, DOMESTICO/DOMESTICA, ECONOMICO/ECONOMICA, ELECTRICO/ELECTRICA, ELECTROMECANICO/ELECTROMECANICA, ELECTRONICO/ELECTRONICA, ESTADISTICO/ESTADISTICA, ESTETICO/ESTETICA, ESTRATEGICO/ESTRATEGICA, FARMACEUTICO/FARMACEUTICA, FISICO/FISICA, FOTOVOLTAICO/FOTOVOLTAICA, GASTRONOMICO/GASTRONOMICA, GENETICO/GENETICA, GEOFISICO/GEOFISICA
+      TECNICA ADMINISTRATIVA  ||  TECNICO ADMINISTRATIVO
+      VICE -RECTOR  ||  VICE-RECTORA
+      OPERADOR CORTADORA  ||  OPERADOR-CORTADOR
+      COORDINADOR CORPORATIVO  ||  COORDINADORA CORPORATIVA
+      ASESOR PEDAGOGICO JR  ||  ASESORA PEDAGOGICA JR
+      ASISTENTE ADMINISTRATIVA & RECEPCIONISTA  ||  ASISTENTE ADMINISTRATIVO/RECEPCIONISTA
+      SUPERVISOR ADMINISTRATIVO  ||  SUPERVISORA ADMINISTRATIVA
+      ASESOR COMERCIAL VENDEDOR JUNIOR  ||  ASESORA COMERCIAL VENDEDORA JUNIOR
+      GERENTE CONTABLE & FINANCIERA  ||  GERENTE CONTABLE FINANCIERO
+      COORDINADOR DE SERVICIO MEDICO  ||  COORDINADORA DE SERVICIOS MEDICOS
+      MERCADERISTA - IMPULSADORA  ||  MERCADERISTA/IMPULSADOR
+      INFORMADOR (A)  ||  INFORMADORA
+      CAJERA/PAGADOR  ||  CAJERO PAGADOR
+      ASESOR PEDAGOGICO  ||  ASESORA PEDAGOGICA
+      AUDITOR INFORMATICO  ||  AUDITORA INFORMATICA
+
+ERRATAS PALABRA -> PALABRA (con 'palabra real'): une 242 grupos mas
+   candidatos: 2,240
+   descarta 'menos de 5 letras': 128
+        SSHE (3 tit., 1 emp.) -> HSE (63 tit.)
+        LL (4 tit., 3 emp.) -> Y (8071 tit.)
+        PPL (1 tit., 1 emp.) -> PL (20 tit.)
+        DDHH (2 tit., 2 emp.) -> D (48 tit.)
+        TTO (1 tit., 1 emp.) -> TO (31 tit.)
+        CAM (5 tit., 6 emp.) -> KAM (79 tit.)
+        CTV (1 tit., 1 emp.) -> CCTV (21 tit.)
+        SUPP (1 tit., 1 emp.) -> SUP (34 tit.)
+        GT (1 tit., 1 emp.) -> GTH (12 tit.)
+        EH (1 tit., 1 emp.) -> E (685 tit.)
+   descarta 'palabra real (3+ empresas)': 929
+        MENTENIMIENTO (1 tit., 185 emp.) -> MANTENIMIENTO (978 tit.)
+        SELECTOR (4 tit., 19 emp.) -> SECTOR (112 tit.)
+        NERERAL (1 tit., 774 emp.) -> GENERAL (690 tit.)
+        INTERNAL (12 tit., 10 emp.) -> INTERNO (156 tit.)
+        MANAGMENT (7 tit., 8 emp.) -> MANAGEMENT (134 tit.)
+        AUTOMATIZACIO (1 tit., 4 emp.) -> AUTOMATIZACION (63 tit.)
+        PROFESIONAL2 (1 tit., 3 emp.) -> PROFESIONAL (127 tit.)
+        ENSACADO (4 tit., 4 emp.) -> ENVASADO (43 tit.)
+        CROBRANZAS (2 tit., 104 emp.) -> COBRANZA (150 tit.)
+        AYUANTE (2 tit., 421 emp.) -> AYUDANTE (1333 tit.)
+   descarta 'existe en el diccionario': 387
+        DOCUMENTO (1 tit., 1 emp.) -> DOCUMENTAL (65 tit.)
+        CORNEJO (1 tit., 1 emp.) -> TORNERO (25 tit.)
+        COORDINATION (3 tit., 1 emp.) -> COORDINACION (92 tit.)
+        PLANCHA (1 tit., 1 emp.) -> PLANTA (474 tit.)
+        PRESENCIA (1 tit., 1 emp.) -> PRESENCIAL (10 tit.)
+        EXECUTING (1 tit., 1 emp.) -> EXECUTIVE (81 tit.)
+        ESTADIO (3 tit., 2 emp.) -> ESTACION (40 tit.)
+        AUTORIA (1 tit., 1 emp.) -> AUDITORIA (204 tit.)
+        CUIDADORA (1 tit., 1 emp.) -> CUIDADOR (10 tit.)
+        DESARROLLAR (1 tit., 2 emp.) -> DESARROLLO (829 tit.)
+   sensibilidad: con la cota INFERIOR de empresas, 688 palabras dejarian de ser reales
+   diccionario: 796 entradas; titulos corregidos que existen: 284; descartados porque el titulo corregido no existe: 893
+   LOS SEIS ERRORES DE `34`:
+        CLAVADOR       SIGUE PASANDO -> LAVADOR
+        PRORECTOR      SIGUE PASANDO -> PROTECTOR
+        EMBALADORA     bloqueado por 'palabra real (3+ empresas)' (8 empresas)
+        ENSACADO       bloqueado por 'palabra real (3+ empresas)' (4 empresas)
+        SUBCONTRALOR   SIGUE PASANDO -> SUBCONTADOR
+        CUADRADOR      SIGUE PASANDO -> CUIDADOR
+        COODINADORA    no se corrige (503 empresas)
+        PRODUCCI       no se corrige (348 empresas)
+   20 correcciones aplicadas, al azar:
+        JEFE DE MARKENTIG  ->  JEFE DE MARKETING
+        ASESOR DE CREDIORO  ->  ASESOR DE CREDITO
+        PSICOLOGO ECUDATIVO  ->  PSICOLOGO EDUCATIVO
+        EXEMPLEADO  ->  EMPLEADO
+        PRESALE  ->  PESAJE
+        OPERARARIO FRITURA  ->  OPERARIO FRITURA
+        COODINACION ACADEMICA  ->  COORDINACION ACADEMICA
+        SUPERVISARA DE CALIDAD  ->  SUPERVISORA DE CALIDAD
+        JEFE ADMINISTRATIV0  ->  JEFE ADMINISTRATIVO
+        JEFE DE FUIGACION  ->  JEFE DE FUMIGACION
+        NCARGADO ESPECIALISTA  ->  ENCARGADO ESPECIALISTA
+        DIRCTORA PROGRAMA  ->  DIRECTORA PROGRAMA
+        REPONSABLE DE DISTRIBUCION Y TRANSPORTE CHOFER  ->  RESPONSABLE DE DISTRIBUCION Y TRANSPORTE CHOFER
+        ACCOUNTIN COORDINATOR  ->  ACCOUNTING COORDINATOR
+        MECANISTA  ->  MECANICA
+        ANALISTA CONTABLE3  ->  ANALISTA CONTABLE
+        COORDINADOR DE ASUGUARMIENTO DE CALIDAD  ->  COORDINADOR DE ASEGURAMIENTO DE CALIDAD
+        AYUDANTE DE MONATJE  ->  AYUDANTE DE MONTAJE
+        ANALISTA DE DATO COMERCIALE  ->  ANALISTA DE DATO COMERCIAL
+        CUTOVER LEAD  ->  CUSTOMER LEAD
+
+ABREVIATURAS (dominio >= 80 %, proteccion de rango): une 347 grupos mas; 277 entradas
+   no se expanden por ser ambiguas entre rango y no rango: 20
+        OP       OPERADOR / OPERARIO / OPERATIVO
+        ADMIN    ADMINISTRATIVO / ADMINISTRADOR / ADMINISTRATIVA / ADMINISTRACION
+        ADMIN.   ADMINISTRATIVO / ADMINISTRADOR / ADMINISTRATIVA / ADMINISTRACION
+        TECN     TECNICO / TECNOLOGIA / TECNICA
+        TEC.     TECNICO / TECNOLOGIA / TECNICA
+        OPER     OPERADOR / OPERARIO / OPERATIVO
+        TECN.    TECNICO / TECNOLOGIA / TECNICA
+        ADMI     ADMINISTRATIVO / ADMINISTRADOR / ADMINISTRATIVA / ADMINISTRACION
+        GEREN    GERENTE / GERENCIA
+        TEC      TECNICO / TECNOLOGIA / TECNICA
+        OP.      OPERADOR / OPERARIO / OPERATIVO
+        OPER.    OPERADOR / OPERARIO / OPERATIVO
+        ADMINI   ADMINISTRATIVO / ADMINISTRADOR / ADMINISTRATIVA / ADMINISTRACION
+        ADMI.    ADMINISTRATIVO / ADMINISTRADOR / ADMINISTRATIVA / ADMINISTRACION
+        DIREC    DIRECTOR / DIRECTORA / DIRECCION
+      JEFE DE INVESTIGACION Y DESARR  ||  JEFE DE INVESTIGACION Y DESARROLLO
+      AUX. SERV. GRALES  ||  AUXILIAR SERV. GRAL
+      ASIST. CREDITO  ||  ASISTENTE CREDITO
+      ASIST OPERACIONES  ||  ASISTENTE OPERACIONE
+      ASIST SERVICIO AL CLIENTE  ||  ASISTENTE SERVICIO AL CLIENTE
+      ASIS INVENTARIO  ||  ASIST. INVENTARIO (F)
+      ANALISTA DE LOGIST  ||  ANALISTA DE LOGISTICA
+      ASIST. EJECUTIVA  ||  ASISTENTE EJECUTIVA
+      ASSO  ||  ASSOCIATE
+      AUX DE LOGISTICA  ||  AUXILIAR DE LOGISTICA
+      AUX DE COBRANZAS  ||  AUXILIAR DE COBRANZA
+      AUX ADMINISTRATIVO  ||  AUXILIAR ADMINISTRATIVO
+      ASIST. DE GERENCIA  ||  ASISTENTE DE GERENCIA
+      13.0 JEFE DE MANTENIMIENTO  ||  JEFE DE MANT.
+      SUPERV.CONTROL DE CALIDAD  ||  SUPERVISOR CONTROL DE CALIDAD
+      AYUD BODEGUERO  ||  AYUDANTE/BODEGUERO
+      ASIST. INGENIERIA  ||  ASISTENTE INGENIERIA
+      ASIST. ELECTROMECANICO  ||  ASISTENTE ELECTROMECANICO
+      ASIST COM EXTERIOR  ||  ASISTENTE COM. EXTERIOR
+      AUX. ATENCION AL CLIENTE  ||  AUXILIAR ATENCION AL CLIENTE
+   las 20 menos dominantes que si se expanden:
+        CONTR -> CONTROL   (80%)
+        CONTR. -> CONTROL   (80%)
+        EC -> ECUADOR   (81%)
+        EC. -> ECUADOR   (81%)
+        CUST -> CUSTOMER   (81%)
+        CONTIN -> CONTINUA   (82%)
+        SECR. -> SECRETARIA   (82%)
+        MEC -> MECANICO   (83%)
+        MEC. -> MECANICO   (83%)
+        MECANI -> MECANICO   (83%)
+        LOGIST. -> LOGISTICA   (83%)
+        LOGIST -> LOGISTICA   (83%)
+        COMU -> COMUNICACION   (83%)
+        COMUNI -> COMUNICACION   (83%)
+        INVES. -> INVESTIGACION   (83%)
+        ASES. -> ASESOR   (83%)
+        ASES -> ASESOR   (83%)
+        GRAFI -> GRAFICO   (84%)
+        DEMA -> DEMANDA   (84%)
+        INSP. -> INSPECTOR   (84%)
+
+RESUMEN (grupos que une cada regla encima de lo actual y del plural simple)
+   plural simple (adoptado)             425
+   genero por palabra                   113   (385 pares por revisar)
+   erratas con 'palabra real'           242   (796 propuestas por revisar)
+   abreviaturas, 80 % y rango           347   (277 propuestas por revisar)
