@@ -5306,3 +5306,61 @@ fusión por coseno, da **58.911 átomos**.
    evaluación; la regla del paso 1 de las rúbricas v4/v5 se revisa. **El cross-encoder se entrenó
    con los pares de grado como `si`: hay que reentrenarlo** con ellos como `no`.
    El plan concreto se registra antes de ejecutarlo.
+
+**Las erratas que borraban un número salen del diccionario (2026-10-02).** Por el criterio A,
+19 erratas aprobadas pasan a `no`: las que quitaban un dígito o un romano pegado (`TECNICO1/2/3`,
+`CONTABLE1/2/3`, `PROFESIONAL2`, `COORDINADOR2`, `CORPORATIVA1`…`7`, `MOTORIZADO1`,
+`PRODUCCIONI`, `SERVICIOS2/5`). Las que quitan una **letra** pegada (`CHOFERB`) se quedan, por
+D-041. Capa 0 v1: **829 erratas**, 216 abreviaturas, 380 pares de género.
+
+---
+
+## D-041 — Las letras de grado se fusionan, sin medir. Decisión del autor que se aparta del criterio A
+
+**Fecha:** 2026-10-02
+**Origen:** decisión del autor tras el criterio A (D-040). **Se aparta a propósito de la regla del
+criterio A**, que manda no fusionar lo inconcluso o no medido.
+**Estado:** adoptada.
+
+### Qué se decide
+
+- **La capa 0 fusiona las letras al final del título:** `AYUDANTE A` = `AYUDANTE B` = `AYUDANTE`.
+  Con las mismas guardas de siempre (una letra junto a `&` es sigla, tras `LICENCIA`/`TIPO` es un
+  tipo, la `A` solo al final, nunca `E`, `Y`, `O`, `U`).
+- **Los números no:** `AUXILIAR 1` y `AUXILIAR 2` quedan separados (criterio A: escalón, +6,9 %).
+- **Candado de grado numérico,** como el de seniority de D-033: dos títulos con número de grado
+  distinto **nunca quedan en el mismo grupo, aunque el cross-encoder diga que sí.** Aplica solo a
+  números. Hace falta porque el cross-encoder v2 aprendió que el grado no separa y, sin candado,
+  el clustering juntaría lo que el criterio A separa.
+
+### Por qué
+
+Sin fusionar, las letras dejan celdas muy chicas que no sirven para bandas.
+
+### Cuánto afecta (datos de 2024-2025, `nomina_features`)
+
+- **715 títulos** llevan una letra de grado al final; **21.826 personas** (2,2 % de las filas
+  evaluables).
+- Con la fusión quedan juntos **1.436 títulos en 305 familias** (incluido el título sin letra de
+  cada familia): 1.131 grupos menos. Las personas en las celdas que cambian son **185.267 (18,5 %)**,
+  porque cuenta a toda la gente de la celda sin letra a la que se suman las variantes con letra.
+- Muchas de esas «letras» no son grados sino marcas entre paréntesis (`(A)`, `(F)`, `(R)`,
+  `(G)`): género inclusivo o códigos internos. Fusionarlas es coherente con la rúbrica.
+
+### Límite que se declara
+
+En el criterio A, entre letras de la misma familia y empresa, la **diferencia absoluta media de
+sueldo es del 13,3 %** (283 contrastes en 98 familias). Sugiere que muchas letras son escalones
+internos de cada empresa: **las bandas de esas celdas pueden mezclar niveles.** No se midió si el
+grado por letra paga sistemáticamente más (las letras no tienen un orden fiable), así que esta
+fusión es una elección de producto, no un resultado.
+
+### Consecuencias
+
+- **Rúbrica v6:** la v5 con dos cambios: el grado numérico separa, y una diferencia solo de letra
+  no separa.
+- **Etiquetas:** al revertir la Enmienda 5 de D-036, los pares que difieren en número vuelven a `no`;
+  los que difieren solo en letra se quedan en `si`. El plan detallado se registra antes de tocarlas.
+- **Cross-encoder v3:** se reentrena con eso. Como `prueba` y `prueba 2` ya se abrieron, **lo que mida
+  la v3 en ellos es exploratorio.** Si hay tiempo, se evalúa armar un conjunto nuevo de ~200 pares
+  con grado para un resultado confirmatorio.
