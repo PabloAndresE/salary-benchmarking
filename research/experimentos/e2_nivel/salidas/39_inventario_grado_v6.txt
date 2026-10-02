@@ -1,0 +1,23 @@
+==============================================================================
+39 · INVENTARIO PARA REVERTIR LA ENMIENDA 5 CON LA RUBRICA v6 (solo lectura)
+==============================================================================
+
+1-2. NUMERO DE GRADO DISTINTO (en los dos titulos, valor distinto) -> `no` en la v6
+conjunto          pares  num.dist hoy si hoy no   correcciones Enmienda 5
+calibra (13e)       200         4      4      0   4 -> 4 vuelven a `no`, 0 se quedan `si`
+prueba (13e)        200         2      2      0   2 -> 2 vuelven a `no`, 0 se quedan `si`
+prueba (20)         400         8      8      0   10 -> 4 vuelven a `no`, 6 se quedan `si`
+prueba 2 (29)       400         1      1      0   
+plata entrena      8900       119    118      1   127 -> 117 vuelven a `no`, 10 se quedan `si`
+plata valida       1500        18     18      0   22 -> 18 vuelven a `no`, 4 se quedan `si`
+
+3. EXCLUSION POR LA CAPA 0 (mismo atomo de la capa 0 v1: letras fuera, numeros dentro)
+conjunto          pares  fuera antes     fuera v1    vuelven      salen
+13e calibra         200            9           13          7         11
+   los que quedan fuera con la v1: 13 `si`, 0 `no`; ejemplos: AYUD. MECANICA / AYUD.MECANICA; ASESOR TRIBUTARIO / ASESOR TRIBUTARIO A; GERENTE DE TECNOLOGIA Y PROYECTOS / GERENTE DE TECNOLOGIA Y PROYEC
+13e prueba          200            9           13          6         10
+   los que quedan fuera con la v1: 13 `si`, 0 `no`; ejemplos: ASISTENTE DE COBRANZA JUDICIAL / ASISTENTE DE COBRANZAS JUDICIALES; ASISTEBTE ADMINISTRATIVO / ASISTENTE / ADMINISTRATIVO; COORDINADOR CORPORATIVO / COORDINADORA CORPORATIVA
+20 prueba           400           27           32         25         30
+   los que quedan fuera con la v1: 32 `si`, 0 `no`; ejemplos: CUADRILLERO / CUADRILLEROS; BODEGUERO-DIGITADOR / BODEGUERO - DIGITADOR; CHOFER: PLATAFORMAS / CHOFER PLATAFORMA
+29 prueba2          400            0           14          0         14
+   los que quedan fuera con la v1: 14 `si`, 0 `no`; ejemplos: SUPERVISOR DE LOCAL / SUPERVISORA DE LOCALES; ASISTENTE DE VENTAS / ASISTENTE DE VENTA; COORDINADOR DE SELECCION / COORDINADOR DE SELECCIONES

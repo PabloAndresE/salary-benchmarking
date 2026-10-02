@@ -5398,3 +5398,91 @@ fusión es una elección de producto, no un resultado.
   cualquier posición. No hay contradicción: la capa 0 es la parte conservadora, y lo demás
   (`AYUDANTE B DE MANTENIMIENTO` / `AYUDANTE C DE MANTENIMIENTO`) lo decide el cross-encoder,
   que el candado no frena porque no hay número.
+
+### Plan para revertir la Enmienda 5 en las etiquetas (2026-10-02, registrado ANTES de tocarlas)
+
+**Evidencia:** `research/experimentos/e2_nivel/39_inventario_grado_v6.py` (solo lee; no cambia
+ninguna etiqueta), `salidas/39_inventario_grado_v6.txt` y `salidas/39_pares_numero_distinto.csv`.
+
+**Una guarda nueva en el candado, vista al hacer el inventario.** En la plata salen pares como
+`COORDINADOR ZONA 1` / `ZONA 2`, `SUPERVISOR DE SECTOR 1` / `2` o `EJECUTIVO ASISTENTE (OFC 1)` /
+`(OFC 2)`: ahí el número es la zona o la oficina, no el grado. `capa0.grado_numerico` ya no cuenta
+un número que vaya justo detrás de `ZONA`, `SECTOR`, `OFC`, `REGION`, `AGENCIA`, `SUCURSAL`,
+`TIENDA`, `PLANTA`, `TURNO`, `LINEA`, `DISTRITO`, `CUADRILLA`, `FRENTE`, `LOCAL`, `SEDE`, `PISO` ni
+`MODULO` (`LUGAR_ANTES_DE_NUMERO`). `OFICINA` y `BODEGA` **no** son guarda (`ASISTENTE DE OFICINA 2`
+y `AUXILIAR DE BODEGA 1` son grados); `RUTA` tampoco, porque `AYUDANTE DE RUTA 1` / `2` es dudoso.
+**Límite:** la lista salió de mirar la plata; se declara así. La rúbrica v6 se lee con la misma guarda.
+
+#### 1. La regla: mecánica y en un solo sentido
+
+Un par cuyos dos títulos llevan número de grado, con valor distinto (`capa0.compatibles` es False),
+pasa a `no`. Nada más cambia: un `no` nunca pasa a `si` por esta regla, y las letras y el número en
+un solo título no se tocan (siguen como las dejó la Enmienda 5, porque la v6 dice lo mismo). Es la
+lectura literal del paso 1 de la v6, que decide en `p1`.
+
+| conjunto | pares | con número distinto | `si` → `no` | de ellos, corregidos por la Enmienda 5 | correcciones de la Enmienda 5 que se quedan `si` |
+|---|---|---|---|---|---|
+| `calibra` (`13e`) | 200 | 4 | 4 | 4 | 0 |
+| `prueba` (`13e`) | 200 | 2 | 2 | 2 | 0 |
+| `prueba` (`20`) | 400 | 8 | 8 | 4 | 6 (número en un solo título, y #237) |
+| `prueba 2` (`29`) | 400 | 1 | 1 (#169, `AYUDANTE DE RUTA 1 LE` / `2 LC`) | — | — |
+| plata `entrena` | 8.900 | 119 | 118 | 117 | 10 |
+| plata `valida` | 1.500 | 18 | 18 | 18 | 4 |
+
+- En `prueba` (`20`), 4 de los 8 (#190, #329, #353, #364) **no** venían de la Enmienda 5: ya estaban
+  `si` en el juicio original, que mezclaba criterios (lo dice la Enmienda 5, §1). La v6 los pasa a `no`.
+- En la plata, el único `si` → `no` que no viene de la Enmienda 5 es #3382 (`... NIVEL 1` /
+  `... NIVEL 1 GRADO 3 MEDIO TIEMPO`), que Gemini juzgó `si`. El caso hermano del lote (#100076) ya
+  era `no` a mano.
+- De los 12 de la plata revisados a mano en la Enmienda 5 (`23_revisar_grado.csv`), vuelven a `no`
+  los que tienen número distinto en los dos títulos (p. ej. `ASISTENTE FINANCIERO 3` /
+  `AUXILIAR FINANCIERO 1`). La revisión se hizo con el grado borrado; con la v6 decide el paso 1.
+
+#### 2. Cómo se aplica, sin perder la historia
+
+- **Juicios humanos** (`13e`, `20`, `29`): `mismo` toma el valor nuevo y el de antes queda en una
+  columna `mismo_v5`, como `mismo_v3` y `mismo_v4`. La nota pasa a `p1 v6`.
+- **Plata:** un archivo nuevo, `39_correcciones_v6.csv`, que `21` aplica **al final**, después de las
+  de la v5, con `origen` + `_v6` y motivo `p1`. Las respuestas de Gemini y los archivos de `23` y
+  `27` no se tocan.
+- El guion es re-ejecutable: siempre parte de la columna guardada.
+
+#### 3. La exclusión por la capa 0, rehecha con la capa 0 v1
+
+Por D-040 («la exclusión va atada a la versión de la capa 0»), `23_fuera_por_capa0.csv` (la regla
+del grado de la Enmienda 5) se reemplaza por `39_fuera_capa0_v1.csv`: sale de la evaluación el par
+cuyos dos títulos dan **el mismo átomo con la capa 0 v1** (letras fuera, números dentro). Los pares
+con número distinto **vuelven**, y entran los que ya junta la capa 0 por otras reglas (plural,
+erratas, abreviaturas, género, puntuación).
+
+| conjunto | fuera antes (Enmienda 5) | fuera con la capa 0 v1 | vuelven | salen nuevos | etiquetas de los que quedan fuera |
+|---|---|---|---|---|---|
+| `calibra` | 9 | 13 | 7 | 11 | 13 `si`, 0 `no` |
+| `prueba` (`13e`) | 9 | 13 | 6 | 10 | 13 `si`, 0 `no` |
+| `prueba` (`20`) | 27 | 32 | 25 | 30 | 32 `si`, 0 `no` |
+| `prueba 2` | 0 | 14 | 0 | 14 | 14 `si`, 0 `no` |
+
+La plata no se excluye: los pares que la capa 0 junta siguen enseñando que son el mismo cargo.
+
+#### 4. Qué se mide con eso, y qué no se toca
+
+- **H1 (D-036) y H4 (D-038) no se tocan:** son el resultado confirmatorio, con las etiquetas y la
+  exclusión con que se registraron.
+- **`calibra`:** con las etiquetas v6 y la exclusión v1 se vuelve a medir la vara (NLI congelado y
+  coseno), y el candado de `22` pasa al `AUC_BASE` nuevo **antes** de entrenar.
+- **Cross-encoder v3:** mismo protocolo, grilla e hiperparámetros que la v2 (D-039); solo cambian las
+  etiquetas (plata con `39_correcciones_v6.csv`) y `calibra`. `prueba` y `prueba 2` siguen sin viajar.
+- **Su evaluación en `prueba` y `prueba 2` es exploratoria** (los dos se abrieron): v3 − coseno y
+  v3 − v2, con el bootstrap pareado de siempre, con las etiquetas v6 y la exclusión v1, y además con
+  las etiquetas y la exclusión originales, para que se vea qué parte del cambio es del juez y qué parte
+  de la vara. Se reporta aparte cómo le va en los pares con número distinto.
+- **Resultado confirmatorio para el grado (opcional):** un conjunto nuevo de ~200 pares con grado, sin
+  solaparse con nada de lo anterior, juzgado a ciegas con la v6. Su análisis se registra antes de
+  armarlo.
+
+#### Orden de ejecución
+
+1. Aplicar §2 y §3 (guion `39`, modo escritura). Comprobar que solo cambian los pares de las tablas.
+2. Rehacer el paquete (`21`) y la vara de `calibra`; fijar el `AUC_BASE` nuevo en `22`.
+3. Reconstruir `base_v16` (capa 0 v1, candado de grado, sin fusión por coseno) con su informe por regla.
+4. Entrenar el cross-encoder v3 y evaluarlo (exploratorio).

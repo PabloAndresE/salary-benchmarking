@@ -94,6 +94,9 @@ def test_candado_de_grado():
     assert grado_numerico("QUIMICO II") == {2}
     assert grado_numerico("1. JEFE DE COMPRAS") == set()            # codigo de planilla
     assert grado_numerico("JEFE DE I+D") == set()
+    assert grado_numerico("COORDINADOR ZONA 2") == set()            # lugar, no grado
+    assert grado_numerico("EJECUTIVO ASISTENTE (OFC 1)") == set()
+    assert grado_numerico("ASISTENTE DE OFICINA 2") == {2}          # OFICINA no es guarda
     assert not compatibles("AUXILIAR 1", "AUXILIAR 2")
     assert not compatibles("QUIMICO I", "QUIMICO II")
     assert compatibles("AUXILIAR", "AUXILIAR 2")                    # sin numero no bloquea

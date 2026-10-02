@@ -52,6 +52,12 @@ ROMANOS = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
 ANTES_DE_GRADO = {"NIVEL", "LEVEL", "GRADO", "CATEGORIA", "CAT"}
 NO_LETRA_GRADO = {"E", "Y", "O", "U"}
 NO_GRADO_DESPUES = {"LICENCIA", "TIPO"}
+# Un numero justo detras de un LUGAR o UNIDAD no es grado: es la zona, la oficina o el turno
+# (`COORDINADOR ZONA 1` / `ZONA 2`, `EJECUTIVO ASISTENTE (OFC 1)`). Visto en la plata (`39`).
+# `OFICINA` y `BODEGA` NO van: `ASISTENTE DE OFICINA 2` y `AUXILIAR DE BODEGA 1` son grados.
+LUGAR_ANTES_DE_NUMERO = {"ZONA", "SECTOR", "OFC", "REGION", "AGENCIA", "SUCURSAL", "TIENDA",
+                         "PLANTA", "TURNO", "LINEA", "DISTRITO", "CUADRILLA", "FRENTE",
+                         "LOCAL", "SEDE", "PISO", "MODULO"}
 _PREFIJO = re.compile(r"^(?:[\d.\-*+#'\[\]()]+\s*|\d+[.\-]?\d*\s+)+")
 _PUNTO_PEGADO = re.compile(r"\.(?=[A-Z])")
 
@@ -94,11 +100,14 @@ _NUM_PEGADO = re.compile(r"^[A-Z]{3,}([1-9])$")
 def grado_numerico(titulo):
     """Los numeros de grado del titulo: digitos 1-9 sueltos (o pegados al final de una
     palabra: `TECNICO2`) y romanos II-X sueltos (y `I` al final), en cualquier posicion
-    salvo el codigo de planilla del inicio. Conjunto vacio si no hay ninguno."""
+    salvo el codigo de planilla del inicio y salvo detras de un lugar o unidad
+    (`LUGAR_ANTES_DE_NUMERO`: `ZONA 1`, `OFC 2`). Conjunto vacio si no hay ninguno."""
     t = _PREFIJO.sub("", _norm(titulo).strip())
     toks = t.split()
     out = set()
     for k, tok in enumerate(toks):
+        if k and toks[k - 1].strip("()#.") in LUGAR_ANTES_DE_NUMERO:
+            continue
         m = _NUM_GRADO.match(tok) or _NUM_PEGADO.match(tok)
         if m:
             out.add(int(m.group(1)))
