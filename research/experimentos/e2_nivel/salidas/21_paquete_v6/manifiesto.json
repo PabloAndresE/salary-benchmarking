@@ -1,0 +1,53 @@
+{
+  "creado": "2026-10-02T21:19:04",
+  "decision": "D-036, enmiendas 1, 2 y 5; D-038; D-041 (rubrica v6)",
+  "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
+  "plantilla": "El puesto de trabajo es {}.",
+  "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
+  "rubrica_v3_sha256_12": "83b03d04c400",
+  "plata": {
+    "pares": 10400,
+    "sin_respuesta_en_los_dos_ordenes": 0,
+    "por_particion": {
+      "entrena": 8900,
+      "valida": 1500
+    },
+    "incoherentes": 139,
+    "incoherentes_juzgados_a_mano": 139,
+    "lote_zona_dificil": 400,
+    "incoherentes_con_etiqueta_blanda": 0,
+    "corregidos_por_grado": 149,
+    "corregidos_por_v5": 49,
+    "corregidos_por_v6": 136,
+    "tasa_si_coherentes": 0.6607,
+    "dificil": 2679
+  },
+  "calibra": {
+    "pares": 187,
+    "si": 140,
+    "no": 47,
+    "fuera_por_capa0": 13
+  },
+  "prueba_en_el_paquete": 0,
+  "prueba_comprobada_contra": {
+    "pares_de_grupos": 1000,
+    "pares_de_titulos": 1000
+  },
+  "fuentes_sha256_12": {
+    "16_pares_10000.csv": "08f26fd0a9ef",
+    "16_respuestas_llm.csv": "c36235cef251",
+    "18_para_juzgar.csv": "7aa89a26514e",
+    "18_meta.csv": "5593112c0181",
+    "13e_pares_400.csv": "8f85de15492d",
+    "13e_para_juzgar.csv": "e941b0aed9ce",
+    "20_pares_400.csv": "ba0c38cd8fed",
+    "23_correcciones_plata.csv": "ce7fabaeb4f5",
+    "39_fuera_capa0_v1.csv": "2b140f49ef05",
+    "27_correcciones_v5.csv": "b9f98d9804ad",
+    "29_prueba2_pares.csv": "6c248f8ff06f",
+    "39_correcciones_v6.csv": "3d4b9fdf1585",
+    "rubrica_mismo_cargo_v6.md": "ba9c81fd2c91",
+    "30_lote_para_juzgar.csv": "db47a15ecbd2",
+    "30_lote_pares.csv": "7fd5b9a7763a"
+  }
+}

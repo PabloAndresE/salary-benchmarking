@@ -106,6 +106,9 @@ AUC_BASE = 0.7346                # `19`, NLI congelado, media de las dos direcci
                                  # Era 0,748 con la v3 y 200 pares (Enmienda 5 de D-036:
                                  # 0,7285 con 194 sin letras de grado; 0,7259 con 191;
                                  # 0,7346 con `calibra` rejuzgada con la v5, D-038)
+# D-041: con `21_paquete_v6` (etiquetas v6, exclusion con la capa 0 v1; 187 pares) la vara es
+# otra, medida en `40_vara_calibra_v6.py` con estas mismas funciones.
+AUC_BASE_POR_PAQUETE = {"21_paquete": AUC_BASE, "21_paquete_v6": 0.7416}
 TOL_BASE = 0.005
 
 MOTIVOS = ["ninguno", "p1", "p2", "p3", "p4", "p5"]
@@ -574,6 +577,9 @@ def main():
     v2 = args.grilla == "v2"
     if v2 and args.salida == SALIDA:
         args.salida = SALIDA.parent / "22_modelos_v2"      # la v1 no se toca
+    if args.paquete.name == "21_paquete_v6" and args.salida in (
+            SALIDA, SALIDA.parent / "22_modelos_v2"):
+        args.salida = SALIDA.parent / "22_modelos_v3"      # D-041: ni la v1 ni la v2 se tocan
 
     os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
@@ -611,6 +617,11 @@ def main():
     y_cal = cal["y"].to_numpy()
 
     # --- 1. el juez sin entrenar tiene que dar el AUC_BASE de `19` -------------------
+    global AUC_BASE
+    if args.paquete.name not in AUC_BASE_POR_PAQUETE:
+        raise SystemExit("ALTO: no hay AUC_BASE registrado para el paquete {}".format(
+            args.paquete.name))
+    AUC_BASE = AUC_BASE_POR_PAQUETE[args.paquete.name]
     print("\n1. JUEZ SIN ENTRENAR sobre calibra, fp32 (tiene que dar {:.4f})".format(AUC_BASE))
     juez0 = construir(args.modelo, False, dev)
     ab0, ba0 = puntuar(juez0, tok, cal["comun"].tolist(), cal["raro"].tolist(), dev,

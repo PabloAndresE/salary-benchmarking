@@ -30,6 +30,11 @@ se detiene sin escribir nada.
 Se puede volver a correr cuando avances con los 139: los juzgados pasan de 0,5 a 1/0.
 
 SALIDA: salidas/21_paquete/ (en .gitignore). Se copia al servidor con scp.
+
+`--v6` (D-041): arma `salidas/21_paquete_v6/` sin tocar `21_paquete/`, que es el de la v2 y el
+que comprueban por hash H1 (`24`) y H4 (`31`). Aplica al final las correcciones de la rubrica v6
+(`39_correcciones_v6.csv`: numero de grado distinto -> `no`) y saca de `calibra` los pares que
+junta la capa 0 v1 (`39_fuera_capa0_v1.csv`) en lugar de los de la Enmienda 5.
 """
 import datetime as dt
 import hashlib
@@ -56,8 +61,14 @@ CORR_V5 = SAL / "27_correcciones_v5.csv"         # D-038: rubrica v5, juicio hum
 LOTE_J = SAL / "30_lote_para_juzgar.csv"         # D-038: lote de la zona dificil, a mano
 LOTE_M = SAL / "30_lote_pares.csv"
 PRUEBA2 = SAL / "29_prueba2_pares.csv"           # D-038: el examen de la v2
+CORR_V6 = SAL / "39_correcciones_v6.csv"         # D-041: el numero de grado separa
+FUERA_V6 = SAL / "39_fuera_capa0_v1.csv"         # D-041: exclusion con la capa 0 v1
+RUBRICA_V6 = AQUI / "rubrica_mismo_cargo_v6.md"
+V6 = "--v6" in sys.argv[1:]
+if V6:
+    FUERA = FUERA_V6
 RUBRICA = AQUI / "rubrica_mismo_cargo.md"
-DESTINO = SAL / "21_paquete"
+DESTINO = SAL / ("21_paquete_v6" if V6 else "21_paquete")
 sys.path.insert(0, str(AQUI.parents[2] / "src"))
 PLANTILLA = "El puesto de trabajo es {}."        # con el titulo en .title(); Enmienda 2
 
@@ -174,6 +185,19 @@ def main():
             p = pd.concat([p, filas], ignore_index=True)
             n_lote = len(filas)
 
+    # --- D-041: la rubrica v6, lo ultimo de todo (despues del lote) --------------------
+    n_v6 = 0
+    if V6:
+        c6 = pd.read_csv(CORR_V6, dtype={"n": int})
+        k = p["n"].isin(c6["n"])
+        if int(k.sum()) != len(c6):
+            raise SystemExit("ALTO: {} correcciones v6 y {} pares que las reciben. Vuelve a "
+                             "correr `39 escribir`.".format(len(c6), int(k.sum())))
+        p.loc[k, "etiqueta"] = 0.0
+        p.loc[k, "motivo"] = "p1"
+        p.loc[k, "origen"] = p.loc[k, "origen"] + "_v6"
+        n_v6 = int(k.sum())
+
     plata = p[["n", "comun", "raro", "particion", "estrato", "dificil", "sim",
                "mismo_ab", "mismo_ba", "paso_ab", "paso_ba", "etiqueta", "origen",
                "motivo"]]
@@ -218,7 +242,7 @@ def main():
     rub = RUBRICA.read_text(encoding="utf-8").split("\n## Historial")[0]
     man = {
         "creado": dt.datetime.now().isoformat(timespec="seconds"),
-        "decision": "D-036, enmiendas 1, 2 y 5; D-038",
+        "decision": "D-036, enmiendas 1, 2 y 5; D-038" + ("; D-041 (rubrica v6)" if V6 else ""),
         "modelo_base": "MoritzLaurer/mDeBERTa-v3-base-xnli-multilingual-nli-2mil7",
         "plantilla": PLANTILLA,
         "plantilla_nota": "el titulo va con str.title(); la misma de 13c y 19",
@@ -233,6 +257,7 @@ def main():
             "incoherentes_con_etiqueta_blanda": n_inc - int(len(hechos)),
             "corregidos_por_grado": n_grado,
             "corregidos_por_v5": n_v5,
+            "corregidos_por_v6": n_v6,
             "tasa_si_coherentes": round(float(
                 p.loc[coherente[coherente].index, "etiqueta"].mean()), 4),
             "dificil": int(plata["dificil"].sum()),
@@ -247,6 +272,7 @@ def main():
         "fuentes_sha256_12": {f.name: sha(f) for f in (PARES, RESP, INC_JUZ, INC_META,
                                                       ORO_META, ORO_JUZ, NUEVOS_META)
                               + tuple(f for f in (CORR_GRADO, FUERA, CORR_V5, PRUEBA2)
+                                      + ((CORR_V6, RUBRICA_V6) if V6 else ())
                                       if f.exists())
                               + ((LOTE_J, LOTE_M) if n_lote else ())},
     }

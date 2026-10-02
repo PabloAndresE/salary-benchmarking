@@ -5498,3 +5498,24 @@ La plata no se excluye: los pares que la capa 0 junta siguen enseñando que son 
 - Exclusión: `39_fuera_capa0_v1.csv` (`calibra` 13, `prueba` 13 + 32, `prueba 2` 14).
 - **H1 y H4 se protegen:** `24` y `31` leen `mismo_v5` cuando existe. Comprobado: H1 sigue con
   555 pares (433 `si` / 122 `no`) y H4 con 400 (332 / 68), como antes del cambio.
+
+#### Ejecutado (2026-10-02): paso 2, el paquete v6 y la vara de `calibra`
+
+- **`21 --v6`** arma `salidas/21_paquete_v6/` sin tocar `21_paquete/` (el de la v2, que H1 y H4
+  comprueban por hash). Comprobado contra `21_paquete`: en la plata cambian exactamente las 136
+  etiquetas de `39_correcciones_v6.csv` (todas de 1 a 0) y ninguna otra columna salvo `motivo` y
+  `origen`. `calibra`: **187 pares (140 `si` / 47 `no`)**, 13 fuera por la capa 0 v1. Ningún par de
+  `prueba` ni de `prueba 2` en el paquete.
+- **La vara** (`40_vara_calibra_v6.py`, con las mismas funciones de `22`, CPU, fp32):
+
+  | `calibra` | pares | NLI sin entrenar | coseno | NLI − coseno |
+  |---|---|---|---|---|
+  | `21_paquete` (control, la de la v2) | 191 | 0,7346 | 0,6438 | +0,091 [−0,015, +0,200] |
+  | **`21_paquete_v6`** | **187** | **0,7416** | **0,6225** | **+0,119 [+0,011, +0,233]** |
+
+  El control reproduce el `AUC_BASE` de antes (0,7346), así que la medición es la misma. Con las
+  etiquetas v6, el NLI sin entrenar separa mejor (los pares con número distinto vuelven a `no`, y el
+  NLI ya les daba puntaje bajo) y el coseno peor (les da puntaje alto).
+- **`22`:** el `AUC_BASE` depende del paquete (`21_paquete` 0,7346; `21_paquete_v6` **0,7416**) y se
+  detiene si el paquete no tiene uno registrado. Con `21_paquete_v6` escribe en `22_modelos_v3/`:
+  la v1 y la v2 no se tocan.

@@ -1,0 +1,11 @@
+40 · VARA DE `calibra` (NLI sin entrenar y coseno), D-041
+
+21_paquete: 191 pares (148 si / 43 no)
+   NLI sin entrenar  AUC 0.7346
+   coseno            AUC 0.6438
+   NLI - coseno      +0.091  IC 95 % [-0.015, +0.200]
+
+21_paquete_v6: 187 pares (140 si / 47 no)
+   NLI sin entrenar  AUC 0.7416
+   coseno            AUC 0.6225
+   NLI - coseno      +0.119  IC 95 % [+0.011, +0.233]
