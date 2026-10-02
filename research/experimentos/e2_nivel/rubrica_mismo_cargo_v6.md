@@ -3,10 +3,10 @@
 La siguen igual quien juzga a mano y el LLM. Si las dos partes aplican reglas distintas, el
 acuerdo entre ellas no mide nada.
 
-**Versión 5 — 2026-09-30.** Sustituida por la v6 (2026-10-02, el grado numérico separa). Respecto de la v4 cambian el
-ámbito (paso 3) y la función (paso 4); el grado (paso 1) sigue como en la v4. La v3, con la
-que Gemini etiquetó la plata, sigue congelada en `rubrica_mismo_cargo.md`. Todo lo que va
-antes de «Historial» es la rúbrica.
+**Versión 6 — 2026-10-02.** La vigente para juzgar a mano. Es la v5 con un solo cambio, el
+grado (paso 1): **el número de grado separa; la letra no** (D-041). Los pasos 2 a 5 son los de
+la v5. La v3, con la que Gemini etiquetó la plata, sigue congelada en
+`rubrica_mismo_cargo.md`. Todo lo que va antes de «Historial» es la rúbrica.
 
 ---
 
@@ -48,7 +48,7 @@ Recorre los pasos en orden. El primero que diga `no` decide. Si ninguno lo dice,
   DE`. Las mismas palabras en otro orden son el mismo título.
   `ASISTENTE DE BODEGA` = `ASISTENTE EN EL AREA DE BODGA`.
 - **Códigos internos de la empresa**: números de tres cifras o más, y números pegados a una
-  abreviatura. `SOLDADOR A` = `SOLDADOR I` (ver el grado, abajo),
+  abreviatura. `SOLDADOR A` = `SOLDADOR I` (ver el grado, abajo: el número está en uno solo),
   `INGENIERO INSPECTOR DE PROYECTOS 132` = `... 108`, `SENIOR` = `SENIOR C`, `PORTERO BR`,
   `AYUDANTE DE BODEGA DEV`, `PLANIFICADOR (R)`, `OPERARIO LT.4` = `OPERARIO LT.7`.
 - **La unidad o el lugar donde se trabaja**, si la tarea es la misma:
@@ -58,29 +58,44 @@ Recorre los pasos en orden. El primero que diga `no` decide. Si ninguno lo dice,
 - **`GENERAL`** no es un nivel: `SUPERVISOR DE EMPAQUE` = `SUPERVISOR GENERAL DE EMPAQUE`,
   `JEFE SERVICIOS` = `JEFE DE SERVICIOS GENERAL`.
 
-- **El grado dentro del cargo.** Un número o una letra que marca el grado de la escala
-  interna **no hace distinto el puesto**, esté en uno solo de los títulos o en los dos con
-  valor distinto. Es grado:
-  - un número del 1 al 9 suelto (también `04`, `# 3`, o `1.` al principio);
-  - un romano del I al X suelto;
-  - una letra suelta, sola o entre paréntesis, salvo `E`, `Y`, `O`, `U`; la `A` solo al
-    final del título;
-  - `NIVEL`, `GRADO`, `CATEGORIA` o `LEVEL` delante de cualquiera de los anteriores.
+- **El grado dentro del cargo: la letra no separa, el número sí.** Una marca de grado de la
+  escala interna puede ser una letra o un número.
 
-  `AUXILIAR 1 DE COCINA` = `AUXILIAR 2 DE COCINA`, `LABORATORISTA I` = `LABORATORISTA II`,
-  `CAJERO 3` = `CAJERO 5`, `AYUDANTE B DE MANTENIMIENTO` = `AYUDANTE C DE MANTENIMIENTO`,
-  `OPERARIO CATEGORIA B` = `OPERARIO CATEGORIA C`, `TECNICO NIVEL 2` = `TECNICO NIVEL 4`,
-  `OPERARIO 2 DE EMPAQUE` = `OPERARIO DE EMPAQUE`.
+  **Letra de grado: es ruido.** Una letra suelta, sola o entre paréntesis, salvo `E`, `Y`,
+  `O`, `U`, y la `A` solo al final del título; también con `NIVEL`, `GRADO`, `CATEGORIA` o
+  `LEVEL` delante. Esté en uno solo de los títulos o en los dos con valor distinto, **no hace
+  distinto el puesto**.
+  `AYUDANTE B DE MANTENIMIENTO` = `AYUDANTE C DE MANTENIMIENTO`, `AYUDANTE A` = `AYUDANTE`,
+  `OPERARIO CATEGORIA B` = `OPERARIO CATEGORIA C`, `CONSULTOR (R)` = `CONSULTOR`.
 
-  **No es grado**, y se juzga como cualquier otra palabra:
+  **Número de grado: si los dos títulos lo tienen y es distinto, `no`** (decide aquí, nota
+  `p1`). Es número de grado:
+  - un número del 1 al 9 suelto, en cualquier lugar del título salvo al principio
+    (también `# 3`);
+  - un número del 1 al 9 pegado al final de una palabra: `TECNICO2`;
+  - un romano del II al X suelto, y la `I` al final del título. **`I`, `V` y `X` son siempre
+    romanos, nunca letras.**
+
+  `AUXILIAR 1 DE COCINA` ≠ `AUXILIAR 2 DE COCINA`, `LABORATORISTA I` ≠ `LABORATORISTA II`,
+  `CAJERO 3` ≠ `CAJERO 5`, `TECNICO NIVEL 2` ≠ `TECNICO NIVEL 4`, `JEFE V` ≠ `JEFE IV`.
+
+  **Si el número está en uno solo de los títulos, no separa**: no se sabe a qué grado equivale
+  el otro. `OPERARIO 2 DE EMPAQUE` = `OPERARIO DE EMPAQUE`, `SOLDADOR A` = `SOLDADOR I`.
+  El mismo número en los dos tampoco separa: `CAJERO 3` = `CAJERO DE AGENCIA 3`, si el resto
+  es el mismo puesto.
+
+  **No es grado**, y se juzga como cualquier otra palabra o como código interno:
+  - un número al principio del título (`1. JEFE DE COMPRAS`): es el código de la planilla;
   - una letra pegada a `.`, `/` o `&`, o junto a un `&`: son siglas o abreviaturas
     (`ANALISTA DE PLANTA R & D` ≠ `ANALISTA DE PLANTA R&M` si las áreas son otras);
   - la letra de un tipo: `CHOFER LICENCIA C` / `CHOFER LICENCIA E` se decide por la
     licencia, no como grado;
-  - un número de dos cifras (`# 10`, `24 HORAS`): puede no ser un grado.
+  - un número de dos cifras (`# 10`, `24 HORAS`): puede no ser un grado;
+  - un número pegado a una abreviatura (`OPERARIO LT.4` = `OPERARIO LT.7`): código interno.
 
-  La escalera de sueldos que marcaba el grado no se pierde: la recoge la banda, con la
-  antigüedad, no el nombre del cargo.
+  Por qué la diferencia: dentro de una misma empresa, el número de grado mayor paga un 6,9 %
+  más (criterio A de D-040): es un escalón. Las letras no tienen un orden fiable y se juntan
+  por decisión del autor (D-041), sabiendo que la banda puede mezclar niveles.
 
 ### Paso 2. El escalón: si las palabras de rango están en niveles distintos, `no`
 
@@ -207,6 +222,22 @@ No separa:
 
 ## Historial
 
+### v6 (2026-10-02): el número de grado separa, la letra no
+
+Decisiones del autor, tras el criterio A de D-040 (el grado numérico es un escalón: +6,9 %
+[+4,7 %, +9,1 %] dentro de empresa) y D-041 (las letras se fusionan, sin medir).
+
+- **Paso 1, número de grado:** si los dos títulos lo tienen y es distinto, `no`. La v4/v5 lo
+  trataba como ruido. Si está en uno solo, sigue sin separar.
+- **Paso 1, letra de grado:** sigue siendo ruido, como en la v4/v5.
+- **Lo que se reconoce como número** se alinea con el candado de grado del código
+  (`capa0.grado_numerico`): un número al principio es código de planilla y ya no grado (la v4
+  decía lo contrario); se añade el número pegado al final de una palabra (`TECNICO2`); `I`,
+  `V` y `X` son siempre romanos.
+
+No es una vuelta a la v3: la v3 no distinguía número de letra y no tenía estas guardas.
+Los pasos 2 a 5 son los de la v5.
+
 ### v5 (2026-09-30): el ámbito y la función, afinados tras el análisis de errores
 
 Decisiones del autor, tras `25_analisis_errores.py` (D-038). El cross-encoder de H1 fallaba
@@ -226,5 +257,6 @@ casi solo en el paso 4, y ahí el oro no era del todo consistente (en `calibra`,
 Los pasos 1, 2 y 5 no cambian. Los ejemplos nuevos son inventados y no coinciden con ningún
 título de `13e` ni de `20` (comprobado por búsqueda).
 
-La v4 (el grado) está en `rubrica_mismo_cargo_v4.md`; la historia anterior, en
+La v5 está en `rubrica_mismo_cargo_v5.md`; la v4 (el grado), en `rubrica_mismo_cargo_v4.md`;
+la historia anterior, en
 `rubrica_mismo_cargo.md`.

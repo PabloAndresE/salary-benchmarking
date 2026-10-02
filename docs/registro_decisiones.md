@@ -5382,3 +5382,19 @@ fusión es una elección de producto, no un resultado.
   cuando exista.
 - **Solo se enciende con capa 0.** Las bases sin capa 0 (la v15 y anteriores) siguen igual, para
   que lo medido con ellas se pueda reproducir.
+
+### Rúbrica v6
+
+`research/experimentos/e2_nivel/rubrica_mismo_cargo_v6.md`: la v5 con un solo cambio, en el paso 1.
+- **El número de grado separa** si está en los dos títulos con valor distinto (`AUXILIAR 1` ≠
+  `AUXILIAR 2`). Si está en uno solo, no separa.
+- **La letra de grado no separa**, esté donde esté.
+- Lo que cuenta como número es lo mismo que reconoce el candado (`capa0.grado_numerico`): se
+  comprobaron los ejemplos de la rúbrica contra el código. Un número al principio pasa a ser
+  código de planilla y no grado.
+- Los pasos 2 a 5 son idénticos a los de la v5 (comprobado con `diff`). Los ejemplos nuevos no
+  aparecen en `13e`, `20` ni `29`.
+- La capa 0 solo junta la letra **al final** del título; la rúbrica la trata como ruido en
+  cualquier posición. No hay contradicción: la capa 0 es la parte conservadora, y lo demás
+  (`AYUDANTE B DE MANTENIMIENTO` / `AYUDANTE C DE MANTENIMIENTO`) lo decide el cross-encoder,
+  que el candado no frena porque no hay número.
