@@ -66,6 +66,7 @@ from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
                                      cuantiles_de_empresa, cuantiles_de_persona,
                                      sigma2_por_celda,
                                      tabla_votos, tau2_por_celda)
+from .capa0 import grado_numerico
 from .nivel import (clave_grado, efecto_nivel, mismo_salvo_grado, nivel_lexico,
                     nivel_rubrica, seniority_lexica, tiene_grado)
 
@@ -856,8 +857,11 @@ class BaseReferencia:
             atomos = [capa0.atomo(c) for c in celdas]
             niv_c = np.array([nivel_rubrica(c) if nivel_rubrica(c) else np.nan
                               for c in celdas], dtype=float)
+            # CANDADO DE GRADO (D-041): numero de grado distinto, nunca el mismo grupo.
+            gnum = [grado_numerico(c) for c in celdas]
         else:
             niv_c = niv
+            gnum = None
         fusiona = bool(umbral_fusion) or capa0 is not None
 
         # `lambda` se estima SIN fusionar, a proposito. Mide cuanto difieren dos celdas
@@ -892,13 +896,13 @@ class BaseReferencia:
         # escalones --un `SUPERVISOR DE CALIDAD SR` sigue siendo supervisor-- asi que
         # no entran en `RANGOS` ni mueven el nivel. Solo impiden la fusion.
         sen = np.array([seniority_lexica(c) for c in celdas])
-        grupo = (_fusionar(Z, niv_c, umbral_fusion, senior=sen)
+        grupo = (_fusionar(Z, niv_c, umbral_fusion, senior=sen, grados=gnum)
                  if umbral_fusion else np.arange(n))
         brecha_gen = np.full(n, np.nan)
         if capa0 is not None:
             # CAPA 0 (D-040): mismo atomo, mismo grupo. Va primero entre las pasadas de
             # texto; las de errata (D-025) y genero (D-026) siguen detras.
-            grupo, n_c0 = _fusionar_capa0(atomos, grupo)
+            grupo, n_c0 = _fusionar_capa0(atomos, grupo, grados=gnum)
             print(f"capa 0 ({capa0.version}): {n_c0:,} grupos unidos por el atomo")
         if fusiona:
             # SEGUNDA PASADA POR ERRATA. Necesita saber cuantas empresas respalda cada
@@ -913,7 +917,8 @@ class BaseReferencia:
                 g0 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
                 emp_g0 = (marco.assign(_g=g0).groupby("_g")["empresa_ruc"]
                           .nunique().to_dict())
-                grupo, n_err = _fusionar_erratas(celdas, grupo, niv_c, emp_g0)
+                grupo, n_err = _fusionar_erratas(celdas, grupo, niv_c, emp_g0,
+                                                 grados=gnum)
                 print(f"fusion por errata: {n_err:,} grupos absorbidos")
             if mapa_genero is not None:
                 antes_gen = grupo.copy()
@@ -927,7 +932,8 @@ class BaseReferencia:
                 emp_g1 = (marco.assign(_g=g1).groupby("_g")["empresa_ruc"]
                           .nunique().to_dict())
                 antes_gen = grupo.copy()
-                grupo, fem_masc = _fusionar_genero(celdas, grupo, niv_c, emp_g1)
+                grupo, fem_masc = _fusionar_genero(celdas, grupo, niv_c, emp_g1,
+                                                   grados=gnum)
                 print(f"fusion por genero: {len(fem_masc):,} pares juntados")
                 # LA BRECHA NO DESAPARECE CON LA FUSION, SE HACE VISIBLE. Fusionar da una
                 # referencia justa, pero si el numero se limita a promediar las dos
@@ -1598,7 +1604,34 @@ class BaseReferencia:
         return out
 
 
-def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None):
+class _CandadoGrado:
+    """CANDADO DE GRADO (D-041), igual en espiritu al de seniority (D-033): dos grupos cuyos
+    titulos llevan numero de grado distinto (`AUXILIAR 1` / `AUXILIAR 2`) no se juntan,
+    diga lo que diga la pasada (atomo, errata, genero, coseno o, mas adelante, el
+    cross-encoder). Lleva por grupo el conjunto de numeros de sus titulos; un titulo sin
+    numero no bloquea. `grados=None` lo apaga (bases sin capa 0, como se midieron)."""
+
+    def __init__(self, grados, grupo):
+        self.activo = grados is not None
+        self.g = defaultdict(frozenset)
+        if self.activo:
+            for i, k in enumerate(grupo):
+                if grados[i]:
+                    self.g[int(k)] = self.g[int(k)] | grados[i]
+
+    def choca(self, a, b):
+        if not self.activo:
+            return False
+        ga, gb = self.g.get(int(a)), self.g.get(int(b))
+        return bool(ga) and bool(gb) and ga != gb
+
+    def une(self, superviviente, absorbido):
+        if self.activo:
+            self.g[int(superviviente)] = (self.g.get(int(superviviente), frozenset())
+                                          | self.g.pop(int(absorbido), frozenset()))
+
+
+def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None, grados=None):
     """Agrupa cuasi-duplicados por ENLACE COMPLETO. Devuelve etiqueta -> id de grupo.
 
     Aglomerativo y voraz: las aristas candidatas se recorren de mas a menos similares y
@@ -1644,9 +1677,10 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None):
 
     de = np.arange(n)
     miembros = {}
+    candado = _CandadoGrado(grados, de)
     for _, i, j in aristas:
         gi, gj = int(de[i]), int(de[j])
-        if gi == gj:
+        if gi == gj or candado.choca(gi, gj):
             continue
         A, B = miembros.get(gi, [gi]), miembros.get(gj, [gj])
         if len(A) + len(B) > tope:
@@ -1662,6 +1696,7 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None):
         miembros[gi] = A + B
         miembros.pop(gj, None)
         de[A + B] = gi
+        candado.une(gi, gj)
     return de
 
 
@@ -1758,7 +1793,7 @@ def _letra_suelta(s, i):
 def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
                       min_largo=MIN_LARGO_ERRATA, max_raro=MAX_EMPRESAS_ERRATA,
                       min_comun=MIN_EMPRESAS_ABSORBE, transposicion=True,
-                      largo_en_comun=True, pasadas=PASADAS_ERRATA):
+                      largo_en_comun=True, pasadas=PASADAS_ERRATA, grados=None):
     """Absorbe los grupos-dedazo dentro del grupo comun del que son errata.
 
     Segunda pasada, DESPUES de la fusion semantica y por separado: asi no altera nada de
@@ -1817,7 +1852,7 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
     for _ in range(max(1, int(pasadas))):
         grupo, n_paso = _una_pasada_erratas(
             celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro, min_comun,
-            transposicion, largo_en_comun)
+            transposicion, largo_en_comun, grados)
         total += n_paso
         if not n_paso:
             break
@@ -1825,9 +1860,10 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
 
 
 def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro,
-                        min_comun, transposicion, largo_en_comun):
+                        min_comun, transposicion, largo_en_comun, grados=None):
     """Una vuelta de absorcion. La separa de `_fusionar_erratas` para poder repetirla."""
     n = len(celdas)
+    candado = _CandadoGrado(grados, grupo)
     idx = defaultdict(list)
     for i, c in enumerate(celdas):
         # EL SUELO DE LARGO, y a cual de las dos se le aplica. Existe porque con palabras
@@ -1874,6 +1910,8 @@ def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_ra
                     continue
                 if raro in destino:            # ya absorbido por otro comun
                     continue
+                if candado.choca(raro, comun):
+                    continue
                 destino[raro] = comun
                 fusiones += 1
 
@@ -1911,7 +1949,7 @@ def _par_genero(a, b):
     return None
 
 
-def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
+def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo, grados=None):
     """Junta las grafias masculina y femenina del mismo oficio. Tercera pasada.
 
     POR QUE, y no es un argumento estadistico. Hoy el comportamiento es un ACCIDENTE:
@@ -1951,6 +1989,7 @@ def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
         return x
 
     vistos, fem_masc = set(), []
+    candado = _CandadoGrado(grados, grupo)
     for lista in idx.values():
         for x in range(len(lista)):
             for y in range(x + 1, len(lista)):
@@ -1970,7 +2009,7 @@ def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
                 if g is None:
                     continue
                 ri, rj = raiz(gi), raiz(gj)
-                if ri == rj:
+                if ri == rj or candado.choca(ri, rj):
                     continue
                 # cual de los dos grupos trae la grafia femenina
                 gf, gm = (gi, gj) if celdas[par[0]] == g[0] else (gj, gi)
@@ -1978,8 +2017,10 @@ def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
                 # sobrevive el que mas empresas respalda: identificador estable
                 if emp_por_grupo.get(ri, 0) >= emp_por_grupo.get(rj, 0):
                     padre[rj] = ri
+                    candado.une(ri, rj)
                 else:
                     padre[ri] = rj
+                    candado.une(rj, ri)
 
     if not padre:
         return np.asarray(grupo), []
@@ -1987,12 +2028,13 @@ def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
     return nuevo, fem_masc
 
 
-def _fusionar_capa0(atomos, grupo):
+def _fusionar_capa0(atomos, grupo, grados=None):
     """Une los grupos cuyas celdas tienen el mismo ATOMO de la capa 0 (D-040).
 
     El atomo es texto (`capa0.Capa0.atomo`): no hay candado de nivel que valga aqui, porque
     dos titulos con el mismo atomo son el mismo titulo escrito de otra forma. Sobrevive el
-    grupo de la primera celda.
+    grupo de la primera celda. El candado de grado (D-041) si se comprueba: el atomo
+    conserva los numeros, asi que solo actua si un diccionario se colara un numero.
     """
     padre = {}
 
@@ -2003,6 +2045,7 @@ def _fusionar_capa0(atomos, grupo):
         return x
 
     primero, uniones = {}, 0
+    candado = _CandadoGrado(grados, grupo)
     for i, a in enumerate(atomos):
         if not a:
             continue
@@ -2011,8 +2054,9 @@ def _fusionar_capa0(atomos, grupo):
             primero[a] = gi
             continue
         r = raiz(primero[a])
-        if r != gi:
+        if r != gi and not candado.choca(r, gi):
             padre[gi] = r
+            candado.une(r, gi)
             uniones += 1
     if not padre:
         return np.asarray(grupo), 0

@@ -5364,3 +5364,21 @@ fusión es una elección de producto, no un resultado.
 - **Cross-encoder v3:** se reentrena con eso. Como `prueba` y `prueba 2` ya se abrieron, **lo que mida
   la v3 en ellos es exploratorio.** Si hay tiempo, se evalúa armar un conjunto nuevo de ~200 pares
   con grado para un resultado confirmatorio.
+
+### Implementación (código)
+
+- **Letras:** `capa0.quitar_letra_final`, encendida por defecto (`Capa0(letras=True)`). Usa las
+  mismas guardas que el grado: no es letra tras `&` (sigla `M & R`) ni tras `LICENCIA`/`TIPO`; la
+  `A` solo cuenta al final; quita también el `NIVEL`/`CATEGORIA` que la precede. **`I`, `V` y `X`
+  se leen como romanos, no como letras:** no se fusionan (criterio A).
+- **Números:** se quedan en el átomo. `Capa0(grado=True)` los quitaría; queda apagado.
+- **Candado de grado** (`capa0.grado_numerico` y `capa0.compatibles`): un título lleva los números de
+  grado que tenga, sueltos (1-9 o II-X, y la `I` al final) o pegados al final de una palabra
+  (`TECNICO2`), en cualquier posición salvo el código de planilla del inicio (`1. JEFE DE
+  COMPRAS` no tiene grado). Dos grupos cuyos números conocidos difieren no se juntan; un título
+  sin número no bloquea. Igual que el de seniority de D-033, se lleva **por grupo**: el conjunto
+  de números de todos sus títulos. Se comprueba en las cuatro pasadas: átomo de la capa 0, coseno
+  (`_fusionar`), errata (D-025) y género (D-026). El clustering con el cross-encoder lo usará
+  cuando exista.
+- **Solo se enciende con capa 0.** Las bases sin capa 0 (la v15 y anteriores) siguen igual, para
+  que lo medido con ellas se pueda reproducir.

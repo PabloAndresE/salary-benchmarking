@@ -5,8 +5,11 @@ import numpy as np
 import pandas as pd
 
 from benchmarking.producto.base_referencia import BaseReferencia
-from benchmarking.producto.capa0 import (Capa0, limpiar, proponer_erratas,
-                                         quitar_grado_final)
+from benchmarking.producto.base_referencia import (_fusionar_capa0, _fusionar_erratas,
+                                                  _fusionar_genero)
+from benchmarking.producto.capa0 import (Capa0, compatibles, grado_numerico, limpiar,
+                                         proponer_erratas, quitar_grado_final,
+                                         quitar_letra_final)
 from benchmarking.producto.nivel import nivel_rubrica, seniority_lexica
 
 
@@ -60,9 +63,20 @@ def test_codigo_inicial_y_puntuacion():
     assert limpiar("123") == "123"                                  # no se borra todo
 
 
-def test_el_grado_esta_apagado_por_defecto_y_con_guardas_si_se_enciende():
-    assert Capa0().preparar(["AUXILIAR DE COCINA 2"]).atomo("AUXILIAR DE COCINA 2") \
-        == "AUXILIAR DE COCINA 2"
+def test_las_letras_se_fusionan_y_los_numeros_no():                 # D-041
+    c = Capa0().preparar(["AYUDANTE", "AUXILIAR DE COCINA 2"])
+    assert c.atomo("AYUDANTE A") == c.atomo("AYUDANTE B") == c.atomo("AYUDANTE (C)") \
+        == "AYUDANTE"
+    assert c.atomo("AUXILIAR DE COCINA 2") == "AUXILIAR DE COCINA 2"
+    assert c.atomo("QUIMICO II") == "QUIMICO II"
+    assert quitar_letra_final("JEFE V") == "JEFE V"                     # romano, no letra
+    assert quitar_letra_final("COORDINADOR M & R") == "COORDINADOR M & R"
+    assert quitar_letra_final("CHOFER LICENCIA C") == "CHOFER LICENCIA C"
+    assert quitar_letra_final("OPERARIO CATEGORIA B") == "OPERARIO"
+    assert Capa0(letras=False).preparar([]).atomo("AYUDANTE B") == "AYUDANTE B"
+
+
+def test_el_grado_numerico_esta_apagado_por_defecto_y_con_guardas_si_se_enciende():
     assert quitar_grado_final("AUXILIAR DE COCINA 2") == "AUXILIAR DE COCINA"
     assert quitar_grado_final("QUIMICO II") == "QUIMICO"
     assert quitar_grado_final("OPERARIO CATEGORIA B") == "OPERARIO"
@@ -71,6 +85,45 @@ def test_el_grado_esta_apagado_por_defecto_y_con_guardas_si_se_enciende():
     assert quitar_grado_final("JEFE DE VENTAS") == "JEFE DE VENTAS"
     c = Capa0(grado=True).preparar(["AUXILIAR DE COCINA"])
     assert c.atomo("AUXILIAR DE COCINA 3") == "AUXILIAR DE COCINA"
+
+
+def test_candado_de_grado():
+    assert grado_numerico("AUXILIAR 2") == {2}
+    assert grado_numerico("AUXILIAR 2 DE CONTABILIDAD") == {2}
+    assert grado_numerico("TECNICO2") == {2}
+    assert grado_numerico("QUIMICO II") == {2}
+    assert grado_numerico("1. JEFE DE COMPRAS") == set()            # codigo de planilla
+    assert grado_numerico("JEFE DE I+D") == set()
+    assert not compatibles("AUXILIAR 1", "AUXILIAR 2")
+    assert not compatibles("QUIMICO I", "QUIMICO II")
+    assert compatibles("AUXILIAR", "AUXILIAR 2")                    # sin numero no bloquea
+    assert compatibles("AYUDANTE A", "AYUDANTE B")
+
+
+def test_el_candado_bloquea_aunque_la_pasada_quiera_juntar():
+    celdas = ["AUXILIAR 1", "AUXILIAR 2", "AUXILIAR"]
+    gnum = [grado_numerico(c) for c in celdas]
+    grupo = np.arange(3)
+    # un diccionario que se colara un numero daria el mismo atomo a los tres
+    nuevo, k = _fusionar_capa0(["AUXILIAR"] * 3, grupo, grados=gnum)
+    assert nuevo[0] != nuevo[1]
+    assert k == 1                                     # el sin numero se une a uno solo
+    nuevo, _ = _fusionar_capa0(["AUXILIAR"] * 3, grupo)          # sin candado, los tres
+    assert len(set(nuevo)) == 1
+    # genero: OPERARIA 2 y OPERARIO 3 son par de genero, pero el numero los separa
+    celdas = ["OPERARIA 2", "OPERARIO 3"]
+    gnum = [grado_numerico(c) for c in celdas]
+    niv = np.array([np.nan, np.nan])
+    nuevo, pares = _fusionar_genero(celdas, np.arange(2), niv, {0: 5, 1: 5}, grados=gnum)
+    assert nuevo[0] != nuevo[1] and not pares
+    nuevo, pares = _fusionar_genero(["OPERARIA 2", "OPERARIO 2"], np.arange(2), niv,
+                                    {0: 5, 1: 5}, grados=[{2}, {2}])
+    assert nuevo[0] == nuevo[1]
+    # errata: el raro no se absorbe en un comun con otro numero
+    celdas = ["SUPERVISOR DE BODEGA 1", "SUPERVISOR DE BODEGA 2"]
+    nuevo, k = _fusionar_erratas(celdas, np.arange(2), niv, {0: 40, 1: 1},
+                                 grados=[grado_numerico(c) for c in celdas])
+    assert k == 0
 
 
 def test_la_errata_solo_se_aplica_si_el_titulo_corregido_existe():

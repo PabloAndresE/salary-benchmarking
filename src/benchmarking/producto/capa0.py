@@ -11,11 +11,15 @@ EL ORDEN, sobre el titulo ya normalizado (`_norm`: mayusculas, sin tildes, espac
 
     1. ABREVIATURAS, antes de quitar la puntuacion (el punto es la pista: `SUPERV.`).
        Diccionario aprobado por el autor.
-    2. GRADO AL FINAL (`AUXILIAR 2`, `QUIMICO II`, `AYUDANTE C`), OPCIONAL: depende del
-       criterio A de D-040 (si el grado es escalon salarial, no se borra). Se detecta sobre
-       las palabras ORIGINALES, con sus guardas: una letra junto a `&` es una sigla
-       (`M & R`), tras `LICENCIA`/`TIPO` es un tipo, y la `A` solo cuenta al final.
-       Opcion (a): solo junta titulos identicos salvo el grado.
+    2. GRADO AL FINAL. Sobre las palabras ORIGINALES, con sus guardas: una letra junto a `&`
+       es una sigla (`M & R`), tras `LICENCIA`/`TIPO` es un tipo, la `A` solo al final.
+       - LETRAS (`AYUDANTE A` = `AYUDANTE B` = `AYUDANTE`): se borran, por D-041, decision
+         del autor que se aparta del criterio A (las celdas sin fusionar quedan muy chicas).
+         `I`, `V` y `X` cuentan como romanos, no como letras.
+       - NUMEROS (`AUXILIAR 2`, `QUIMICO II`): NO se borran. El criterio A de D-040 midio que
+         son un escalon (+6,9 % dentro de empresa). `grado=True` los borraria; queda apagado.
+       Ademas, el CANDADO DE GRADO (`compatibles`): dos titulos con numero de grado distinto
+       nunca van al mismo grupo, aunque otra pasada o el cross-encoder digan que si.
     3. LIMPIEZA: fuera el codigo o la numeracion al inicio (`09.01 …`, `1. …`, `3 …`, que es
        formato de planilla) y la puntuacion.
     4. PLURAL, regla simple: -S/-ES fuera si el singular existe en la base; no -IS/-US. El
@@ -63,6 +67,54 @@ def _es_grado_token(tok, previo, es_ultimo):
             and (t != "A" or es_ultimo)):
         return True
     return False
+
+
+def _es_letra_grado(tok, previo, es_ultimo):
+    t = tok.strip("()")
+    return (bool(re.fullmatch(r"\(?[A-Z]\)?", tok)) and t not in NO_LETRA_GRADO
+            and t not in ROMANOS and previo != "&" and previo not in NO_GRADO_DESPUES
+            and (t != "A" or es_ultimo))
+
+
+def quitar_letra_final(titulo):
+    """`AYUDANTE DE MANTENIMIENTO B` -> `AYUDANTE DE MANTENIMIENTO` (D-041). Solo letras;
+    los numeros y los romanos se quedan."""
+    toks = titulo.split()
+    while len(toks) > 1 and _es_letra_grado(toks[-1], toks[-2], True):
+        toks = toks[:-1]
+        if len(toks) > 1 and toks[-1] in ANTES_DE_GRADO:
+            toks = toks[:-1]
+    return " ".join(toks)
+
+
+_NUM_GRADO = re.compile(r"^\(?#?([1-9])\)?\.?$")
+_NUM_PEGADO = re.compile(r"^[A-Z]{3,}([1-9])$")
+
+
+def grado_numerico(titulo):
+    """Los numeros de grado del titulo: digitos 1-9 sueltos (o pegados al final de una
+    palabra: `TECNICO2`) y romanos II-X sueltos (y `I` al final), en cualquier posicion
+    salvo el codigo de planilla del inicio. Conjunto vacio si no hay ninguno."""
+    t = _PREFIJO.sub("", _norm(titulo).strip())
+    toks = t.split()
+    out = set()
+    for k, tok in enumerate(toks):
+        m = _NUM_GRADO.match(tok) or _NUM_PEGADO.match(tok)
+        if m:
+            out.add(int(m.group(1)))
+            continue
+        x = tok.strip("()#.")
+        if x in ROMANOS and (x != "I" or k == len(toks) - 1) and k > 0:
+            out.add(ROMANOS.index(x) + 1)
+    return frozenset(out)
+
+
+def compatibles(a, b):
+    """CANDADO DE GRADO (D-041): False si los dos titulos tienen numero de grado y es
+    distinto. `AUXILIAR 1` / `AUXILIAR 2` no; `AUXILIAR` / `AUXILIAR 2` si (el numero en un
+    solo titulo no se sabe a que grado equivale)."""
+    ga, gb = grado_numerico(a), grado_numerico(b)
+    return not (ga and gb and ga != gb)
 
 
 def quitar_grado_final(titulo):
@@ -116,7 +168,8 @@ class Capa0:
     erratas: dict = field(default_factory=dict)
     abreviaturas: dict = field(default_factory=dict)
     genero: dict = field(default_factory=dict)
-    grado: bool = False
+    grado: bool = False            # numeros: apagado (criterio A de D-040: son escalon)
+    letras: bool = True            # letras: se fusionan (D-041)
     version: str = VERSION
     existentes: set = field(default_factory=set, repr=False)
 
@@ -124,6 +177,8 @@ class Capa0:
         t = expandir_abreviaturas(_norm(titulo), self.abreviaturas)
         if self.grado:
             t = quitar_grado_final(t)
+        elif self.letras:
+            t = quitar_letra_final(t)
         t = limpiar(t)
         return [self.plural.get(w, w) for w in t.split()]
 
@@ -151,6 +206,7 @@ class Capa0:
     # --- persistencia: va dentro del .npz de la base ------------------------------------
     def a_json(self):
         return json.dumps({"version": self.version, "grado": self.grado,
+                           "letras": self.letras,
                            "plural": self.plural, "erratas": self.erratas,
                            "abreviaturas": self.abreviaturas, "genero": self.genero},
                           ensure_ascii=False, sort_keys=True)
@@ -159,7 +215,8 @@ class Capa0:
     def de_json(cls, s, titulos):
         d = json.loads(s)
         c = cls(plural=d["plural"], erratas=d["erratas"], abreviaturas=d["abreviaturas"],
-                genero=d["genero"], grado=d["grado"], version=d["version"])
+                genero=d["genero"], grado=d["grado"], version=d["version"],
+                letras=d.get("letras", False))
         erratas, c.erratas = c.erratas, {}
         c.existentes = {c.atomo(t) for t in titulos}
         c.erratas = erratas
@@ -181,9 +238,10 @@ def cargar_diccionarios(version=VERSION, base=DATOS):
             "genero": leer("genero.csv", "femenino", "masculino")}
 
 
-def nueva(version=VERSION, grado=False, base=DATOS):
+def nueva(version=VERSION, grado=False, letras=True, base=DATOS):
     """Una capa 0 con los diccionarios aprobados de `version`."""
-    return Capa0(grado=grado, version=version, **cargar_diccionarios(version, base))
+    return Capa0(grado=grado, letras=letras, version=version,
+                 **cargar_diccionarios(version, base))
 
 
 # --- la regla que PROPONE erratas (el autor aprueba) ------------------------------------
