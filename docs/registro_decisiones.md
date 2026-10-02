@@ -5262,3 +5262,19 @@ cumple y D-015 se enmienda.** La fusión por coseno ≥ 0,95 deja la capa 0 (`um
 construir `base_v16`); esos pares los resuelven el cross-encoder y el clustering. Lo que juntaba mal
 era sobre todo seniority (`SUPERVISOR DE FINANZAS` / `… SR`, `ANALISTA CREDITO` / `… DE CREDITO SR.`,
 `… SEMISENIOR` / `… SENIOR`). Y el cross-encoder no aceptó ningún par distinto en la muestra.
+
+### La capa 0 v1: diccionarios aprobados (2026-10-02)
+
+El autor revisó el **100 %** de las tres listas (más allá del 95 % previsto). Tras la revisión de
+Claude se corrigieron 9 decisiones antes de exportar: **8 erratas aprobadas pasan a `no`** porque en
+la base juntan oficios o palabras distintas (`CLAVADOR` / `LAVADOR`, `PRORECTOR` / `PROTECTOR`,
+`SUBCONTRALOR` / `SUBCONTADOR`, `PRESALE` / `PESAJE`, `CUTOVER` / `CUSTOMER`, `MECANISTA` /
+`MECANICA`, `SANEADOR` / `PLANEADOR`, `COPASTOR` / `PASTOR`), y **`PAI` → `PAIS` pasa a `no`**
+(era un `on` mal escrito; PAI es el Programa de los Años Intermedios del Bachillerato
+Internacional). En género, los pares que podían ser disciplinas (`FISICA`, `CLINICA`,
+`ESTADISTICA`…) se revisaron contra la base: solo producen concordancias correctas (`ANALISTA
+ESTADISTICA` = `… ESTADISTICO`).
+
+**Capa 0 v1** (`producto/datos/capa0_v1/`, `37_exportar_capa0.py`): **848 erratas, 216
+abreviaturas y 380 pares de género.** Sobre los 65.181 títulos de `base_v15`, sin grado y sin
+fusión por coseno, da **58.911 átomos**.
