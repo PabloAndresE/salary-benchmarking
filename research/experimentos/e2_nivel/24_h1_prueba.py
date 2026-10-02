@@ -146,7 +146,10 @@ def conjunto_prueba():
                                ("20", "20_pares_400.csv", "20_para_juzgar.csv")):
         m = leer(SAL / meta)
         m = m[m["particion"] == "prueba"] if conj == "13e" else m
-        j = leer(SAL / juicio)[["n", "mismo"]]
+        j = leer(SAL / juicio)
+        # D-041: la v6 corrige `mismo`; H1 se lee con la etiqueta con que se registro.
+        j = j.assign(mismo=j["mismo_v5"]) if "mismo_v5" in j.columns else j
+        j = j[["n", "mismo"]]
         d = m.merge(j, on="n", validate="one_to_one")
         d["mismo"] = d["mismo"].str.strip().str.lower()
         d = d[d["mismo"].isin(["si", "no"])]

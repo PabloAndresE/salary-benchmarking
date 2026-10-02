@@ -5486,3 +5486,15 @@ La plata no se excluye: los pares que la capa 0 junta siguen enseñando que son 
 2. Rehacer el paquete (`21`) y la vara de `calibra`; fijar el `AUC_BASE` nuevo en `22`.
 3. Reconstruir `base_v16` (capa 0 v1, candado de grado, sin fusión por coseno) con su informe por regla.
 4. Entrenar el cross-encoder v3 y evaluarlo (exploratorio).
+
+#### Ejecutado (2026-10-02): paso 1 del orden
+
+`python 39_inventario_grado_v6.py escribir`. Cambió exactamente lo de las tablas:
+- Juicios humanos, `si` → `no`: `13e` #104, #111, #188, #290, #350, #396; `20` #46, #53, #88, #185,
+  #190, #329, #353, #364; `29` #169. Comprobado contra el commit anterior: en cada archivo solo
+  cambian `mismo` y `nota` de esos pares, y aparece `mismo_v5` igual al `mismo` de antes.
+- Plata: `39_correcciones_v6.csv`, 136 correcciones (118 `entrena`, 18 `valida`). Aún no las aplica
+  `21`: es el paso 2.
+- Exclusión: `39_fuera_capa0_v1.csv` (`calibra` 13, `prueba` 13 + 32, `prueba 2` 14).
+- **H1 y H4 se protegen:** `24` y `31` leen `mismo_v5` cuando existe. Comprobado: H1 sigue con
+  555 pares (433 `si` / 122 `no`) y H4 con 400 (332 / 68), como antes del cambio.

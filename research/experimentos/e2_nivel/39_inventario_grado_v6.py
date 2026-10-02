@@ -1,6 +1,14 @@
-"""Inventario para revertir la Enmienda 5 de D-036 con la rubrica v6 (D-041). SOLO LEE.
+"""Inventario para revertir la Enmienda 5 de D-036 con la rubrica v6 (D-041), y su aplicacion.
 
-No toca ninguna etiqueta: cuenta lo que el plan cambiaria, para registrarlo antes.
+    python 39_inventario_grado_v6.py             SOLO LEE: cuenta lo que el plan cambiaria
+    python 39_inventario_grado_v6.py escribir    aplica el plan registrado en D-041
+
+Al escribir (re-ejecutable: siempre parte de lo guardado):
+  - juicios humanos (13e, 20, 29): `mismo_v5` guarda la etiqueta de antes; `mismo` pasa a `no` en
+    los pares con numero distinto que eran `si`; la nota gana `p1 v6`. Separador y BOM se respetan.
+  - plata: 39_correcciones_v6.csv (n, particion, etiqueta_antes, etiqueta, motivo), que `21`
+    aplica al final. Se calcula sobre el paquete SIN las correcciones v6.
+  - exclusion: 39_fuera_capa0_v1.csv (conjunto, n, particion), el mismo atomo con la capa 0 v1.
 
 La regla v6 en lo que toca al grado es MECANICA: un par cuyos dos titulos llevan numero de grado
 y ese numero difiere es `no` (`capa0.compatibles` es False). Lo demas no lo decide esta regla.
@@ -136,5 +144,67 @@ def _ns_grado(nom):
             }.get(nom, [])
 
 
+def _escribir_juicio(ruta, dist_ns):
+    """`mismo` -> `no` en los `n` dados que eran `si`; `mismo_v5` guarda lo de antes."""
+    crudo = ruta.read_bytes()
+    bom = crudo.startswith(b"\xef\xbb\xbf")
+    primera = crudo.decode("utf-8-sig").splitlines()[0]
+    sep = ";" if primera.count(";") > primera.count(",") else ","
+    d = pd.read_csv(ruta, sep=sep, encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    if "mismo_v5" not in d.columns:
+        d.insert(d.columns.get_loc("mismo") + 1, "mismo_v5", d["mismo"])
+    d["mismo"] = d["mismo_v5"]
+    d["nota"] = d["nota"].str.replace(r"\s*p1 v6$", "", regex=True)
+    k = d["n"].isin(dist_ns) & (d["mismo_v5"].str.strip().str.lower() == "si")
+    d.loc[k, "mismo"] = "no"
+    d.loc[k, "nota"] = (d.loc[k, "nota"].str.strip() + " p1 v6").str.strip()
+    d.to_csv(ruta, sep=sep, index=False, encoding="utf-8-sig" if bom else "utf-8")
+    return d.loc[k, "n"].tolist()
+
+
+def escribir():
+    import collections
+    b = np.load(RAIZ / "demo" / "base_v15.npz", allow_pickle=True)
+    c0 = capa0.nueva("v1").preparar([str(c) for c in b["celdas"]])
+    dist = lambda d: set(d.loc[[not capa0.compatibles(a, r) for a, r in
+                                zip(d["comun"], d["raro"])], "n"])
+    cambios = collections.OrderedDict()
+    part = leer(SAL / "13e_pares_400.csv")[["n", "particion"]]
+    for nombre in ("13e_para_juzgar.csv", "20_para_juzgar.csv", "29_prueba2_para_juzgar.csv"):
+        d = leer(SAL / nombre)
+        cambios[nombre] = _escribir_juicio(SAL / nombre, dist(d))
+
+    # plata: sobre el paquete, quitando cualquier correccion v6 previa
+    pl = pd.read_csv(SAL / "21_paquete" / "plata.csv", dtype=str, keep_default_na=False)
+    previas = SAL / "39_correcciones_v6.csv"
+    if previas.exists():
+        pv = pd.read_csv(previas, dtype=str).set_index("n")["etiqueta_antes"]
+        k = pl["n"].isin(pv.index)
+        pl.loc[k, "etiqueta"] = pl.loc[k, "n"].map(pv)
+    ns = dist(pl)
+    cv = pl[pl["n"].isin(ns) & (pl["etiqueta"] != "0.0")]
+    cv = pd.DataFrame({"n": cv["n"], "particion": cv["particion"],
+                       "etiqueta_antes": cv["etiqueta"], "etiqueta": "0.0", "motivo": "p1"})
+    cv.to_csv(previas, index=False, encoding="utf-8")
+
+    # exclusion por la capa 0 v1
+    e13 = leer(SAL / "13e_para_juzgar.csv").merge(part, on="n")
+    fuera = []
+    for cj, d in (("13e", e13), ("20", leer(SAL / "20_para_juzgar.csv").assign(particion="prueba")),
+                  ("29", leer(SAL / "29_prueba2_para_juzgar.csv").assign(particion="prueba2"))):
+        for _, f in d.iterrows():
+            if c0.atomo(f["comun"]) == c0.atomo(f["raro"]):
+                fuera.append({"conjunto": cj, "n": f["n"], "particion": f["particion"]})
+    pd.DataFrame(fuera).to_csv(SAL / "39_fuera_capa0_v1.csv", index=False, encoding="utf-8")
+
+    print("juicios humanos, si -> no:")
+    for k, v in cambios.items():
+        print("   {:<30} {:>3}  {}".format(k, len(v), ", ".join(sorted(v, key=int))))
+    print("plata: {} correcciones ({})".format(
+        len(cv), cv.groupby("particion").size().to_dict()))
+    print("fuera por la capa 0 v1: {}".format(
+        pd.DataFrame(fuera).groupby(["conjunto", "particion"]).size().to_dict()))
+
+
 if __name__ == "__main__":
-    main()
+    escribir() if sys.argv[1:] == ["escribir"] else main()

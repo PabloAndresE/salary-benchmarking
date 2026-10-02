@@ -106,6 +106,9 @@ def conjunto_prueba2():
     j = pd.read_csv(P2_JUICIOS, sep=None, engine="python", encoding="utf-8-sig", dtype=str,
                     keep_default_na=False)
     m = pd.read_csv(P2_META, sep=";", encoding="utf-8-sig", dtype=str, keep_default_na=False)
+    # D-041: la v6 corrige `mismo`; H4 se lee con la etiqueta con que se registro.
+    if "mismo_v5" in j.columns:
+        j["mismo"] = j["mismo_v5"]
     d = j[["n", "comun", "raro", "mismo"]].merge(m[["n", "sim", "estrato"]], on="n",
                                                   validate="one_to_one")
     d["mismo"] = d["mismo"].str.strip().str.lower()
