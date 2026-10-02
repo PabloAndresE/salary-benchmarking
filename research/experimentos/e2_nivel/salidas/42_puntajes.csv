@@ -1,0 +1,1001 @@
+conjunto,cj,n,estrato,y_orig,y_v6,fuera_orig,fuera_v1,num_distinto,coseno,v1,v2,v3
+prueba,13e,1,banda,si,si,False,False,False,0.9469,0.99566686,0.9965628,0.996345
+prueba,13e,2,banda,si,si,False,False,False,0.9568,0.99530464,0.9966484,0.99657184
+prueba,13e,3,banda,si,si,False,False,False,0.9445,0.97737306,0.99517703,0.9934168
+prueba,13e,5,banda,si,si,False,False,False,0.9424,0.16980849,0.6274485,0.7814359
+prueba,13e,6,banda,si,si,False,False,False,0.9534,0.9967573,0.99449486,0.9969097
+prueba,13e,13,banda,si,si,False,False,False,0.9489,0.9822874,0.9783029,0.98029196
+prueba,13e,21,banda,no,no,False,False,False,0.962,1.8377254e-05,0.0007516554,0.00020568613
+prueba,13e,22,banda,no,no,False,False,False,0.9362,0.0017188056,0.0077677094,0.005062092
+prueba,13e,23,banda,no,no,False,False,False,0.9374,9.508809e-05,0.0033185477,0.0019938839
+prueba,13e,27,banda,si,si,False,False,False,0.9367,0.99393916,0.99003327,0.99525887
+prueba,13e,28,alto,si,si,False,False,False,0.9714,0.99661875,0.9974819,0.9971692
+prueba,13e,30,banda,si,si,False,False,False,0.9618,0.9967304,0.99775416,0.9974335
+prueba,13e,32,alto,si,si,False,False,False,0.9714,0.96956193,0.99395066,0.99428743
+prueba,13e,39,banda,si,si,False,False,False,0.9336,0.8016765,0.9903076,0.9917668
+prueba,13e,41,banda,si,si,False,False,False,0.9325,0.9961342,0.99639064,0.9965183
+prueba,13e,45,banda,si,si,False,False,False,0.947,0.9962681,0.99734944,0.9974103
+prueba,13e,47,banda,si,si,False,False,False,0.9591,0.99683005,0.99588484,0.9969136
+prueba,13e,52,banda,no,no,False,False,False,0.9501,0.9955314,0.99389493,0.9947216
+prueba,13e,54,banda,no,no,False,False,False,0.9628,1.325239e-05,1.7664943e-05,6.097867e-06
+prueba,13e,55,bajo,si,si,False,False,False,0.9034,0.9452645,0.9704211,0.97811294
+prueba,13e,57,banda,si,si,True,False,False,0.9622,0.9961205,0.99666196,0.99499565
+prueba,13e,59,banda,no,no,False,False,False,0.9595,2.832e-06,0.00039785219,0.00015145495
+prueba,13e,61,banda,no,no,False,False,False,0.9305,0.7971404,0.60060996,0.20743246
+prueba,13e,62,banda,si,si,False,False,False,0.9578,0.77532053,0.9954358,0.9945118
+prueba,13e,65,banda,no,no,False,False,False,0.9519,1.6013866e-05,0.005276363,0.0008098988
+prueba,13e,66,bajo,no,no,False,False,False,0.908,0.9676229,0.8240613,0.92838573
+prueba,13e,67,banda,no,no,False,False,False,0.942,0.9544985,0.9780556,0.98617196
+prueba,13e,69,alto,no,no,False,False,False,0.9726,0.9557823,0.9914995,0.99234605
+prueba,13e,72,alto,si,si,False,False,False,0.9916,0.99548256,0.99740756,0.9965469
+prueba,13e,73,banda,no,no,False,False,False,0.9555,5.63132e-06,0.0015994539,0.0002659476
+prueba,13e,74,banda,si,si,False,False,False,0.9602,0.996756,0.99656314,0.996245
+prueba,13e,77,alto,si,si,False,False,False,0.973,0.9963395,0.99610627,0.9963528
+prueba,13e,78,bajo,si,si,False,False,False,0.9245,0.9946143,0.9920471,0.9911988
+prueba,13e,81,banda,si,si,False,False,False,0.9617,0.9967047,0.99696535,0.9973314
+prueba,13e,82,alto,si,si,False,False,False,0.9878,0.9963359,0.9954991,0.9957604
+prueba,13e,83,banda,si,si,False,False,False,0.9482,0.99139607,0.99484974,0.9965895
+prueba,13e,84,banda,si,si,False,False,False,0.9594,0.99619234,0.99471027,0.9960747
+prueba,13e,85,bajo,no,no,False,False,False,0.9023,9.095457e-05,0.006807867,0.0012632307
+prueba,13e,87,banda,no,no,False,False,False,0.9508,4.5079096e-06,2.7336018e-05,1.1810423e-05
+prueba,13e,90,banda,si,si,False,False,False,0.9528,0.9927312,0.9931823,0.9922346
+prueba,13e,91,banda,no,no,False,False,False,0.9348,2.2308795e-05,0.00080467295,0.00024770157
+prueba,13e,92,banda,no,no,False,False,False,0.9337,3.2549935e-05,0.0010521791,0.0003746255
+prueba,13e,93,banda,si,si,False,False,False,0.9345,0.996434,0.99338984,0.9957673
+prueba,13e,95,banda,si,si,False,False,False,0.9552,0.98872143,0.98971474,0.99300563
+prueba,13e,97,bajo,no,no,False,False,False,0.9013,1.8178886e-05,0.0027792435,0.000571657
+prueba,13e,98,alto,si,si,False,True,False,0.9719,0.99593043,0.9960771,0.9968122
+prueba,13e,99,banda,si,si,False,False,False,0.9451,0.99531454,0.9962433,0.9962364
+prueba,13e,105,banda,si,si,False,True,False,0.9532,0.99536437,0.99581844,0.9955699
+prueba,13e,107,banda,si,si,False,False,False,0.9639,0.99386,0.9959487,0.99590427
+prueba,13e,108,banda,si,si,False,False,False,0.9616,0.99535966,0.9963518,0.99696034
+prueba,13e,109,banda,si,si,False,False,False,0.9675,0.99494094,0.99679875,0.99608994
+prueba,13e,110,banda,si,si,False,False,False,0.9478,0.9707535,0.95303994,0.9602385
+prueba,13e,111,banda,si,no,True,False,True,0.9657,0.99670845,0.9967687,0.00037526904
+prueba,13e,113,alto,si,si,False,True,False,0.9729,0.99623007,0.9917705,0.99229676
+prueba,13e,117,banda,si,si,False,False,False,0.9408,0.9960734,0.9964567,0.9956018
+prueba,13e,119,banda,si,si,False,False,False,0.9395,0.9953516,0.99404985,0.995908
+prueba,13e,120,banda,si,si,False,False,False,0.9458,0.9969995,0.9929458,0.9932226
+prueba,13e,122,banda,no,no,False,False,False,0.9506,2.1246724e-05,0.00052277365,0.00021190557
+prueba,13e,125,alto,si,si,False,False,False,0.9701,0.9962411,0.991465,0.20481409
+prueba,13e,127,banda,si,si,False,False,False,0.9512,0.99563587,0.9949614,0.9957001
+prueba,13e,129,alto,si,si,False,False,False,0.9726,0.9966269,0.99754894,0.997417
+prueba,13e,131,banda,si,si,False,False,False,0.9654,0.9969788,0.99717134,0.9974957
+prueba,13e,132,bajo,si,si,False,False,False,0.9123,0.99582446,0.9967033,0.9961518
+prueba,13e,133,banda,si,si,False,False,False,0.963,0.9931488,0.99510664,0.9954442
+prueba,13e,134,banda,si,si,False,False,False,0.9496,0.99645036,0.9947855,0.99573976
+prueba,13e,135,banda,si,si,False,False,False,0.969,0.99558866,0.99653167,0.9965623
+prueba,13e,136,bajo,si,si,False,False,False,0.9044,0.8636652,0.81576663,0.6281512
+prueba,13e,138,banda,si,si,False,False,False,0.938,0.9966419,0.9959657,0.9952211
+prueba,13e,139,banda,si,si,False,False,False,0.9632,0.99677765,0.997627,0.99741095
+prueba,13e,140,banda,si,si,False,False,False,0.9628,0.99231875,0.992505,0.99399537
+prueba,13e,144,banda,si,si,False,False,False,0.9487,0.99670905,0.996519,0.99649554
+prueba,13e,147,banda,si,si,False,False,False,0.9308,0.924952,0.9938474,0.99555385
+prueba,13e,148,banda,no,no,False,False,False,0.9312,0.0025098165,0.0020479588,0.00064344786
+prueba,13e,149,banda,si,si,False,False,False,0.9426,0.996517,0.9949982,0.9963822
+prueba,13e,152,banda,si,si,False,False,False,0.9395,0.99205256,0.9951266,0.9959181
+prueba,13e,154,banda,si,si,False,False,False,0.9576,0.9956583,0.99533546,0.9957207
+prueba,13e,156,banda,no,no,False,False,False,0.9432,7.823394e-06,1.8106064e-05,1.6127311e-05
+prueba,13e,157,banda,si,si,False,False,False,0.9609,0.99511975,0.9894489,0.98916805
+prueba,13e,159,alto,si,si,False,False,False,0.9719,0.9959446,0.9912324,0.9934189
+prueba,13e,160,banda,no,no,False,False,False,0.9646,2.0166746e-05,0.0010119412,0.00026915432
+prueba,13e,163,alto,si,si,False,False,False,0.9702,0.99681515,0.99692035,0.9965602
+prueba,13e,165,alto,si,si,False,False,False,0.975,0.9955501,0.99560803,0.99616265
+prueba,13e,167,banda,si,si,False,False,False,0.9354,0.99606764,0.9945999,0.9957547
+prueba,13e,168,banda,si,si,False,False,False,0.9384,0.9957178,0.99603856,0.9967045
+prueba,13e,170,bajo,no,no,False,False,False,0.9234,0.86151797,0.9585071,0.9707059
+prueba,13e,173,banda,si,si,False,False,False,0.9365,0.9959101,0.9901269,0.98793787
+prueba,13e,174,alto,si,si,False,False,False,0.9715,0.9964184,0.9959489,0.9951823
+prueba,13e,183,banda,si,si,False,False,False,0.9631,0.9971388,0.9968698,0.9972477
+prueba,13e,185,bajo,no,no,False,False,False,0.9139,0.96622777,0.8784892,0.74207675
+prueba,13e,190,banda,si,si,False,False,False,0.9626,0.99539495,0.9955992,0.99583185
+prueba,13e,191,alto,no,no,False,False,False,0.9735,2.9060824e-05,0.00063327805,0.000246901
+prueba,13e,192,alto,si,si,False,False,False,0.9781,0.9971905,0.9981787,0.9975198
+prueba,13e,196,banda,si,si,False,False,False,0.9373,0.9954506,0.9941138,0.99399173
+prueba,13e,199,bajo,si,si,False,False,False,0.9006,0.99404067,0.99263924,0.9922005
+prueba,13e,200,alto,si,si,False,False,False,0.9723,0.9966753,0.9959759,0.99637985
+prueba,13e,202,banda,si,si,False,False,False,0.9328,0.049872532,0.10708027,0.17914727
+prueba,13e,204,alto,si,si,False,False,False,0.9767,0.99597436,0.99652094,0.99529207
+prueba,13e,206,bajo,si,si,False,False,False,0.9008,0.9968154,0.9963335,0.99649537
+prueba,13e,207,bajo,si,si,False,False,False,0.9099,0.99663705,0.99731606,0.9971487
+prueba,13e,211,banda,si,si,False,True,False,0.9667,0.99385905,0.9934205,0.98922575
+prueba,13e,212,banda,no,no,False,False,False,0.9587,0.94650006,0.86578995,0.9256402
+prueba,13e,216,alto,si,si,False,False,False,0.9743,0.9592585,0.99300474,0.99334836
+prueba,13e,217,banda,no,no,False,False,False,0.9411,1.1416064e-05,0.0010168024,0.0001897491
+prueba,13e,218,bajo,si,si,False,False,False,0.9041,0.38390297,0.28713563,0.28339088
+prueba,13e,220,banda,si,si,True,True,False,0.9645,0.9965395,0.9961742,0.9969806
+prueba,13e,222,bajo,si,si,False,False,False,0.9147,0.9960713,0.98736054,0.99077636
+prueba,13e,223,bajo,si,si,False,False,False,0.9241,0.8928523,0.5952761,0.66244346
+prueba,13e,226,banda,no,no,False,False,False,0.9391,0.99483854,0.99169123,0.9937601
+prueba,13e,228,banda,no,no,False,False,False,0.9393,0.9774485,0.56906366,0.0070034014
+prueba,13e,229,banda,no,no,False,False,False,0.9601,7.076583e-06,0.0033982117,0.000908054
+prueba,13e,233,banda,no,no,False,False,False,0.9492,0.99528253,0.99684083,0.9966557
+prueba,13e,235,banda,si,si,False,False,False,0.9588,0.9966259,0.9966617,0.99674755
+prueba,13e,237,banda,no,no,False,False,False,0.9599,4.34296e-06,0.00051818736,0.00017556125
+prueba,13e,238,banda,no,no,False,False,False,0.9382,0.00037860204,0.0014902195,0.0003160084
+prueba,13e,240,banda,si,si,True,True,False,0.9468,0.996423,0.9940448,0.9954208
+prueba,13e,242,bajo,si,si,False,False,False,0.9074,0.9269024,0.80497515,0.8283774
+prueba,13e,243,banda,si,si,False,False,False,0.9517,0.99620104,0.99636483,0.9970278
+prueba,13e,244,banda,no,no,False,False,False,0.9493,3.8094226e-05,0.00037997373,3.6814938e-05
+prueba,13e,245,banda,si,si,False,False,False,0.9451,0.99581367,0.9947413,0.9954594
+prueba,13e,246,banda,si,si,True,False,False,0.9622,0.9968427,0.9958315,0.99622303
+prueba,13e,247,banda,si,si,False,False,False,0.9313,0.9967373,0.9969439,0.9971614
+prueba,13e,248,banda,no,no,False,False,False,0.9319,0.99431634,0.9904288,0.99212307
+prueba,13e,251,banda,si,si,False,False,False,0.9532,0.99567384,0.99421376,0.9950488
+prueba,13e,254,banda,si,si,False,False,False,0.969,0.9965259,0.9963423,0.996604
+prueba,13e,256,alto,si,si,False,False,False,0.9782,0.9969436,0.99681276,0.997035
+prueba,13e,260,banda,si,si,True,False,False,0.9586,0.9967958,0.9968623,0.9948049
+prueba,13e,261,banda,no,no,False,False,False,0.9626,0.98727334,0.9942947,0.99487484
+prueba,13e,264,banda,si,si,False,False,False,0.945,0.99620813,0.9968008,0.996397
+prueba,13e,265,banda,si,si,False,False,False,0.9538,0.9951249,0.99748904,0.99731266
+prueba,13e,267,bajo,no,no,False,False,False,0.9231,0.99098295,0.9859953,0.9841064
+prueba,13e,268,bajo,si,si,False,False,False,0.9013,0.99303955,0.9904666,0.9926974
+prueba,13e,270,banda,si,si,False,False,False,0.9407,0.99595946,0.9913488,0.9917185
+prueba,13e,271,banda,no,no,False,False,False,0.9306,0.00016612232,4.2650146e-05,3.0648647e-05
+prueba,13e,272,banda,no,no,False,False,False,0.9323,0.00018582387,0.0011944417,0.00041499318
+prueba,13e,274,banda,no,no,False,False,False,0.9585,8.434833e-06,0.0006174379,0.00016819383
+prueba,13e,277,banda,no,no,False,False,False,0.9603,5.7551722e-05,0.0017339437,0.00034837794
+prueba,13e,278,banda,si,si,False,False,False,0.932,0.99555165,0.99668956,0.9968787
+prueba,13e,279,bajo,si,si,False,False,False,0.9031,0.98090756,0.95402306,0.968175
+prueba,13e,280,banda,no,no,False,False,False,0.9464,0.9958837,0.9971593,0.99693704
+prueba,13e,281,banda,no,no,False,False,False,0.9434,4.3997647e-06,0.00090212416,0.00024829342
+prueba,13e,282,banda,si,si,False,False,False,0.9447,0.9965639,0.9972081,0.99703425
+prueba,13e,284,alto,si,si,False,False,False,0.9722,0.97568077,0.99028057,0.99185365
+prueba,13e,285,banda,no,no,False,False,False,0.9358,0.9876918,0.9943196,0.9907369
+prueba,13e,286,banda,si,si,True,False,False,0.9471,0.99492514,0.9707382,0.8959838
+prueba,13e,287,banda,si,si,False,False,False,0.9411,0.9881151,0.98213524,0.9858568
+prueba,13e,290,alto,si,no,True,False,True,0.9735,0.99631125,0.99200624,0.0014268934
+prueba,13e,297,banda,no,no,False,False,False,0.944,0.0017497867,0.00021509913,0.00014633685
+prueba,13e,298,banda,no,no,False,False,False,0.9409,0.9596547,0.93561804,0.964675
+prueba,13e,299,banda,si,si,False,False,False,0.951,0.9966434,0.9979265,0.99773663
+prueba,13e,303,banda,no,no,False,False,False,0.9566,8.64963e-06,0.0008319854,0.00020298453
+prueba,13e,307,banda,si,si,False,False,False,0.9635,0.97802234,0.98723006,0.9934018
+prueba,13e,308,banda,no,no,False,False,False,0.9499,0.8532394,0.9683917,0.9840062
+prueba,13e,309,alto,si,si,False,False,False,0.9713,0.99357504,0.9946608,0.99441445
+prueba,13e,311,banda,si,si,False,False,False,0.9372,0.99446875,0.9717219,0.9266831
+prueba,13e,314,banda,no,no,False,False,False,0.9596,0.00055382843,0.002944571,0.0035627023
+prueba,13e,315,banda,si,si,False,False,False,0.9627,0.9937716,0.989772,0.99011606
+prueba,13e,316,bajo,no,no,False,False,False,0.9216,3.1088707e-06,0.0010319387,0.00022746806
+prueba,13e,321,banda,si,si,False,False,False,0.9544,0.9956415,0.9975215,0.99713475
+prueba,13e,322,banda,si,si,False,True,False,0.9549,0.9969954,0.99699795,0.9967461
+prueba,13e,323,bajo,si,si,False,False,False,0.9161,0.60151833,0.22568727,0.34496617
+prueba,13e,324,alto,si,si,False,False,False,0.9763,0.9963589,0.9950652,0.996461
+prueba,13e,325,banda,si,si,False,False,False,0.9325,0.98213655,0.9957561,0.99535835
+prueba,13e,329,bajo,no,no,False,False,False,0.9071,2.5388938e-05,0.00034549186,0.00012920308
+prueba,13e,331,banda,si,si,False,False,False,0.9615,0.7090955,0.9906945,0.9897421
+prueba,13e,336,banda,si,si,False,False,False,0.9552,0.9946024,0.98478293,0.9924417
+prueba,13e,337,bajo,no,no,False,False,False,0.916,0.99689823,0.9794154,0.95468974
+prueba,13e,338,banda,si,si,False,False,False,0.9386,0.020345634,0.0007880043,0.00993135
+prueba,13e,339,alto,si,si,True,True,False,0.9747,0.9967784,0.9958186,0.9968869
+prueba,13e,341,banda,si,si,False,False,False,0.956,0.9958021,0.9936339,0.99620336
+prueba,13e,343,banda,si,si,False,False,False,0.9502,0.9924923,0.99001974,0.9919726
+prueba,13e,344,bajo,no,no,False,False,False,0.9068,0.95148903,0.9943339,0.9948448
+prueba,13e,345,banda,si,si,False,False,False,0.9622,0.9934256,0.99552923,0.9956821
+prueba,13e,347,banda,si,si,False,False,False,0.961,0.9965427,0.9962915,0.9963695
+prueba,13e,349,bajo,si,si,False,False,False,0.9106,0.9964648,0.99589133,0.99607986
+prueba,13e,353,alto,si,si,False,False,False,0.9731,0.996218,0.98494124,0.98957604
+prueba,13e,355,banda,no,no,False,False,False,0.9363,0.9966684,0.99491423,0.9962077
+prueba,13e,357,bajo,si,si,False,False,False,0.9182,0.996176,0.9955603,0.995978
+prueba,13e,358,alto,si,si,False,False,False,0.9737,0.9965634,0.99640435,0.9965333
+prueba,13e,359,banda,si,si,False,True,False,0.9675,0.9964692,0.99567914,0.9960508
+prueba,13e,363,alto,si,si,False,True,False,0.9749,0.99681365,0.9966918,0.99639016
+prueba,13e,364,banda,si,si,False,False,False,0.9431,0.9964411,0.9950434,0.9961661
+prueba,13e,365,banda,si,si,False,False,False,0.9339,0.99427104,0.98757976,0.98800236
+prueba,13e,366,banda,no,no,False,False,False,0.9512,4.8709667e-06,0.001766639,0.00017805761
+prueba,13e,367,banda,no,no,False,False,False,0.9415,6.284469e-05,0.0019594412,0.0004145594
+prueba,13e,368,banda,no,no,False,False,False,0.9411,0.0033032666,0.0074054776,0.004047456
+prueba,13e,369,banda,si,si,False,False,False,0.9529,0.9958479,0.99469846,0.9952665
+prueba,13e,375,bajo,no,no,False,False,False,0.9009,0.9817217,0.9706866,0.9756143
+prueba,13e,378,banda,si,si,False,False,False,0.9364,0.9265558,0.97801715,0.98317075
+prueba,13e,379,bajo,si,si,False,False,False,0.9035,0.90920854,0.96326196,0.96614313
+prueba,13e,382,banda,si,si,False,True,False,0.9485,0.9968994,0.9974545,0.99726784
+prueba,13e,383,bajo,si,si,False,False,False,0.9062,0.7321897,0.96041584,0.9499736
+prueba,13e,384,banda,si,si,False,False,False,0.9552,0.8852845,0.9800924,0.97047913
+prueba,13e,385,banda,si,si,False,False,False,0.9561,0.9878218,0.9901607,0.99074554
+prueba,13e,387,alto,si,si,False,True,False,0.9702,0.9961804,0.9919044,0.99305016
+prueba,13e,390,alto,si,si,False,True,False,0.9765,0.9969308,0.99651575,0.99656385
+prueba,13e,393,banda,si,si,False,False,False,0.9479,0.9751198,0.9862583,0.98614395
+prueba,13e,394,banda,si,si,False,False,False,0.9357,0.98043394,0.9749739,0.9727677
+prueba,13e,395,banda,si,si,False,False,False,0.9322,0.98847806,0.9869244,0.98506796
+prueba,13e,397,bajo,si,si,False,False,False,0.9099,0.90464807,0.8702535,0.96022356
+prueba,13e,398,banda,si,si,False,False,False,0.9646,0.9963849,0.9974972,0.99729204
+prueba,20,1,banda,si,si,False,False,False,0.9501,0.952654,0.9857266,0.9803112
+prueba,20,2,banda,no,no,False,False,False,0.9612,9.0896965e-06,0.00044609237,0.00013345179
+prueba,20,3,banda,no,no,False,False,False,0.9336,5.2501464e-06,2.5104584e-05,5.52952e-06
+prueba,20,4,banda,si,si,False,False,False,0.9413,0.9926998,0.9915406,0.9920417
+prueba,20,5,banda,si,si,False,False,False,0.9507,0.9950125,0.9947031,0.99391925
+prueba,20,6,banda,si,si,False,False,False,0.9415,0.99586457,0.9926132,0.99128854
+prueba,20,7,banda,si,si,False,False,False,0.9559,0.92949367,0.9809562,0.980847
+prueba,20,8,banda,si,si,False,False,False,0.9475,0.99637353,0.9953158,0.99668217
+prueba,20,9,banda,si,si,False,False,False,0.9558,0.9965938,0.9952129,0.9945657
+prueba,20,10,banda,no,no,False,False,False,0.9348,7.040151e-06,0.00042006114,0.00013072984
+prueba,20,11,banda,si,si,False,False,False,0.9398,0.9911057,0.9853923,0.98657006
+prueba,20,12,banda,si,si,False,False,False,0.9441,0.9856327,0.988584,0.9875471
+prueba,20,13,banda,si,si,False,False,False,0.9616,0.99616337,0.9967687,0.99658877
+prueba,20,14,bajo,si,si,False,False,False,0.9051,0.9901952,0.990134,0.9896184
+prueba,20,15,bajo,no,no,False,False,False,0.9056,0.58384305,0.98015964,0.98645294
+prueba,20,16,banda,si,si,False,False,False,0.9383,0.9940279,0.9873372,0.9882513
+prueba,20,17,banda,si,si,False,False,False,0.9402,0.9860439,0.9870949,0.9836997
+prueba,20,18,banda,si,si,False,False,False,0.9526,0.9963215,0.9963756,0.9965036
+prueba,20,19,banda,no,no,False,False,False,0.9482,0.00042555592,0.0074623693,0.0018481439
+prueba,20,20,banda,si,si,False,False,False,0.9623,0.9864193,0.993829,0.994244
+prueba,20,21,banda,no,no,False,False,False,0.936,0.8656673,0.96336854,0.96378964
+prueba,20,22,banda,si,si,False,False,False,0.9633,0.0018794078,0.0076953657,0.0020140172
+prueba,20,23,banda,si,si,False,False,False,0.9604,0.99697804,0.9972032,0.99737376
+prueba,20,24,banda,si,si,False,False,False,0.9499,0.9974798,0.99765915,0.99744415
+prueba,20,25,banda,si,si,False,True,False,0.946,0.9967749,0.99639857,0.9965269
+prueba,20,26,bajo,no,no,False,False,False,0.9243,0.99650544,0.9954777,0.99622667
+prueba,20,27,banda,si,si,False,False,False,0.9352,0.9960484,0.99295413,0.9913051
+prueba,20,28,banda,no,no,False,False,False,0.9429,1.1142487e-05,1.9871832e-05,8.885738e-06
+prueba,20,29,banda,si,si,False,False,False,0.9632,0.9968356,0.9978266,0.9975615
+prueba,20,30,banda,si,si,False,False,False,0.952,0.9967578,0.99415517,0.9952595
+prueba,20,31,banda,si,si,True,False,False,0.9605,0.9971995,0.9971019,0.99716115
+prueba,20,32,bajo,si,si,False,False,False,0.9018,0.9394873,0.97775793,0.9781179
+prueba,20,33,bajo,si,si,False,False,False,0.9011,0.9877915,0.9874414,0.9915192
+prueba,20,34,banda,si,si,False,False,False,0.9402,0.99682695,0.9964402,0.99676144
+prueba,20,35,banda,si,si,False,False,False,0.9605,0.99602824,0.9970453,0.9971862
+prueba,20,36,banda,si,si,False,False,False,0.9526,0.9954765,0.98893476,0.99153775
+prueba,20,37,bajo,no,no,False,False,False,0.9073,0.88277185,0.925696,0.91453254
+prueba,20,38,banda,no,no,False,False,False,0.9321,0.9952975,0.99644905,0.9964825
+prueba,20,39,banda,si,si,False,False,False,0.9574,0.28668037,0.9795555,0.91877323
+prueba,20,40,banda,si,si,False,False,False,0.9605,0.98199254,0.97154737,0.9868394
+prueba,20,41,banda,no,no,False,False,False,0.9365,0.5816918,0.9194669,0.90185225
+prueba,20,42,banda,si,si,False,False,False,0.933,0.9954916,0.9961876,0.9967711
+prueba,20,43,banda,si,si,False,False,False,0.9513,0.99622554,0.9969816,0.9970836
+prueba,20,44,banda,si,si,False,False,False,0.9324,0.9953415,0.99507654,0.9955929
+prueba,20,45,banda,si,si,False,False,False,0.9339,7.927681e-06,0.004535847,0.00051707507
+prueba,20,46,banda,si,no,True,False,True,0.942,0.995677,0.98504907,0.067849986
+prueba,20,47,banda,si,si,False,False,False,0.946,0.96660495,0.9821104,0.98828113
+prueba,20,48,banda,si,si,False,False,False,0.9513,0.99646443,0.9974414,0.9968921
+prueba,20,49,banda,no,no,False,False,False,0.9515,6.724689e-06,0.00073236326,0.00020235062
+prueba,20,50,banda,no,no,False,False,False,0.9644,3.3319193e-06,0.0004479572,0.00014944535
+prueba,20,51,banda,si,si,False,False,False,0.9572,0.99698406,0.99767107,0.99748135
+prueba,20,52,banda,no,no,False,False,False,0.931,0.96548843,0.9717032,0.97541195
+prueba,20,53,banda,si,no,True,False,True,0.9349,0.9969056,0.99630135,0.00044075574
+prueba,20,54,banda,si,si,False,False,False,0.9413,0.9955752,0.9908844,0.9880674
+prueba,20,55,banda,si,si,False,True,False,0.9304,0.99573845,0.9930347,0.9954272
+prueba,20,56,bajo,si,si,True,False,False,0.9071,0.9964678,0.9914624,0.9898537
+prueba,20,57,banda,si,si,False,False,False,0.937,0.9924864,0.986469,0.9932639
+prueba,20,58,banda,no,no,False,False,False,0.9539,1.18989265e-05,0.0011853025,0.00019129748
+prueba,20,59,alto,si,si,False,False,False,0.9726,0.9966394,0.9968086,0.9967678
+prueba,20,60,banda,si,si,False,False,False,0.9566,0.9952083,0.993954,0.9951992
+prueba,20,61,banda,si,si,True,False,False,0.9454,0.9951396,0.9899994,0.07829224
+prueba,20,62,bajo,no,no,False,False,False,0.9066,0.8755783,0.64825654,0.42013508
+prueba,20,63,banda,si,si,False,False,False,0.9654,0.00014705838,5.1724277e-05,3.177875e-05
+prueba,20,64,banda,si,si,False,False,False,0.9523,0.9350678,0.9671677,0.9763188
+prueba,20,65,banda,si,si,False,False,False,0.9632,0.8689961,0.9947521,0.99272513
+prueba,20,66,bajo,no,no,False,False,False,0.9012,4.545212e-06,0.0006064357,0.000222673
+prueba,20,67,banda,si,si,False,True,False,0.9485,0.9964301,0.9936378,0.9969692
+prueba,20,68,banda,si,si,False,False,False,0.9454,0.99262977,0.9905445,0.9924103
+prueba,20,69,bajo,si,si,False,True,False,0.9115,0.9964187,0.9969709,0.99702746
+prueba,20,70,bajo,duda,duda,False,False,False,0.9166,0.16258095,0.7389248,0.7877258
+prueba,20,71,bajo,si,si,False,False,False,0.925,0.9903995,0.99151266,0.9920889
+prueba,20,72,banda,si,si,False,False,False,0.9388,0.9476655,0.9820746,0.98820746
+prueba,20,73,bajo,no,no,False,False,False,0.9137,6.3849297e-06,0.0007965133,0.00020205606
+prueba,20,74,banda,si,si,False,True,False,0.944,0.9969767,0.99672306,0.9962926
+prueba,20,75,banda,duda,duda,False,False,False,0.939,0.99276817,0.95834297,0.9773674
+prueba,20,76,banda,si,si,False,False,False,0.9477,0.99565566,0.98988825,0.98967206
+prueba,20,77,banda,si,si,False,False,False,0.9392,0.9963272,0.9968712,0.9967896
+prueba,20,78,banda,si,si,False,False,False,0.9642,0.0026149189,0.0008956245,0.0018148783
+prueba,20,79,banda,si,si,False,True,False,0.9667,0.996593,0.99643517,0.9963202
+prueba,20,80,banda,no,no,False,False,False,0.9415,9.4872536e-07,0.0006809525,9.8335826e-05
+prueba,20,81,banda,si,si,False,False,False,0.9482,0.89431894,0.9739019,0.9863076
+prueba,20,82,banda,si,si,True,False,False,0.9648,0.9969702,0.9973882,0.9979278
+prueba,20,83,banda,si,si,False,False,False,0.9362,0.9965171,0.99667484,0.996583
+prueba,20,84,banda,si,si,False,False,False,0.9553,0.9960968,0.9976253,0.99724746
+prueba,20,85,banda,si,si,False,False,False,0.9375,0.986783,0.9902203,0.992644
+prueba,20,86,banda,no,no,False,False,False,0.9412,5.3045524e-06,0.00091730943,0.00020202488
+prueba,20,87,banda,si,si,False,False,False,0.9331,0.99682933,0.9961568,0.996685
+prueba,20,88,bajo,si,no,True,False,True,0.9012,0.9967022,0.9895515,0.0031463061
+prueba,20,89,bajo,duda,duda,False,False,False,0.9105,0.9826936,0.9674702,0.9698833
+prueba,20,90,banda,si,si,False,False,False,0.9494,0.9968881,0.9966615,0.996493
+prueba,20,91,banda,si,si,False,True,False,0.9665,0.9968159,0.99656737,0.99631065
+prueba,20,92,banda,si,si,True,False,False,0.9687,0.994249,0.9917209,0.9961311
+prueba,20,93,banda,si,si,False,False,False,0.9571,0.97891355,0.9535833,0.9717794
+prueba,20,94,banda,si,si,False,False,False,0.9366,0.18971714,0.61458915,0.51843834
+prueba,20,95,banda,si,si,False,False,False,0.9369,0.9962214,0.99542344,0.9960824
+prueba,20,96,banda,no,no,False,False,False,0.951,7.997859e-06,0.00052756956,8.150391e-05
+prueba,20,97,banda,no,no,False,False,False,0.9404,0.0011049565,0.00017417184,0.0003385472
+prueba,20,98,bajo,si,si,False,False,False,0.9005,0.014907449,0.9113872,0.6731877
+prueba,20,99,banda,si,si,False,False,False,0.9486,0.99545574,0.98623127,0.9908159
+prueba,20,100,banda,no,no,False,False,False,0.9428,1.2665415e-05,2.064635e-05,5.224325e-06
+prueba,20,101,banda,si,si,False,False,False,0.9358,0.99384284,0.9921264,0.9942273
+prueba,20,102,banda,si,si,False,False,False,0.9644,0.9966822,0.99734926,0.99710035
+prueba,20,103,banda,si,si,False,True,False,0.939,0.99626154,0.99511427,0.9932281
+prueba,20,104,banda,si,si,False,False,False,0.952,0.99500054,0.99453986,0.9939343
+prueba,20,105,banda,no,no,False,False,False,0.9405,0.1107926,0.0182479,0.0055357064
+prueba,20,106,banda,si,si,True,False,False,0.9575,0.99695057,0.99711573,0.99653786
+prueba,20,107,banda,si,si,False,False,False,0.9473,0.99573046,0.99678504,0.997
+prueba,20,108,banda,no,no,False,False,False,0.9509,0.99678946,0.99628997,0.99689025
+prueba,20,109,banda,si,si,False,False,False,0.96,0.9958379,0.99690837,0.99721014
+prueba,20,110,banda,si,si,False,True,False,0.951,0.9967249,0.9970426,0.99735427
+prueba,20,111,banda,no,no,False,False,False,0.9316,0.004273341,0.0010198174,0.00012042444
+prueba,20,112,banda,si,si,False,False,False,0.9456,0.9395574,0.985268,0.97334826
+prueba,20,113,banda,si,si,True,False,False,0.9418,0.99683183,0.9963907,0.99285495
+prueba,20,114,bajo,si,si,False,False,False,0.9039,0.99472797,0.9822112,0.98740816
+prueba,20,115,banda,no,no,False,False,False,0.9326,3.207883e-05,2.9607569e-05,1.2679493e-05
+prueba,20,116,banda,si,si,False,False,False,0.9396,0.9716703,0.9876098,0.9920272
+prueba,20,117,bajo,si,si,False,False,False,0.9052,0.93400234,0.9969168,0.99657845
+prueba,20,118,banda,si,si,False,False,False,0.9316,0.9947102,0.99608415,0.9966731
+prueba,20,119,banda,no,no,False,False,False,0.9428,6.3536045e-06,1.5183384e-05,5.5578853e-06
+prueba,20,120,banda,si,si,False,False,False,0.943,0.9746829,0.99462926,0.99293596
+prueba,20,121,banda,si,si,False,False,False,0.968,0.99675065,0.9949314,0.99485594
+prueba,20,122,banda,si,si,False,False,False,0.9488,0.99641067,0.99731684,0.99710417
+prueba,20,123,bajo,no,no,False,False,False,0.9285,3.9797387e-06,0.00032164445,9.5000076e-05
+prueba,20,124,banda,si,si,False,False,False,0.9361,0.95983523,0.9878878,0.98555785
+prueba,20,125,bajo,si,si,False,False,False,0.9287,0.9344253,0.9803803,0.9852976
+prueba,20,126,banda,si,si,False,False,False,0.9681,0.9962889,0.99365944,0.9947257
+prueba,20,127,banda,si,si,False,False,False,0.9401,0.9475423,0.97006655,0.9675883
+prueba,20,128,banda,duda,duda,False,False,False,0.9397,0.9914686,0.9904851,0.99379665
+prueba,20,129,banda,si,si,False,False,False,0.9514,0.99652195,0.99568987,0.99637043
+prueba,20,130,banda,si,si,False,False,False,0.9603,0.9958883,0.99633986,0.9962878
+prueba,20,131,bajo,no,no,False,False,False,0.9095,0.022294702,0.0042164144,0.0061591445
+prueba,20,132,banda,si,si,False,False,False,0.9312,0.00022669323,9.53685e-05,4.693836e-05
+prueba,20,133,banda,si,si,False,False,False,0.9675,0.9942347,0.99654853,0.9959697
+prueba,20,134,banda,si,si,False,False,False,0.9558,0.9943137,0.9947879,0.99571407
+prueba,20,135,banda,si,si,False,False,False,0.9416,0.42384937,0.5204631,0.6857846
+prueba,20,136,banda,si,si,False,False,False,0.9582,0.99653035,0.9962472,0.99717903
+prueba,20,137,banda,si,si,False,True,False,0.9583,0.99619514,0.9949423,0.99555075
+prueba,20,138,banda,si,si,False,False,False,0.9335,0.99661773,0.9950564,0.9957519
+prueba,20,139,banda,si,si,False,True,False,0.9601,0.99684906,0.9967566,0.9971827
+prueba,20,140,banda,si,si,False,False,False,0.9641,0.9787556,0.98870075,0.9930735
+prueba,20,141,banda,si,si,False,True,False,0.9598,0.9966955,0.9966345,0.9970484
+prueba,20,142,bajo,no,no,False,False,False,0.9083,0.99350446,0.98330593,0.9841575
+prueba,20,143,banda,si,si,False,False,False,0.9484,0.9951195,0.99581844,0.9961417
+prueba,20,144,banda,si,si,False,False,False,0.9357,0.9552405,0.99012756,0.99079996
+prueba,20,145,banda,si,si,False,False,False,0.965,0.9829794,0.9930403,0.9946052
+prueba,20,146,banda,si,si,False,False,False,0.9641,0.9970212,0.9960819,0.99498504
+prueba,20,147,bajo,si,si,False,False,False,0.9234,0.0031021708,0.0027421871,0.00081953796
+prueba,20,148,banda,si,si,False,False,False,0.9524,0.9961185,0.99592423,0.9963571
+prueba,20,149,banda,si,si,False,False,False,0.9583,0.9968993,0.9973675,0.99728996
+prueba,20,150,banda,si,si,False,False,False,0.9601,0.9967823,0.99401164,0.994115
+prueba,20,151,banda,si,si,False,False,False,0.962,0.972171,0.98877877,0.9884967
+prueba,20,152,banda,si,si,False,False,False,0.9403,0.942626,0.98616433,0.99086404
+prueba,20,153,banda,si,si,False,False,False,0.943,0.99496114,0.9920927,0.99159247
+prueba,20,154,banda,si,si,False,False,False,0.9491,0.98495775,0.9944548,0.994143
+prueba,20,155,bajo,no,no,False,False,False,0.9252,0.0029069204,0.01718829,0.0008760131
+prueba,20,156,banda,si,si,False,False,False,0.9485,0.9932892,0.9802097,0.9744193
+prueba,20,157,banda,si,si,True,False,False,0.9366,0.99652135,0.9964434,0.99673223
+prueba,20,158,banda,si,si,False,False,False,0.9402,0.82865125,0.94112307,0.89750654
+prueba,20,159,banda,si,si,False,False,False,0.9455,0.9956634,0.9957785,0.99623203
+prueba,20,160,banda,si,si,False,False,False,0.9361,0.99454737,0.9923016,0.9954415
+prueba,20,161,banda,si,si,False,False,False,0.949,0.9801286,0.9933501,0.9938493
+prueba,20,162,banda,si,si,False,False,False,0.9617,0.9949439,0.9924489,0.99302644
+prueba,20,163,banda,si,si,False,False,False,0.9309,0.94507676,0.97186625,0.98156375
+prueba,20,164,bajo,si,si,False,True,False,0.9103,0.9959489,0.99715567,0.997232
+prueba,20,165,banda,si,si,False,False,False,0.9587,0.011737538,0.12459721,0.045037277
+prueba,20,166,banda,si,si,False,False,False,0.954,9.527587e-05,0.00013338725,2.1307536e-05
+prueba,20,167,banda,si,si,False,False,False,0.9592,0.96118,0.96870774,0.9853217
+prueba,20,168,banda,si,si,False,False,False,0.9612,0.9965522,0.9979533,0.9976088
+prueba,20,169,banda,si,si,False,False,False,0.9466,0.9961999,0.9744002,0.9500037
+prueba,20,170,banda,duda,duda,False,False,False,0.9332,0.98780924,0.97702044,0.9898919
+prueba,20,171,banda,si,si,False,False,False,0.9694,0.99663466,0.9973466,0.9973182
+prueba,20,172,banda,si,si,False,False,False,0.9661,0.99151856,0.9876845,0.9898713
+prueba,20,173,banda,si,si,False,False,False,0.9357,0.99591357,0.9941595,0.9952146
+prueba,20,174,banda,si,si,False,False,False,0.9513,0.9764155,0.99099606,0.9859467
+prueba,20,175,banda,si,si,False,True,False,0.9339,0.9959064,0.9933843,0.99401873
+prueba,20,176,alto,si,si,False,False,False,0.9732,8.496853e-05,0.010865515,0.0009601691
+prueba,20,177,bajo,no,no,False,False,False,0.9016,0.97226775,0.9550482,0.98522973
+prueba,20,178,banda,si,si,False,True,False,0.9336,0.9947437,0.9968536,0.9971335
+prueba,20,179,banda,si,si,False,False,False,0.9676,0.99546576,0.99645865,0.99694633
+prueba,20,180,bajo,si,si,False,False,False,0.9299,0.8884465,0.9214503,0.9266771
+prueba,20,181,banda,si,si,False,False,False,0.9382,0.9940984,0.99635255,0.9973339
+prueba,20,182,banda,no,no,False,False,False,0.9607,4.871259e-06,0.0005244954,0.00021731894
+prueba,20,183,banda,si,si,False,False,False,0.9639,0.9898392,0.9828584,0.9814058
+prueba,20,184,banda,no,no,False,False,False,0.9388,0.8328765,0.7530716,0.7730159
+prueba,20,185,banda,si,no,True,False,True,0.9571,0.9969723,0.9970582,0.0023243343
+prueba,20,186,banda,si,si,False,False,False,0.9524,0.9961053,0.9973201,0.9970213
+prueba,20,187,banda,no,no,False,False,False,0.9681,1.1517551e-05,0.0006899848,0.0002751295
+prueba,20,188,banda,duda,duda,False,False,False,0.9548,0.6130683,0.9863154,0.9892411
+prueba,20,189,banda,si,si,False,False,False,0.9524,0.99659246,0.99364066,0.9954398
+prueba,20,190,bajo,si,no,True,False,True,0.9074,0.99637306,0.99447703,0.010913331
+prueba,20,191,banda,si,si,False,False,False,0.9516,0.99556345,0.98812443,0.9884869
+prueba,20,192,banda,si,si,False,False,False,0.9583,0.99620897,0.99105704,0.9928798
+prueba,20,193,banda,si,si,False,False,False,0.9391,0.5841546,0.7726541,0.8346891
+prueba,20,194,banda,si,si,False,False,False,0.9392,0.9820339,0.98236597,0.9897907
+prueba,20,195,banda,si,si,False,False,False,0.9625,0.99550545,0.99548715,0.9960066
+prueba,20,196,bajo,si,si,False,False,False,0.9052,0.995744,0.98994654,0.9914665
+prueba,20,197,banda,si,si,False,True,False,0.9565,0.99685174,0.9971629,0.997312
+prueba,20,198,banda,si,si,False,False,False,0.9462,0.9946672,0.99353683,0.9946511
+prueba,20,199,bajo,si,si,False,False,False,0.9079,0.97780186,0.9915357,0.9883404
+prueba,20,200,banda,no,no,False,False,False,0.9465,7.8388155e-05,1.9353358e-05,1.1965187e-05
+prueba,20,201,banda,si,si,False,False,False,0.941,0.9963094,0.9972064,0.99701524
+prueba,20,202,bajo,si,si,False,False,False,0.9085,0.9895091,0.98848575,0.98508644
+prueba,20,203,banda,si,si,True,True,False,0.9632,0.9965251,0.99302536,0.9975586
+prueba,20,204,bajo,no,no,False,False,False,0.9214,5.403362e-06,0.0013803162,0.00017171586
+prueba,20,205,banda,si,si,False,False,False,0.9636,0.99566364,0.99649954,0.9965329
+prueba,20,206,banda,si,si,False,False,False,0.9542,0.99386686,0.9902962,0.9890754
+prueba,20,207,banda,si,si,False,False,False,0.9551,0.9920526,0.98627883,0.9876677
+prueba,20,208,alto,si,si,False,False,False,0.9767,0.9966787,0.9971383,0.9970132
+prueba,20,209,banda,si,si,False,True,False,0.9477,0.9946383,0.98899627,0.98889714
+prueba,20,210,bajo,si,si,False,False,False,0.9258,0.99249536,0.98808366,0.9918787
+prueba,20,211,banda,si,si,False,False,False,0.9324,0.09622372,0.038409058,0.028221838
+prueba,20,212,banda,si,si,False,False,False,0.9531,0.99575484,0.99665123,0.9968833
+prueba,20,213,bajo,duda,duda,False,False,False,0.901,0.8779069,0.9464495,0.93677294
+prueba,20,214,banda,si,si,False,False,False,0.9358,0.9968844,0.9954469,0.9959612
+prueba,20,215,banda,no,no,False,False,False,0.9417,3.243056e-06,0.00041294287,0.00017119618
+prueba,20,216,banda,si,si,False,False,False,0.949,0.9952086,0.996078,0.99661344
+prueba,20,217,bajo,si,si,True,False,False,0.9089,0.98320514,0.9935821,0.8642988
+prueba,20,218,banda,no,no,False,False,False,0.938,7.943258e-05,6.442377e-05,3.5482823e-05
+prueba,20,219,banda,no,no,False,False,False,0.9505,1.8996137e-05,0.0007886074,0.00016134158
+prueba,20,220,bajo,si,si,False,False,False,0.9136,0.99656004,0.9951308,0.99379444
+prueba,20,221,banda,si,si,False,False,False,0.9301,0.9962799,0.99616814,0.99686384
+prueba,20,222,banda,si,si,False,True,False,0.9618,0.99482596,0.9953347,0.99561757
+prueba,20,223,bajo,no,no,False,False,False,0.9043,0.9745579,0.99362874,0.9912582
+prueba,20,224,banda,si,si,False,False,False,0.9474,0.99570775,0.99147516,0.99457103
+prueba,20,225,banda,si,si,False,False,False,0.9691,0.9959403,0.996023,0.99646944
+prueba,20,226,banda,si,si,False,True,False,0.9432,0.9964081,0.996233,0.9970505
+prueba,20,227,banda,si,si,False,False,False,0.9403,0.043593064,0.049121022,0.020858474
+prueba,20,228,banda,no,no,False,False,False,0.9308,0.98475146,0.9790695,0.97895986
+prueba,20,229,banda,si,si,True,False,False,0.9623,0.99651927,0.99632245,0.9965659
+prueba,20,230,banda,si,si,False,False,False,0.9354,0.99270564,0.9815402,0.9064172
+prueba,20,231,banda,si,si,False,False,False,0.9341,0.9955954,0.9912716,0.9912015
+prueba,20,232,banda,si,si,True,False,False,0.9608,0.99701077,0.99702036,0.99670106
+prueba,20,233,banda,si,si,False,False,False,0.9515,0.95911103,0.9836917,0.98863035
+prueba,20,234,banda,duda,duda,False,False,False,0.9346,0.992354,0.9862837,0.9885538
+prueba,20,235,bajo,duda,duda,False,False,False,0.9009,0.932346,0.92173725,0.83660656
+prueba,20,236,bajo,no,no,False,False,False,0.9131,0.16462594,0.97641915,0.9857268
+prueba,20,237,banda,si,si,False,False,False,0.9364,0.7892096,0.98006165,0.98126537
+prueba,20,238,banda,si,si,False,False,False,0.9429,0.9960027,0.9964161,0.9965998
+prueba,20,239,banda,no,no,False,False,False,0.9591,0.99391305,0.991053,0.99176127
+prueba,20,240,banda,si,si,True,False,False,0.9685,0.9969601,0.9956559,0.9960564
+prueba,20,241,banda,si,si,False,False,False,0.9689,0.9482464,0.99000597,0.98742735
+prueba,20,242,banda,si,si,False,False,False,0.9587,0.99612176,0.9947631,0.9942438
+prueba,20,243,banda,si,si,False,False,False,0.9401,0.99417704,0.99078846,0.9925843
+prueba,20,244,banda,si,si,False,False,False,0.9671,0.9965637,0.9978056,0.997514
+prueba,20,245,banda,si,si,False,False,False,0.9529,0.9968868,0.9963788,0.99589086
+prueba,20,246,bajo,si,si,False,False,False,0.9035,0.99565357,0.9794468,0.98469347
+prueba,20,247,banda,no,no,False,False,False,0.9537,7.3930914e-06,0.00031025553,9.058318e-05
+prueba,20,248,banda,si,si,False,False,False,0.9306,0.96200657,0.99538845,0.99541706
+prueba,20,249,banda,si,si,False,True,False,0.9438,0.9921495,0.99320006,0.99511594
+prueba,20,250,banda,si,si,False,False,False,0.9566,0.97010577,0.99520695,0.99522865
+prueba,20,251,banda,no,no,False,False,False,0.9374,5.578851e-06,3.322038e-05,8.76531e-06
+prueba,20,252,banda,si,si,False,False,False,0.9478,0.9962118,0.9973644,0.99702346
+prueba,20,253,banda,si,si,False,False,False,0.9448,0.98056734,0.9639135,0.9855526
+prueba,20,254,banda,si,si,False,False,False,0.9448,0.9911998,0.9932191,0.9931938
+prueba,20,255,banda,si,si,False,False,False,0.9505,0.9966271,0.99650276,0.9963596
+prueba,20,256,banda,no,no,False,False,False,0.9449,1.4179824e-05,9.046358e-05,1.6926553e-05
+prueba,20,257,bajo,si,si,False,False,False,0.9009,0.9918611,0.99094296,0.99065036
+prueba,20,258,banda,si,si,False,False,False,0.9625,0.99139565,0.9935128,0.99311405
+prueba,20,259,banda,si,si,False,False,False,0.9541,0.9965515,0.9965407,0.9966081
+prueba,20,260,banda,si,si,False,True,False,0.9337,0.9951137,0.99135417,0.9925021
+prueba,20,261,banda,si,si,False,False,False,0.9347,0.9964243,0.9972614,0.9972513
+prueba,20,262,banda,si,si,False,False,False,0.9602,0.996601,0.9975875,0.99746615
+prueba,20,263,banda,si,si,False,False,False,0.9616,0.87533355,0.94197947,0.9710266
+prueba,20,264,banda,si,si,False,False,False,0.9439,0.9956171,0.9911436,0.99047786
+prueba,20,265,banda,si,si,False,False,False,0.9385,0.99683774,0.997775,0.99759436
+prueba,20,266,banda,no,no,False,False,False,0.9645,1.8557852e-05,0.00032717353,6.421668e-05
+prueba,20,267,banda,si,si,False,False,False,0.9307,5.5887886e-06,0.0009122477,0.00021244797
+prueba,20,268,banda,si,si,False,False,False,0.9682,0.9955298,0.9922317,0.99504864
+prueba,20,269,bajo,no,no,False,False,False,0.9247,4.8341453e-06,0.00042633954,0.0002785469
+prueba,20,270,banda,si,si,False,True,False,0.9542,0.99578506,0.99225575,0.99304634
+prueba,20,271,banda,si,si,False,True,False,0.9606,0.9960837,0.9966175,0.9964851
+prueba,20,272,banda,si,si,True,False,False,0.9475,0.9946468,0.9501588,0.9035859
+prueba,20,273,banda,si,si,False,False,False,0.9304,0.9961491,0.99565303,0.9960733
+prueba,20,274,banda,si,si,False,False,False,0.9655,8.24159e-05,0.0070794052,0.00062018866
+prueba,20,275,banda,no,no,False,False,False,0.967,6.272365e-06,0.00047899247,0.00025302556
+prueba,20,276,banda,si,si,False,False,False,0.9366,0.99625725,0.994625,0.99564624
+prueba,20,277,banda,si,si,False,False,False,0.9415,0.9903665,0.9963892,0.9968079
+prueba,20,278,banda,si,si,False,False,False,0.9628,0.9868543,0.9736861,0.97606033
+prueba,20,279,alto,si,si,False,True,False,0.9791,0.9971072,0.9972192,0.99702716
+prueba,20,280,banda,si,si,False,False,False,0.9491,0.996128,0.9950883,0.99621433
+prueba,20,281,banda,si,si,False,False,False,0.9431,0.97913873,0.99301136,0.9907883
+prueba,20,282,bajo,si,si,False,False,False,0.9139,0.26778674,0.121658236,0.12941192
+prueba,20,283,banda,si,si,False,False,False,0.9531,0.9901667,0.9871086,0.992926
+prueba,20,284,banda,si,si,False,True,False,0.9556,0.99557334,0.99501526,0.9962284
+prueba,20,285,banda,si,si,False,True,False,0.9668,0.996389,0.99681896,0.9966953
+prueba,20,286,banda,si,si,False,False,False,0.9448,0.996582,0.9972829,0.9973144
+prueba,20,287,banda,si,si,False,False,False,0.9644,0.9964598,0.9942133,0.9956348
+prueba,20,288,banda,no,no,False,False,False,0.97,2.5576373e-05,0.000667656,0.00024351482
+prueba,20,289,banda,si,si,False,False,False,0.9643,0.99558896,0.9907953,0.9945176
+prueba,20,290,banda,si,si,True,False,False,0.9633,0.9969379,0.9972289,0.9971248
+prueba,20,291,banda,si,si,False,False,False,0.9343,0.99692744,0.9954799,0.9947306
+prueba,20,292,banda,si,si,False,True,False,0.9608,0.9964214,0.9969577,0.9969397
+prueba,20,293,banda,si,si,False,False,False,0.9506,0.9795537,0.99381804,0.99125236
+prueba,20,294,bajo,si,si,False,False,False,0.9141,0.99653155,0.9962448,0.99578905
+prueba,20,295,banda,si,si,False,False,False,0.947,0.9959888,0.99707615,0.99716693
+prueba,20,296,bajo,no,no,False,False,False,0.9168,0.98125696,0.9785858,0.9869442
+prueba,20,297,banda,si,si,False,False,False,0.9331,0.893668,0.870582,0.7829423
+prueba,20,298,banda,si,si,False,False,False,0.9631,0.9863826,0.9847172,0.9656122
+prueba,20,299,banda,si,si,False,False,False,0.9653,0.99625164,0.99677646,0.99719876
+prueba,20,300,banda,si,si,False,False,False,0.9497,0.9947673,0.9955743,0.9964234
+prueba,20,301,bajo,si,si,False,False,False,0.9279,2.9158223e-06,0.0003491225,0.00012454488
+prueba,20,302,banda,no,no,False,False,False,0.9425,0.00073897664,0.005816653,0.0007020909
+prueba,20,303,banda,si,si,False,False,False,0.9337,0.9777166,0.9572873,0.97820973
+prueba,20,304,banda,si,si,False,False,False,0.9556,0.99619955,0.9963379,0.99563193
+prueba,20,305,banda,si,si,False,False,False,0.9653,0.9957997,0.9944561,0.9958603
+prueba,20,306,banda,si,si,False,False,False,0.9367,0.9953535,0.9884125,0.9850017
+prueba,20,307,alto,si,si,False,False,False,0.9758,0.91422325,0.89559424,0.91195256
+prueba,20,308,bajo,no,no,False,False,False,0.9044,2.5396137e-06,0.0009364117,0.00032144587
+prueba,20,309,bajo,si,si,False,False,False,0.9146,0.9916196,0.986428,0.9803722
+prueba,20,310,banda,si,si,False,False,False,0.9567,0.9921388,0.9926894,0.9916967
+prueba,20,311,bajo,si,si,False,False,False,0.9197,0.9423775,0.98443556,0.99134356
+prueba,20,312,banda,si,si,False,False,False,0.9622,0.996482,0.9962192,0.99659616
+prueba,20,313,banda,si,si,False,False,False,0.9405,0.989189,0.9943811,0.9956645
+prueba,20,314,banda,si,si,True,False,False,0.9429,0.99705464,0.9952722,0.9938245
+prueba,20,315,banda,si,si,False,False,False,0.9357,0.9961905,0.99657965,0.9967145
+prueba,20,316,bajo,si,si,False,False,False,0.9026,0.72288275,0.98926747,0.99260277
+prueba,20,317,banda,no,no,False,False,False,0.9598,1.419301e-05,0.0005728205,0.00023060238
+prueba,20,318,banda,si,si,False,False,False,0.9415,0.9829039,0.980701,0.9876723
+prueba,20,319,banda,si,si,False,False,False,0.9616,0.9905904,0.99493676,0.99482995
+prueba,20,320,banda,si,si,False,False,False,0.9326,0.9970554,0.9976727,0.99760294
+prueba,20,321,bajo,si,si,False,False,False,0.9114,0.99246144,0.9904892,0.99465305
+prueba,20,322,banda,si,si,False,False,False,0.943,0.03785846,0.049585152,0.014521771
+prueba,20,323,banda,si,si,False,False,False,0.9636,0.9958629,0.9953097,0.9951788
+prueba,20,324,banda,si,si,False,False,False,0.9328,0.99492794,0.995761,0.99392223
+prueba,20,325,bajo,si,si,False,False,False,0.9035,0.9966838,0.99663126,0.9966435
+prueba,20,326,banda,si,si,True,True,False,0.9357,0.9960986,0.99606854,0.99708635
+prueba,20,327,bajo,si,si,False,False,False,0.901,0.012669653,0.6896679,0.07421148
+prueba,20,328,banda,si,si,False,False,False,0.9321,0.99576175,0.99489313,0.99515253
+prueba,20,329,banda,si,no,True,False,True,0.9396,0.9966142,0.9964799,0.0007418977
+prueba,20,330,banda,si,si,False,False,False,0.9523,0.98975235,0.9716951,0.9853563
+prueba,20,331,banda,si,si,False,False,False,0.9513,3.1996403e-06,0.00036912193,0.00015820558
+prueba,20,332,banda,si,si,False,False,False,0.9529,0.99670595,0.9964647,0.9970764
+prueba,20,333,banda,si,si,False,False,False,0.9623,0.99345976,0.9827286,0.9851552
+prueba,20,334,banda,si,si,True,False,False,0.937,0.9952128,0.9925997,0.9861753
+prueba,20,335,banda,si,si,False,False,False,0.9447,0.9806444,0.9677055,0.967231
+prueba,20,336,banda,si,si,False,False,False,0.9591,0.9946945,0.9929252,0.9922646
+prueba,20,337,banda,si,si,False,False,False,0.9334,0.0012842246,0.004906464,0.0026621718
+prueba,20,338,banda,si,si,False,False,False,0.9395,0.9972453,0.9969542,0.9969835
+prueba,20,339,banda,si,si,False,False,False,0.9587,0.9965756,0.9973171,0.9975509
+prueba,20,340,banda,si,si,False,True,False,0.9646,0.9966216,0.9966678,0.99714106
+prueba,20,341,banda,si,si,False,False,False,0.9601,0.9962192,0.99623436,0.99612606
+prueba,20,342,banda,si,si,False,False,False,0.9519,0.9970484,0.9976733,0.9973361
+prueba,20,343,banda,no,no,False,False,False,0.9387,0.9850969,0.97956455,0.98843974
+prueba,20,344,banda,si,si,False,False,False,0.9401,0.9849311,0.9869886,0.98900884
+prueba,20,345,banda,si,si,False,False,False,0.9403,0.9966867,0.9974438,0.9973801
+prueba,20,346,banda,si,si,False,False,False,0.959,0.996532,0.9963938,0.9962712
+prueba,20,347,bajo,si,si,False,False,False,0.9002,0.8621149,0.98630404,0.9937131
+prueba,20,348,banda,no,no,False,False,False,0.9554,9.218339e-06,0.00044357756,0.0001250603
+prueba,20,349,banda,no,no,False,False,False,0.9522,3.0529434e-05,2.537104e-05,6.467336e-06
+prueba,20,350,banda,si,si,True,False,False,0.9603,0.9967935,0.99461395,0.9938985
+prueba,20,351,banda,si,si,False,False,False,0.9639,0.996705,0.9976127,0.9975089
+prueba,20,352,banda,si,si,False,False,False,0.9472,0.9744279,0.98608786,0.933052
+prueba,20,353,banda,si,no,True,False,True,0.9355,0.9970126,0.9949594,0.0012592721
+prueba,20,354,banda,si,si,False,False,False,0.9594,0.9969525,0.9963366,0.99682826
+prueba,20,355,banda,si,si,False,False,False,0.9632,0.9970474,0.9968001,0.996587
+prueba,20,356,banda,si,si,False,False,False,0.932,0.9881355,0.5750634,0.39146605
+prueba,20,357,banda,si,si,False,False,False,0.9317,1.1983752e-06,0.00083286996,0.000176353
+prueba,20,358,banda,si,si,False,False,False,0.9512,0.99668026,0.99700487,0.99707717
+prueba,20,359,banda,si,si,False,False,False,0.9624,0.9839589,0.9901545,0.9795062
+prueba,20,360,bajo,no,no,False,False,False,0.9011,1.9226475e-06,0.0010324789,0.00043860404
+prueba,20,361,bajo,si,si,False,False,False,0.9068,0.9655308,0.84905493,0.8814826
+prueba,20,362,bajo,si,si,False,False,False,0.9249,0.9961655,0.9914282,0.9948788
+prueba,20,363,banda,si,si,False,False,False,0.9423,0.9947803,0.99493283,0.9891408
+prueba,20,364,banda,si,no,True,False,True,0.9563,0.9963426,0.97627854,0.0445108
+prueba,20,365,banda,si,si,False,False,False,0.9453,0.99646395,0.9969405,0.9963985
+prueba,20,366,banda,si,si,False,False,False,0.9667,0.9963598,0.99695224,0.99476707
+prueba,20,367,banda,si,si,False,False,False,0.9314,0.31633753,0.66329014,0.17958514
+prueba,20,368,bajo,si,si,False,False,False,0.9032,0.99623203,0.9935975,0.99320817
+prueba,20,369,banda,no,no,False,False,False,0.9501,1.1703796e-05,0.00065722613,0.00018411019
+prueba,20,370,banda,si,si,False,False,False,0.9606,0.99624485,0.99525785,0.99539644
+prueba,20,371,banda,si,si,False,False,False,0.963,0.9744984,0.98947453,0.99172103
+prueba,20,372,bajo,si,si,False,False,False,0.9195,0.98953944,0.9898129,0.99326533
+prueba,20,373,banda,no,no,False,False,False,0.9505,0.0006572456,0.0011708761,0.00042642365
+prueba,20,374,banda,no,no,False,False,False,0.949,1.1377283e-06,0.0010332976,0.00017428637
+prueba,20,375,banda,si,si,False,False,False,0.9325,0.98856854,0.9839515,0.98833764
+prueba,20,376,banda,no,no,False,False,False,0.9526,0.0005807847,0.044735245,0.041175652
+prueba,20,377,banda,si,si,False,False,False,0.9362,0.95446384,0.9761408,0.96652406
+prueba,20,378,banda,si,si,False,False,False,0.9472,0.9903974,0.994817,0.99392587
+prueba,20,379,banda,si,si,False,False,False,0.9319,5.489359e-05,0.017669382,0.008005236
+prueba,20,380,banda,si,si,False,False,False,0.9512,0.996605,0.9935154,0.9928864
+prueba,20,381,banda,si,si,False,False,False,0.9484,0.9926548,0.9941375,0.99560356
+prueba,20,382,banda,si,si,False,False,False,0.947,0.24426872,0.25767612,0.4277329
+prueba,20,383,banda,si,si,False,False,False,0.9573,0.9968745,0.9967956,0.9967367
+prueba,20,384,banda,si,si,False,False,False,0.963,0.99658215,0.9967628,0.99682814
+prueba,20,385,banda,si,si,False,False,False,0.9492,0.99417305,0.9910983,0.9924236
+prueba,20,386,banda,si,si,False,True,False,0.9557,0.99642324,0.9973113,0.9971858
+prueba,20,387,banda,si,si,False,True,False,0.9612,0.9951655,0.9967179,0.99648666
+prueba,20,388,banda,si,si,False,False,False,0.9562,0.99478114,0.995992,0.9963833
+prueba,20,389,banda,si,si,False,False,False,0.9554,7.5235353e-06,0.0018267967,0.00018630533
+prueba,20,390,banda,si,si,False,False,False,0.9613,0.995003,0.99758846,0.9969078
+prueba,20,391,banda,si,si,False,False,False,0.9307,0.9662945,0.959119,0.9556826
+prueba,20,392,banda,si,si,False,False,False,0.9538,0.99663,0.9976926,0.9971694
+prueba,20,393,banda,si,si,False,False,False,0.9622,0.9839727,0.9902908,0.9908537
+prueba,20,394,bajo,si,si,False,False,False,0.9063,0.66873044,0.7745919,0.92477167
+prueba,20,395,banda,si,si,False,False,False,0.9519,0.9955369,0.99677825,0.99684525
+prueba,20,396,banda,si,si,False,False,False,0.9492,0.9470994,0.9900889,0.99193716
+prueba,20,397,banda,si,si,False,False,False,0.9669,0.9835098,0.9935856,0.99316406
+prueba,20,398,alto,si,si,False,False,False,0.9744,0.9966077,0.9965127,0.99665
+prueba,20,399,banda,no,no,False,False,False,0.9669,3.9276374e-06,0.000576197,0.00015625625
+prueba,20,400,banda,si,si,False,False,False,0.9505,0.9812775,0.9905615,0.9948077
+prueba 2,29,1,banda,si,si,False,False,False,0.9524,0.9947415,0.99252534,0.99092877
+prueba 2,29,2,banda,si,si,False,False,False,0.9544,0.9868747,0.99269724,0.9943021
+prueba 2,29,3,banda,si,si,False,False,False,0.9599,0.9939238,0.99576473,0.99501246
+prueba 2,29,4,banda,si,si,False,False,False,0.9453,0.9948779,0.9962239,0.996514
+prueba 2,29,5,banda,si,si,False,False,False,0.9527,0.99594665,0.99714625,0.9971182
+prueba 2,29,6,banda,si,si,False,False,False,0.9463,0.9969606,0.9975627,0.9975035
+prueba 2,29,7,banda,si,si,False,False,False,0.9419,0.96787727,0.9736926,0.97805357
+prueba 2,29,8,banda,si,si,False,False,False,0.956,0.995311,0.9945459,0.9949592
+prueba 2,29,9,banda,no,no,False,False,False,0.9593,1.0196944e-05,0.00063159893,0.00016030848
+prueba 2,29,10,banda,si,si,False,False,False,0.9517,0.99595016,0.996216,0.99642456
+prueba 2,29,11,bajo,si,si,False,False,False,0.9053,0.26466128,0.10964242,0.0070315464
+prueba 2,29,12,banda,no,no,False,False,False,0.9517,5.140195e-06,0.00073877856,0.00028037315
+prueba 2,29,13,banda,si,si,False,False,False,0.9447,0.99608177,0.98490965,0.9902524
+prueba 2,29,14,bajo,no,no,False,False,False,0.9053,3.819231e-06,0.00073459424,0.0002567611
+prueba 2,29,15,banda,si,si,False,True,False,0.9529,0.99406856,0.98967206,0.9931618
+prueba 2,29,16,banda,si,si,False,False,False,0.9535,0.9962263,0.99609095,0.99592197
+prueba 2,29,17,bajo,si,si,False,False,False,0.9241,0.99294645,0.9883244,0.9770875
+prueba 2,29,18,banda,si,si,False,False,False,0.9371,0.0002458107,0.0028512364,0.00042240025
+prueba 2,29,19,bajo,si,si,False,False,False,0.9061,0.94790584,0.98729765,0.9894058
+prueba 2,29,20,banda,si,si,False,False,False,0.9548,0.99561477,0.9956037,0.9954011
+prueba 2,29,21,banda,si,si,False,False,False,0.9306,0.9878412,0.97239536,0.9775136
+prueba 2,29,22,banda,si,si,False,False,False,0.9322,0.9968329,0.996852,0.99709463
+prueba 2,29,23,banda,si,si,False,False,False,0.9309,0.996717,0.9966384,0.9965263
+prueba 2,29,24,banda,si,si,False,True,False,0.9527,0.99622416,0.99674755,0.9968412
+prueba 2,29,25,banda,si,si,False,False,False,0.9478,0.99655104,0.9958729,0.9964898
+prueba 2,29,26,banda,si,si,False,False,False,0.9433,0.9900167,0.9885336,0.99139893
+prueba 2,29,27,banda,no,no,False,False,False,0.9465,1.5190465e-06,1.3977946e-05,6.61853e-06
+prueba 2,29,28,bajo,si,si,False,False,False,0.9059,0.99247473,0.98609984,0.9894219
+prueba 2,29,29,banda,si,si,False,True,False,0.9315,0.99708194,0.9976416,0.9973478
+prueba 2,29,30,banda,si,si,False,False,False,0.9361,0.9964327,0.9922223,0.98734355
+prueba 2,29,31,banda,si,si,False,False,False,0.9529,0.9919569,0.9935791,0.9939813
+prueba 2,29,32,banda,no,no,False,False,False,0.9346,0.97870237,0.9776939,0.9625659
+prueba 2,29,33,banda,si,si,False,False,False,0.9378,0.056548025,0.8262525,0.320901
+prueba 2,29,34,banda,si,si,False,False,False,0.9451,0.99676216,0.99668676,0.9966051
+prueba 2,29,35,banda,si,si,False,False,False,0.9341,0.9972068,0.9951147,0.9947176
+prueba 2,29,36,banda,si,si,False,False,False,0.954,0.99684405,0.9975986,0.9969312
+prueba 2,29,37,banda,si,si,False,False,False,0.9536,0.99612254,0.9959304,0.9961594
+prueba 2,29,38,banda,si,si,False,False,False,0.9474,0.98147583,0.98949414,0.9941284
+prueba 2,29,39,banda,si,si,False,False,False,0.96,0.94857085,0.9945563,0.9936658
+prueba 2,29,40,bajo,si,si,False,False,False,0.9191,0.9963732,0.9969523,0.99732107
+prueba 2,29,41,banda,si,si,False,False,False,0.9402,0.99162257,0.98758036,0.9897209
+prueba 2,29,42,banda,si,si,False,False,False,0.9512,0.8791869,0.98723096,0.9904659
+prueba 2,29,43,banda,si,si,False,False,False,0.9418,0.98531795,0.9639232,0.97999084
+prueba 2,29,44,bajo,no,no,False,False,False,0.9135,6.8125985e-07,0.00069798954,0.00014773269
+prueba 2,29,45,banda,si,si,False,False,False,0.9408,0.99513537,0.9947049,0.99361736
+prueba 2,29,46,bajo,si,si,False,False,False,0.9055,0.8239058,0.9599226,0.94566464
+prueba 2,29,47,banda,si,si,False,False,False,0.9342,0.9905212,0.99161375,0.9890481
+prueba 2,29,48,bajo,no,no,False,False,False,0.9074,0.0016461884,0.0014482283,0.00025060042
+prueba 2,29,49,banda,si,si,False,False,False,0.9413,0.9253543,0.9675132,0.9747003
+prueba 2,29,50,banda,no,no,False,False,False,0.9536,5.036245e-05,0.0059174714,0.001961845
+prueba 2,29,51,banda,si,si,False,False,False,0.9435,0.9481389,0.6297663,0.7880913
+prueba 2,29,52,banda,si,si,False,False,False,0.9467,0.9873086,0.9954205,0.9961402
+prueba 2,29,53,banda,si,si,False,False,False,0.9491,0.99608386,0.9894494,0.9903808
+prueba 2,29,54,banda,si,si,False,False,False,0.9502,0.71525854,0.99379236,0.9944263
+prueba 2,29,55,banda,si,si,False,False,False,0.9446,0.99516284,0.9950073,0.99678683
+prueba 2,29,56,banda,no,no,False,False,False,0.941,1.3189033e-05,0.0012650304,0.00035353482
+prueba 2,29,57,bajo,si,si,False,False,False,0.9097,0.9925491,0.9690549,0.98427945
+prueba 2,29,58,banda,si,si,False,False,False,0.939,0.9795654,0.9774989,0.9818557
+prueba 2,29,59,banda,si,si,False,False,False,0.9569,0.99305254,0.9926906,0.99372387
+prueba 2,29,60,bajo,si,si,False,False,False,0.9133,0.9916378,0.98619306,0.9902678
+prueba 2,29,61,banda,si,si,False,False,False,0.9595,0.99672234,0.9942871,0.99518186
+prueba 2,29,62,bajo,si,si,False,False,False,0.9227,0.9786117,0.9900198,0.98947704
+prueba 2,29,63,banda,si,si,False,False,False,0.9352,0.9959349,0.9956744,0.9963572
+prueba 2,29,64,banda,si,si,False,False,False,0.9649,0.95989376,0.996696,0.9962078
+prueba 2,29,65,banda,si,si,False,False,False,0.9451,0.9967114,0.996501,0.99690074
+prueba 2,29,66,banda,si,si,False,False,False,0.9489,0.7515601,0.85466737,0.8878331
+prueba 2,29,67,banda,si,si,False,False,False,0.9563,0.99450594,0.9943024,0.99584687
+prueba 2,29,68,banda,si,si,False,False,False,0.9554,0.9953723,0.9881901,0.9913594
+prueba 2,29,69,banda,si,si,False,False,False,0.9321,0.9956736,0.9847388,0.9892587
+prueba 2,29,70,banda,no,no,False,False,False,0.9597,1.6946147e-05,0.0005373728,0.00016165197
+prueba 2,29,71,banda,si,si,False,False,False,0.9579,0.9967986,0.996415,0.9968561
+prueba 2,29,72,banda,si,si,False,False,False,0.956,0.74008113,0.93305653,0.9297628
+prueba 2,29,73,banda,si,si,False,False,False,0.9518,0.992124,0.99451196,0.99425733
+prueba 2,29,74,banda,si,si,False,False,False,0.954,0.95468885,0.9951923,0.9950668
+prueba 2,29,75,banda,no,no,False,False,False,0.953,0.047359634,0.013435789,0.02726904
+prueba 2,29,76,banda,si,si,False,False,False,0.9602,0.9958221,0.9910735,0.9929448
+prueba 2,29,77,banda,si,si,False,True,False,0.953,0.99684227,0.99721444,0.9970213
+prueba 2,29,78,banda,si,si,False,False,False,0.9411,0.9886632,0.9905512,0.993331
+prueba 2,29,79,banda,si,si,False,False,False,0.9528,0.995978,0.99566823,0.99512863
+prueba 2,29,80,banda,si,si,False,False,False,0.9569,0.9968935,0.99585134,0.9958145
+prueba 2,29,81,banda,si,si,False,False,False,0.9496,0.9968389,0.9960966,0.99564433
+prueba 2,29,82,banda,si,si,False,False,False,0.9318,0.99225324,0.9794894,0.9864195
+prueba 2,29,83,banda,no,no,False,False,False,0.9598,0.00043755487,0.004915679,0.0021506106
+prueba 2,29,84,bajo,no,no,False,False,False,0.9115,0.0063424306,0.20684463,0.40853754
+prueba 2,29,85,banda,no,no,False,False,False,0.9392,0.01527692,0.052399054,0.059024468
+prueba 2,29,86,banda,si,si,False,False,False,0.9321,0.99384934,0.99315035,0.9909851
+prueba 2,29,87,banda,si,si,False,False,False,0.9438,0.9963145,0.9861848,0.98829764
+prueba 2,29,88,banda,si,si,False,False,False,0.931,0.9910845,0.9957123,0.9959238
+prueba 2,29,89,banda,si,si,False,False,False,0.9419,0.9952769,0.9937796,0.99491966
+prueba 2,29,90,bajo,si,si,False,False,False,0.9057,0.9679814,0.9637194,0.9533298
+prueba 2,29,91,banda,no,no,False,False,False,0.9454,0.91062576,0.34216267,0.26248345
+prueba 2,29,92,banda,si,si,False,False,False,0.9552,0.9962153,0.9950495,0.9954072
+prueba 2,29,93,bajo,si,si,False,False,False,0.9168,0.98459184,0.99577415,0.9943415
+prueba 2,29,94,banda,si,si,False,False,False,0.9559,0.99573785,0.99647504,0.99679476
+prueba 2,29,95,banda,si,si,False,False,False,0.9699,0.9944393,0.99311656,0.99477977
+prueba 2,29,96,banda,no,no,False,False,False,0.9434,5.628559e-06,0.00035552634,8.24949e-05
+prueba 2,29,97,banda,si,si,False,False,False,0.9424,0.9930721,0.9863772,0.9876895
+prueba 2,29,98,banda,no,no,False,False,False,0.9369,0.00043663735,0.019395182,0.005723332
+prueba 2,29,99,banda,si,si,False,False,False,0.9461,0.9951513,0.99620104,0.99584985
+prueba 2,29,100,banda,no,no,False,False,False,0.9519,2.4975013e-06,1.8112898e-05,6.934028e-06
+prueba 2,29,101,banda,si,si,False,False,False,0.9455,0.9308199,0.97813207,0.9854982
+prueba 2,29,102,banda,si,si,False,False,False,0.9491,0.99613065,0.9952604,0.9964611
+prueba 2,29,103,banda,no,no,False,False,False,0.9323,0.0001294423,0.00053298334,0.00023022058
+prueba 2,29,104,banda,si,si,False,False,False,0.9471,0.99064237,0.9899306,0.9871871
+prueba 2,29,105,banda,si,si,False,False,False,0.9419,0.9925411,0.9898416,0.9951756
+prueba 2,29,106,banda,no,no,False,False,False,0.9369,0.004023827,0.00143334,0.00018540301
+prueba 2,29,107,banda,no,no,False,False,False,0.9479,2.1467838e-05,0.0008295706,0.00029970304
+prueba 2,29,108,banda,si,si,False,False,False,0.9329,0.9970131,0.99759746,0.9972471
+prueba 2,29,109,banda,si,si,False,False,False,0.9314,0.9939871,0.9948873,0.9941619
+prueba 2,29,110,banda,si,si,False,False,False,0.9542,0.9944498,0.9914379,0.9942486
+prueba 2,29,111,banda,si,si,False,False,False,0.9312,0.99674934,0.9961863,0.996563
+prueba 2,29,112,banda,si,si,False,False,False,0.9326,0.96031785,0.309219,0.13234335
+prueba 2,29,113,banda,si,si,False,False,False,0.9513,0.9878621,0.9928995,0.98769397
+prueba 2,29,114,banda,si,si,False,False,False,0.9553,0.9959831,0.9967745,0.9969619
+prueba 2,29,115,banda,si,si,False,False,False,0.9394,0.9655308,0.9008106,0.92934656
+prueba 2,29,116,banda,si,si,False,False,False,0.9488,0.98506975,0.98896474,0.9923858
+prueba 2,29,117,banda,si,si,False,False,False,0.9429,0.9966533,0.99762625,0.9974519
+prueba 2,29,118,bajo,no,no,False,False,False,0.9107,0.97709495,0.4684101,0.39687532
+prueba 2,29,119,banda,no,no,False,False,False,0.9318,1.277022e-05,3.3134853e-05,2.312838e-05
+prueba 2,29,120,banda,si,si,False,False,False,0.9373,0.11488012,0.79135686,0.84135824
+prueba 2,29,121,banda,si,si,False,False,False,0.9465,0.9873195,0.9796949,0.97865117
+prueba 2,29,122,banda,si,si,False,False,False,0.9495,0.9966262,0.99733543,0.9970571
+prueba 2,29,123,banda,si,si,False,False,False,0.9356,0.99445915,0.99520266,0.9950599
+prueba 2,29,124,banda,si,si,False,False,False,0.9364,0.912387,0.9952971,0.99542326
+prueba 2,29,125,banda,si,si,False,False,False,0.9313,0.96484005,0.9703373,0.96446794
+prueba 2,29,126,banda,si,si,False,False,False,0.9337,0.9799979,0.86007786,0.69679517
+prueba 2,29,127,banda,si,si,False,False,False,0.9531,0.71669513,0.98349315,0.98604864
+prueba 2,29,128,banda,si,si,False,False,False,0.939,0.99622315,0.9928489,0.9945462
+prueba 2,29,129,banda,si,si,False,False,False,0.9373,0.92054003,0.98551244,0.9901297
+prueba 2,29,130,bajo,si,si,False,False,False,0.9204,0.99619585,0.99661505,0.99665165
+prueba 2,29,131,banda,si,si,False,False,False,0.9436,0.9967208,0.99676543,0.997002
+prueba 2,29,132,banda,si,si,False,True,False,0.9364,0.9959841,0.9958815,0.9964128
+prueba 2,29,133,banda,si,si,False,False,False,0.9422,0.9933809,0.97993994,0.9819224
+prueba 2,29,134,banda,si,si,False,False,False,0.9441,0.9621394,0.9860671,0.99115956
+prueba 2,29,135,banda,si,si,False,False,False,0.9512,0.99698144,0.996849,0.99714863
+prueba 2,29,136,banda,si,si,False,False,False,0.9498,0.99663496,0.9979675,0.99754137
+prueba 2,29,137,banda,si,si,False,False,False,0.9539,0.99145865,0.99396527,0.9945886
+prueba 2,29,138,bajo,no,no,False,False,False,0.9103,9.161294e-06,1.2695808e-05,5.355198e-06
+prueba 2,29,139,banda,si,si,False,True,False,0.9588,0.996546,0.99784696,0.99759626
+prueba 2,29,140,banda,no,no,False,False,False,0.9438,5.616159e-06,0.00020341616,4.1917156e-05
+prueba 2,29,141,bajo,si,si,False,False,False,0.9001,0.94482803,0.92585987,0.8384083
+prueba 2,29,142,banda,si,si,False,False,False,0.9549,0.99112153,0.9907707,0.9915616
+prueba 2,29,143,banda,si,si,False,False,False,0.9359,0.9901089,0.991846,0.9941886
+prueba 2,29,144,banda,si,si,False,False,False,0.9598,0.93123907,0.99331445,0.9938233
+prueba 2,29,145,banda,si,si,False,False,False,0.9325,0.9966681,0.9965615,0.99635434
+prueba 2,29,146,banda,si,si,False,False,False,0.9575,0.95467234,0.99431753,0.9934214
+prueba 2,29,147,banda,no,no,False,False,False,0.9452,2.2511425e-05,0.0014980711,0.00041316735
+prueba 2,29,148,banda,si,si,False,False,False,0.9548,0.99648356,0.9975303,0.99736685
+prueba 2,29,149,bajo,si,si,False,False,False,0.9035,0.9954393,0.9890194,0.99417466
+prueba 2,29,150,banda,no,no,False,False,False,0.9403,1.5953652e-05,0.000511374,0.0001930009
+prueba 2,29,151,banda,si,si,False,False,False,0.9609,0.9893036,0.99112153,0.98805594
+prueba 2,29,152,bajo,si,si,False,False,False,0.901,0.032333814,0.27117845,0.32962266
+prueba 2,29,153,banda,si,si,False,False,False,0.9493,0.99682266,0.99724567,0.99706084
+prueba 2,29,154,banda,si,si,False,False,False,0.9551,0.9954398,0.99695796,0.99700475
+prueba 2,29,155,banda,si,si,False,False,False,0.9443,0.99207455,0.98928154,0.9817544
+prueba 2,29,156,banda,si,si,False,False,False,0.9322,0.99456954,0.986124,0.98847574
+prueba 2,29,157,banda,no,no,False,False,False,0.9554,2.2512442e-05,2.8802508e-05,7.5839657e-06
+prueba 2,29,158,banda,no,no,False,False,False,0.9536,6.4489664e-06,0.0016849352,0.00023419879
+prueba 2,29,159,banda,no,no,False,False,False,0.9337,8.798471e-06,0.0015551663,0.0002561829
+prueba 2,29,160,banda,si,si,False,False,False,0.9435,0.9228413,0.9026534,0.93615466
+prueba 2,29,161,banda,si,si,False,False,False,0.953,0.99680614,0.9972928,0.997177
+prueba 2,29,162,banda,si,si,False,False,False,0.9355,0.993765,0.99412537,0.9945043
+prueba 2,29,163,banda,si,si,False,False,False,0.9593,0.9963179,0.9952404,0.99603885
+prueba 2,29,164,banda,si,si,False,False,False,0.9397,0.995476,0.99334335,0.9942051
+prueba 2,29,165,bajo,si,si,False,False,False,0.9193,0.99598217,0.99700403,0.99696285
+prueba 2,29,166,banda,si,si,False,False,False,0.9351,0.9924501,0.9939773,0.99531716
+prueba 2,29,167,banda,si,si,False,False,False,0.9419,0.9972339,0.9976401,0.9975767
+prueba 2,29,168,banda,si,si,False,False,False,0.9497,0.8381065,0.91441417,0.9691324
+prueba 2,29,169,banda,si,no,False,False,True,0.9483,0.9942692,0.9755078,0.18710849
+prueba 2,29,170,banda,si,si,False,False,False,0.9515,0.99551535,0.9947699,0.99448323
+prueba 2,29,171,banda,si,si,False,False,False,0.9329,0.99643147,0.99497,0.99552816
+prueba 2,29,172,banda,si,si,False,False,False,0.9359,0.9949057,0.9953089,0.99280185
+prueba 2,29,173,bajo,si,si,False,False,False,0.9042,0.9948902,0.98258966,0.97969764
+prueba 2,29,174,banda,no,no,False,False,False,0.932,0.012974808,0.002940029,0.0010669429
+prueba 2,29,175,banda,si,si,False,False,False,0.9369,0.92991096,0.94918686,0.9501829
+prueba 2,29,176,banda,si,si,False,False,False,0.952,0.9967654,0.9972706,0.9971879
+prueba 2,29,177,banda,si,si,False,False,False,0.9349,0.9960675,0.99506515,0.99536556
+prueba 2,29,178,banda,si,si,False,False,False,0.9532,0.99652416,0.996831,0.9969476
+prueba 2,29,179,bajo,si,si,False,False,False,0.9105,0.9965876,0.9946026,0.9950961
+prueba 2,29,180,banda,si,si,False,False,False,0.9342,0.99131054,0.9930642,0.9937069
+prueba 2,29,181,bajo,si,si,False,False,False,0.9206,0.99536866,0.99004537,0.9923735
+prueba 2,29,182,banda,no,no,False,False,False,0.9377,0.74554014,0.10967249,0.32545972
+prueba 2,29,183,banda,si,si,False,False,False,0.9526,0.99650675,0.9974672,0.9971383
+prueba 2,29,184,bajo,si,si,False,False,False,0.9075,0.9932548,0.99057037,0.99302477
+prueba 2,29,185,banda,si,si,False,False,False,0.9563,0.9969284,0.99578696,0.99577093
+prueba 2,29,186,banda,no,no,False,False,False,0.9486,0.48133412,0.95028204,0.93204236
+prueba 2,29,187,banda,si,si,False,False,False,0.9494,0.9966098,0.99659854,0.9971723
+prueba 2,29,188,bajo,si,si,False,False,False,0.9013,0.916419,0.992857,0.33069453
+prueba 2,29,189,banda,si,si,False,False,False,0.9395,0.9963016,0.9923736,0.9889527
+prueba 2,29,190,banda,si,si,False,False,False,0.9369,0.8966283,0.9732959,0.9778479
+prueba 2,29,191,banda,si,si,False,False,False,0.946,0.996051,0.8363029,0.9805301
+prueba 2,29,192,banda,si,si,False,False,False,0.9466,0.9968096,0.9961977,0.996773
+prueba 2,29,193,banda,si,si,False,False,False,0.9503,0.9009938,0.9764225,0.9831327
+prueba 2,29,194,banda,si,si,False,False,False,0.9308,0.98783153,0.97107226,0.98023075
+prueba 2,29,195,banda,no,no,False,False,False,0.9497,0.47569913,0.9804407,0.94272494
+prueba 2,29,196,banda,si,si,False,False,False,0.9359,0.9961535,0.9878228,0.9925035
+prueba 2,29,197,banda,no,no,False,False,False,0.9325,0.00012367505,0.017209683,0.007549433
+prueba 2,29,198,banda,si,si,False,False,False,0.9427,0.9943652,0.997199,0.99713904
+prueba 2,29,199,banda,si,si,False,False,False,0.9468,0.00059066847,0.0091306465,0.004787084
+prueba 2,29,200,banda,si,si,False,False,False,0.9323,0.99499655,0.99489003,0.9958756
+prueba 2,29,201,bajo,si,si,False,False,False,0.9109,0.96207654,0.9887004,0.9663813
+prueba 2,29,202,bajo,si,si,False,False,False,0.927,0.9967565,0.9976022,0.9975407
+prueba 2,29,203,banda,si,si,False,False,False,0.9507,0.9953763,0.9938257,0.9939234
+prueba 2,29,204,banda,si,si,False,False,False,0.9302,0.19426882,0.058206886,0.040295515
+prueba 2,29,205,banda,no,no,False,False,False,0.953,1.22160145e-05,0.005575311,0.00076455704
+prueba 2,29,206,banda,si,si,False,False,False,0.942,0.98174524,0.99127877,0.99339896
+prueba 2,29,207,banda,si,si,False,False,False,0.9576,0.9961035,0.9967022,0.99692434
+prueba 2,29,208,banda,si,si,False,False,False,0.9517,0.99372685,0.99466246,0.995386
+prueba 2,29,209,banda,si,si,False,False,False,0.9619,0.9968636,0.99770826,0.99752617
+prueba 2,29,210,bajo,no,no,False,False,False,0.9156,2.3014986e-06,1.5252528e-05,6.0896564e-06
+prueba 2,29,211,banda,si,si,False,True,False,0.9328,0.9921705,0.99189776,0.987414
+prueba 2,29,212,bajo,si,si,False,False,False,0.9078,0.9948174,0.9950375,0.9921234
+prueba 2,29,213,banda,si,si,False,True,False,0.9563,0.9935576,0.98276067,0.9893298
+prueba 2,29,214,banda,si,si,False,False,False,0.9506,0.99401814,0.9872071,0.99208754
+prueba 2,29,215,banda,si,si,False,False,False,0.9366,0.9965564,0.99476385,0.99479824
+prueba 2,29,216,bajo,si,si,False,False,False,0.906,0.9637709,0.9893615,0.9897532
+prueba 2,29,217,banda,si,si,False,False,False,0.9347,0.99637413,0.99674785,0.9955922
+prueba 2,29,218,banda,si,si,False,False,False,0.9498,0.9961325,0.99544734,0.9963891
+prueba 2,29,219,banda,si,si,False,False,False,0.9384,0.9963732,0.99786526,0.99725103
+prueba 2,29,220,banda,no,no,False,False,False,0.9592,0.87104607,0.2908511,0.21368633
+prueba 2,29,221,banda,no,no,False,False,False,0.9462,4.0368463e-06,0.00069616846,0.0002550025
+prueba 2,29,222,banda,si,si,False,False,False,0.9456,0.9953391,0.9947641,0.9941067
+prueba 2,29,223,banda,si,si,False,False,False,0.9368,0.9889234,0.9356632,0.22682454
+prueba 2,29,224,banda,si,si,False,False,False,0.951,0.99641883,0.9968985,0.996648
+prueba 2,29,225,banda,si,si,False,False,False,0.9532,0.9965647,0.99762106,0.9973503
+prueba 2,29,226,banda,si,si,False,False,False,0.9436,0.87829465,0.92073566,0.9510162
+prueba 2,29,227,banda,si,si,False,False,False,0.9309,0.9717045,0.99112487,0.99121386
+prueba 2,29,228,banda,si,si,False,False,False,0.9336,0.99489176,0.99501795,0.9943197
+prueba 2,29,229,banda,si,si,False,False,False,0.9377,0.81832415,0.9881258,0.9855392
+prueba 2,29,230,banda,si,si,False,False,False,0.9528,0.9955005,0.9963872,0.9965928
+prueba 2,29,231,banda,si,si,False,False,False,0.9417,0.9967741,0.9956698,0.99591804
+prueba 2,29,232,banda,si,si,False,False,False,0.9435,0.99330413,0.99309427,0.9953026
+prueba 2,29,233,banda,si,si,False,False,False,0.9465,0.021440852,0.660178,0.6770589
+prueba 2,29,234,banda,si,si,False,False,False,0.9368,0.9950169,0.9953588,0.9957333
+prueba 2,29,235,banda,si,si,False,False,False,0.9505,0.99605197,0.99537474,0.99662066
+prueba 2,29,236,banda,si,si,False,False,False,0.9418,0.94502425,0.9664881,0.9230242
+prueba 2,29,237,banda,si,si,False,False,False,0.9554,0.99688846,0.9979872,0.9978497
+prueba 2,29,238,bajo,no,no,False,False,False,0.9005,0.91008186,0.9380851,0.8953754
+prueba 2,29,239,banda,no,no,False,False,False,0.947,2.717302e-06,0.00044522542,0.00016413078
+prueba 2,29,240,bajo,si,si,False,False,False,0.9019,0.94809675,0.97800964,0.97703755
+prueba 2,29,241,banda,si,si,False,False,False,0.9455,0.9954539,0.9964336,0.99608076
+prueba 2,29,242,banda,si,si,False,False,False,0.9437,0.63231426,0.97494423,0.98629385
+prueba 2,29,243,banda,si,si,False,False,False,0.9575,0.99638647,0.9944351,0.9935188
+prueba 2,29,244,bajo,si,si,False,False,False,0.9143,0.7349739,0.8678118,0.8372841
+prueba 2,29,245,banda,si,si,False,False,False,0.9341,0.9889624,0.9876881,0.990146
+prueba 2,29,246,banda,si,si,False,False,False,0.9501,0.99659806,0.9953661,0.9945387
+prueba 2,29,247,banda,si,si,False,False,False,0.9514,0.9939366,0.9956466,0.99613804
+prueba 2,29,248,banda,si,si,False,False,False,0.9518,0.9474831,0.9788581,0.98352003
+prueba 2,29,249,banda,no,no,False,False,False,0.9511,4.6414378e-05,0.030046215,0.008027757
+prueba 2,29,250,banda,no,no,False,False,False,0.9383,2.4072535e-05,3.792926e-05,9.945645e-06
+prueba 2,29,251,banda,si,si,False,False,False,0.9513,0.9958263,0.9949506,0.9931154
+prueba 2,29,252,banda,si,si,False,False,False,0.9447,0.99674547,0.99619836,0.9972196
+prueba 2,29,253,banda,si,si,False,False,False,0.9338,0.9918957,0.99116373,0.99276763
+prueba 2,29,254,banda,si,si,False,False,False,0.9337,0.99648094,0.99694085,0.997286
+prueba 2,29,255,bajo,no,no,False,False,False,0.9006,0.0009128046,0.004566569,0.0014864744
+prueba 2,29,256,banda,si,si,False,True,False,0.9324,0.99676,0.9961512,0.9966766
+prueba 2,29,257,banda,si,si,False,False,False,0.9406,0.99592197,0.9959643,0.99579495
+prueba 2,29,258,banda,si,si,False,False,False,0.9415,0.9871596,0.99140406,0.99235886
+prueba 2,29,259,banda,si,si,False,False,False,0.9363,0.75590384,0.97431403,0.963378
+prueba 2,29,260,banda,si,si,False,False,False,0.9535,0.9967616,0.99762297,0.99758023
+prueba 2,29,261,bajo,si,si,False,False,False,0.902,0.83904254,0.97629195,0.9845832
+prueba 2,29,262,banda,si,si,False,False,False,0.9593,0.9916902,0.9904642,0.9890194
+prueba 2,29,263,banda,no,no,False,False,False,0.941,0.00048633275,0.0001488914,0.00016081362
+prueba 2,29,264,bajo,si,si,False,False,False,0.9021,0.14091344,0.28873983,0.008941924
+prueba 2,29,265,banda,si,si,False,False,False,0.9421,0.9951119,0.9949113,0.9959683
+prueba 2,29,266,banda,si,si,False,False,False,0.9379,0.9953106,0.9946313,0.9953125
+prueba 2,29,267,banda,si,si,False,False,False,0.9349,0.25793883,0.8452543,0.7585673
+prueba 2,29,268,banda,si,si,False,False,False,0.9451,0.99673975,0.9976433,0.9974378
+prueba 2,29,269,banda,si,si,False,False,False,0.9328,0.9956664,0.99195975,0.9940045
+prueba 2,29,270,bajo,si,si,False,False,False,0.9201,0.9969199,0.884698,0.8290189
+prueba 2,29,271,banda,si,si,False,False,False,0.9411,0.9102763,0.96089923,0.9814411
+prueba 2,29,272,bajo,no,no,False,False,False,0.9061,0.046363886,0.00072132616,0.00021458624
+prueba 2,29,273,banda,si,si,False,False,False,0.9563,0.988722,0.9735229,0.9864802
+prueba 2,29,274,banda,si,si,False,False,False,0.9414,0.993684,0.9892444,0.99270916
+prueba 2,29,275,banda,si,si,False,False,False,0.9423,0.9928486,0.99656147,0.9963229
+prueba 2,29,276,banda,si,si,False,False,False,0.9314,0.9959843,0.9967736,0.99636143
+prueba 2,29,277,banda,si,si,False,False,False,0.9518,0.99680007,0.9971225,0.9971116
+prueba 2,29,278,banda,si,si,False,False,False,0.9495,0.99690586,0.99593264,0.9962362
+prueba 2,29,279,banda,si,si,False,False,False,0.9562,0.99497044,0.9932722,0.9938725
+prueba 2,29,280,banda,si,si,False,False,False,0.9503,0.9319164,0.913675,0.86416864
+prueba 2,29,281,banda,si,si,False,False,False,0.9356,0.99562913,0.99458635,0.9949286
+prueba 2,29,282,banda,si,si,False,False,False,0.9365,0.8481574,0.99239975,0.9935576
+prueba 2,29,283,banda,si,si,False,False,False,0.9498,0.9968132,0.99752945,0.9973444
+prueba 2,29,284,bajo,si,si,False,False,False,0.9294,0.9934816,0.9795461,0.98824644
+prueba 2,29,285,bajo,no,no,False,False,False,0.9201,1.5201778e-05,2.8441664e-05,1.5788724e-05
+prueba 2,29,286,banda,si,si,False,False,False,0.9409,0.99347556,0.99085516,0.9916874
+prueba 2,29,287,banda,si,si,False,False,False,0.9315,0.9947235,0.99455166,0.99608535
+prueba 2,29,288,banda,si,si,False,False,False,0.9595,0.9962713,0.9971357,0.99700224
+prueba 2,29,289,banda,si,si,False,False,False,0.9563,0.98840624,0.97459465,0.9879167
+prueba 2,29,290,banda,si,si,False,False,False,0.9544,0.9878931,0.9935631,0.9893793
+prueba 2,29,291,banda,si,si,False,False,False,0.9672,0.9949108,0.9933324,0.9959024
+prueba 2,29,292,banda,si,si,False,False,False,0.9331,0.9900417,0.99497366,0.99591404
+prueba 2,29,293,banda,si,si,False,True,False,0.9439,0.99634093,0.9947989,0.9944723
+prueba 2,29,294,banda,si,si,False,False,False,0.9344,0.99668235,0.99606913,0.99670917
+prueba 2,29,295,banda,si,si,False,False,False,0.9458,0.9969365,0.9973701,0.997362
+prueba 2,29,296,bajo,si,si,False,False,False,0.9039,0.99571395,0.9943209,0.9952648
+prueba 2,29,297,banda,no,no,False,False,False,0.9406,0.0030262696,0.0096129505,0.0030689852
+prueba 2,29,298,banda,no,no,False,False,False,0.9372,0.00021438744,0.00029168595,0.00045011664
+prueba 2,29,299,banda,si,si,False,False,False,0.9396,0.42672226,0.9924695,0.97508705
+prueba 2,29,300,banda,si,si,False,False,False,0.9437,0.99591583,0.9967694,0.9965832
+prueba 2,29,301,banda,si,si,False,False,False,0.9463,0.9965564,0.9940593,0.9949294
+prueba 2,29,302,banda,si,si,False,False,False,0.9534,0.9960454,0.9966852,0.99665934
+prueba 2,29,303,banda,si,si,False,False,False,0.9329,0.99308574,0.9908554,0.99407065
+prueba 2,29,304,banda,si,si,False,False,False,0.9328,0.12825072,0.8788183,0.95396703
+prueba 2,29,305,banda,si,si,False,False,False,0.957,0.9941279,0.9775921,0.99084544
+prueba 2,29,306,banda,no,no,False,False,False,0.9318,3.216261e-05,0.0013314313,0.00029232175
+prueba 2,29,307,banda,no,no,False,False,False,0.9504,9.835087e-05,2.1842312e-05,1.9117124e-05
+prueba 2,29,308,banda,si,si,False,False,False,0.9505,0.9950679,0.99571013,0.99645215
+prueba 2,29,309,bajo,si,si,False,False,False,0.9084,0.9939237,0.98664474,0.9853673
+prueba 2,29,310,banda,si,si,False,False,False,0.9422,0.9959873,0.99713296,0.9971601
+prueba 2,29,311,bajo,si,si,False,False,False,0.9012,0.99461526,0.98718226,0.9638238
+prueba 2,29,312,banda,si,si,False,False,False,0.9478,0.9960592,0.98917484,0.99288005
+prueba 2,29,313,bajo,si,si,False,False,False,0.9093,0.99669653,0.99092263,0.9907572
+prueba 2,29,314,bajo,si,si,False,False,False,0.9226,0.96725756,0.98880774,0.9839412
+prueba 2,29,315,banda,si,si,False,False,False,0.9312,0.9958139,0.9899278,0.9913481
+prueba 2,29,316,banda,si,si,False,False,False,0.9383,0.99545085,0.99741495,0.99754643
+prueba 2,29,317,banda,si,si,False,False,False,0.9554,0.99602437,0.99612737,0.99539566
+prueba 2,29,318,banda,si,si,False,False,False,0.9396,0.9949116,0.985245,0.9939511
+prueba 2,29,319,banda,si,si,False,False,False,0.9503,0.9961479,0.99736446,0.9971394
+prueba 2,29,320,banda,si,si,False,False,False,0.9654,0.99159306,0.9956696,0.9944273
+prueba 2,29,321,banda,si,si,False,False,False,0.9327,0.9958964,0.9890151,0.9905662
+prueba 2,29,322,banda,si,si,False,False,False,0.9308,0.99326646,0.9939243,0.99004745
+prueba 2,29,323,banda,no,no,False,False,False,0.9328,2.2484852e-05,0.000985254,0.00051396654
+prueba 2,29,324,banda,no,no,False,False,False,0.9464,4.7147343e-05,0.0018494328,0.00042440253
+prueba 2,29,325,banda,si,si,False,False,False,0.9493,0.9849731,0.99220276,0.9938442
+prueba 2,29,326,banda,no,no,False,False,False,0.94,0.9688901,0.8804213,0.3976824
+prueba 2,29,327,bajo,no,no,False,False,False,0.9042,2.2198343e-05,0.0041648205,0.00097273494
+prueba 2,29,328,banda,si,si,False,False,False,0.9383,0.99204236,0.9960705,0.99462354
+prueba 2,29,329,banda,si,si,False,True,False,0.9403,0.9962669,0.9972287,0.99665076
+prueba 2,29,330,banda,si,si,False,False,False,0.9521,0.995354,0.99478066,0.99632543
+prueba 2,29,331,banda,si,si,False,False,False,0.9517,0.9955941,0.993666,0.993536
+prueba 2,29,332,banda,si,si,False,False,False,0.9617,0.9971445,0.9795717,0.9377661
+prueba 2,29,333,banda,si,si,False,False,False,0.9552,0.9958608,0.9855441,0.9922117
+prueba 2,29,334,banda,si,si,False,False,False,0.9555,0.99656576,0.9969852,0.99712586
+prueba 2,29,335,banda,si,si,False,False,False,0.9574,0.91908157,0.9916,0.9873492
+prueba 2,29,336,banda,si,si,False,False,False,0.9489,0.99652284,0.997272,0.9973647
+prueba 2,29,337,banda,si,si,False,False,False,0.9312,0.06696558,0.32436103,0.33540937
+prueba 2,29,338,banda,si,si,False,False,False,0.9444,0.99403113,0.9925287,0.9959408
+prueba 2,29,339,banda,si,si,False,True,False,0.9426,0.9970045,0.995979,0.996214
+prueba 2,29,340,banda,si,si,False,False,False,0.9562,0.98615175,0.99462754,0.995571
+prueba 2,29,341,banda,si,si,False,False,False,0.952,0.99693584,0.99777913,0.99715555
+prueba 2,29,342,banda,si,si,False,False,False,0.949,0.941895,0.8628891,0.9306016
+prueba 2,29,343,bajo,si,si,False,False,False,0.9153,0.9960999,0.993299,0.99400103
+prueba 2,29,344,banda,si,si,False,False,False,0.9436,0.9958664,0.99474233,0.9942072
+prueba 2,29,345,banda,si,si,False,False,False,0.9411,0.99680096,0.99735415,0.9973662
+prueba 2,29,346,banda,si,si,False,False,False,0.9449,0.9668079,0.9900883,0.9829983
+prueba 2,29,347,bajo,si,si,False,False,False,0.9065,0.9966365,0.9951328,0.9948265
+prueba 2,29,348,banda,si,si,False,False,False,0.9542,0.9959164,0.99519235,0.9948885
+prueba 2,29,349,banda,si,si,False,False,False,0.9454,0.4144584,0.5198037,0.45787916
+prueba 2,29,350,banda,si,si,False,False,False,0.9483,0.99445987,0.9939889,0.9962295
+prueba 2,29,351,banda,si,si,False,False,False,0.9514,0.9969442,0.9978229,0.9972165
+prueba 2,29,352,banda,no,no,False,False,False,0.9354,5.0237926e-05,8.983672e-05,3.238857e-05
+prueba 2,29,353,banda,si,si,False,False,False,0.9304,0.99209577,0.98606944,0.990957
+prueba 2,29,354,banda,no,no,False,False,False,0.9555,5.8191155e-05,1.701029e-05,1.0272979e-05
+prueba 2,29,355,banda,no,no,False,False,False,0.9378,3.8466937e-06,1.7792778e-05,1.0744723e-05
+prueba 2,29,356,banda,no,no,False,False,False,0.9406,1.6768521e-05,3.876344e-05,9.300355e-06
+prueba 2,29,357,banda,si,si,False,False,False,0.9531,0.99691415,0.99769217,0.99733293
+prueba 2,29,358,bajo,no,no,False,False,False,0.902,0.008066536,0.9523437,0.7925938
+prueba 2,29,359,bajo,si,si,False,False,False,0.9008,0.89771485,0.6288121,0.7973334
+prueba 2,29,360,banda,si,si,False,False,False,0.9338,0.9935402,0.9883197,0.9846659
+prueba 2,29,361,banda,si,si,False,False,False,0.9515,0.89405584,0.9899309,0.9897822
+prueba 2,29,362,banda,si,si,False,True,False,0.9531,0.99686825,0.9968284,0.996653
+prueba 2,29,363,bajo,si,si,False,False,False,0.9031,0.69789624,0.40582862,0.32579905
+prueba 2,29,364,banda,si,si,False,False,False,0.938,0.20516114,0.9968545,0.9960149
+prueba 2,29,365,banda,si,si,False,False,False,0.9507,0.94375855,0.899234,0.9280843
+prueba 2,29,366,banda,si,si,False,False,False,0.9464,0.45649198,0.8481164,0.92077255
+prueba 2,29,367,bajo,si,si,False,False,False,0.9044,0.9964867,0.99350685,0.992689
+prueba 2,29,368,banda,si,si,False,False,False,0.9329,0.9744837,0.9543055,0.9735606
+prueba 2,29,369,banda,si,si,False,False,False,0.9405,0.98870164,0.9936017,0.9934773
+prueba 2,29,370,banda,no,no,False,False,False,0.9401,0.0031802256,0.0025815174,0.0008208463
+prueba 2,29,371,banda,no,no,False,False,False,0.9486,9.779564e-06,0.00094693044,0.00020975665
+prueba 2,29,372,banda,si,si,False,False,False,0.9372,0.9965045,0.9927382,0.99281085
+prueba 2,29,373,bajo,si,si,False,False,False,0.9144,0.00014757177,0.28625175,0.39828923
+prueba 2,29,374,banda,si,si,False,False,False,0.9303,0.99384487,0.9948704,0.9957392
+prueba 2,29,375,banda,si,si,False,False,False,0.9378,0.96158683,0.8769453,0.8518226
+prueba 2,29,376,banda,si,si,False,False,False,0.9491,0.99374706,0.9953114,0.99541306
+prueba 2,29,377,bajo,si,si,False,False,False,0.9038,0.8835292,0.989874,0.98205245
+prueba 2,29,378,bajo,si,si,False,False,False,0.9136,0.9962571,0.99267495,0.9915948
+prueba 2,29,379,banda,si,si,False,False,False,0.9315,0.990728,0.9863209,0.9915457
+prueba 2,29,380,bajo,no,no,False,False,False,0.9002,0.00035364233,0.021456098,0.006356905
+prueba 2,29,381,bajo,no,no,False,False,False,0.9131,2.9649113e-06,3.113626e-05,1.0979221e-05
+prueba 2,29,382,banda,no,no,False,False,False,0.9548,2.6150876e-05,0.0067736874,0.001786412
+prueba 2,29,383,banda,no,no,False,False,False,0.9407,7.784996e-05,0.0016760135,0.0004901481
+prueba 2,29,384,banda,si,si,False,True,False,0.9308,0.9965282,0.9939816,0.9963089
+prueba 2,29,385,banda,si,si,False,False,False,0.9574,0.99660337,0.9970298,0.9969544
+prueba 2,29,386,banda,si,si,False,False,False,0.9335,0.9828307,0.9889953,0.9902783
+prueba 2,29,387,banda,si,si,False,False,False,0.9317,0.99684554,0.9953018,0.9960081
+prueba 2,29,388,bajo,si,si,False,False,False,0.9047,0.9965877,0.9966175,0.9962276
+prueba 2,29,389,banda,si,si,False,False,False,0.9484,0.17183341,0.662939,0.15658824
+prueba 2,29,390,banda,si,si,False,False,False,0.9509,0.9965412,0.9954068,0.9965891
+prueba 2,29,391,banda,si,si,False,False,False,0.9405,0.9814892,0.99538684,0.99551815
+prueba 2,29,392,banda,no,no,False,False,False,0.9394,0.9793423,0.72538936,0.7861745
+prueba 2,29,393,banda,si,si,False,False,False,0.9496,0.99262285,0.99710876,0.99669033
+prueba 2,29,394,banda,si,si,False,False,False,0.939,0.98136246,0.9871723,0.97394735
+prueba 2,29,395,banda,no,no,False,False,False,0.9369,0.0052654105,0.011323462,0.006358714
+prueba 2,29,396,banda,si,si,False,False,False,0.9528,0.9953891,0.99642944,0.9962073
+prueba 2,29,397,banda,si,si,False,False,False,0.9592,0.99601156,0.99329054,0.9951123
+prueba 2,29,398,banda,si,si,False,False,False,0.9366,0.995858,0.9958849,0.9956511
+prueba 2,29,399,banda,si,si,False,False,False,0.9362,0.86716896,0.9347591,0.9546709
+prueba 2,29,400,banda,si,si,False,False,False,0.9449,0.99435544,0.9963133,0.99661964

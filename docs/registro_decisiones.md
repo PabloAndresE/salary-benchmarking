@@ -5575,3 +5575,29 @@ limpio, 6 corridas, ninguna retomada; pesos en `22_modelos_v3/`, respaldados en
   **T = 1,243**, ECE 0,029 → 0,023.
 - No se compara con la v2 en `calibra`: la `calibra` es otra (191 frente a 187, otras etiquetas).
   La comparación es la evaluación exploratoria en `prueba` y `prueba 2`.
+
+#### Evaluación exploratoria del cross-encoder v3 (2026-10-02)
+
+**Evidencia:** `42_v3_exploratorio.py` (commit `13b922b`, repo limpio), `salidas/42_v3_exploratorio.txt`
+y `42_puntajes.csv`. **Exploratorio:** `prueba` y `prueba 2` ya se habían abierto. H1 y H4 no cambian.
+
+| conjunto · vara | pares | v3 | v2 | coseno | v3 − coseno | v3 − v2 |
+|---|---|---|---|---|---|---|
+| `prueba` · original (H1) | 555 | 0,8945 | 0,8962 | 0,6211 | +0,273 [+0,208, +0,339] | −0,002 [−0,009, +0,006] |
+| `prueba` · v6 + capa 0 v1 | 546 | 0,8941 | 0,8590 | 0,6099 | +0,284 [+0,218, +0,350] | **+0,035 [+0,010, +0,065]** |
+| `prueba 2` · original (H4) | 400 | 0,9875 | 0,9850 | 0,5652 | +0,422 [+0,348, +0,499] | +0,003 [−0,002, +0,008] |
+| `prueba 2` · v6 + capa 0 v1 | 386 | 0,9873 | 0,9821 | 0,5603 | +0,427 [+0,350, +0,501] | +0,005 [−0,000, +0,012] |
+
+- **Con la vara original, la v3 empata con la v2** en los dos conjuntos: reentrenar con el grado no
+  le costó nada en lo que ya hacía bien.
+- **Con la vara v6, la v3 le gana a la v2 en `prueba`** (+0,035, IC sobre cero). **Toda la ventaja
+  viene de los pares con número distinto:** sin ellos, v3 − v2 = −0,004 [−0,011, +0,004] en `prueba` y
+  +0,003 [−0,001, +0,009] en `prueba 2`.
+- **Pares con número de grado distinto** (11: 10 en `prueba`, 1 en `prueba 2`; todos `no` con la v6):
+  la v1 y la v2 juntan los 11 (P calibrada mediana 0,97 y 0,99); **la v3 no junta ninguno** (mediana
+  0,008; el más alto, `AYUDANTE DE RUTA 1 LE` / `2 LC`, 0,23). El coseno les da 0,94 de mediana.
+- **Límite:** son 11 pares, y la v3 aprendió de 136 de la plata con la misma regla mecánica. Que la
+  v3 separe el grado en pares nuevos lo diría el conjunto confirmatorio de ~200 pares con grado (§4),
+  que sigue siendo opcional.
+- **Juez operativo:** la v3 hace lo mismo que la v2 en todo lo demás y además separa el grado, que
+  es lo que dice la rúbrica v6. **Propuesta: la v3 pasa a ser el juez operativo** (decisión del autor).

@@ -1,0 +1,49 @@
+==============================================================================
+42 · CROSS-ENCODER v3 EN `prueba` Y `prueba 2` — EXPLORATORIO (D-041)
+==============================================================================
+T: v1 1.704, v2 1.206, v3 1.243
+H1 y H4 no cambian: son confirmatorios con la vara original. Esto es exploratorio.
+
+prueba · vara ORIGINAL (la de H1/H4): 555 pares (433 si / 122 no)
+   AUC  v3 0.8945   v2 0.8962   v1 0.8902   coseno 0.6211
+   v3 - coseno  +0.2734   IC95 [+0.2083, +0.3386]
+   v3 - v2      -0.0017   IC95 [-0.0088, +0.0057]
+   v2 - coseno  +0.2751   IC95 [+0.2085, +0.3433]
+
+prueba · vara v6 + capa 0 v1: 546 pares (414 si / 132 no)
+   AUC  v3 0.8941   v2 0.8590   v1 0.8325   coseno 0.6099
+   v3 - coseno  +0.2841   IC95 [+0.2180, +0.3495]
+   v3 - v2      +0.0350   IC95 [+0.0102, +0.0647]
+   v2 - coseno  +0.2491   IC95 [+0.1824, +0.3176]
+
+prueba 2 · vara ORIGINAL (la de H1/H4): 400 pares (332 si / 68 no)
+   AUC  v3 0.9875   v2 0.9850   v1 0.9770   coseno 0.5652
+   v3 - coseno  +0.4222   IC95 [+0.3481, +0.4990]
+   v3 - v2      +0.0025   IC95 [-0.0016, +0.0076]
+   v2 - coseno  +0.4198   IC95 [+0.3442, +0.4981]
+
+prueba 2 · vara v6 + capa 0 v1: 386 pares (317 si / 69 no)
+   AUC  v3 0.9873   v2 0.9821   v1 0.9692   coseno 0.5603
+   v3 - coseno  +0.4270   IC95 [+0.3503, +0.5013]
+   v3 - v2      +0.0052   IC95 [-0.0002, +0.0123]
+   v2 - coseno  +0.4218   IC95 [+0.3500, +0.4976]
+
+PARES CON NUMERO DE GRADO DISTINTO (con la v6 todos son `no`)
+   11 pares (10 en `prueba`, 1 en `prueba 2`)
+   v1: junta 11 de 11 (P calibrada >= 0,5); P mediana 0.966
+   v2: junta 11 de 11 (P calibrada >= 0,5); P mediana 0.987
+   v3: junta 0 de 11 (P calibrada >= 0,5); P mediana 0.008
+   coseno mediano 0.942
+      EJECUTIVO DE BANCA CORPORATIVA 5       / EJECUTIVO DE BANCA CORPORATIVA 6       v2 0.99  v3 0.00
+      PROFESOR TITULAR AGREGADO 1            / PROFESOR TITULAR AGREGADO 2            v2 0.98  v3 0.01
+      PROF/TITULO III NIVEL BASICO           / PROF/TITULO IV NIVEL BASICO            v2 0.97  v3 0.11
+      DISENADOR 1                            / DISENADOR 2                            v2 0.99  v3 0.00
+      COORDINADOR 3                          / COORDINADOR 1                          v2 0.98  v3 0.01
+      ASESOR DE SERVICIO 1                   / ASESOR DE SERVICIO 2                   v2 0.99  v3 0.01
+      PROFESOR DE TENIS 1                    / PROFESOR DE TENIS 3                    v2 0.99  v3 0.03
+      AYUDANTE DE TESORERIA 1                / AYUDANTE DE TESORERIA 4                v2 0.99  v3 0.00
+      AGENTES DE SERVICIOS2                  / AGENTES DE SERVICIOS5                  v2 0.99  v3 0.00
+      AYUDANTES 1 DE PRODUCCION ESTERILES    / AYUDANTES 3 DE PRODUCCION ESTERILES    v2 0.96  v3 0.08
+      GESTOR: AYUDANTE DE RUTA 1 LE          / GESTOR: AYUDANTE DE RUTA 2 LC          v2 0.95  v3 0.23
+
+ficha: commit 13b922b, sin commitear False, v3 sha a5fb00032d8c
