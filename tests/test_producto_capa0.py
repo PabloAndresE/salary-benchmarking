@@ -192,3 +192,15 @@ def test_sin_capa0_la_base_se_comporta_como_antes():
     assert b.capa0 is None
     assert b.grupo[b.idx["ASISTENTE CONTABLE"]] != b.grupo[b.idx["ASIST. CONTABLE"]]
     assert b.referenciar(["ASIST CONTABLE"], emb).iloc[0]["cargo_base"] == ""
+
+
+def test_con_capa0_la_errata_no_absorbe_siglas_cortas():
+    # D-041: `COORDINADOR C` cae en el grupo de `COORDINADOR` por la letra; `COORDINADOR DC`
+    # esta a una letra de `COORDINADOR C`, pero es una sigla de area, no un dedazo.
+    celdas = ["COORDINADOR", "COORDINADOR C", "COORDINADOR DC", "COORDINADOR QA"]
+    grupo = np.array([0, 0, 2, 3])
+    niv = np.full(4, np.nan)
+    nuevo, k = _fusionar_erratas(celdas, grupo, niv, {0: 40, 2: 1, 3: 1}, palabra_min=4)
+    assert k == 0 and len(set(nuevo.tolist())) == 3
+    nuevo, k = _fusionar_erratas(celdas, grupo, niv, {0: 40, 2: 1, 3: 1})   # sin la guarda
+    assert k >= 1

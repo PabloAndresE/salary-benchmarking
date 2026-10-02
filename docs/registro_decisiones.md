@@ -5519,3 +5519,59 @@ La plata no se excluye: los pares que la capa 0 junta siguen enseñando que son 
 - **`22`:** el `AUC_BASE` depende del paquete (`21_paquete` 0,7346; `21_paquete_v6` **0,7416**) y se
   detiene si el paquete no tiene uno registrado. Con `21_paquete_v6` escribe en `22_modelos_v3/`:
   la v1 y la v2 no se tocan.
+
+#### Ejecutado (2026-10-02): paso 3, `base_v16`, y paso 4, el cross-encoder v3
+
+**`base_v16`** (`41_base_v16.py`, `demo/base_v16.npz`, no se sube: lleva sueldos y bandas). Capa 0 v1
+(letras fuera, números dentro), sin fusión por coseno, candados con el nivel de la rúbrica y el de
+grado. Mismos datos que la v15 (1.000.490 filas, 65.181 títulos, todos en común) y mismos vectores.
+
+**Un error encontrado al construirla, y corregido antes del informe.** Con la letra fuera,
+`COORDINADOR C` entra en el grupo grande de `COORDINADOR`, y la pasada de erratas (D-025), que compara
+el título crudo, absorbía detrás `COORDINADOR DC`, `QC`, `QA`, `TH`, `SAP`…: siglas de área a una
+letra de distancia, no dedazos. La guarda de «letra suelta» solo cubría el caso de igual largo.
+**Con capa 0, el dedazo tiene que estar en una palabra de 4 letras o más en los dos títulos**
+(`PALABRA_MIN_ERRATA`, test incluido). Sin capa 0 (v15) no cambia nada. Absorciones por errata:
+472 → 316. El grupo de `COORDINADOR` queda con sus grafías, el género y las letras.
+
+**Informe** (`salidas/41_base_v16.txt`):
+
+| | v15 | v16 |
+|---|---|---|
+| grupos (65.181 títulos) | 50.296 | **58.051** |
+| títulos en grupos de 2 o más | 23.742 | 11.438 |
+| grupo más grande | 30 títulos | 81 (grafías de `ASISTENTE ADMINISTRATIVO`) |
+
+- **Capa 0, regla por regla** (títulos que comparten átomo con otro: 10.898 con todo). Lo que se
+  pierde al apagar cada regla: plural 2.486, género 2.047, erratas 1.652, letras de grado 556,
+  abreviaturas 441. Solo con puntuación y código inicial: 3.035. No suman: hay títulos que necesitan
+  dos reglas.
+- **Pasadas:** capa 0 6.695 uniones, errata 316, género 119.
+- **Candado de grado: no bloqueó ninguna unión.** 2.161 títulos llevan número de grado (12.222
+  personas), pero el átomo conserva el número y la errata ya excluye los dígitos. Hoy es una red de
+  seguridad; trabaja de verdad cuando el clustering con el cross-encoder junte por significado.
+- **Quién cambia de grupo:** 22.564 títulos (34,6 %), 425.451 personas-título de 666.574 (63,8 %;
+  una persona que pasó por dos títulos cuenta dos veces). **El grueso es por quitar el coseno:**
+  18.431 títulos quedan en un grupo más chico (236.744 personas-título) y 3.530 en uno más grande
+  por la capa 0 (160.648).
+- **Bandas de los títulos que cambian** (exp(dif) − 1): la mediana del desplazamiento es 0 en las
+  cuatro; la mediana del valor absoluto, 2,8 % (p10), 5,0 % (p25), 7,0 % (p50) y 6,1 % (p75). **Alguna
+  banda se mueve más del 5 % en 17.300 títulos, 138.797 personas-título (20,8 % del total).** Casos
+  grandes: `VENDEDOR / A` y `VENDEDOR (A)` +15 % en p50 (de 7 a 19 títulos); `REPRESENTANTE DE
+  NEGOCIOS` −31 % (de 2 a 1); `TRABAJADOR/A AGRICOLA` +10 %.
+
+**Cómo leerlo.** La v16 es solo la capa 0: el texto que es el mismo título escrito de otra forma.
+Las uniones por significado que hacía el coseno (D-015) ya no están, y **le tocan al cross-encoder y
+al clustering, que todavía no existen.** Por eso muchas celdas quedan más chicas que en la v15 y sus
+bandas se mueven. **La v16 no reemplaza a la v15 en el producto** hasta que la base con el clustering
+se construya y se mida.
+
+**Cross-encoder v3** (`22 --grilla v2 --paquete salidas/21_paquete_v6`, GPU, commit `0cb97b8`, repo
+limpio, 6 corridas, ninguna retomada; pesos en `22_modelos_v3/`, respaldados en
+`/home/pencalada/respaldo/22_modelos_v3`, idénticos):
+- El juez sin entrenar dio 0,7416, la vara registrada.
+- Elegida `w_humano = 1`, como en la v2 (`w_humano = 3` no le gana: IC [−0,001, +0,012]). AUC medio
+  en `calibra` (187, optimista) **0,9816** (sd 0,004); el representante, 0,9839. Temperatura
+  **T = 1,243**, ECE 0,029 → 0,023.
+- No se compara con la v2 en `calibra`: la `calibra` es otra (191 frente a 187, otras etiquetas).
+  La comparación es la evaluación exploratoria en `prueba` y `prueba 2`.

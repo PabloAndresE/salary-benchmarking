@@ -153,10 +153,11 @@ def main():
                         ("erratas (diccionario)", dict(erratas={})),
                         ("genero (diccionario)", dict(genero={})),
                         ("letras de grado (D-041)", dict(letras=False))):
-        n = solos_unidos([variante(**cambio).atomo(x) for x in celdas])
+        v = variante(**cambio)
+        n = solos_unidos([v.atomo(x) for x in celdas])
         p("   sin {:<26} {:>7,} unidos   aporta {:>6,}".format(nom, n, llenos - n))
-    n = solos_unidos([variante(abreviaturas={}, plural={}, erratas={}, genero={},
-                               letras=False).atomo(x) for x in celdas])
+    v = variante(abreviaturas={}, plural={}, erratas={}, genero={}, letras=False)
+    n = solos_unidos([v.atomo(x) for x in celdas])
     p("   solo puntuacion y codigo inicial: {:,} unidos".format(n))
     p("   (las aportaciones no suman el total: un titulo puede necesitar dos reglas)")
 

@@ -114,6 +114,7 @@ MIN_PERSONAS = 10
 # DIRECTA: 57,7% -> 64,1% de la gente contestada con datos de su propio puesto en vez de
 # por analogia. Bajar a 0,93 sube la cobertura a 66,1% pero el efecto vuelve a cero.
 UMBRAL_FUSION = 0.95
+PALABRA_MIN_ERRATA = 4  # D-041: con capa 0, el dedazo va en una palabra de 4+ letras
 VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
 TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
 
@@ -917,8 +918,9 @@ class BaseReferencia:
                 g0 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
                 emp_g0 = (marco.assign(_g=g0).groupby("_g")["empresa_ruc"]
                           .nunique().to_dict())
-                grupo, n_err = _fusionar_erratas(celdas, grupo, niv_c, emp_g0,
-                                                 grados=gnum)
+                grupo, n_err = _fusionar_erratas(
+                    celdas, grupo, niv_c, emp_g0, grados=gnum,
+                    palabra_min=PALABRA_MIN_ERRATA if capa0 is not None else 0)
                 print(f"fusion por errata: {n_err:,} grupos absorbidos")
             if mapa_genero is not None:
                 antes_gen = grupo.copy()
@@ -1735,13 +1737,25 @@ def _distancia1(a, b, transposicion=False):
     return a[i:] == b[i + 1:]
 
 
-def _es_errata(a, b):
+def _es_errata(a, b, palabra_min=0):
     """.El par a distancia 1 es un DEDAZO, y no un escalon ni una variante de genero?
 
     Devuelve False para todo lo que no sea claramente ortografico. Es deliberadamente
     conservador: un falso positivo aqui funde dos oficios distintos en una sola celda y
     contamina la referencia de las dos.
+
+    `palabra_min` (D-041, solo con capa 0): la palabra donde esta el dedazo tiene que tener al
+    menos ese largo en los dos titulos. Con la capa 0 quitando la letra final, `COORDINADOR C`
+    cae en el grupo grande de `COORDINADOR`, y `COORDINADOR DC` / `QC` / `TH`, a una letra de
+    distancia, se colaban detras: siglas de area, no dedazos. Un cambio de espacio (`AUXILIAR
+    ADMINISTRATIVO` / `AUXILIARADMINISTRATIVO`) no tiene palabra editada y sigue pasando.
     """
+    if palabra_min:
+        ta, tb = a.split(), b.split()
+        if len(ta) == len(tb):
+            dif = [(x, y) for x, y in zip(ta, tb) if x != y]
+            if len(dif) == 1 and min(len(dif[0][0]), len(dif[0][1])) < palabra_min:
+                return False
     if _DIGITO_ERR.search(a) or _DIGITO_ERR.search(b):
         return False                                    # OPERARIO 1 / OPERARIO 2
     if set(_ROMANO_ERR.findall(a)) != set(_ROMANO_ERR.findall(b)):
@@ -1793,7 +1807,8 @@ def _letra_suelta(s, i):
 def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
                       min_largo=MIN_LARGO_ERRATA, max_raro=MAX_EMPRESAS_ERRATA,
                       min_comun=MIN_EMPRESAS_ABSORBE, transposicion=True,
-                      largo_en_comun=True, pasadas=PASADAS_ERRATA, grados=None):
+                      largo_en_comun=True, pasadas=PASADAS_ERRATA, grados=None,
+                      palabra_min=0):
     """Absorbe los grupos-dedazo dentro del grupo comun del que son errata.
 
     Segunda pasada, DESPUES de la fusion semantica y por separado: asi no altera nada de
@@ -1852,7 +1867,7 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
     for _ in range(max(1, int(pasadas))):
         grupo, n_paso = _una_pasada_erratas(
             celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro, min_comun,
-            transposicion, largo_en_comun, grados)
+            transposicion, largo_en_comun, grados, palabra_min)
         total += n_paso
         if not n_paso:
             break
@@ -1860,7 +1875,8 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
 
 
 def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro,
-                        min_comun, transposicion, largo_en_comun, grados=None):
+                        min_comun, transposicion, largo_en_comun, grados=None,
+                        palabra_min=0):
     """Una vuelta de absorcion. La separa de `_fusionar_erratas` para poder repetirla."""
     n = len(celdas)
     candado = _CandadoGrado(grados, grupo)
@@ -1896,7 +1912,8 @@ def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_ra
                 if np.isfinite(ni) and np.isfinite(nj) and ni != nj:
                     continue
                 a, b = celdas[par[0]], celdas[par[1]]
-                if not _distancia1(a, b, transposicion) or not _es_errata(a, b):
+                if (not _distancia1(a, b, transposicion)
+                        or not _es_errata(a, b, palabra_min)):
                     continue
                 ei, ej = emp_por_grupo.get(gi, 0), emp_por_grupo.get(gj, 0)
                 raro, comun = (gi, gj) if ei <= ej else (gj, gi)

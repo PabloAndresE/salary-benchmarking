@@ -1,0 +1,55 @@
+==============================================================================
+41 · BASE v16: CAPA 0 v1, SIN FUSION POR COSENO, CANDADO DE GRADO (D-040, D-041)
+==============================================================================
+filas evaluables 2024-2025: 1,000,490; titulos: 65,181; personas: 603,159
+titulos de la v15: 65,181; en comun: 65,181
+guardada en demo/base_v16.npz (88 s)
+
+1. GRUPOS
+   v15: 50,296 grupos para 65,181 titulos; titulos en grupos de 2+: 23,742; grupo mas grande: 30 titulos
+   v16: 58,051 grupos para 65,181 titulos; titulos en grupos de 2+: 11,438; grupo mas grande: 81 titulos
+
+2. CAPA 0 v1, REGLA POR REGLA (titulos que comparten atomo con otro titulo)
+   capa 0 entera: 10,898 titulos unidos
+   sin abreviaturas                10,457 unidos   aporta    441
+   sin plural                       8,412 unidos   aporta  2,486
+   sin erratas (diccionario)        9,246 unidos   aporta  1,652
+   sin genero (diccionario)         8,851 unidos   aporta  2,047
+   sin letras de grado (D-041)     10,342 unidos   aporta    556
+   solo puntuacion y codigo inicial: 3,035 unidos
+   (las aportaciones no suman el total: un titulo puede necesitar dos reglas)
+
+3. PASADAS DE TEXTO Y CANDADO DE GRADO (desde cero, sin recuento de empresas fresco)
+   con candado: capa 0 6,695 uniones; errata 475; genero 118; grupos 57,893
+   sin candado: capa 0 6,695 uniones; errata 475; genero 118; grupos 57,893
+   titulos con numero de grado: 2,161 (12,222 personas)
+
+4. QUIEN CAMBIA DE GRUPO (su titulo queda con otros titulos que en la v15)
+   titulos: 22,564 de 65,181 (34.6%); personas: 425,451 de 666,574 (63.8%)
+   grupo mas chico (lo separa quitar el coseno): 18,431 titulos, 236,744 personas
+   grupo mas grande (lo junta la capa 0):        3,530 titulos, 160,648 personas
+
+5. BANDAS DE LOS TITULOS QUE CAMBIAN (exp(dif) - 1)
+   p10: mediana +0.0%; mediana del valor absoluto 2.8%; p90 del absoluto 74.4%
+   p25: mediana +0.0%; mediana del valor absoluto 5.0%; p90 del absoluto 57.2%
+   p50: mediana +0.0%; mediana del valor absoluto 7.0%; p90 del absoluto 45.4%
+   p75: mediana +0.0%; mediana del valor absoluto 6.1%; p90 del absoluto 53.2%
+   alguna banda se mueve > 5 %: 17,300 titulos (76.7% de los que cambian), 138,797 personas (20.8% del total)
+   los 15 con mas personas (p50 v15 -> v16, en multiplos del SBU):
+      ASISTENTE DE ALMACEN                           6,334 pers.   1.49 ->  1.49  (+0%)  grupo 6 -> 2 titulos
+      TRABAJADOR/A AGRICOLA                          2,069 pers.   1.00 ->  1.10  (+10%)  grupo 6 -> 2 titulos
+      TRABAJADOR AGRICOLA CAMPO                      1,645 pers.   1.03 ->  1.12  (+8%)  grupo 5 -> 1 titulos
+      VENDEDOR / A                                   1,564 pers.   1.42 ->  1.63  (+15%)  grupo 7 -> 19 titulos
+      OPERARIO DE PRODUCCION                         1,363 pers.   1.14 ->  1.06  (-7%)  grupo 12 -> 3 titulos
+      VENDEDOR (A)                                   1,189 pers.   1.42 ->  1.63  (+15%)  grupo 7 -> 19 titulos
+      AUXILIAR                                       1,106 pers.   1.23 ->  1.22  (-1%)  grupo 1 -> 3 titulos
+      TRABAJADOR CAMPO                               1,092 pers.   1.03 ->  1.01  (-3%)  grupo 5 -> 3 titulos
+      OPERADOR DE PRODUCCION                         1,028 pers.   1.14 ->  1.18  (+3%)  grupo 12 -> 2 titulos
+      AYUDANTE DE PRODUCCION                         1,022 pers.   1.10 ->  1.10  (+0%)  grupo 8 -> 5 titulos
+      REPRESENTANTE DE NEGOCIOS                        969 pers.   1.49 ->  1.02  (-31%)  grupo 2 -> 1 titulos
+      ASESOR DE VENTAS (R)                             938 pers.   1.04 ->  1.21  (+16%)  grupo 1 -> 4 titulos
+      AYUDANTE DE MOSTRADOR                            874 pers.   1.17 ->  1.13  (-3%)  grupo 2 -> 1 titulos
+      TECNICO DE MANTENIMIENTO                         691 pers.   1.78 ->  1.74  (-3%)  grupo 12 -> 10 titulos
+      TRABAJADOR AGRICOLA COSECHA                      685 pers.   1.16 ->  1.22  (+5%)  grupo 2 -> 1 titulos
+
+(121 s)
