@@ -5247,3 +5247,18 @@ Decisión del autor:
   grado y sus guardas, errata solo hacia títulos que existen, género, nivel de la rúbrica,
   construir y consultar con la misma capa 0, guardar y cargar, y la base sin capa 0). Sin fallos
   nuevos en la suite (292 pasan; los 5 que fallan ya fallaban por dependencias del entorno).
+
+### Criterio B: se confirma, la fusión por coseno sale de la capa 0 (2026-10-02)
+
+Revisión a ciegas del autor de los 100 pares (`32_revisar_coseno.csv`, `32 evaluar`):
+
+| | juzgados distintos de verdad |
+|---|---|
+| 50 que el cross-encoder rechaza | **30 (60 %)** |
+| 50 que el cross-encoder acepta | **0 (0 %)** |
+
+Tasa de rechazo 2,95 % (≥ 1 %) y 60 % de distintos entre los rechazados (≥ 50 %): **el criterio B se
+cumple y D-015 se enmienda.** La fusión por coseno ≥ 0,95 deja la capa 0 (`umbral_fusion=None` al
+construir `base_v16`); esos pares los resuelven el cross-encoder y el clustering. Lo que juntaba mal
+era sobre todo seniority (`SUPERVISOR DE FINANZAS` / `… SR`, `ANALISTA CREDITO` / `… DE CREDITO SR.`,
+`… SEMISENIOR` / `… SENIOR`). Y el cross-encoder no aceptó ningún par distinto en la muestra.

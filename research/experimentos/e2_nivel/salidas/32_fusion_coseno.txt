@@ -11,3 +11,9 @@ P del cross v2 en los pares unidos: mediana 0.991; percentil 5 0.934
 
 revision a ciegas: 50 rechazados + 50 aceptados, barajados -> 32_revisar_coseno.csv
   (mapa: 32_revisar_coseno_mapa.csv, NO abrir antes de juzgar)
+
+EVALUACION (juicios del autor, a ciegas)
+  rechazados por el cross: 50 revisados, distintos de verdad 60%
+  aceptados por el cross:  50 revisados, distintos de verdad 0%
+  tasa de rechazo 2.95% (>= 1 %) y distintos entre rechazados 60% (>= 50 %)
+  CRITERIO B: SE CONFIRMA: D-015 se enmienda
