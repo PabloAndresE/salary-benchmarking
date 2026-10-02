@@ -5278,3 +5278,31 @@ ESTADISTICA` = `… ESTADISTICO`).
 **Capa 0 v1** (`producto/datos/capa0_v1/`, `37_exportar_capa0.py`): **848 erratas, 216
 abreviaturas y 380 pares de género.** Sobre los 65.181 títulos de `base_v15`, sin grado y sin
 fusión por coseno, da **58.911 átomos**.
+
+### Criterio A: el grado ES un escalón salarial; no se fusiona (2026-10-02)
+
+**Evidencia:** `38_grado_dentro_empresa.py` y `salidas/38_grado_dentro_empresa.txt`, sobre
+`nomina_features` (2024-2025, `en_clean`, filas evaluables: 1.000.490), con BigQuery. La versión
+**dentro de empresa**, la que decide según lo registrado.
+
+- Filas con un grado al final: 35.244 (3,5 %); ordinales 13.418, letras 21.826.
+- **Ordinales:** 1.092 contrastes dentro de la misma empresa y año (grados consecutivos de la
+  misma familia), en 383 familias. **Diferencia media entre familias: +6,9 %, IC 95 % [+4,7 %,
+  +9,1 %].** Media ≥ 5 % y el IC entero sobre cero: **ESCALÓN → el grado no se fusiona.**
+- Descriptivo: el grado mayor paga más en el 61 % de las familias y en el 55 % de los
+  contrastes; mediana de los contrastes +3,3 %; media ponderada por personas +8,3 %; por salto
+  de un grado +4,9 % (n = 961).
+- **Letras** (no deciden): 283 contrastes en 98 familias, diferencia absoluta media 13,3 %.
+- El adelanto entre empresas (`33`) daba inconcluso (+2,7 %): entre empresas la escala interna se
+  diluía, como se anticipó.
+
+**Consecuencias (D-040, criterio A):**
+1. La capa 0 v1 **no borra el grado** (`grado=False`, ya por defecto) y D-037 queda sin efecto.
+2. Las erratas aprobadas que borran un grado pegado (`TECNICO1`, `CONTABLE2`, `COORDINADOR2`,
+   `CORPORATIVA1`…`7`, `CHOFERB`…: 22) contradicen el resultado y deben salir del diccionario.
+3. **La Enmienda 5 de D-036 se revierte en lo que toca al grado:** las etiquetas corregidas de
+   `no` a `si` por el grado (17 humanas, 149 de la plata, incluidas las 12 revisadas a mano) vuelven a
+   su valor anterior; los pares excluidos de `calibra` y `prueba` por la capa 0 de grado vuelven a la
+   evaluación; la regla del paso 1 de las rúbricas v4/v5 se revisa. **El cross-encoder se entrenó
+   con los pares de grado como `si`: hay que reentrenarlo** con ellos como `no`.
+   El plan concreto se registra antes de ejecutarlo.

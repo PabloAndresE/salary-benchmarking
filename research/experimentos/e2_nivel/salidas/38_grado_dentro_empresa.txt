@@ -1,0 +1,32 @@
+==============================================================================
+38 · CRITERIO A DE D-040, DENTRO DE EMPRESA: ¿EL GRADO ES UN ESCALON SALARIAL?
+==============================================================================
+filas evaluables 2024-2025: 1,000,490; titulos distintos: 65,181
+filas con un grado al final: 35,244 (3.5%); ordinal 13,418, letra 21,826
+
+ORDINALES (deciden)
+   contrastes dentro de empresa (empresa x anio x familia, grados consecutivos): 1,092
+   familias: 383; empresas-anio distintas: implicitas en los contrastes
+   diferencia media entre familias (grado mayor - menor): +6.9%   IC 95 % [+4.7%, +9.1%]
+   >>> CRITERIO A: ESCALON -> no se fusiona <<<
+   descriptivo: familias donde el grado mayor paga mas: 61%; contrastes donde paga mas: 55%; mediana de los contrastes +3.3%
+   descriptivo: media ponderada por personas de los contrastes +8.3%
+   por tamano del salto de grado: {1: '+4.9% (n=961)', 2: '+1.6% (n=106)', 3: '+20.8% (n=19)'}
+   las 15 familias con mas contrastes:
+      TECNICO                                       n=  24   +5.6%
+      ASISTENTE CONTABLE                            n=  24   -3.3%
+      ASISTENTE ADMINISTRATIVO                      n=  20   +1.1%
+      MECANICO                                      n=  18   -7.6%
+      OPERADOR                                      n=  17   +1.6%
+      OPERARIO                                      n=  14   +4.3%
+      FUNCIONARIO                                   n=  12   +16.7%
+      SUPERVISOR DE VENTA                           n=  12   -0.3%
+      SUPERVISOR DE PLANTA                          n=  12   -3.3%
+      INGENIERO DE CAMPO                            n=  12   +21.7%
+      EMPACADOR CARGADOR                            n=  12   +0.0%
+      LABORATORISTA                                 n=  11   -3.3%
+      COCINERO                                      n=  10   -15.6%
+      TECNICO DE CAMPO                              n=  10   +2.7%
+      SOLDADOR                                      n=   9   +0.6%
+
+LETRAS (no deciden: sin orden fiable): 283 contrastes en 98 familias; diferencia absoluta media 13.3%
