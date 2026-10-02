@@ -5216,3 +5216,34 @@ Decisión del autor:
    que colapsan con la **capa 0 v1**», es decir, las reglas adoptadas y los diccionarios que el autor
    apruebe ahora. Si después hay una capa 0 v2, se reporta cuántos pares más colapsan con ella, **sin
    redefinir lo anterior**: cada evaluación dice con qué versión de la capa 0 se excluyó.
+
+### La capa 0, implementada en el producto (2026-10-02)
+
+**Evidencia:** `src/benchmarking/producto/capa0.py`, `nivel.py` (`nivel_rubrica`),
+`base_referencia.py` y `tests/test_producto_capa0.py`.
+
+- **Una sola función, `Capa0.atomo(titulo)`**, igual al construir y al consultar. Orden:
+  normalización (`_norm`) → abreviaturas (antes de quitar la puntuación) → grado al final
+  (**apagado por defecto**, depende del criterio A) → código inicial y puntuación → plural →
+  erratas (solo si el título corregido existe en la base) → género por palabra.
+- **El grado se detecta sobre las palabras originales,** antes de quitar la puntuación: si no,
+  `COORDINADOR M & R` quedaría en `COORDINADOR M R` y la `M` y la `R` se leerían como grados.
+- **Diccionarios versionados** en `producto/datos/capa0_v1/`, con solo las filas aprobadas
+  (hoy vacíos). `37_exportar_capa0.py` pasa a esos archivos las filas con `aprobar = si` de las
+  listas de `36`. El mapa de plural lo genera la construcción desde el vocabulario de la base.
+- **En la base:** `construir(..., capa0=...)` agrupa por átomo y guarda la capa 0 (reglas y
+  diccionarios) dentro del `.npz`, para que la consulta use exactamente las mismas. Con
+  `umbral_fusion=None` se saca la fusión por coseno (criterio B) **sin apagar** las pasadas de
+  errata (D-025) y género (D-026), que antes colgaban de ella.
+- **El candado de las fusiones usa `nivel_rubrica`** (criterio C) cuando hay capa 0.
+  `nivel_lexico` no cambia: alimenta la escalera salarial y `efecto_nivel`, y cambiarlo
+  movería estadísticos medidos; si se alinea también ahí, es otra decisión con su medición.
+  `SEMISENIOR` entra como marca de seniority propia (0,5).
+- **El grado de D-037 queda apagado por defecto** (`grado=False`), y su consulta por grado
+  también: la regla vigente es la de la capa 0, pendiente del criterio A.
+- **Las bases anteriores siguen funcionando:** `base_v15` carga sin capa 0 y responde igual.
+- **Tests:** los cuatro pedidos (`CASERO` ≠ `CAJERO` con la protección del diccionario, una
+  errata en dos palabras, una abreviatura, un plural) y ocho más (código inicial y puntuación,
+  grado y sus guardas, errata solo hacia títulos que existen, género, nivel de la rúbrica,
+  construir y consultar con la misma capa 0, guardar y cargar, y la base sin capa 0). Sin fallos
+  nuevos en la suite (292 pasan; los 5 que fallan ya fallaban por dependencias del entorno).

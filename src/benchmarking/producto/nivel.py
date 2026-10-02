@@ -87,6 +87,8 @@ _PATRON = re.compile(r"\b(" + _ALTERNATIVAS + r")(?:ES|S)?\b")
 # de los escalones por digito ya se ocupa `_es_errata`.
 SENIORIDAD = {
     "TRAINEE": -2, "SOUS": -1, "JR": -1, "JUNIOR": -1,
+    # D-040, criterio C: SEMISENIOR es una marca propia, entre la falta de marca y SR.
+    "SEMISENIOR": 0.5, "SEMI SENIOR": 0.5, "SEMI-SENIOR": 0.5, "SSR": 0.5,
     "SR": 1, "SENIOR": 1,
     "CORPORATIVO": 2, "CORPORATIVA": 2,
 }
@@ -195,6 +197,57 @@ def mismo_salvo_grado(a, b):
         return False
     ka = clave_grado(a)
     return ka is not None and ka == clave_grado(b)
+
+
+# --- EL NIVEL SEGUN LA RUBRICA (D-040, criterio C) ------------------------------------
+# `nivel_lexico` alimenta la escalera salarial y `efecto_nivel`: cambiarlo moveria
+# estadisticos ya medidos. Este es el lexico de la RUBRICA, para el candado de fusion de la
+# capa 0. Diferencias con `nivel_lexico`:
+#   - mas palabras: ASESOR, EJECUTIVO, CONSULTOR, ENCARGADO, SUBJEFE, ADMINISTRADOR,
+#     CONTROLLER y los rangos en ingles ASSISTANT y MANAGER (ASSISTANT MANAGER = 4). Medido
+#     sobre las 24.654 fusiones por coseno de base_v15: cada una bloquea entre 0 y 16;
+#   - lo que va tras DE / DEL no cuenta (dice a quien apoya: `ASISTENTE DE GERENTE` es un
+#     asistente);
+#   - TECNICO y ESPECIALISTA solo son rango si abren el titulo (`AUXILIAR TECNICO` es un
+#     auxiliar).
+RANGOS_RUBRICA = dict(RANGOS) | {
+    "ASESOR": 1, "EJECUTIVO": 1, "ASSISTANT": 1,
+    "ADMINISTRADOR": 2, "CONTROLLER": 2, "CONSULTOR": 2,
+    "ENCARGADO": 3, "SUBJEFE": 3,
+    "MANAGER": 5,
+}
+_SOLO_AL_INICIO = {"TECNICO", "ESPECIALISTA"}
+
+
+def _raiz_rango(w):
+    """`COORDINADORA`, `ASISTENTES`, `JEFA`, `GERENTES` -> la palabra de la tabla."""
+    for c in (w, w[:-2] if w.endswith("ES") else None, w[:-1] if w.endswith("S") else None,
+              "JEFE" if w in ("JEFA", "JEFAS") else None):
+        if c and c in RANGOS_RUBRICA:
+            return c
+    if w.endswith("A") and w[:-1] + "O" in RANGOS_RUBRICA:
+        return w[:-1] + "O"
+    if w.endswith("A") and w[:-1] in RANGOS_RUBRICA:          # COORDINADORA, SUPERVISORA
+        return w[:-1]
+    if w.endswith("AS") and w[:-2] in RANGOS_RUBRICA:
+        return w[:-2]
+    return None
+
+
+def nivel_rubrica(etiqueta):
+    """Nivel de la palabra de rango MAS ALTA segun la rubrica, o None si no hay ninguna."""
+    ws = re.findall(r"[A-Z]+", str(etiqueta).upper())
+    if "ASSISTANT" in ws and "MANAGER" in ws:
+        return 4
+    alto = None
+    for i, w in enumerate(ws):
+        if w in ("DE", "DEL"):
+            break
+        r = _raiz_rango(w)
+        if r is None or (r in _SOLO_AL_INICIO and i > 0):
+            continue
+        alto = max(alto or 0, RANGOS_RUBRICA[r])
+    return alto
 
 
 def enmascarar(etiqueta, marca="PUESTO"):

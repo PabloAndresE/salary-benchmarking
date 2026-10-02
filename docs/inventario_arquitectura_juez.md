@@ -76,10 +76,12 @@ desde la computadora del autor, que guarda el original.
 | `research/experimentos/e2_nivel/29_prueba2.py` | **`prueba 2`**: 400 pares nuevos para el examen del cross-encoder v2 (D-038). Python del sistema (necesita `pyarrow`) | versionado |
 | `research/experimentos/e2_nivel/30_lote_entrenamiento.py` | el lote de entrenamiento de la zona difícil: 400 pares (mitad por duda del cross-encoder, mitad al azar) para juzgar con la v5 (D-038) | versionado |
 | `research/experimentos/e2_nivel/31_h4_prueba2.py` | **H4**: abre `prueba 2` una sola vez, tras cinco candados; v2 contra v1 (H4), réplica de H1, H4b, ensamble, estratos y calibración. `--ensayo` sobre `calibra` | versionado |
+| `research/experimentos/e2_nivel/32_fusion_coseno_cross.py` … `36_capa0_listas_y_colapsos.py` | las mediciones de la capa 0 (D-040): fusión por coseno con el cross (criterio B), adelanto del grado (A), reglas por palabra, listas para aprobar y colapsos del oro | versionado |
+| `research/experimentos/e2_nivel/37_exportar_capa0.py` | pasa las filas aprobadas de las listas de `36` a `producto/datos/capa0_v1/` | versionado |
 | `requirements-cross.txt` | versiones exactas para entrenar y evaluar el cross (Enmienda 3) | versionado |
 
 Los guiones que vengan (entrenar B, destilar A, agrupar con C, utilidad aguas abajo) se
-añaden aquí con el número que les toque, `32_…` en adelante.
+añaden aquí con el número que les toque, `38_…` en adelante.
 
 ## 4. Salidas de los guiones
 
@@ -121,6 +123,8 @@ No se borra nada de esto; se lista porque es donde entra B cuando gane H1.
 |---|---|---|
 | `src/benchmarking/producto/base_referencia.py` | la consolidación (`UMBRAL_FUSION`, enlace completo) pasa a C; el vecindario `λ(1 − sim)` pasa a `λ(1 − P(mismo))`; `_lambda_semantica` se reestima | versionado |
 | `src/benchmarking/producto/referenciar_nomina.py` | el flujo de un cargo nuevo: asignación a grupo y las tres ramas | versionado |
+| `src/benchmarking/producto/capa0.py` | **la capa 0** (D-040): `Capa0.atomo`, una sola función de texto al construir y al consultar; `proponer_erratas` | versionado |
+| `src/benchmarking/producto/datos/capa0_v1/` | los diccionarios **aprobados** de la capa 0 v1 (erratas, abreviaturas, género); vacíos hasta la revisión | versionado |
 | `src/benchmarking/producto/nivel.py` | `nivel_lexico` y `seniority_lexica`: capa 0, y la señal del peso por nivel en la pérdida de B | versionado |
 | `src/benchmarking/evaluacion/referencia.py` | votos, pesos y cuantiles de la banda; no cambia, pero la utilidad aguas abajo se mide con él | versionado |
 | `src/benchmarking/evaluacion/embeddings.py` | los embeddings de Vertex con caché: el espacio del coseno, línea base y punto de partida de A | versionado |

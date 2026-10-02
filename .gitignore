@@ -30,6 +30,8 @@ cuarentena/
 # arranca sin el. Con `*.json` a secas se quedaba fuera y rompia en cualquier otra
 # maquina sin que nadie lo notara aqui.
 !src/benchmarking/datos/*.json
+# los diccionarios aprobados de la capa 0 (D-040) se versionan: son datos del producto
+!src/benchmarking/producto/datos/capa0_*/*.csv
 # log del uvicorn local
 uvicorn.log
 !**/esquema_plantilla.yaml

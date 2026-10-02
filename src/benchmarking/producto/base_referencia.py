@@ -67,7 +67,7 @@ from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
                                      sigma2_por_celda,
                                      tabla_votos, tau2_por_celda)
 from .nivel import (clave_grado, efecto_nivel, mismo_salvo_grado, nivel_lexico,
-                    seniority_lexica, tiene_grado)
+                    nivel_rubrica, seniority_lexica, tiene_grado)
 
 VECINOS = 25
 MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
@@ -665,6 +665,8 @@ class BaseReferencia:
                  brecha_gen=None, padron=None):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
+        self.capa0 = None              # D-040; `construir` o `cargar` la ponen
+        self.grado_consulta = False    # D-037, apagado por defecto desde D-040
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
         # GRUPO de fusion: las grafias de un mismo puesto comparten estadisticos.
         self.m, self.W, self.emp = m, W, emp
@@ -779,7 +781,8 @@ class BaseReferencia:
     @classmethod
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
-                  genero=True, mapa_genero=None, grado=True, mapa_grado=None, scvs=None):
+                  genero=True, mapa_genero=None, grado=False, mapa_grado=None, capa0=None,
+                  scvs=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
@@ -793,9 +796,16 @@ class BaseReferencia:
         del mismo tamano: si fusionar al azar costara lo mismo, la regla de genero no
         estaria identificando oficios equivalentes.
 
-        `grado=False` apaga la cuarta pasada de D-037, que junta las grafias que solo
-        difieren en el grado (`AUXILIAR 1` / `AUXILIAR 2`). `mapa_grado` inyecta las
-        uniones, para el PLACEBO, igual que los otros dos mapas.
+        `grado=True` enciende la pasada de D-037, que junta las grafias que solo difieren
+        en el grado (`AUXILIAR 1` / `AUXILIAR 2`). APAGADA POR DEFECTO desde D-040: si el
+        grado se borra depende del criterio A (escalon salarial), y la regla nueva es la de
+        la capa 0 (opcion a, solo al final). `mapa_grado` inyecta las uniones (placebo).
+
+        `capa0` (D-040) es un `capa0.Capa0`: cada titulo se convierte en su ATOMO con
+        transformaciones de texto y los titulos con el mismo atomo van al mismo grupo. Con
+        ella el candado de fusion usa el nivel de la RUBRICA (criterio C) y la base guarda
+        la capa 0 para que la consulta aplique exactamente las mismas reglas. Combinada con
+        `umbral_fusion=None` saca la fusion por coseno (D-015) sin apagar errata ni genero.
 
         `mapa_erratas` inyecta las absorciones en vez de calcularlas —un dict grupo_raro
         -> grupo_comun—. Lo usa el PLACEBO del experimento, que absorbe los mismos grupos
@@ -838,6 +848,17 @@ class BaseReferencia:
         niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan
                         for c in celdas], dtype=float)
         n = len(celdas)
+        # D-040: con capa 0, el CANDADO de las fusiones usa el nivel de la rubrica (criterio
+        # C). `niv` sigue siendo el lexico de siempre para lambda, el vecindario y el efecto
+        # de nivel: cambiarlo moveria estadisticos medidos, y eso es otra decision.
+        if capa0 is not None:
+            capa0.preparar(celdas)
+            atomos = [capa0.atomo(c) for c in celdas]
+            niv_c = np.array([nivel_rubrica(c) if nivel_rubrica(c) else np.nan
+                              for c in celdas], dtype=float)
+        else:
+            niv_c = niv
+        fusiona = bool(umbral_fusion) or capa0 is not None
 
         # `lambda` se estima SIN fusionar, a proposito. Mide cuanto difieren dos celdas
         # por unidad de distancia semantica, y dentro de un grupo fusionado esa diferencia
@@ -871,10 +892,15 @@ class BaseReferencia:
         # escalones --un `SUPERVISOR DE CALIDAD SR` sigue siendo supervisor-- asi que
         # no entran en `RANGOS` ni mueven el nivel. Solo impiden la fusion.
         sen = np.array([seniority_lexica(c) for c in celdas])
-        grupo = (_fusionar(Z, niv, umbral_fusion, senior=sen)
+        grupo = (_fusionar(Z, niv_c, umbral_fusion, senior=sen)
                  if umbral_fusion else np.arange(n))
         brecha_gen = np.full(n, np.nan)
-        if umbral_fusion:
+        if capa0 is not None:
+            # CAPA 0 (D-040): mismo atomo, mismo grupo. Va primero entre las pasadas de
+            # texto; las de errata (D-025) y genero (D-026) siguen detras.
+            grupo, n_c0 = _fusionar_capa0(atomos, grupo)
+            print(f"capa 0 ({capa0.version}): {n_c0:,} grupos unidos por el atomo")
+        if fusiona:
             # SEGUNDA PASADA POR ERRATA. Necesita saber cuantas empresas respalda cada
             # grupo para decidir cual es el dedazo y cual el titulo comun, y eso solo se
             # sabe DESPUES de la fusion semantica. Se cuenta aqui con un groupby barato,
@@ -887,7 +913,7 @@ class BaseReferencia:
                 g0 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
                 emp_g0 = (marco.assign(_g=g0).groupby("_g")["empresa_ruc"]
                           .nunique().to_dict())
-                grupo, n_err = _fusionar_erratas(celdas, grupo, niv, emp_g0)
+                grupo, n_err = _fusionar_erratas(celdas, grupo, niv_c, emp_g0)
                 print(f"fusion por errata: {n_err:,} grupos absorbidos")
             if mapa_genero is not None:
                 antes_gen = grupo.copy()
@@ -901,7 +927,7 @@ class BaseReferencia:
                 emp_g1 = (marco.assign(_g=g1).groupby("_g")["empresa_ruc"]
                           .nunique().to_dict())
                 antes_gen = grupo.copy()
-                grupo, fem_masc = _fusionar_genero(celdas, grupo, niv, emp_g1)
+                grupo, fem_masc = _fusionar_genero(celdas, grupo, niv_c, emp_g1)
                 print(f"fusion por genero: {len(fem_masc):,} pares juntados")
                 # LA BRECHA NO DESAPARECE CON LA FUSION, SE HACE VISIBLE. Fusionar da una
                 # referencia justa, pero si el numero se limita a promediar las dos
@@ -925,7 +951,7 @@ class BaseReferencia:
                 g2 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
                 emp_g2 = (marco.assign(_g=g2).groupby("_g")["empresa_ruc"]
                           .nunique().to_dict())
-                grupo, n_gra = _fusionar_grado(celdas, grupo, niv, emp_g2)
+                grupo, n_gra = _fusionar_grado(celdas, grupo, niv_c, emp_g2)
                 print(f"fusion por grado: {n_gra:,} grupos unidos")
 
             g_por_etiqueta = dict(zip(celdas, grupo))
@@ -947,13 +973,13 @@ class BaseReferencia:
 
         # Cuantiles empiricos de los votos, sobre la columna de GRUPO cuando hay fusion:
         # las grafias de un mismo puesto son una sola celda a todos los efectos.
-        colg = col if not umbral_fusion else "_g"
+        colg = col if not fusiona else "_g"
         qs = cuantiles_de_empresa(d, colg, t2_serie, s2_serie, CUANTILES)
         qp = cuantiles_de_persona(d, colg, t2_serie, s2_serie, CUANTILES)
 
         def _expandir(serie, defecto):
             v = pd.Series(serie).reindex(
-                pd.Index(grupo) if umbral_fusion else pd.Index(celdas)).to_numpy(float)
+                pd.Index(grupo) if fusiona else pd.Index(celdas)).to_numpy(float)
             return np.where(np.isfinite(v), v, defecto)
 
         tau2_c = _expandir(t2_serie, tau2)
@@ -969,7 +995,7 @@ class BaseReferencia:
         # personas por GRUPO, no por etiqueta: las grafias de un puesto suman juntas
         pg = d.groupby(colg).size()
         personas = pd.Series(pg).reindex(
-            pd.Index(grupo) if umbral_fusion else pd.Index(celdas)
+            pd.Index(grupo) if fusiona else pd.Index(celdas)
         ).fillna(0).to_numpy(dtype=np.int64)
 
         # Padron de empresas por celda, para poder contar uniones sin duplicar.
@@ -983,7 +1009,7 @@ class BaseReferencia:
         # Banda por rubro. Las varianzas van indexadas por la clave de `colg` y salen de
         # los arrays YA expandidos: `t2_serie` no cubre las celdas que se cayeron de
         # `tau2_por_celda`, y ahi hace falta el global, no un NaN.
-        clave_et = grupo if umbral_fusion else np.array(celdas, dtype=object)
+        clave_et = grupo if fusiona else np.array(celdas, dtype=object)
         t2_cl = pd.Series(tau2_c, index=clave_et)
         s2_cl = pd.Series(sigma2_c, index=clave_et)
         t2_cl = t2_cl[~t2_cl.index.duplicated()]
@@ -993,11 +1019,14 @@ class BaseReferencia:
               f"{len(rubro[8])} rubros de {len(NIVELES_RUBRO)} niveles")
 
         ef = efecto_nivel(marco, col=col)
-        return cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
+        base = cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
                    tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel,
                    ajuste_seg, rubro, brecha_gen,
                    (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves,
                     meta_ruc, pad_ruc))
+        base.capa0 = capa0
+        base.grado_consulta = bool(grado)      # D-037: la consulta por grado, si se encendio
+        return base
 
     def empresas_de(self, i_celda: int) -> np.ndarray:
         """Con que enteros indexa el padron a las empresas que respaldan `i_celda`.
@@ -1012,6 +1041,17 @@ class BaseReferencia:
         if f is None:
             return np.zeros(0, dtype=np.int32)
         return self.pad_idx[self.pad_ptr[f]:self.pad_ptr[f + 1]]
+
+    def _por_capa0(self, titulo):
+        """La celda de la base con el mismo ATOMO que `titulo` (D-040), o None. Entre varias,
+        la de mas empresas. Es la misma funcion que agrupo la base al construirla."""
+        if getattr(self, "_idx_atomo", None) is None:
+            idx = {}
+            for i, c in enumerate(self.celdas):
+                idx.setdefault(self.capa0.atomo(c), []).append(i)
+            self._idx_atomo = idx
+        cands = self._idx_atomo.get(self.capa0.atomo(titulo), ())
+        return max(cands, key=lambda i: self.emp[i]) if cands else None
 
     def _por_grado(self, titulo):
         """La celda de la base que es `titulo` salvo el grado (D-037), o None.
@@ -1145,7 +1185,10 @@ class BaseReferencia:
             ruc_ciiu=np.array([v[0] for v in self.meta_ruc.values()], dtype=object),
             ruc_tam=np.array([v[1] for v in self.meta_ruc.values()], dtype=np.int64),
             ruc_seg=np.array([v[2] for v in self.meta_ruc.values()], dtype=object),
-            escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float))
+            escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float),
+            # D-040: la capa 0 viaja con la base, para que la consulta use sus reglas.
+            capa0_json=np.array(self.capa0.a_json() if self.capa0 is not None else ""),
+            grado_consulta=np.array(bool(self.grado_consulta)))
 
     @classmethod
     def cargar(cls, ruta, sbu):
@@ -1167,7 +1210,7 @@ class BaseReferencia:
                 rubro = (z["rub_cel"], z["rub_cod"], z["rub_m"], z["rub_W"],
                          z["rub_emp"], z["rub_per"], z["rub_bandas"],
                          z["rub_bandas_per"], list(z["rubros"]))
-            return cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
+            base = cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
                        z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
                        sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
                        opc["sigma2_c"], opc["bandas"], opc["personas"],
@@ -1190,6 +1233,14 @@ class BaseReferencia:
                                   (int(i) for i in z["pad_ruc_idx"])))
                          if "pad_ruc_lista" in z.files else {})
                         if "pad_ptr" in z.files else None))
+            # D-040: la capa 0 con que se construyo. Las bases anteriores no la traen: la
+            # consulta busca el titulo tal cual, que es el comportamiento de entonces.
+            if "capa0_json" in z.files and str(z["capa0_json"]):
+                from .capa0 import Capa0
+                base.capa0 = Capa0.de_json(str(z["capa0_json"]), base.celdas)
+            if "grado_consulta" in z.files:
+                base.grado_consulta = bool(z["grado_consulta"])
+            return base
 
     # -- consulta --------------------------------------------------------------
 
@@ -1294,12 +1345,17 @@ class BaseReferencia:
         for k, t in enumerate(unicos):
             propio = self.idx.get(t)
             cargo_base = ""
-            if propio is None:
+            if propio is None and self.capa0 is not None:
+                # D-040: el titulo del cliente pasa por la MISMA capa 0 que la base.
+                # Asi un `VENDEROR` (errata aprobada) o un `ASIST. CONTABLE` encuentran su
+                # celda en vez de caer por analogia.
+                propio = self._por_capa0(t)
+            elif propio is None and self.grado_consulta:
                 # D-037: `AUXILIAR 3 DE CONTABILIDAD` de un cliente es el mismo puesto que
                 # el `AUXILIAR 1 DE CONTABILIDAD` de la base. Misma regla que al construir.
                 propio = self._por_grado(t)
-                if propio is not None:
-                    cargo_base = self.celdas[propio]
+            if propio is not None and self.celdas[propio] != t:
+                cargo_base = self.celdas[propio]
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
             banda = banda_per = None
             directo = (propio is not None
@@ -1929,6 +1985,38 @@ def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo):
         return np.asarray(grupo), []
     nuevo = np.array([raiz(int(g)) for g in grupo], dtype=np.int64)
     return nuevo, fem_masc
+
+
+def _fusionar_capa0(atomos, grupo):
+    """Une los grupos cuyas celdas tienen el mismo ATOMO de la capa 0 (D-040).
+
+    El atomo es texto (`capa0.Capa0.atomo`): no hay candado de nivel que valga aqui, porque
+    dos titulos con el mismo atomo son el mismo titulo escrito de otra forma. Sobrevive el
+    grupo de la primera celda.
+    """
+    padre = {}
+
+    def raiz(x):
+        while padre.get(x, x) != x:
+            padre[x] = padre.get(padre[x], padre[x])
+            x = padre[x]
+        return x
+
+    primero, uniones = {}, 0
+    for i, a in enumerate(atomos):
+        if not a:
+            continue
+        gi = raiz(int(grupo[i]))
+        if a not in primero:
+            primero[a] = gi
+            continue
+        r = raiz(primero[a])
+        if r != gi:
+            padre[gi] = r
+            uniones += 1
+    if not padre:
+        return np.asarray(grupo), 0
+    return np.array([raiz(int(g)) for g in grupo], dtype=np.int64), uniones
 
 
 def _fusionar_grado(celdas, grupo, niveles, emp_por_grupo):
