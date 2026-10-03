@@ -5665,3 +5665,37 @@ construcción.
 **Límite que se declara:** la pérdida es relativa a lo que encuentran las letras. Los sinónimos sin
 letras en común (`CHOFER` / `CONDUCTOR`) no los encuentra ninguno de los dos buscadores; medirlos es
 la comparación de bi-encoders, que viene después.
+
+---
+
+## D-044 — Modelo base del bi-encoder: comparación sin entrenar, registrada antes de medir
+
+**Fecha:** 2026-10-03
+**Origen:** D-043 midió, sin corregir, que Vertex no propone entre el 47 % y el 76 % de los pares que
+la v3 juzga como el mismo cargo. Lo más probable es que el bi-encoder vaya antes del clustering. La
+auditoría humana de D-043 queda pendiente: no bloquea esto, y sus 150 pares servirán también para
+evaluar el bi-encoder.
+
+**Modelos:** `intfloat/multilingual-e5-base`, `intfloat/multilingual-e5-large`, `BAAI/bge-m3` y
+`sentence-transformers/paraphrase-multilingual-mpnet-base-v2` (licencias MIT / Apache, en local).
+**Vertex** (`text-multilingual-embedding-002`) es la referencia: no se puede afinar.
+**Uso:** el de la ficha de cada modelo (e5: prefijo `query: ` y promedio de tokens; bge-m3: CLS;
+mpnet: promedio de tokens), vectores normalizados, el título tal cual como se le dio a Vertex.
+Revisión de cada modelo fijada en el informe.
+
+**Métrica principal: recall@100.** Sobre los pares de `43_pares.csv` que la v3 dice `si` (P ≥ 0,5,
+sin candado; 27.303), la fracción que queda entre los 100 vecinos más cercanos de alguno de los dos,
+buscando sobre los 58.051 nodos de `base_v16`. Sin piso de coseno: las escalas no son comparables
+entre modelos; el piso se calibra después para el elegido. Se reportan también recall@25 y la
+versión ponderada por personas.
+**Secundaria: precisión@25.** De los 25 vecinos que propone cada modelo para los 2.000 nodos de la
+muestra de D-043, la fracción que la v3 dice `si`.
+
+**Criterio:** se elige el modelo abierto con **mayor recall@100**. Si la diferencia con el siguiente
+tiene un IC 95 % que toca el cero (bootstrap por nodo sorteado, 10.000), gana el más chico. El
+elegido se entrena después destilando la v3 aunque sin entrenar no le gane a Vertex; se reporta la
+diferencia con Vertex.
+
+**Límites:** la verdad es la v3 (en coseno bajo extrapola, hasta la auditoría de D-043); los pares
+salen de un buscador por letras, que favorece a los modelos sensibles a la ortografía, y no miden
+sinónimos sin letras en común; es la comparación sin entrenar.
