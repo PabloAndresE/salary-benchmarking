@@ -5699,3 +5699,25 @@ diferencia con Vertex.
 **Límites:** la verdad es la v3 (en coseno bajo extrapola, hasta la auditoría de D-043); los pares
 salen de un buscador por letras, que favorece a los modelos sensibles a la ortografía, y no miden
 sinónimos sin letras en común; es la comparación sin entrenar.
+
+### Resultado (2026-10-03): e5-base
+
+**Evidencia:** `44_bi_encoder_base.py`, `salidas/44_bi_encoder_base.txt`. 27.303 pares `si` de la v3
+sobre 1.985 nodos sorteados; búsqueda sobre los 58.051 nodos de `base_v16`.
+
+| modelo | recall@25 | **recall@100** | recall@100 por personas | precisión@25 |
+|---|---|---|---|---|
+| Vertex (referencia) | 59,8 % | 80,6 % | 85,9 % | 67,6 % |
+| **e5-base** (278 M) | 63,0 % | **84,8 %** | 87,7 % | 66,5 % |
+| e5-large (560 M) | 63,5 % | 84,7 % | 89,3 % | 67,3 % |
+| bge-m3 (568 M) | 61,1 % | 82,0 % | 87,5 % | 68,8 % |
+| mpnet (278 M) | 39,5 % | 58,1 % | 65,9 % | 52,1 % |
+
+- e5-base − e5-large: +0,0 % [−0,5 %, +0,5 %]: empate; **gana e5-base, el más chico (criterio).**
+- Frente a Vertex, sin entrenar: e5-base +4,2 % [+3,5 %, +4,9 %], e5-large +4,2 %, bge-m3 +1,5 %
+  [+0,7 %, +2,2 %], mpnet −22,5 %.
+- La precisión@25 es parecida en los cuatro buenos (66–69 %): ninguno propone más ruido.
+- **e5-base es el modelo base del bi-encoder**, que se afina destilando la v3. Pesos en
+  `modelos/e5-base` (revisión `d12875059715`, fuera del repo).
+- Recordatorio de los límites de D-044: la verdad es la v3, y los pares vienen de un buscador por
+  letras.

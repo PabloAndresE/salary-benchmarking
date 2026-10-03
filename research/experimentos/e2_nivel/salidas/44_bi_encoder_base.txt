@@ -1,0 +1,23 @@
+==============================================================================
+44 · MODELO BASE DEL BI-ENCODER, SIN ENTRENAR (D-044)
+==============================================================================
+nodos 58,051; pares `si` de la v3 (verdad): 27,303 de 1,985 nodos sorteados
+revisiones: e5-base d12875059715, e5-large 3d7cfbdacd47, bge-m3 5617a9f61b02, mpnet 4328cf26390c
+
+modelo      recall@25 recall@100 rec@100 pers  precision@25
+Vertex          59.8%      80.6%        85.9%         67.6%
+e5-base         63.0%      84.8%        87.7%         66.5%
+e5-large        63.5%      84.7%        89.3%         67.3%
+bge-m3          61.1%      82.0%        87.5%         68.8%
+mpnet           39.5%      58.1%        65.9%         52.1%
+
+CONTRASTES de recall@100 (IC 95 %, bootstrap por nodo sorteado, 10,000)
+   e5-base - e5-large  +0.0%  [-0.5%, +0.5%]
+   e5-base - Vertex +4.2%  [+3.5%, +4.9%]
+   e5-large - Vertex +4.2%  [+3.5%, +4.8%]
+   bge-m3 - Vertex +1.5%  [+0.7%, +2.2%]
+   mpnet - Vertex -22.5%  [-23.6%, -21.3%]
+
+>>> CRITERIO D-044: e5-base (278 M parametros). empate con IC que toca cero entre e5-base y e5-large: gana el mas chico <<<
+
+(243 s)
