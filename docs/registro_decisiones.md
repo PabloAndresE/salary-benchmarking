@@ -5625,3 +5625,43 @@ y `42_puntajes.csv`. **Exploratorio:** `prueba` y `prueba 2` ya se habían abier
 `ADYUDANTE DE BODEGA`): las celdas del mismo grupo empataban en empresas (el conteo es del grupo) y
 ganaba la primera en orden alfabético. Ahora desempata la grafía que ya es el átomo y luego la más
 corta. No cambia ningún grupo ni ningún número.
+
+---
+
+## D-043 — ¿Cuánto pierde Vertex como buscador de candidatos? Diagnóstico antes del clustering
+
+**Fecha:** 2026-10-03 (registrado ANTES de medir)
+**Origen:** el diseño del correlation clustering usa el coseno de Vertex para proponer qué pares
+juzga el cross-encoder v3. Si Vertex no propone un par que sí es el mismo cargo, la v3 nunca lo ve.
+Ese es el trabajo del bi-encoder, y esta medición decide si hace falta antes del clustering.
+
+**Por qué no sirve el oro que ya tenemos:** `calibra`, `prueba`, `prueba 2`, la plata y el lote 30 se
+muestrearon todos entre pares con coseno ≥ 0,90. Medir con ellos daría 0 % de pérdida por
+construcción.
+
+**Diseño:**
+1. **Nodos:** los grupos de `base_v16` (capa 0). Cada uno se representa por la celda que ya es su
+   átomo, o si no, la más corta. Vector: el de Vertex de ese representante.
+2. **Muestra:** 2.000 nodos, sorteados sin reposición con peso por personas (semilla fija).
+3. **Buscador independiente de Vertex:** para cada nodo de la muestra, sus 25 vecinos más parecidos
+   por TF-IDF de n-gramas de caracteres (3 letras, dentro de palabra) entre los representantes.
+4. **Juez:** la v3 (D-042), P calibrada (T = 1,243); `si` si P ≥ 0,5. Los pares que bloquea algún
+   candado (nivel de la rúbrica, seniority, número de grado) no cuentan: el clustering nunca los
+   juntaría.
+5. **Vertex lo propone** si el par está entre los 25 vecinos de Vertex de alguno de los dos y su
+   coseno es ≥ el piso. Pisos: 0,80, 0,85 y 0,90.
+6. **Pérdida** = de los pares `si` de la v3, la fracción que Vertex no propone; por pares y
+   ponderada por las personas del nodo sorteado.
+7. **Auditoría humana a ciegas:** 100 pares de los perdidos con el piso 0,90 (sorteados en
+   proporción a cuatro tramos: fuera de los 25 vecinos, coseno < 0,80, 0,80–0,85, 0,85–0,90),
+   mezclados con 50 pares que la v3 rechazó, juzgados por el autor con la rúbrica v6 sin ver al
+   modelo. La fracción de `si` por tramo corrige la pérdida de cada piso.
+
+**Criterio:**
+- se elige el **piso más alto** cuya pérdida corregida sea **menor del 5 %** de los `si`;
+- si ninguno la cumple (ni 0,80), **el bi-encoder va antes del clustering**;
+- si se cumple, el clustering usa Vertex con ese piso y el bi-encoder queda como mejora posterior.
+
+**Límite que se declara:** la pérdida es relativa a lo que encuentran las letras. Los sinónimos sin
+letras en común (`CHOFER` / `CONDUCTOR`) no los encuentra ninguno de los dos buscadores; medirlos es
+la comparación de bi-encoders, que viene después.
