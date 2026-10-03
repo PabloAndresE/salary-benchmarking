@@ -48,19 +48,23 @@ def cargar(nombre, archivo):
 def bajar(repo, corto):
     from huggingface_hub import snapshot_download
     destino = MOD / corto
-    snapshot_download(repo, local_dir=destino,
-                      allow_patterns=["*.json", "*.safetensors", "*.model", "*.txt",
-                                      "sentencepiece*", "tokenizer*"],
-                      ignore_patterns=["onnx/*", "openvino/*", "*/*"])
     from huggingface_hub import HfApi
-    return HfApi().model_info(repo).sha
+    info = HfApi().model_info(repo)
+    raiz = {x.rfilename for x in info.siblings if "/" not in x.rfilename}
+    # pesos: safetensors si los hay; si no (bge-m3), el .bin
+    pesos = ["*.safetensors"] if any(f.endswith(".safetensors") for f in raiz) else ["*.bin"]
+    snapshot_download(repo, local_dir=destino, revision=info.sha,
+                      allow_patterns=["*.json", "*.model", "*.txt", "sentencepiece*",
+                                      "tokenizer*"] + pesos,
+                      ignore_patterns=["onnx/*", "openvino/*", "*/*"])
+    return info.sha
 
 
 def embeber(ruta, textos, pooling, prefijo, dev, lote=512):
     import torch
     from transformers import AutoModel, AutoTokenizer
     tok = AutoTokenizer.from_pretrained(ruta)
-    m = AutoModel.from_pretrained(ruta, torch_dtype=torch.float16).to(dev).eval()
+    m = AutoModel.from_pretrained(ruta, dtype=torch.float16).to(dev).eval()
     out = []
     with torch.no_grad():
         for a in range(0, len(textos), lote):
