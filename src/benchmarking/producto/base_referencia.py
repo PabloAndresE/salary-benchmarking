@@ -1058,8 +1058,12 @@ class BaseReferencia:
             for i, c in enumerate(self.celdas):
                 idx.setdefault(self.capa0.atomo(c), []).append(i)
             self._idx_atomo = idx
-        cands = self._idx_atomo.get(self.capa0.atomo(titulo), ())
-        return max(cands, key=lambda i: self.emp[i]) if cands else None
+        atomo = self.capa0.atomo(titulo)
+        cands = self._idx_atomo.get(atomo, ())
+        # `emp` es del GRUPO: entre celdas del mismo grupo empata. Desempata la grafia que ya
+        # es el atomo (`AYUDANTE DE BODEGA`, no `ADYUDANTE DE BODEGA`), y luego la mas corta.
+        return max(cands, key=lambda i: (self.emp[i], self.celdas[i] == atomo,
+                                         -len(self.celdas[i]))) if cands else None
 
     def _por_grado(self, titulo):
         """La celda de la base que es `titulo` salvo el grado (D-037), o None.

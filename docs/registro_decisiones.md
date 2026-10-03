@@ -5601,3 +5601,27 @@ y `42_puntajes.csv`. **Exploratorio:** `prueba` y `prueba 2` ya se habían abier
   que sigue siendo opcional.
 - **Juez operativo:** la v3 hace lo mismo que la v2 en todo lo demás y además separa el grado, que
   es lo que dice la rúbrica v6. **Propuesta: la v3 pasa a ser el juez operativo** (decisión del autor).
+
+---
+
+## D-042 — La v3 es el juez operativo
+
+**Fecha:** 2026-10-03
+**Origen:** decisión del autor, tras la evaluación exploratoria de D-041.
+**Estado:** adoptado. Reemplaza a la v2 como juez operativo (D-039).
+
+- **El cross-encoder v3** (`22_modelos_v3/elegido`, sha `a5fb00032d8c`, T = 1,243) pasa a ser el juez
+  que se usa de aquí en adelante: el correlation clustering, el producto y los análisis nuevos.
+- **Por qué:** con la vara original empata con la v2 en `prueba` y `prueba 2`, y además separa el
+  número de grado (0 de 11 pares juntados, frente a 11 de 11 de la v2), que es lo que dice la rúbrica
+  v6. La evidencia es **exploratoria** (D-041): `prueba` y `prueba 2` ya estaban abiertos.
+- **Lo que no cambia:** H1 (v1, D-036) y H4 (v2 frente a v1, D-038) siguen siendo los resultados
+  confirmatorios, con sus jueces y su vara. La v1 y la v2 se conservan (pesos y respaldos).
+- **Pendiente opcional:** el conjunto confirmatorio de ~200 pares con grado, para decir con un
+  examen nuevo que la v3 separa el grado.
+
+**Corrección de presentación, mismo día.** Al consultar `base_v16`, el nombre de referencia
+(`cargo_base`) de un título resuelto por la capa 0 salía con errata (`AYUDANTE DE BODEGA B` →
+`ADYUDANTE DE BODEGA`): las celdas del mismo grupo empataban en empresas (el conteo es del grupo) y
+ganaba la primera en orden alfabético. Ahora desempata la grafía que ya es el átomo y luego la más
+corta. No cambia ningún grupo ni ningún número.
