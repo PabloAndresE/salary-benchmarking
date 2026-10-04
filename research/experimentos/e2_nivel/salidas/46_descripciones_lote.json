@@ -6,5 +6,8 @@
   "semilla": 20261004,
   "preparado": "2026-10-04T03:10:21",
   "entrada_sha256_12": "51e92db82888",
-  "tokens_entrada_aprox": 9079474
+  "tokens_entrada_aprox": 9079474,
+  "lote": "batches/f4w1w1oms6obhilxgk5033uzsyv3kxhh1ees",
+  "archivo_entrada": "files/b2dyvbofna09",
+  "enviado": "2026-10-04T17:14:47"
 }

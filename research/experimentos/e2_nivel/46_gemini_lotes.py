@@ -145,7 +145,8 @@ def enviar(tipo):
 
 def estado(tipo):
     man = json.loads(rutas(tipo)[1].read_text(encoding="utf-8"))
-    lote = cliente().batches.get(name=man["lote"])
+    cli = cliente()          # guardado: si el cliente es temporal, se cierra antes de llamar
+    lote = cli.batches.get(name=man["lote"])
     print("{}  estado: {}".format(lote.name, lote.state))
     if getattr(lote, "batch_stats", None):
         print(lote.batch_stats)
