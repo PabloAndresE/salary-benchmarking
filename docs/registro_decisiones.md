@@ -5721,3 +5721,76 @@ sobre 1.985 nodos sorteados; búsqueda sobre los 58.051 nodos de `base_v16`.
   `modelos/e5-base` (revisión `d12875059715`, fuera del repo).
 - Recordatorio de los límites de D-044: la verdad es la v3, y los pares vienen de un buscador por
   letras.
+
+---
+
+## D-045 — El bi-encoder: e5-base afinado reemplaza a Vertex + adaptador. Criterios de entrenamiento
+
+**Fecha:** 2026-10-04 (registrado ANTES de generar datos y de entrenar)
+**Origen:** decisión del autor tras D-044.
+
+### 1. Cambio de decisión
+
+La capa A (recuperar candidatos) **deja de ser Vertex con un adaptador** (D-036; el inventario de
+arquitectura ponía los embeddings de Vertex como su punto de partida) y **pasa a ser e5-base afinado,
+en local**. Razones: sin entrenar ya propone más pares buenos que Vertex (+4,2 de recall@100, D-044);
+se puede afinar entero; **nos libera del riesgo de que Google retire `text-multilingual-embedding-002`**
+(habría que volver a embeber todo, y un adaptador entrenado sobre ella se perdería); sin costo por
+consulta. Vertex queda como línea base. **En la base del producto**, Vertex también da λ, los vecinos
+de la analogía y el efecto de nivel: pasar eso a e5 se mide aparte, con pinball y placebo, antes de
+cambiarlo.
+
+### 2. Antes de entrenar: auditoría de los positivos lejanos (parte de D-043)
+
+La calibración de la v3 se hizo con pares de coseno ≥ 0,90; un P ≥ 0,9 lejos de ahí no garantiza
+nada (en D-043 dijo `si` al 43 % de los pares con coseno < 0,70).
+- **Muestra:** 100 pares de `43_pares.csv` con coseno < 0,85, P ≥ 0,9 y sin candado, al azar (hay
+  6.297; se excluyen los 38 que ya están en la auditoría de D-043), mezclados con 30 de coseno < 0,85
+  y P ≤ 0,2. A ciegas, con la rúbrica v6.
+- **Regla:** si el autor dice `si` en el **80 % o más** de los 100 de P ≥ 0,9, los positivos lejanos
+  (coseno < 0,85) entran con P ≥ 0,9. **Si no, entran solo los que el autor revise.**
+- Los juicios cuentan también para la auditoría de D-043 en los tramos que correspondan.
+- Límite: la muestra sale de pares por letras (D-043), no de las fuentes de Gemini; se reporta por
+  tramo de coseno.
+
+### 3. Pares de entrenamiento (la v3 pone las etiquetas)
+
+**Positivos** (P ≥ 0,8 y sin candado si coseno ≥ 0,85; los lejanos, según la regla del §2):
+a) los 100 vecinos de e5, de Vertex y de TF-IDF; b) **propuestas de Gemini**: para ~5.000 nodos
+sorteados con peso por personas, hasta 20 títulos que sean el mismo cargo, buscados en la base con la
+capa 0; c) **descripciones (A0)**: una descripción corta por nodo (58.051), embebida con e5, y sus 50
+vecinos; d) **pares lejanos**: una muestra del rango 100 a 1.000 de e5 y de Vertex. Se reporta cuántos
+positivos aporta cada fuente.
+**Negativos:** difíciles (P ≤ 0,2 en esas fuentes, y los pares bloqueados por un candado de nivel,
+seniority o grado) y al azar (dentro del lote).
+**Gemini:** aprobado, **en modo batch**, con la disciplina de D-035 (versión fija, temperatura 0,
+caché, hash de la instrucción). **Antes de usar las descripciones, el autor revisa 30 al azar** para
+ver que no salgan genéricas.
+
+### 4. Separación por componentes conectados
+
+Grafo con todos los nodos y una arista por cada par puntuado que la v3 une (P ≥ 0,5); las componentes
+conectadas se reparten **80 / 20** con semilla fija. Un par entra solo si sus dos nodos están del
+mismo lado. Si la componente mayor supera el **10 %** de los nodos, se repite con aristas P ≥ 0,8 y
+luego P ≥ 0,9, y se reporta cuál se usó. **Los cinco casos conocidos van forzados a evaluación**. La
+época se elige con una validación sacada de las componentes de entrenamiento.
+**Los lotes no llevan dos pares de la misma componente**, para que los negativos dentro del lote no
+sean variantes del mismo cargo.
+
+### 5. Evaluación (componentes de evaluación)
+
+- **Principal:** recall@100 de los pares `si` de la v3, buscando sobre los 58.051 nodos; IC 95 % por
+  bootstrap de componentes (10.000).
+- **Se adopta si:** (i) e5 afinado − e5 sin entrenar tiene el IC entero sobre cero, y (ii) **no queda
+  por debajo de Vertex: el límite inferior del IC de e5 afinado − Vertex no baja de −1 punto.**
+- **Secundaria:** precisión@25.
+- **Los casos conocidos, antes y después:** rango del grupo del otro título entre los vecinos, con
+  Vertex, e5 sin entrenar y e5 afinado: `CHOFER` / `CONDUCTOR`, `VENDEDOR` / `ASESOR COMERCIAL`,
+  `MENSAJERO` / `MOTORIZADO`, `GUARDIA` / `AGENTE DE SEGURIDAD`, `JEFE DE TALENTO HUMANO` / `JEFE DE
+  RECURSOS HUMANOS` (con Vertex: 1.601, 2.076, 11.131, 122 y 46; Enmienda 1 de D-036). Descriptivo:
+  son pocos para un criterio, pero se reportan siempre.
+
+### 6. Entrenamiento
+
+Pérdida contrastiva con negativos dentro del lote más los difíciles (MultipleNegativesRanking); lote
+256, lr 2e-5, hasta 3 épocas, 3 semillas; repo limpio; pesos respaldados.
