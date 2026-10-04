@@ -1,0 +1,10 @@
+{
+  "tipo": "propuestas",
+  "modelo": "gemini-3.8-flash",
+  "instruccion_sha": "958d7e771453",
+  "n": 5000,
+  "semilla": 20261004,
+  "preparado": "2026-10-04T03:10:24",
+  "entrada_sha256_12": "a0acdf0b5632",
+  "tokens_entrada_aprox": 759643
+}

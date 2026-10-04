@@ -1,6 +1,7 @@
 # Entornos virtuales
 .venv/
 .venv-texto/
+.venv-gemini/
 venv/
 env/
 

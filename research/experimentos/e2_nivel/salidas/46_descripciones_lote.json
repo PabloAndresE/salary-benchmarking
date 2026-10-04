@@ -1,0 +1,10 @@
+{
+  "tipo": "descripciones",
+  "modelo": "gemini-3.8-flash",
+  "instruccion_sha": "ddd78a247cdb",
+  "n": 58051,
+  "semilla": 20261004,
+  "preparado": "2026-10-04T03:10:21",
+  "entrada_sha256_12": "51e92db82888",
+  "tokens_entrada_aprox": 9079474
+}
