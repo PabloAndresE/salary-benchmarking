@@ -78,3 +78,4 @@ modelos/
 research/experimentos/e2_nivel/salidas/22_modelos/
 research/experimentos/e2_nivel/salidas/22_modelos_v2/
 research/experimentos/e2_nivel/salidas/22_modelos_v3/
+research/experimentos/e2_nivel/salidas/*.jsonl
