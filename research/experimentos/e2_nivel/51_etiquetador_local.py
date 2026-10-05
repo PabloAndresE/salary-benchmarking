@@ -35,10 +35,12 @@ SAL = AQUI / "salidas"
 RUBRICA = AQUI / "rubrica_mismo_cargo_v6.md"
 # los tres de la primera idea (Qwen3-235B, Qwen3-32B, Qwen2.5-72B) se cambiaron por una generacion
 # mas nueva y mas chica: la red del servidor estaba a 0,5 MB/s (2026-10-05)
-MODELOS = ("qwen35-35b-a3b-fp8", "gemma4-26b-a4b", "qwen35-122b-a10b-fp8", "glm-5.3-flash")
+MODELOS = ("qwen35-35b-a3b-fp8", "gemma4-26b-a4b", "qwen35-122b-a10b-fp8", "glm-5.3-flash",
+           "glm-5.3-flash-razona")
 # GLM-5.3-Flash lo sirve la Universidad en el propio H200 (API compatible con OpenAI, sin clave);
 # se usa con 8 peticiones a la vez como maximo: es un recurso compartido
-API = {"glm-5.3-flash": ("http://172.28.230.10:12559/v1/chat/completions", "zai-org/GLM-5.3-Flash")}
+API = {"glm-5.3-flash": ("http://172.28.230.10:12559/v1/chat/completions", "zai-org/GLM-5.3-Flash", False),
+       "glm-5.3-flash-razona": ("http://172.28.230.10:12559/v1/chat/completions", "zai-org/GLM-5.3-Flash", True)}
 CONCURRENCIA = 8
 UMBRAL_LEJOS, KAPPA_CERCA = 0.85, 0.79
 
@@ -83,19 +85,19 @@ def conjuntos():
     return d
 
 
-def pedir_api(url, nombre, sis, a, b, intentos=5):
+def pedir_api(url, nombre, sis, a, b, pensar=False, intentos=5):
     import urllib.request
-    cuerpo = {"model": nombre, "temperature": 0, "max_tokens": 300, "seed": 20261005,
+    cuerpo = {"model": nombre, "temperature": 0, "max_tokens": 4000 if pensar else 300, "seed": 20261005,
               "messages": [{"role": "system", "content": sis},
                            {"role": "user", "content": "A: {}\nB: {}".format(a, b)}],
               "response_format": {"type": "json_schema",
                                   "json_schema": {"name": "veredicto", "schema": ESQUEMA}},
-              "chat_template_kwargs": {"enable_thinking": False}}
+              "chat_template_kwargs": {"enable_thinking": pensar}}
     for k in range(intentos):
         try:
             r = urllib.request.Request(url, data=json.dumps(cuerpo).encode(),
                                        headers={"Content-Type": "application/json"})
-            return json.load(urllib.request.urlopen(r, timeout=180))["choices"][0]["message"]["content"]
+            return json.load(urllib.request.urlopen(r, timeout=600))["choices"][0]["message"]["content"]
         except Exception as e:                       # noqa: BLE001 - se reintenta y se registra
             err = repr(e)
             time.sleep(2 * (k + 1))
@@ -104,9 +106,9 @@ def pedir_api(url, nombre, sis, a, b, intentos=5):
 
 def correr_api(modelo, filas, sis):
     from concurrent.futures import ThreadPoolExecutor
-    url, nombre = API[modelo]
+    url, nombre, pensar = API[modelo]
     with ThreadPoolExecutor(CONCURRENCIA) as ex:
-        return list(ex.map(lambda f: pedir_api(url, nombre, sis, f[2], f[3]), filas))
+        return list(ex.map(lambda f: pedir_api(url, nombre, sis, f[2], f[3], pensar), filas))
 
 
 def correr(modelo, tp):

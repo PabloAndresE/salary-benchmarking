@@ -1,0 +1,9 @@
+51 · ETIQUETADOR LOCAL CON LA RUBRICA v6, contra juicios del autor
+lejos = auditoria D-045 (130 pares, coseno < 0,85); cerca = calibra v6 (187)
+modelo           coherencia  acierto lejos    kappa lejos acierto cerca  kappa cerca
+qwen35-35b-a3b-fp8 (sin correr)
+gemma4-26b-a4b   (sin correr)
+qwen35-122b-a10b-fp8 (sin correr)
+glm-5.3-flash         93.1%          79.2%           0.68        92.5%         0.94
+
+>>> CRITERIO: ningun modelo cumple (acierto lejos >= 85 % y kappa cerca >= 0,79) <<<
