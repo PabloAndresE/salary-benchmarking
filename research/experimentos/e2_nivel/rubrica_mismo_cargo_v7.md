@@ -3,9 +3,11 @@
 La siguen igual quien juzga a mano y el LLM. Si las dos partes aplican reglas distintas, el
 acuerdo entre ellas no mide nada.
 
-**Versión 6 — 2026-10-02.** Sustituida por la v7 (2026-10-05). Es la v5 con un solo cambio, el
-grado (paso 1): **el número de grado separa; la letra no** (D-041). Los pasos 2 a 5 son los de
-la v5. La v3, con la que Gemini etiquetó la plata, sigue congelada en
+**Versión 7 — 2026-10-05.** La vigente para juzgar a mano. Es la v6 con seis aclaraciones,
+decididas por el autor al revisar los pares lejanos en que un LLM y él no coincidían (D-047):
+títulos que no nombran un puesto, palabras cortadas, palabras de puesto fuera de la tabla (paso
+2), la acotación que lleva a otro oficio, la sección frente al vehículo o la especialidad (paso
+4), y ser un puesto frente a apoyarlo (paso 5). La v3, con la que Gemini etiquetó la plata, sigue congelada en
 `rubrica_mismo_cargo.md`. Todo lo que va antes de «Historial» es la rúbrica.
 
 ---
@@ -33,6 +35,19 @@ puesto que el otro título.
 
 Si lo que va tras `/` no es un puesto sino una función más (`SUPERVISOR DE EMPAQUE /
 DESPACHO`), no es un título doble: es una función añadida (paso 4).
+
+## Antes de empezar: títulos que no nombran un puesto, y palabras cortadas
+
+**Si uno de los dos títulos no nombra ningún puesto** —solo un área, un proceso, un producto o
+una marca—, no se sabe qué hace esa persona: `no`. `PRODUCCION` ≠ `JEFE DE PRODUCCION`,
+`CARTERA` ≠ `ANALISTA DE CARTERA`, `SEMILLAS` ≠ `OPERARIO DE SEMILLAS`, `SENIOR 2` ≠
+`CONTADOR SENIOR`.
+
+**Una palabra cortada** se juzga reconstruida si la reconstrucción es segura:
+`TECNICO DE REFRIGER` = `TECNICO DE REFRIGERACION`, `ASIST. ADMINIST` = `ASISTENTE
+ADMINISTRATIVO`. **Si no se puede reconstruir con seguridad, `no`**: `ASISTENTE DE` ≠
+`ASISTENTE DE BODEGA` (no se sabe asistente de qué), `INSPECTOR DE CAL` ≠ `INSPECTOR DE CALDERAS` (puede
+ser calidad).
 
 ## Cómo decidir: cinco pasos, en orden
 
@@ -128,6 +143,11 @@ línea, no un directivo.
   tiene, o ninguno, sigue a los pasos siguientes. Las palabras que no están en la tabla
   (`PROGRAMADOR`, `INGENIERO`, `PROFESOR`, `CHOFER`, `VENDEDOR`, `GESTOR`, `LIDER`, …) no
   marcan nivel.
+- **Entre palabras de puesto distintas, solo separa la tabla.** Si las dos están en la tabla en
+  el mismo nivel, o una no está en la tabla, el nivel no separa, y la función se juzga en el
+  paso 4: `TECNICO DE LABORATORIO` = `INGENIERO DE LABORATORIO`, `LIDER DE CUADRILLA` = `JEFE
+  DE CUADRILLA`, `OBRERO DE EMPAQUE` = `OPERADOR DE EMPAQUE`, `AGENTE DE DESPACHO` =
+  `OPERADOR DE DESPACHO`.
 
 **Distinto nivel → `no`.** `ASISTENTE DE SERVICIO AL CLIENTE` = `ASESOR DE SERVICIO AL
 CLIENTE` (los dos nivel 1), pero `EJECUTIVO DE CUENTAS` ≠ `JEFE DE CUENTAS`,
@@ -171,9 +191,11 @@ se aplica con amplitud: separa poco.
   Y SERVICIO AL CLIENTE`, `JEFE DE ALMACEN` = `JEFE ALMACENAMIENTO Y DESPACHO`, `JEFE DE
   MONTAJE` = `JEFE DE MONTAJE Y SOLDADURA`, `TECNICO DE REFRIGERACION` = `TECNICO DE
   REFRIGERACION Y ELECTRICIDAD`.
-- **Especificar o acotar la misma función no separa.** `ANALISTA DE COMPRAS` = `ANALISTA
-  DE COMPRAS NACIONALES E IMPORTACIONES`, `ANALISTA DE BASE DE DATOS` = `ANALISTA DE BASE
-  DE DATOS Y APLICACIONES`.
+- **Especificar o acotar la misma función no separa**, mientras siga siendo el mismo oficio.
+  `ANALISTA DE COMPRAS` = `ANALISTA DE COMPRAS NACIONALES E IMPORTACIONES`, `ANALISTA DE BASE
+  DE DATOS` = `ANALISTA DE BASE DE DATOS Y APLICACIONES`, `INGENIERO` = `INGENIERO DE FIBRA OPTICA`.
+- **La sección de la planta o del local no separa**: `OPERARIO SECCION PANADERIA` =
+  `OPERARIO SECCION LACTEOS`.
 - **La misma tarea sobre otro objeto no separa.** `ASISTENTE DE DOCUMENTACION EXPORT JR.`
   = `ASISTENTE DE DOCUMENTACION IMPORT JR.`
 - **Nombres distintos para la misma tarea o la misma área → `si`.** `PROGRAMADOR DE
@@ -190,7 +212,14 @@ Solo separa, → `no`:
   ELECTRONICO`, `JEFE DE PRODUCTO` ≠ `JEFE DE PRODUCCION`. Se juzga por lo que significan,
   no por cuánto se parecen.
 - **Especialidades con mercados claramente distintos**: `INGENIERO BACK-END SENIOR` ≠
-  `INGENIERO FRONT-END SENIOR`.
+  `INGENIERO FRONT-END SENIOR`, `CONSULTOR TECNICO` ≠ `CONSULTOR DE EXPERIENCIA DEL CLIENTE`.
+- **Una acotación que lleva a otro oficio u otro sector**: `PELADOR` ≠ `PELADOR DE CAMARON`,
+  `CONTROLADOR DE OPERACIONES` ≠ `CONTROLADOR DE OPERACIONES AEREAS`, `AYUDANTE DE LABORATORIO`
+  ≠ `AYUDANTE DE LABORATORIO DE VACUNAS`.
+- **Una palabra genérica que es ambigua entre oficios**: `MAESTRO` ≠ `MAESTRO MAYOR` (profesor o
+  jefe de obra), `OPERADOR` ≠ `OPERADOR TURISTICO`.
+- **Otro tipo de vehículo, de equipo o de licencia**: `CHOFER DE VEHICULO LIVIANO` ≠ `CHOFER DE
+  VEHICULO PESADO`, `OPERADOR DE MONTACARGAS` ≠ `CONDUCTOR DE TRACTOCAMION`.
 
 **En la duda** entre dos títulos que comparten la función principal: `si`.
 
@@ -200,6 +229,10 @@ Si uno de los títulos es `ASISTENTE`, `AUXILIAR`, `AYUDANTE` o `SECRETARIA` **d
 mando** —una palabra de nivel 3 o más: `SUPERVISOR`, `COORDINADOR`, `JEFE`, `GERENTE`,
 `DIRECTOR`…— y el otro apoya a un área, son puestos distintos → `no`.
 `ASISTENTE DE PRODUCCION` ≠ `ASISTENTE DEL SUPERVISOR DE PRODUCCION`.
+
+**Ser un puesto y apoyar a ese puesto son puestos distintos**, sea o no un mando: `PROFESOR
+DE MATEMATICAS` ≠ `ASISTENTE DE PROFESOR`, `ENFERMERO` ≠ `AUXILIAR DE ENFERMERO`, `SOLDADOR` ≠
+`AYUDANTE DE SOLDADOR`.
 
 No separa:
 - **Si lo apoyado no es un mando** (`TECNICO`, `OPERADOR`, `ADMINISTRADOR`, `CONTROLLER`):
@@ -221,6 +254,20 @@ No separa:
 ---
 
 ## Historial
+
+### v7 (2026-10-05): seis aclaraciones, tras los pares lejanos (D-047)
+
+Decisiones del autor al revisar los pares de la auditoría de D-045 §2 en que GLM-5.3-Flash
+(etiquetador candidato) y el autor no coincidían. Los ejemplos nuevos son inventados (no salen de
+esa auditoría, que valida al etiquetador).
+
+- **Antes de empezar:** un título que no nombra un puesto (área, proceso, producto o marca) → `no`.
+  Una palabra cortada se reconstruye solo si es seguro; si no → `no`.
+- **Paso 2:** entre palabras de puesto distintas, solo separa la tabla de niveles.
+- **Paso 4:** la acotación no separa dentro del mismo oficio, pero sí cuando lleva a otro oficio o
+  sector, o cuando la palabra genérica es ambigua entre oficios; la sección no separa; el tipo de
+  vehículo, equipo o licencia y la especialidad profesional sí separan.
+- **Paso 5:** ser un puesto y apoyar a ese puesto son puestos distintos, sea o no un mando.
 
 ### v6 (2026-10-02): el número de grado separa, la letra no
 
@@ -257,6 +304,6 @@ casi solo en el paso 4, y ahí el oro no era del todo consistente (en `calibra`,
 Los pasos 1, 2 y 5 no cambian. Los ejemplos nuevos son inventados y no coinciden con ningún
 título de `13e` ni de `20` (comprobado por búsqueda).
 
-La v5 está en `rubrica_mismo_cargo_v5.md`; la v4 (el grado), en `rubrica_mismo_cargo_v4.md`;
+La v6 está en `rubrica_mismo_cargo_v6.md`; la v5, en `rubrica_mismo_cargo_v5.md`; la v4 (el grado), en `rubrica_mismo_cargo_v4.md`;
 la historia anterior, en
 `rubrica_mismo_cargo.md`.

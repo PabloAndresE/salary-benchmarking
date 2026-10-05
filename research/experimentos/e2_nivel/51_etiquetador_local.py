@@ -32,7 +32,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 AQUI = pathlib.Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 SAL = AQUI / "salidas"
-RUBRICA = AQUI / "rubrica_mismo_cargo_v6.md"
+RUBRICA = AQUI / "rubrica_mismo_cargo_v7.md"     # v7 desde 2026-10-05 (D-047); la v6 dio 51_<m>.csv
+SUF = "_v7"
 # los tres de la primera idea (Qwen3-235B, Qwen3-32B, Qwen2.5-72B) se cambiaron por una generacion
 # mas nueva y mas chica: la red del servidor estaba a 0,5 MB/s (2026-10-05)
 MODELOS = ("qwen35-35b-a3b-fp8", "gemma4-26b-a4b", "qwen35-122b-a10b-fp8", "glm-5.3-flash",
@@ -149,7 +150,7 @@ def guardar(modelo, filas, textos, sha, seg):
             out.append((i, o, a, b, "", "", "", str(txt)[:200]))
     r = pd.DataFrame(out, columns=["id", "orden", "a", "b", "mismo", "paso", "razon", "error"])
     r["modelo"], r["rubrica_sha"] = modelo, sha
-    r.to_csv(SAL / "51_{}.csv".format(modelo), index=False, encoding="utf-8")
+    r.to_csv(SAL / "51_{}{}.csv".format(modelo, SUF), index=False, encoding="utf-8")
     print("{}: {} respuestas en {:.0f} s ({:.1f} por segundo); errores {}".format(
         modelo, len(r), seg, len(r) / seg, int((r["error"] != "").sum())))
 
@@ -162,13 +163,13 @@ def kappa(y, p):
 
 def resumen():
     d = conjuntos()
-    out = ["51 · ETIQUETADOR LOCAL CON LA RUBRICA v6, contra juicios del autor",
+    out = ["51 · ETIQUETADOR CON LA RUBRICA v7, contra juicios del autor (corregidos a la v7)",
            "lejos = auditoria D-045 (130 pares, coseno < 0,85); cerca = calibra v6 (187)",
            "{:<16} {:>10} {:>14} {:>14} {:>12} {:>12}".format(
                "modelo", "coherencia", "acierto lejos", "kappa lejos", "acierto cerca", "kappa cerca")]
     mejores = []
     for m in MODELOS:
-        f = SAL / "51_{}.csv".format(m)
+        f = SAL / "51_{}{}.csv".format(m, SUF)
         if not f.exists():
             out.append("{:<16} (sin correr)".format(m))
             continue
@@ -190,7 +191,7 @@ def resumen():
     out.append("\n>>> CRITERIO: {} <<<".format(
         "se usa {} (acierto lejos {:.1%})".format(max(mejores)[1], max(mejores)[0]) if mejores
         else "ningun modelo cumple (acierto lejos >= 85 % y kappa cerca >= 0,79)"))
-    (SAL / "51_etiquetador_local.txt").write_text("\n".join(out) + "\n", encoding="utf-8")
+    (SAL / "51_etiquetador_local{}.txt".format(SUF)).write_text("\n".join(out) + "\n", encoding="utf-8")
     print("\n".join(out))
 
 
