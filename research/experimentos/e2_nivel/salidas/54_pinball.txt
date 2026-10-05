@@ -1,4 +1,6 @@
 54 · PINBALL DE LA BANDA, empresas apartadas (protocolo de D-025 / D-031)
 votos emparejados: 35,223; empresas: 1,343
+   clusters_50_clusters_confiable_cargos    pinball medio 0.13473   cobertura directa 58.42%   frente a v15 +0.00004 [-0.00041, +0.00051] no se distingue
+   placebo_50_clusters_confiable_cargos     pinball medio 0.14101   cobertura directa 56.38%   frente a v15 +0.00303 [+0.00218, +0.00386] EMPEORA
    v15                                      pinball medio 0.13513   cobertura directa 54.33%
-   v16                                      pinball medio 0.13520   cobertura directa 53.92%   frente a v15 +0.00016 [-0.00026, +0.00059] no se distingue
+   v16                                      pinball medio 0.13520   cobertura directa 53.92%   frente a v15 +0.00016 [-0.00022, +0.00062] no se distingue
