@@ -5854,3 +5854,41 @@ grandes (14.634 nodos), forzadas a evaluación; el reparto queda en nodos **eval
 entrena 21.763, valida 9.090**, no 80 / 20. Aristas P ≥ 0,9 cortadas: 9,0 %; nodos de evaluación con
 un vecino P ≥ 0,9 en entrenamiento: 37,2 % (el control de fuga se mide sobre el 62,8 % restante).
 Positivos de entrenamiento (P ≥ 0,8 cerca, ≥ 0,9 lejos): 210.360 en 366 comunidades.
+
+---
+
+## D-046 — Correlation clustering con la v3 sobre `base_v16` (capa C de D-036). Registrado antes de medir
+
+**Fecha:** 2026-10-05
+**Origen:** la fusión por coseno salió de la capa 0 (criterio B de D-040); las uniones por significado
+le tocan al juez (v3, D-042) y al clustering. Decisiones del autor.
+
+**Antecedentes del buscador (exploratorio, sin registro previo por decisión del autor):** la
+evaluación registrada de D-045 dio «no se adopta», pero su verdad estaba sesgada: incluía los vecinos
+de e5 y de Vertex, que aciertan ~100 % de lo que ellos mismos propusieron. Con la verdad corregida
+(solo pares por letras o de Gemini) y lotes al azar con máscara de positivos conocidos, el e5
+afinado **B** (lr 1e-5, una época; `48_bi_encoder_B3/semilla_1`) da recall@100 65,8 % frente a 61,6 %
+(e5 sin entrenar) y 57,3 % (Vertex), precisión@25 86 % frente a 68 %, estable en 3 semillas
+(validación 0,658 / 0,656 / 0,653). `49_evaluar_bi_encoder.txt`. Gemini propone solo para los 5.000
+grupos sorteados (75 % de las personas); el autor decidió no pagar el resto (~$10 para 3.824 grupos
+con ≥ 3 empresas): **límite declarado**.
+
+**Diseño:**
+1. **Nodos:** los 58.051 grupos de la capa 0 de `base_v16`, cada uno con su representante (la celda que
+   ya es su átomo, o la más corta). Lo que juntó la capa 0 no se separa.
+2. **Candidatos:** la unión de los 100 vecinos de B, los 50 vecinos por descripción (e5 sobre la
+   descripción de Gemini) y las propuestas de Gemini. Los pares ya puntuados en `47` se reutilizan.
+3. **Peso:** log-odds de la P calibrada de la v3 (T = 1,243).
+4. **Candados:** nivel de la rúbrica, seniority (D-033) y número de grado (D-041), por cluster: dos
+   clusters con valores conocidos distintos no se juntan.
+5. **Unión voraz,** de la arista más segura a la menos: dos clusters se juntan si (a) la suma de los
+   log-odds entre todos sus miembros es positiva (la v3 puntúa los pares que falten), (b) **ningún par
+   entre ellos tiene P < 0,1**, (c) ningún candado lo impide y (d) el cluster no pasa de 60 grupos.
+
+**Criterios de adopción** (para que `base_v17` reemplace a la v15):
+- **a. Auditoría ciega:** 100 pares de representantes que el clustering juntó (de grupos distintos),
+  mezclados con 100 candidatos que no juntó; rúbrica v6. **Se exige ≥ 90 % de `si` en los juntados.**
+- **b. Utilidad:** pinball en q = 0,25 y 0,75, empresas apartadas, contraste pareado por empresa
+  (protocolo de D-025 / D-031), `base_v17` frente a `base_v15`: el IC no queda entero sobre cero, **y**
+  el placebo (las mismas uniones hacia destinos al azar del mismo tamaño) sí empeora.
+- **c. Descriptivo:** el informe de `41` (grupos, quién cambia, bandas).
