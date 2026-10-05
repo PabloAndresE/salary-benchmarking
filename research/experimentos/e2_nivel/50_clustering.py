@@ -37,7 +37,10 @@ V3 = SAL / "22_modelos_v3" / "elegido"
 K_B, K_DESC, TOPE = 100, 50, 60
 # P minimo de TODOS los pares entre dos clusters: 0,1 en la primera corrida (regla de D-046 §5, con
 # la suma de log-odds); 0,5 = enlace completo (enmienda a D-046), sin la suma (queda implicita)
-P_MIN = {"suma": 0.1, "completo": 0.5}
+P_MIN = {"suma": 0.1, "completo": 0.5, "confiable": 0.5}
+# "confiable" (enmienda a D-046 tras D-047): ademas, TODOS los pares entre los dos clusters con coseno
+# de Vertex >= 0,90, la poblacion en que la v3 se entreno y se evaluo
+COS_CONFIABLE = 0.90
 CAND = SAL / "50_candidatos.parquet"
 
 
@@ -147,7 +150,7 @@ def es_cargo(n):
 def agrupar(de, regla="completo", solo_cargos=False):
     p_min = P_MIN[regla]
     sufijo = "" if regla == "suma" else "_" + regla
-    _, tit, _, _, _, _ = cargar("e47", "47_pares_bi_encoder.py").nodos_y_capa0()
+    _, tit, Zv, _, _, _ = cargar("e47", "47_pares_bi_encoder.py").nodos_y_capa0()
     n = len(tit)
     d = pd.read_parquet(CAND)
     p = pd.concat([pd.read_parquet(SAL / "50_puntajes_{}de{}.parquet".format(k, de)) for k in range(de)])
@@ -169,6 +172,9 @@ def agrupar(de, regla="completo", solo_cargos=False):
     c_sen = {k: {sen[k]} for k in range(n)}
     c_gra = {k: gra[k] for k in range(n)}
     aristas = d[(d["P"] >= 0.5) & ~d["bloqueado"]].sort_values("P", ascending=False)
+    if regla == "confiable":
+        cv = np.einsum("ij,ij->i", Zv[aristas["i"].to_numpy()], Zv[aristas["j"].to_numpy()])
+        aristas = aristas[cv >= COS_CONFIABLE]
     if solo_cargos:
         ok = es_cargo(n)
         aristas = aristas[ok[aristas["i"].to_numpy()] & ok[aristas["j"].to_numpy()]]
@@ -191,6 +197,9 @@ def agrupar(de, regla="completo", solo_cargos=False):
         mA, mB = miembros[A], miembros[Bc]
         if len(mA) + len(mB) > TOPE:
             motivo["tope"] += 1
+            continue
+        if regla == "confiable" and float((Zv[mA] @ Zv[mB].T).min()) < COS_CONFIABLE:
+            motivo["par con coseno < 0,90"] = motivo.get("par con coseno < 0,90", 0) + 1
             continue
         pares = [(min(x, y), max(x, y)) for x in mA for y in mB]
         # atajo sin cambiar la regla: si un par YA puntuado tiene P < 0,1, la union esta rechazada
