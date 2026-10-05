@@ -1,0 +1,16 @@
+48 · BI-ENCODER e5-base DESTILADO DE LA v3 (D-045)
+commit 1bca74a sin commitear False
+positivos (entrena) 210,360 en 366 comunidades; anclas con negativo dificil 21,331; pares `si` de valida 237,455
+semilla 1: recall@100 valida sin entrenar 0.5334; 821 pasos por epoca
+   semilla 1 epoca 1: perdida 0.5857  recall@100 valida 0.4605  (72 s)
+   semilla 1 epoca 2: perdida 0.2331  recall@100 valida 0.4625  (74 s)
+   semilla 1 epoca 3: perdida 0.2187  recall@100 valida 0.4665  (72 s)
+semilla 2: recall@100 valida sin entrenar 0.5334; 821 pasos por epoca
+   semilla 2 epoca 1: perdida 0.5858  recall@100 valida 0.4531  (75 s)
+   semilla 2 epoca 2: perdida 0.2328  recall@100 valida 0.4608  (74 s)
+   semilla 2 epoca 3: perdida 0.2187  recall@100 valida 0.4600  (74 s)
+semilla 3: recall@100 valida sin entrenar 0.5334; 821 pasos por epoca
+   semilla 3 epoca 1: perdida 0.5858  recall@100 valida 0.4538  (74 s)
+   semilla 3 epoca 2: perdida 0.2322  recall@100 valida 0.4823  (76 s)
+   semilla 3 epoca 3: perdida 0.2196  recall@100 valida 0.4693  (76 s)
+ELEGIDA: semilla 3 (recall@100 valida 0.4823)

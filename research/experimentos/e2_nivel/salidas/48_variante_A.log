@@ -1,0 +1,9 @@
+variante 'A': lotes azar, lr 2e-05, epocas 3
+48 · BI-ENCODER e5-base DESTILADO DE LA v3 (D-045)
+commit c633c7d sin commitear True
+positivos (entrena) 210,360 en 366 comunidades; anclas con negativo dificil 21,331; pares `si` de valida 98,058
+semilla 1: recall@100 valida sin entrenar 0.6188; 821 pasos por epoca
+   semilla 1 epoca 1: perdida 1.5705  recall@100 valida 0.6565  (102 s)
+   semilla 1 epoca 2: perdida 1.0639  recall@100 valida 0.6496  (100 s)
+   semilla 1 epoca 3: perdida 1.0005  recall@100 valida 0.6513  (97 s)
+ELEGIDA: semilla 1 (recall@100 valida 0.6565)

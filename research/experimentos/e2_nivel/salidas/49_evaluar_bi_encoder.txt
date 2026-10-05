@@ -1,0 +1,44 @@
+==============================================================================
+49 · EVALUACION DEL BI-ENCODER, lado `evalua` (verdad: pares por letras o de Gemini)
+==============================================================================
+modelos: e5 sin entrenar (e5-base), af original (semilla_3), af A (semilla_1), af B (semilla_1)
+pares `si` de la v3 en evalua: 339,142 sobre 25,680 nodos; sin fuga (los dos nodos): 105,353
+
+modelo            recall@25  recall@100   rec@100 pers rec@100 sin fuga
+Vertex                30.8%       57.3%          57.0%          62.0%
+e5 sin entrenar       32.2%       61.6%          50.2%          66.8%
+af original           34.6%       60.1%          68.0%          66.1%
+af A                  36.9%       65.4%          71.4%          72.5%
+af B                  37.1%       65.8%          70.9%          72.3%
+
+CONTRASTES de recall@100 (IC 95 %, bootstrap por comunidad, 10,000; exploratorio)
+   af original - e5 sin entrenar  -1.5% [-3.9%, +1.1%]   sin fuga -0.7% [-3.4%, +2.1%]
+   af original - Vertex           +2.8% [+0.6%, +5.7%]   sin fuga +4.1% [+1.1%, +7.6%]
+   af A - e5 sin entrenar  +3.8% [+0.1%, +7.4%]   sin fuga +5.6% [+2.6%, +8.5%]
+   af A - Vertex           +8.1% [+5.0%, +11.8%]   sin fuga +10.4% [+7.0%, +14.0%]
+   af B - e5 sin entrenar  +4.2% [+0.9%, +7.4%]   sin fuga +5.5% [+2.8%, +8.3%]
+   af B - Vertex           +8.5% [+5.8%, +11.9%]   sin fuga +10.3% [+7.1%, +13.8%]
+
+recall@100 por fuente del par (descriptivo):
+   cerca_e5       n= 189,034   Vertex 79.0%   e5 sin entrenar 99.6%   af original 78.9%   af A 86.2%   af B 87.4%
+   cerca_tfidf    n= 334,889   Vertex 57.6%   e5 sin entrenar 62.0%   af original 60.4%   af A 65.7%   af B 66.1%
+   cerca_vertex   n= 174,607   Vertex 100.0%   e5 sin entrenar 84.4%   af original 80.5%   af A 86.9%   af B 87.3%
+   descripcion    n=  47,702   Vertex 82.2%   e5 sin entrenar 81.9%   af original 83.5%   af A 87.6%   af B 87.7%
+   gemini         n=   7,448   Vertex 57.5%   e5 sin entrenar 54.4%   af original 58.1%   af A 63.5%   af B 61.9%
+   lejos_e5       n=   1,940   Vertex 38.0%   e5 sin entrenar 27.6%   af original 45.1%   af A 48.0%   af B 49.0%
+   lejos_vertex   n=   1,788   Vertex 26.2%   e5 sin entrenar 48.5%   af original 46.4%   af A 52.1%   af B 52.1%
+
+precision@25 (2.000 nodos de evalua; la v3 juzga los vecinos):
+   Vertex           68.8%
+   e5 sin entrenar  67.9%
+   af original      88.4%
+   af A             88.3%
+   af B             86.3%
+
+CASOS CONOCIDOS: rango del otro titulo entre los vecinos (el menor de los dos sentidos)
+                                                           Vertex  e5 sin entrenar      af original             af A             af B
+   CHOFER / CONDUCTOR                                       1,312              429            9,749              224              191
+   VENDEDOR / ASESOR COMERCIAL                              1,220            2,151            1,342            1,001            1,567
+   MENSAJERO / MOTORIZADO                                   6,912            1,039            4,278              681              872
+   GUARDIA / AGENTE DE SEGURIDAD                              135            3,779               11            3,786            1,872
+   JEFE DE TALENTO HUMANO / JEFE DE RECURSOS HUMANOS             135               34               32               26               35
