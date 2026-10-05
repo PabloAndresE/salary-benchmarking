@@ -18,6 +18,7 @@ codifican con la MISMA funcion de `48` (prefijo, promedio, largo 32, bf16).
 
 SALIDA: salidas/49_evaluar_bi_encoder.txt
 """
+import argparse
 import contextlib
 import importlib.util
 import json
@@ -77,12 +78,23 @@ def main():
     d = pd.read_parquet(SAL / "47_pares.parquet")
     lado = nodos["lado"].to_numpy()
     comp = nodos["comp"].to_numpy()
-    ev = d[(d["lado"] == "evalua") & (d["P"] >= 0.5) & ~d["bloqueado"]].reset_index(drop=True)
+    # CORRECCION (2026-10-05): la verdad, solo de fuentes que no son los modelos comparados (por
+    # letras o Gemini). Con los vecinos de e5 o de Vertex como verdad, cada uno acierta ~100 % de lo
+    # que el mismo propuso y el afinado compite en desventaja.
+    ev = d[(d["lado"] == "evalua") & (d["P"] >= 0.5) & ~d["bloqueado"]
+           & d["fuente"].str.contains("cerca_tfidf|gemini")].reset_index(drop=True)
 
-    res = json.loads((SAL / "48_bi_encoder" / "resultados.json").read_text(encoding="utf-8"))
-    ruta_af = SAL / "48_bi_encoder" / "semilla_{}".format(res["elegida"])
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--afinados", default="48_bi_encoder",
+                    help="carpetas de 48 separadas por coma; de cada una, la semilla elegida")
+    a_ = ap.parse_args()
+    modelos = [("e5 sin entrenar", e48.E5)]
+    for carpeta in a_.afinados.split(","):
+        res = json.loads((SAL / carpeta / "resultados.json").read_text(encoding="utf-8"))
+        nombre = "af " + (res["hiper"].get("variante") or "original")
+        modelos.append((nombre, SAL / carpeta / "semilla_{}".format(res["elegida"])))
     Z = {"Vertex": Zv}
-    for nombre, ruta in (("e5 sin entrenar", e48.E5), ("e5 afinado", ruta_af)):
+    for nombre, ruta in modelos:
         tok = AutoTokenizer.from_pretrained(ruta)
         mod = e48.Codificador(ruta).cuda()
         Z[nombre] = e48.codificar(mod, tok, list(tit)).cpu().numpy()
@@ -90,10 +102,9 @@ def main():
         torch.cuda.empty_cache()
 
     p("=" * 78)
-    p("49 · EVALUACION DEL BI-ENCODER (D-045 §5), lado `evalua`")
+    p("49 · EVALUACION DEL BI-ENCODER, lado `evalua` (verdad: pares por letras o de Gemini)")
     p("=" * 78)
-    p("afinado: semilla {} de 48 (commit {}, sin commitear {})".format(
-        res["elegida"], res["commit"][:7], res["sin_commitear"]))
+    p("modelos: " + ", ".join("{} ({})".format(n_, pathlib.Path(r).name) for n_, r in modelos))
     p("pares `si` de la v3 en evalua: {:,} sobre {:,} nodos; sin fuga (los dos nodos): {:,}".format(
         len(ev), len(np.unique(ev[["i", "j"]])), int((sin_fuga[ev["i"]] & sin_fuga[ev["j"]]).sum())))
 
@@ -134,22 +145,11 @@ def main():
         dif = acierto[x][100][m].mean() - acierto[y][100][m].mean()
         return dif, *np.percentile(dd, [2.5, 97.5])
 
-    p("\nCONTRASTES de recall@100 (IC 95 %, bootstrap por comunidad, {:,})".format(B))
-    d1 = boot("e5 afinado", "e5 sin entrenar")
-    d2 = boot("e5 afinado", "Vertex")
-    p("   afinado - sin entrenar  {:+.1%}  [{:+.1%}, {:+.1%}]".format(*d1))
-    p("   afinado - Vertex        {:+.1%}  [{:+.1%}, {:+.1%}]".format(*d2))
-    f1 = boot("e5 afinado", "e5 sin entrenar", mf)
-    f2 = boot("e5 afinado", "Vertex", mf)
-    p("   control de fuga: afinado - sin entrenar {:+.1%} [{:+.1%}, {:+.1%}]; afinado - Vertex "
-      "{:+.1%} [{:+.1%}, {:+.1%}]".format(*f1, *f2))
-    adopta = d1[1] > 0 and d2[1] >= -0.01
-    p("\n>>> CRITERIO D-045: {} <<<".format(
-        "SE ADOPTA el e5 afinado" if adopta else "NO se adopta (i: IC sobre cero {}; ii: limite "
-        "inferior frente a Vertex {:+.1%})".format(d1[1] > 0, d2[1])))
-    if adopta and f1[1] <= 0:
-        p("    aviso: en el control de fuga la mejora frente a e5 sin entrenar no tiene el IC sobre"
-          " cero: puede ser memoria de vecinos, no sinonimos (enmienda a D-045 §4)")
+    p("\nCONTRASTES de recall@100 (IC 95 %, bootstrap por comunidad, {:,}; exploratorio)".format(B))
+    for nombre in [n_ for n_ in Z if n_.startswith("af ")]:
+        for base in ("e5 sin entrenar", "Vertex"):
+            p("   {} - {:<16} {:+.1%} [{:+.1%}, {:+.1%}]   sin fuga {:+.1%} [{:+.1%}, {:+.1%}]".format(
+                nombre, base, *boot(nombre, base), *boot(nombre, base, mf)))
 
     p("\nrecall@100 por fuente del par (descriptivo):")
     f = ev.assign(fuente=ev["fuente"].str.split("|")).explode("fuente")
