@@ -1,0 +1,32 @@
+47 · PARES DEL BI-ENCODER Y SEPARACION POR COMUNIDADES (D-045, enmienda §4)
+pares puntuados: 4,921,824; bloqueados 1,019,076
+   componentes conectadas, P >= 0.5: la mayor 54,115 nodos (93.2%)
+   componentes conectadas, P >= 0.8: la mayor 52,292 nodos (90.1%)
+   componentes conectadas, P >= 0.9: la mayor 49,061 nodos (84.5%)
+   Louvain sobre aristas P >= 0,9: 6,459 comunidades; la mayor 5,642 nodos (9.7%)
+
+nodos por lado: {"evalua": 27198, "entrena": 21763, "valida": 9090}
+comunidades forzadas a evaluacion (casos conocidos): 7; nodos en ellas: 14,634
+aristas P >= 0,9 cortadas: 9.0%; nodos de evaluacion con vecino P >= 0,9 en entrenamiento: 37.2%
+
+pares por lado (P >= 0,5 sin candado = `si` de la v3):
+   cruza    2,039,142 pares   si  453,577
+   entrena    932,762 pares   si  414,730
+   evalua   1,603,781 pares   si  879,756
+   valida     346,139 pares   si  237,455
+
+`si` de la v3 por fuente (P >= 0,5, sin candado):
+   cerca_e5       1,896,667 pares   si  957,341 (50%)   con P >= 0,9 y cos_vertex < 0,85: 192,869
+   cerca_tfidf    1,884,340 pares   si  765,402 (41%)   con P >= 0,9 y cos_vertex < 0,85: 169,059
+   cerca_vertex   1,907,733 pares   si  972,423 (51%)   con P >= 0,9 y cos_vertex < 0,85: 184,583
+   descripcion      946,571 pares   si  341,852 (36%)   con P >= 0,9 y cos_vertex < 0,85: 81,233
+   gemini            25,656 pares   si   16,737 (65%)   con P >= 0,9 y cos_vertex < 0,85: 3,987
+   lejos_e5         212,342 pares   si   61,618 (29%)   con P >= 0,9 y cos_vertex < 0,85: 7,709
+   lejos_vertex     212,371 pares   si   64,705 (30%)   con P >= 0,9 y cos_vertex < 0,85: 9,174
+
+los casos conocidos (P de la v3 del par):
+   CHOFER                   / CONDUCTOR                  P 0.24 (descripcion|gemini)
+   VENDEDOR                 / ASESOR COMERCIAL           P 0.58 (gemini)
+   MENSAJERO                / MOTORIZADO                 P 0.58 (descripcion|gemini)
+   GUARDIA                  / AGENTE DE SEGURIDAD        P 0.64 (descripcion|gemini)
+   JEFE DE TALENTO HUMANO   / JEFE DE RECURSOS HUMANOS   P 0.91 (cerca_e5|gemini)

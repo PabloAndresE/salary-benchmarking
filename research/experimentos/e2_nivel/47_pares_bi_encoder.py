@@ -13,8 +13,8 @@ las propuestas de Gemini (detalle de implementacion registrado en D-045).
 FUENTES (D-045 §3): a) 100 vecinos por titulo con e5-base, Vertex y TF-IDF; b) propuestas de Gemini
 que existen en la base (por la capa 0); c) 50 vecinos por descripcion (e5-base); d) 20 lejanos por
 ancla, rango 100-1.000 de e5 y de Vertex (10 y 10, al azar).
-SEPARACION (D-045 §4): componentes con aristas P >= 0,5 sin candado (0,8 y 0,9 si la mayor pasa
-del 10 % de los nodos); 80 / 20 por componente, semilla fija; los cinco casos conocidos, forzados a
+SEPARACION (D-045 §4 y su enmienda): comunidades de Louvain sobre aristas P >= 0,9 sin candado
+(las componentes conectadas daban una gigante); 80 / 20 por comunidad, semilla fija; los cinco casos conocidos, forzados a
 evaluacion; validacion = 10 % de las componentes de entrenamiento.
 """
 import argparse
@@ -196,16 +196,24 @@ def separar(de):
         print(s, flush=True)
         out.append(s)
 
-    p_("47 · PARES DEL BI-ENCODER Y SEPARACION POR COMPONENTES (D-045)")
+    p_("47 · PARES DEL BI-ENCODER Y SEPARACION POR COMUNIDADES (D-045, enmienda §4)")
     p_("pares puntuados: {:,}; bloqueados {:,}".format(len(d), int(d["bloqueado"].sum())))
-    for umbral in (0.5, 0.8, 0.9):
-        comp = componentes(umbral)
-        tam = pd.Series(comp).value_counts()
-        p_("   aristas P >= {}: {:,} componentes; la mayor {:,} nodos ({:.1%})".format(
-            umbral, len(tam), int(tam.iloc[0]), tam.iloc[0] / n))
-        if tam.iloc[0] <= 0.10 * n:
-            break
-    p_("   se usa P >= {}".format(umbral))
+    for umbral in (0.5, 0.8, 0.9):                      # lo registrado primero: el diagnostico
+        tam = pd.Series(componentes(umbral)).value_counts()
+        p_("   componentes conectadas, P >= {}: la mayor {:,} nodos ({:.1%})".format(
+            umbral, int(tam.iloc[0]), tam.iloc[0] / n))
+    import networkx as nx
+    e = d[(d["P"] >= 0.9) & ~d["bloqueado"]]
+    G = nx.Graph()
+    G.add_nodes_from(range(n))
+    G.add_weighted_edges_from(zip(e["i"], e["j"], e["P"]))
+    com = nx.community.louvain_communities(G, weight="weight", resolution=1.0, seed=SEM)
+    comp = np.empty(n, dtype=np.int64)
+    for k, c in enumerate(com):
+        comp[list(c)] = k
+    tam = pd.Series(comp).value_counts()
+    p_("   Louvain sobre aristas P >= 0,9: {:,} comunidades; la mayor {:,} nodos ({:.1%})".format(
+        len(tam), int(tam.iloc[0]), tam.iloc[0] / n))
 
     casos = {}
     for a, b in CASOS:
@@ -232,8 +240,18 @@ def separar(de):
         SAL / "47_nodos.parquet", index=False)
 
     p_("\nnodos por lado: " + json.dumps(pd.Series(lado).value_counts().to_dict()))
-    p_("componentes forzadas a evaluacion (casos conocidos): {}; nodos en ellas: {:,}".format(
+    p_("comunidades forzadas a evaluacion (casos conocidos): {}; nodos en ellas: {:,}".format(
         len(forzadas), int(np.isin(comp, list(forzadas)).sum())))
+    ln = lado == "evalua"
+    fuerte = e[["i", "j"]].to_numpy()
+    con_vecino_ent = np.zeros(n, bool)
+    np.logical_or.at(con_vecino_ent, fuerte[:, 0], np.isin(lado[fuerte[:, 1]], ["entrena", "valida"]))
+    np.logical_or.at(con_vecino_ent, fuerte[:, 1], np.isin(lado[fuerte[:, 0]], ["entrena", "valida"]))
+    p_("aristas P >= 0,9 cortadas: {:.1%}; nodos de evaluacion con vecino P >= 0,9 en entrenamiento:"
+       " {:.1%}".format((lado[fuerte[:, 0]] != lado[fuerte[:, 1]]).mean(),
+                        (con_vecino_ent & ln).sum() / ln.sum()))
+    pd.DataFrame({"nodo": np.arange(n), "sin_fuga": ~con_vecino_ent}).to_parquet(
+        SAL / "47_sin_fuga.parquet", index=False)
     p_("\npares por lado (P >= 0,5 sin candado = `si` de la v3):")
     si = (d["P"] >= 0.5) & ~d["bloqueado"]
     for l, g in d.groupby("lado"):

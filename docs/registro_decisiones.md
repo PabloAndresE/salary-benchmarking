@@ -5817,3 +5817,40 @@ Pérdida contrastiva con negativos dentro del lote más los difíciles (Multiple
 - **Los negativos difíciles lejanos (P ≤ 0,2) se quedan como en D-045 §3.** Claude propuso sacarlos
   cuando el recuento daba 27 %; con 3 % (IC hasta 17 %) la razón desaparece y no se enmienda.
 - Estos juicios cuentan también para la auditoría de D-043 en los tramos que correspondan.
+
+### Enmienda a D-045 §4 (2026-10-05, antes de entrenar): separación por comunidades de Louvain
+
+**Por qué:** las componentes conectadas forman una componente gigante: con aristas P ≥ 0,5, el 93,2 %
+de los 58.051 nodos; con 0,8, el 90,1 %; con 0,9, todavía el 84,5 %. La regla registrada se agotó, y
+como esa componente contiene los casos conocidos, quedaba forzada entera a evaluación (solo 6.020
+nodos para entrenar). Es el encadenamiento que D-015 midió con el enlace simple.
+
+**Medido antes de decidir** (reparto 80 / 20 de prueba, semilla fija):
+
+| separación | grupo mayor | aristas P ≥ 0,9 cortadas | nodos de evaluación con un vecino P ≥ 0,9 en entrenamiento |
+|---|---|---|---|
+| nodos al azar | — | 31,8 % | — |
+| **Louvain, aristas P ≥ 0,9** | **9,7 %** (6.459 comunidades) | **3,8 %** | **39 %** |
+| Louvain, aristas P ≥ 0,5 | 14,2 % (840) | 9,8 % | 75 % |
+
+**Decisión del autor:**
+1. **La separación es por comunidades de Louvain** (`networkx`, resolución 1,0, peso = P, semilla
+   fija) sobre las aristas P ≥ 0,9 sin candado, 80 / 20; las comunidades de los cinco casos conocidos,
+   forzadas a evaluación; validación = 10 % de las comunidades de entrenamiento. Reemplaza a las
+   componentes conectadas. Los lotes no llevan dos pares de la misma comunidad.
+2. **El criterio de adopción no cambia**; el bootstrap es por comunidad.
+3. **Control de fuga:** el recall@100 se reporta también solo en los nodos de evaluación **sin ningún
+   vecino P ≥ 0,9 en entrenamiento**. Si el afinado gana en general pero no ahí, lo aprendido es
+   memoria de vecinos y no sinónimos, y se reporta así.
+
+**Lo que ya dice la v3 de los cinco casos** (todos son candidatos, por las descripciones y Gemini):
+`JEFE DE TALENTO HUMANO` / `JEFE DE RECURSOS HUMANOS` 0,91; `GUARDIA` / `AGENTE DE SEGURIDAD` 0,64;
+`VENDEDOR` / `ASESOR COMERCIAL` 0,58; `MENSAJERO` / `MOTORIZADO` 0,58; **`CHOFER` / `CONDUCTOR` 0,24**.
+Aunque el bi-encoder los acerque, la v3 sola no une `CHOFER` con `CONDUCTOR`: es un límite del juez,
+que se retoma en el clustering.
+
+**Reparto resultante (47, 2026-10-05):** los diez títulos de los casos conocidos caen en 7 comunidades
+grandes (14.634 nodos), forzadas a evaluación; el reparto queda en nodos **evalúa 27.198 (47 %),
+entrena 21.763, valida 9.090**, no 80 / 20. Aristas P ≥ 0,9 cortadas: 9,0 %; nodos de evaluación con
+un vecino P ≥ 0,9 en entrenamiento: 37,2 % (el control de fuga se mide sobre el 62,8 % restante).
+Positivos de entrenamiento (P ≥ 0,8 cerca, ≥ 0,9 lejos): 210.360 en 366 comunidades.
