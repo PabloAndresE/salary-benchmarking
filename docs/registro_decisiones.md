@@ -5892,3 +5892,19 @@ con ≥ 3 empresas): **límite declarado**.
   (protocolo de D-025 / D-031), `base_v17` frente a `base_v15`: el IC no queda entero sobre cero, **y**
   el placebo (las mismas uniones hacia destinos al azar del mismo tamaño) sí empeora.
 - **c. Descriptivo:** el informe de `41` (grupos, quién cambia, bandas).
+
+### Enmienda a D-046 (2026-10-05, tras la primera corrida y antes de auditar): enlace completo
+
+**La primera corrida juntó de más** (`50_clustering.txt`, regla del §5: suma de log-odds > 0 y ningún
+par con P < 0,1): de 58.051 grupos, **4.153 clusters**; el **54 % de los grupos y el 80 % de las
+personas** quedaron en clusters que llegaron al tope de 60, y el tope frenó 1,7 millones de uniones. Lo
+único que paró el crecimiento fue el tope. Los clusters grandes mezclan cosas distintas (`CERAMICA`,
+`COMPACTADOR`, `COMPOST`, `COMPRESORES`, `CONDIMENTO`; `AYUDANTE DE EXCAVADORA` con `OPERADOR DE
+RETROEXCAVADORA`; `JEFE DE ELECTRICIDAD` con `JEFE DE EMPAQUES AL VACIO`). Es el encadenamiento de
+D-015: un par muy seguro compensa a varios dudosos, y la v3 dice `si` a ~50 % de los vecinos. **No se
+audita**: con clusters así la auditoría fallaría por construcción.
+
+**Decisión del autor:** la regla de unión pasa a **enlace completo**: dos clusters se juntan solo si
+**todos** los pares entre ellos tienen P ≥ 0,5 (con eso la suma de log-odds es positiva por
+construcción). Se mantienen los candados y el tope de 60. La caché de puntajes de la v3 se guarda.
+Los criterios de adopción (auditoría ≥ 90 % y pinball con placebo) no cambian.

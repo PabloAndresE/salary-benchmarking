@@ -34,7 +34,10 @@ from benchmarking.producto.nivel import nivel_rubrica, seniority_lexica  # noqa:
 
 B = SAL / "48_bi_encoder_B3" / "semilla_1"
 V3 = SAL / "22_modelos_v3" / "elegido"
-K_B, K_DESC, TOPE, P_MIN = 100, 50, 60, 0.1
+K_B, K_DESC, TOPE = 100, 50, 60
+# P minimo de TODOS los pares entre dos clusters: 0,1 en la primera corrida (regla de D-046 §5, con
+# la suma de log-odds); 0,5 = enlace completo (enmienda a D-046), sin la suma (queda implicita)
+P_MIN = {"suma": 0.1, "completo": 0.5}
 CAND = SAL / "50_candidatos.parquet"
 
 
@@ -131,7 +134,9 @@ class Juez:
         return np.array([self.cache[p] for p in pares])
 
 
-def agrupar(de):
+def agrupar(de, regla="completo"):
+    p_min = P_MIN[regla]
+    sufijo = "" if regla == "suma" else "_" + regla
     _, tit, _, _, _, _ = cargar("e47", "47_pares_bi_encoder.py").nodos_y_capa0()
     n = len(tit)
     d = pd.read_parquet(CAND)
@@ -139,6 +144,11 @@ def agrupar(de):
     d = d.merge(p.rename(columns={"P": "P2"}), on=["i", "j"], how="left")
     d["P"] = d["P"].fillna(d["P2"])
     cache = {(int(i), int(j)): float(v) for i, j, v in zip(d["i"], d["j"], d["P"]) if v == v}
+    vuelo = SAL / "50_cache_vuelo.parquet"            # lo que la v3 puntuo al vuelo en corridas previas
+    if vuelo.exists():
+        c = pd.read_parquet(vuelo)
+        cache.update({(int(i), int(j)): float(v) for i, j, v in zip(c["i"], c["j"], c["P"])})
+    n_previo = len(cache)
     juez = Juez(tit, cache)
     niv = [nivel_rubrica(t) for t in tit]
     sen = [seniority_lexica(t) for t in tit]
@@ -149,7 +159,7 @@ def agrupar(de):
     c_sen = {k: {sen[k]} for k in range(n)}
     c_gra = {k: gra[k] for k in range(n)}
     aristas = d[(d["P"] >= 0.5) & ~d["bloqueado"]].sort_values("P", ascending=False)
-    motivo = {"unidos": 0, "mismo cluster": 0, "candado": 0, "tope": 0, "par con P < 0,1": 0,
+    motivo = {"unidos": 0, "mismo cluster": 0, "candado": 0, "tope": 0, "par con P < minimo": 0,
               "suma de log-odds <= 0": 0}
     t0 = time.time()
     for k, (i, j) in enumerate(zip(aristas["i"].to_numpy(), aristas["j"].to_numpy())):
@@ -172,14 +182,14 @@ def agrupar(de):
         # atajo sin cambiar la regla: si un par YA puntuado tiene P < 0,1, la union esta rechazada
         # y no hace falta pedirle a la v3 los que faltan
         conocidos = [cache[q] for q in pares if q in cache]
-        if conocidos and min(conocidos) < P_MIN:
-            motivo["par con P < 0,1"] += 1
+        if conocidos and min(conocidos) < p_min:
+            motivo["par con P < minimo"] += 1
             continue
         P = np.clip(juez.P(pares), 1e-4, 1 - 1e-4)
-        if P.min() < P_MIN:
-            motivo["par con P < 0,1"] += 1
+        if P.min() < p_min:
+            motivo["par con P < minimo"] += 1
             continue
-        if np.log(P / (1 - P)).sum() <= 0:
+        if regla == "suma" and np.log(P / (1 - P)).sum() <= 0:
             motivo["suma de log-odds <= 0"] += 1
             continue
         # se une B en A
@@ -191,9 +201,16 @@ def agrupar(de):
         c_gra[A] = c_gra[A] | c_gra.pop(Bc)
         motivo["unidos"] += 1
     pd.DataFrame({"nodo": np.arange(n), "titulo": tit, "cluster": de_}).to_parquet(
-        SAL / "50_clusters.parquet", index=False)
+        SAL / "50_clusters{}.parquet".format(sufijo), index=False)
+    if len(cache) > n_previo:
+        claves = list(cache)[n_previo:]
+        nuevo = pd.DataFrame({"i": [a for a, _ in claves], "j": [b for _, b in claves],
+                              "P": [cache[q] for q in claves]})
+        if vuelo.exists():
+            nuevo = pd.concat([pd.read_parquet(vuelo), nuevo])
+        nuevo.to_parquet(vuelo, index=False)
     tam = pd.Series(de_).value_counts()
-    out = ["50 · CORRELATION CLUSTERING CON LA v3 (D-046)",
+    out = ["50 · CORRELATION CLUSTERING CON LA v3 (D-046), regla {} (P minimo {})".format(regla, p_min),
            "candidatos {:,}; aristas P >= 0,5 sin candado recorridas {:,}".format(len(d), len(aristas)),
            "resultado de cada arista: " + json.dumps(motivo, ensure_ascii=False),
            "pares nuevos que la v3 puntuo al vuelo: {:,}".format(juez.nuevos),
@@ -203,7 +220,7 @@ def agrupar(de):
     grandes = tam.index[:8]
     for c in grandes:
         out.append("   {:>3} | {}".format(int(tam[c]), " ; ".join(sorted(str(tit[x]) for x in miembros[int(c)])[:12])))
-    (SAL / "50_clustering.txt").write_text("\n".join(out) + "\n", encoding="utf-8")
+    (SAL / "50_clustering{}.txt".format(sufijo)).write_text("\n".join(out) + "\n", encoding="utf-8")
     print("\n".join(out))
 
 
@@ -212,6 +229,7 @@ if __name__ == "__main__":
     ap.add_argument("etapa", choices=["candidatos", "puntuar", "agrupar"])
     ap.add_argument("--parte", type=int, default=0)
     ap.add_argument("--de", type=int, default=3)
+    ap.add_argument("--regla", default="completo", choices=list(P_MIN))
     a = ap.parse_args()
     {"candidatos": candidatos, "puntuar": lambda: puntuar(a.parte, a.de),
-     "agrupar": lambda: agrupar(a.de)}[a.etapa]()
+     "agrupar": lambda: agrupar(a.de, a.regla)}[a.etapa]()
