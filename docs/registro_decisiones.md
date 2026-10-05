@@ -5794,3 +5794,26 @@ sean variantes del mismo cargo.
 
 Pérdida contrastiva con negativos dentro del lote más los difíciles (MultipleNegativesRanking); lote
 256, lr 2e-5, hasta 3 épocas, 3 semillas; repo limpio; pesos respaldados.
+
+### Resultado de la auditoría de los positivos lejanos (D-045 §2, 2026-10-05)
+
+**Evidencia:** `45_auditoria_lejanos.py decidir`, `salidas/45_auditoria_para_juzgar.csv` y
+`45_auditoria_lejanos.txt`. 130 pares a ciegas con la rúbrica v6.
+
+- **P ≥ 0,9 (coseno < 0,85): el autor dice `si` en 89 de 100 (89 %, IC 95 % de Wilson [81 %, 94 %]).**
+  **Se cumple la regla (≥ 80 %): los positivos lejanos entran con P ≥ 0,9.** Parejo por tramo de
+  coseno: < 0,70 86 % (n = 7), 0,70–0,75 88 % (16), 0,75–0,80 87 % (31), 0,80–0,85 91 % (46). Los
+  11 errores de la v3 son profesiones parecidas (`SICOLOGO` / `SOCIOLOGO`), títulos ambiguos
+  (`MAESTRO` / `MAESTRO DE OBRA 2`) y especializaciones (`CORTADOR` / `CORTADOR DE VISCERAS`).
+- **P ≤ 0,2 (coseno < 0,85): el autor dice `si` en 1 de 30 (3 %, IC [1 %, 17 %])**: `GERENTE NACIONAL
+  DE POST/VENTA` / `GERENTE DE POSTVENTA 1`, que la v3 rechaza (P 0,10).
+- **Correcciones, declaradas.** En el primer recuento el autor tenía 8 `si` en este grupo. Al
+  revisarlos con Claude, **4 fueron errores al marcar** (`CADENERO` / `JEFE DE LA CADENA DE
+  SUMINISTRO`, `INSPECTOR/A NIVEL #4` / `DIRECTORA DE NIVEL INICIAL`, `SOLDADOR` / `SUPERVISOR DE
+  SOLDADOR`, `AYUDANTE DE PERFORACION 2` / `MECANICO PERFORACION`), y **3 se rejuzgaron a `no` ya
+  sin ciego**, tras ver la lectura de Claude con la rúbrica (`ANALISTA LOCAL DE CREDITO` /
+  `CREDITO`, `ASSOCIATE` / `EXPERT ASSOCIATE`, `ANOTADOR` / `INSPECTOR NOTIFICADOR`). Los 7 llevan
+  nota en el archivo. El grupo de P ≥ 0,9 no se tocó.
+- **Los negativos difíciles lejanos (P ≤ 0,2) se quedan como en D-045 §3.** Claude propuso sacarlos
+  cuando el recuento daba 27 %; con 3 % (IC hasta 17 %) la razón desaparece y no se enmienda.
+- Estos juicios cuentan también para la auditoría de D-043 en los tramos que correspondan.

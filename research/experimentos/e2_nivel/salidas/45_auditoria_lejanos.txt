@@ -1,0 +1,11 @@
+45 · AUDITORIA DE LOS POSITIVOS LEJANOS DE LA v3 (D-045 §2)
+   P<=0,2: 30 pares; el autor dice si en 3%
+   P>=0,9: 100 pares; el autor dice si en 89%
+
+   P >= 0,9 por tramo de coseno:
+      (0.0, 0.7]  n=  7  si 86%
+      (0.7, 0.75]  n= 16  si 88%
+      (0.75, 0.8]  n= 31  si 87%
+      (0.8, 0.85]  n= 46  si 91%
+
+>>> REGLA D-045: 89% de si en los P >= 0,9 -> los positivos lejanos entran con P >= 0,9 <<<
