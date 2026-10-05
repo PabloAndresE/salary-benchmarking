@@ -2,6 +2,7 @@
 .venv/
 .venv-texto/
 .venv-gemini/
+.venv-llm/
 venv/
 env/
 
