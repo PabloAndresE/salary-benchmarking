@@ -145,8 +145,8 @@ def guardar(modelo, filas, textos, sha, seg):
         try:
             r = json.loads(txt)
             out.append((i, o, a, b, r["mismo"], r["paso"], r["razon"], ""))
-        except (ValueError, KeyError):
-            out.append((i, o, a, b, "", "", "", txt[:200]))
+        except (ValueError, KeyError, TypeError):       # TypeError: respuesta vacia (None)
+            out.append((i, o, a, b, "", "", "", str(txt)[:200]))
     r = pd.DataFrame(out, columns=["id", "orden", "a", "b", "mismo", "paso", "razon", "error"])
     r["modelo"], r["rubrica_sha"] = modelo, sha
     r.to_csv(SAL / "51_{}.csv".format(modelo), index=False, encoding="utf-8")
