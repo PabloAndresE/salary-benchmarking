@@ -21,8 +21,8 @@ con mejor valida. La evaluacion (lado `evalua`) es otro guion: `49`.
 SALIDAS: salidas/48_bi_encoder/semilla_K/ (pesos, fuera del repo), 48_bi_encoder/resultados.json,
 salidas/48_entrenar_bi_encoder.log
 """
+import argparse
 import json
-import math
 import pathlib
 import subprocess
 import sys
@@ -59,8 +59,14 @@ def datos():
     for i, j in zip(N["i"], N["j"]):
         duros.setdefault(int(i), []).append(int(j))
         duros.setdefault(int(j), []).append(int(i))
-    va = d[(d["lado"] == "valida") & (d["P"] >= 0.5) & ~d["bloqueado"]][["i", "j"]]
-    return nodos["titulo"].tolist(), P, duros, va
+    # validacion SOLO con pares de fuentes que no son los modelos comparados (por letras o Gemini):
+    # los vecinos de e5 o de Vertex como verdad favorecen a ese mismo modelo (49, 2026-10-05)
+    indep = d["fuente"].str.contains("cerca_tfidf|gemini")
+    va = d[(d["lado"] == "valida") & (d["P"] >= 0.5) & ~d["bloqueado"] & indep][["i", "j"]]
+    # pares que la v3 ya confirmo: no pueden ser negativos dentro del lote
+    sab = d[(d["P"] >= 0.5) & ~d["bloqueado"] & ent]
+    conocidos = set(zip(sab["i"], sab["j"])) | set(zip(sab["j"], sab["i"]))
+    return nodos["titulo"].tolist(), P, duros, va, conocidos
 
 
 class Codificador(torch.nn.Module):
@@ -101,7 +107,9 @@ def recall_valida(mod, tok, tit, va, k=100):
     return float(np.mean(hit))
 
 
-def una_semilla(sem, tit, P, duros, va, log):
+def una_semilla(sem, tit, P, duros, va, log, conocidos=None, lotes="comunidad", lr=LR,
+                epocas=EPOCAS, destino=None):
+    destino = destino or DESTINO
     from transformers import AutoTokenizer, get_linear_schedule_with_warmup
     torch.manual_seed(sem)
     rng = np.random.default_rng(sem)
@@ -112,20 +120,23 @@ def una_semilla(sem, tit, P, duros, va, log):
     peso = np.array([len(por_comp[c]) for c in comps], dtype=float)
     peso /= peso.sum()
     pasos = len(P) // LOTE
-    opt = torch.optim.AdamW(mod.parameters(), lr=LR)
-    sch = get_linear_schedule_with_warmup(opt, int(0.1 * pasos * EPOCAS), pasos * EPOCAS)
+    opt = torch.optim.AdamW(mod.parameters(), lr=lr)
+    sch = get_linear_schedule_with_warmup(opt, int(0.1 * pasos * epocas), pasos * epocas)
     mejor, hist = -1.0, []
     r0 = recall_valida(mod, tok, tit, va)
     log("semilla {}: recall@100 valida sin entrenar {:.4f}; {} pasos por epoca".format(sem, r0, pasos))
-    for ep in range(1, EPOCAS + 1):
+    for ep in range(1, epocas + 1):
         t0, perdidas = time.time(), []
         for _ in range(pasos):
-            cs = rng.choice(comps, min(LOTE, len(comps)), replace=False, p=peso)
-            filas = P.iloc[[rng.choice(por_comp[c]) for c in cs]]
+            if lotes == "comunidad":
+                cs = rng.choice(comps, min(LOTE, len(comps)), replace=False, p=peso)
+                filas = P.iloc[[rng.choice(por_comp[c]) for c in cs]]
+            else:
+                filas = P.iloc[rng.choice(len(P), LOTE, replace=False)]
             gira = rng.random(len(filas)) < 0.5          # el ancla puede ser cualquiera de los dos
             anc = np.where(gira, filas["j"], filas["i"])
             posi = np.where(gira, filas["i"], filas["j"])
-            negs = [rng.choice(duros[a]) for a in anc if a in duros]
+            negs = [int(rng.choice(duros[a])) for a in anc if a in duros]
             textos = [tit[x] for x in anc] + [tit[x] for x in posi] + [tit[x] for x in negs]
             t = tok(["query: " + x for x in textos], padding=True, truncation=True,
                     max_length=LARGO, return_tensors="pt").to("cuda")
@@ -133,6 +144,13 @@ def una_semilla(sem, tit, P, duros, va, log):
                 e = mod(t).float()
             n = len(anc)
             s = e[:n] @ e[n:].T * ESCALA
+            if conocidos is not None:
+                # fuera de la diagonal: el mismo nodo o un par ya confirmado por la v3 no es negativo
+                cand = list(posi) + negs
+                malo = np.array([[(int(a) == int(c) or (int(a), int(c)) in conocidos) and k != q
+                                  for q, c in enumerate(cand)] for k, a in enumerate(anc)])
+                if malo.any():
+                    s = s.masked_fill(torch.from_numpy(malo).cuda(), -1e4)
             perdida = torch.nn.functional.cross_entropy(s, torch.arange(n, device="cuda"))
             perdida.backward()
             torch.nn.utils.clip_grad_norm_(mod.parameters(), 1.0)
@@ -146,7 +164,7 @@ def una_semilla(sem, tit, P, duros, va, log):
             sem, ep, np.mean(perdidas), r, time.time() - t0))
         if r > mejor:
             mejor = r
-            ruta = DESTINO / "semilla_{}".format(sem)
+            ruta = destino / "semilla_{}".format(sem)
             mod.m.save_pretrained(ruta)
             tok.save_pretrained(ruta)
             (ruta / "info.json").write_text(json.dumps(
@@ -158,27 +176,41 @@ def una_semilla(sem, tit, P, duros, va, log):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--variante", default="", help="vacio = la corrida original")
+    ap.add_argument("--lotes", default="comunidad", choices=["comunidad", "azar"])
+    ap.add_argument("--lr", type=float, default=LR)
+    ap.add_argument("--epocas", type=int, default=EPOCAS)
+    ap.add_argument("--semillas", default="1,2,3")
+    a = ap.parse_args()
+    global DESTINO
+    if a.variante:
+        DESTINO = SAL / "48_bi_encoder_{}".format(a.variante)
     DESTINO.mkdir(parents=True, exist_ok=True)
     lineas = []
 
     def log(s):
         print(s, flush=True)
         lineas.append(s)
-        (SAL / "48_entrenar_bi_encoder.log").write_text("\n".join(lineas) + "\n", encoding="utf-8")
+        (DESTINO / "entrenar.log").write_text("\n".join(lineas) + "\n", encoding="utf-8")
 
-    tit, P, duros, va = datos()
+    tit, P, duros, va, conocidos = datos()
+    log("variante {!r}: lotes {}, lr {}, epocas {}".format(a.variante, a.lotes, a.lr, a.epocas))
     log("48 · BI-ENCODER e5-base DESTILADO DE LA v3 (D-045)")
     log("commit {} sin commitear {}".format(git("rev-parse", "HEAD")[:7],
                                            bool(git("status", "--porcelain"))))
     log("positivos (entrena) {:,} en {:,} comunidades; anclas con negativo dificil {:,}; pares "
         "`si` de valida {:,}".format(len(P), P["comp_i"].nunique(), len(duros), len(va)))
-    res = [una_semilla(s, tit, P, duros, va, log) for s in SEMILLAS]
+    res = [una_semilla(int(s), tit, P, duros, va, log,
+                       conocidos=conocidos if a.lotes == "azar" else None, lotes=a.lotes, lr=a.lr,
+                       epocas=a.epocas) for s in a.semillas.split(",")]
     elegida = max(res, key=lambda r: r["mejor"])
     log("ELEGIDA: semilla {} (recall@100 valida {:.4f})".format(elegida["semilla"], elegida["mejor"]))
     (DESTINO / "resultados.json").write_text(json.dumps(
         {"commit": git("rev-parse", "HEAD"), "sin_commitear": bool(git("status", "--porcelain")),
          "semillas": res, "elegida": elegida["semilla"],
-         "hiper": {"lote": LOTE, "lr": LR, "epocas": EPOCAS, "escala": ESCALA, "largo": LARGO}},
+         "hiper": {"lote": LOTE, "lr": a.lr, "epocas": a.epocas, "escala": ESCALA, "largo": LARGO,
+                   "lotes": a.lotes, "variante": a.variante}},
         indent=2), encoding="utf-8")
 
 
