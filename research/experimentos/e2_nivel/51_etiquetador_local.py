@@ -12,7 +12,8 @@ tiene que coincidir >= 85 % ahi y tener kappa >= 0,79 en `cerca` (el de Gemini e
 lo cumple, no se usa ninguno. Coincidencia por par: el veredicto coherente en los dos ordenes; un
 par incoherente cuenta como fallo.
 
-    CUDA_VISIBLE_DEVICES=0,1 .venv-llm/bin/python 51_etiquetador_local.py --modelo qwen3-235b-fp8 --tp 2
+    CUDA_VISIBLE_DEVICES=0 .venv-llm/bin/python 51_etiquetador_local.py --modelo qwen35-35b-a3b-fp8
+    CUDA_VISIBLE_DEVICES=0,1 .venv-llm/bin/python 51_etiquetador_local.py --modelo qwen35-122b-a10b-fp8 --tp 2
     .venv-llm/bin/python 51_etiquetador_local.py --resumen
 
 SALIDAS: salidas/51_<modelo>.csv (respuestas), salidas/51_etiquetador_local.txt (resumen)
@@ -32,7 +33,9 @@ AQUI = pathlib.Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 SAL = AQUI / "salidas"
 RUBRICA = AQUI / "rubrica_mismo_cargo_v6.md"
-MODELOS = ("qwen3-235b-fp8", "qwen3-32b", "qwen25-72b-awq")
+# los tres de la primera idea (Qwen3-235B, Qwen3-32B, Qwen2.5-72B) se cambiaron por una generacion
+# mas nueva y mas chica: la red del servidor estaba a 0,5 MB/s (2026-10-05)
+MODELOS = ("qwen35-35b-a3b-fp8", "gemma4-26b-a4b", "qwen35-122b-a10b-fp8")
 UMBRAL_LEJOS, KAPPA_CERCA = 0.85, 0.79
 
 INSTRUCCION = """Eres un analista de benchmarking salarial. Vas a recibir dos titulos de
