@@ -204,3 +204,16 @@ def test_con_capa0_la_errata_no_absorbe_siglas_cortas():
     assert k == 0 and len(set(nuevo.tolist())) == 3
     nuevo, k = _fusionar_erratas(celdas, grupo, niv, {0: 40, 2: 1, 3: 1})   # sin la guarda
     assert k >= 1
+
+
+def test_grupos_inyectados_reemplazan_la_agrupacion():                 # D-046
+    filas = [(f"E{i}", "CHOFER", 0.7 + 0.01 * (i % 5)) for i in range(12)]
+    filas += [(f"F{i}", "CONDUCTOR", 0.72 + 0.01 * (i % 5)) for i in range(12)]
+    filas += [(f"G{i}", "CAJERO", 0.6 + 0.01 * (i % 5)) for i in range(12)]
+    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
+    emb = {"CHOFER": np.array([1.0, 0.0]), "CONDUCTOR": np.array([0.0, 1.0]),
+           "CAJERO": np.array([0.7, -0.7])}
+    b = BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=None, capa0=Capa0(),
+                                 grupos={"CHOFER": 7, "CONDUCTOR": 7})
+    assert b.grupo[b.idx["CHOFER"]] == b.grupo[b.idx["CONDUCTOR"]]
+    assert b.grupo[b.idx["CAJERO"]] != b.grupo[b.idx["CHOFER"]]

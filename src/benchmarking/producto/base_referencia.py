@@ -784,8 +784,13 @@ class BaseReferencia:
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
                   genero=True, mapa_genero=None, grado=False, mapa_grado=None, capa0=None,
-                  scvs=None):
+                  scvs=None, grupos=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
+
+        `grupos` (D-046) es un dict etiqueta -> id de grupo que REEMPLAZA la agrupacion final,
+        despues de todas las pasadas: lo usa el correlation clustering con el juez, que se
+        calcula aparte. Las etiquetas que no esten en el dict conservan el grupo que les dieron
+        las pasadas. Con `grupos`, la fusion se considera activa aunque `umbral_fusion` sea None.
 
         `umbral_fusion=None` desactiva la fusion de cuasi-duplicados.
 
@@ -863,7 +868,7 @@ class BaseReferencia:
         else:
             niv_c = niv
             gnum = None
-        fusiona = bool(umbral_fusion) or capa0 is not None
+        fusiona = bool(umbral_fusion) or capa0 is not None or grupos is not None
 
         # `lambda` se estima SIN fusionar, a proposito. Mide cuanto difieren dos celdas
         # por unidad de distancia semantica, y dentro de un grupo fusionado esa diferencia
@@ -962,6 +967,13 @@ class BaseReferencia:
                 grupo, n_gra = _fusionar_grado(celdas, grupo, niv_c, emp_g2)
                 print(f"fusion por grado: {n_gra:,} grupos unidos")
 
+            if grupos is not None:
+                # los ids externos y los internos no pueden chocar: los internos se desplazan
+                fuera = 10 ** 9
+                grupo = np.array([int(grupos[c]) if c in grupos else fuera + int(g)
+                                  for c, g in zip(celdas, grupo)], dtype=np.int64)
+                print(f"grupos inyectados: {sum(c in grupos for c in celdas):,} etiquetas, "
+                      f"{len(set(grupo.tolist())):,} grupos")
             g_por_etiqueta = dict(zip(celdas, grupo))
             d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
             m_g, W_g, emp_g, claves, tau2, sigma2, t2_serie, s2_serie = _stats(d, "_g")
