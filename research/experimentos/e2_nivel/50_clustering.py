@@ -153,6 +153,9 @@ def agrupar(de):
               "suma de log-odds <= 0": 0}
     t0 = time.time()
     for k, (i, j) in enumerate(zip(aristas["i"].to_numpy(), aristas["j"].to_numpy())):
+        if k % 100_000 == 0:
+            print("   {:,} de {:,} aristas; {:,} uniones; {:,} pares nuevos de la v3 ({:.0f} s)".format(
+                k, len(aristas), motivo["unidos"], juez.nuevos, time.time() - t0), flush=True)
         A, Bc = int(de_[i]), int(de_[j])
         if A == Bc:
             motivo["mismo cluster"] += 1
@@ -166,6 +169,12 @@ def agrupar(de):
             motivo["tope"] += 1
             continue
         pares = [(min(x, y), max(x, y)) for x in mA for y in mB]
+        # atajo sin cambiar la regla: si un par YA puntuado tiene P < 0,1, la union esta rechazada
+        # y no hace falta pedirle a la v3 los que faltan
+        conocidos = [cache[q] for q in pares if q in cache]
+        if conocidos and min(conocidos) < P_MIN:
+            motivo["par con P < 0,1"] += 1
+            continue
         P = np.clip(juez.P(pares), 1e-4, 1 - 1e-4)
         if P.min() < P_MIN:
             motivo["par con P < 0,1"] += 1
@@ -181,9 +190,6 @@ def agrupar(de):
         c_sen.pop(Bc)
         c_gra[A] = c_gra[A] | c_gra.pop(Bc)
         motivo["unidos"] += 1
-        if k % 200_000 == 0:
-            print("   {:,} aristas, {:,} uniones, {:,} pares nuevos de la v3 ({:.0f} s)".format(
-                k, motivo["unidos"], juez.nuevos, time.time() - t0), flush=True)
     pd.DataFrame({"nodo": np.arange(n), "titulo": tit, "cluster": de_}).to_parquet(
         SAL / "50_clusters.parquet", index=False)
     tam = pd.Series(de_).value_counts()
