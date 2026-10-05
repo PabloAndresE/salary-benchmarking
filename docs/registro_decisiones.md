@@ -5957,3 +5957,33 @@ optimista. **Decisión del autor:**
 2. **Validación limpia antes de entrenar:** 100 pares lejanos **nuevos** (no usados para la v7),
    juzgados a ciegas por el autor con la v7. **Se usa GLM si, en los coherentes, coincide con el
    autor ≥ 90 % y es coherente en ≥ 85 % de los pares.** Si no, no se usa.
+
+### Resultado de la validación limpia (52) y decisión (2026-10-06)
+
+**Evidencia:** `52_validacion_glm.py`, `salidas/52_validacion_glm.txt`, `52_validacion_juicio1.csv`
+(autor, ciego), `52_validacion_juez2.csv` (segundo juez humano, ciego: recibió la columna vacía y no
+vio ningún resultado) y `52_validacion_juez2_corregido.csv` (el del segundo juez con 21 juicios
+corregidos por Claude con la v7, cada uno con su regla en la nota: 18 por funciones distintas, uno
+por título sin puesto, uno por nivel y uno por ámbito).
+
+- **Regla registrada (contra el autor): GLM no pasa.** Coherente en 80 % (se pedía ≥ 85 %); en los
+  coherentes, 71,2 % de acuerdo (se pedía ≥ 90 %). El 93,8 % de antes era optimista: la v7 se ajustó a
+  aquellos 130 pares. **No se usan las etiquetas de GLM.**
+- **El acuerdo entre dos humanos con la misma rúbrica es bajo:** 66 % (kappa 0,35); 75 % (kappa 0,45)
+  con las correcciones. GLM coincide con el autor (71 %, kappa 0,39) tanto como el segundo juez. **El
+  criterio de 90 % estaba por encima del acuerdo humano: error de diseño del criterio**, declarado.
+- **Precisión de lo que se uniría** en esa zona (pares de coseno < 0,85 de los clusters y candidatos
+  semánticos): v3 con P ≥ 0,9 41 % (autor) / 68 % (juez 2) / 55 % (juez 2 corregido); GLM ≈ 50 %;
+  v3 y GLM a la vez, 48 %. En la auditoría de D-045 §2 la v3 daba 89 %, pero aquellos pares venían
+  del buscador por letras, que es otra población.
+
+**Decisión del autor:**
+1. **No se entrena la v4.** Las 10.000 etiquetas de GLM (`53`) quedan como dato descriptivo.
+2. **Enmienda a D-046: el clustering se hace solo en la zona confiable de la v3.** Dos clusters se
+   juntan solo si **todos** los pares entre ellos tienen coseno de Vertex ≥ 0,90 (la población con que
+   se entrenó y evaluó la v3: AUC 0,89–0,99 en `prueba` y `prueba 2`) **y** P de la v3 ≥ 0,5, sin
+   candado, sin pasar de 60 grupos; los no-cargos quedan solos. Los criterios de adopción de D-046
+   (auditoría ≥ 90 % y pinball con placebo frente a la v15) no cambian.
+3. **Los sinónimos lejanos que importan van a un diccionario aprobado por el autor**, como las
+   erratas y abreviaturas de la capa 0: las propuestas de Gemini que existen en la base, para los
+   cargos con más personas, en una lista para aprobar o rechazar.
