@@ -5908,3 +5908,52 @@ audita**: con clusters así la auditoría fallaría por construcción.
 **todos** los pares entre ellos tienen P ≥ 0,5 (con eso la suma de log-odds es positiva por
 construcción). Se mantienen los candados y el tope de 60. La caché de puntajes de la v3 se guarda.
 Los criterios de adopción (auditoría ≥ 90 % y pinball con placebo) no cambian.
+
+---
+
+## D-047 — Juez v4: la v3 no sabe decir «no» lejos. Rúbrica v7 y un etiquetador LLM sin costo
+
+**Fecha:** 2026-10-05
+**Origen:** el correlation clustering de D-046 juntó de más, también con enlace completo (a las
+700.000 aristas llevaba las mismas uniones que la regla anterior; se detuvo). La causa es el juez:
+la v3, entrenada solo con pares de coseno ≥ 0,90, da «mismo cargo» a pares absurdos (`COMPRESORES`
+/ `COMPOSTERA` 0,93; `AYUDANTE DE EXCAVADORA` / `OPERADOR DE RETROEXCAVADORA` 0,91; `CERAMICA` /
+`COMPOST` 0,63). Hay que reentrenarlo con pares lejanos etiquetados.
+
+**Etiquetador.** Gemini con la rúbrica completa costaría del orden de $150–300 (≈ 70 M de tokens de
+entrada): el autor lo descarta. Se usa un LLM sin costo por consulta. La Universidad sirve
+`zai-org/GLM-5.3-Flash` en el propio H200 (API compatible con OpenAI, sin clave; se usa con 8
+peticiones a la vez por ser un recurso compartido). También se descargaron Qwen3.5-35B-A3B,
+Qwen3.5-122B-A10B y Gemma 4 26B (en `modelos/`, sin usar todavía); Ollama ofrece otros, no probados.
+
+**Validación contra juicios que ya existían** (`51_etiquetador_local.py`; criterio fijado antes de
+medir: acierto ≥ 85 % en los 130 pares lejanos de la auditoría de D-045 §2, contando las
+contradicciones entre órdenes como fallo, y kappa ≥ 0,79 en `calibra`):
+
+| GLM-5.3-Flash | coherencia | acierto lejos | kappa lejos | kappa cerca |
+|---|---|---|---|---|
+| sin razonamiento, rúbrica v6 | 93,1 % | 79,2 % | 0,68 | 0,94 |
+| con razonamiento, rúbrica v6 | 91,5 % | 76,2 % | 0,74 | 0,91 |
+| **sin razonamiento, rúbrica v7** | 89,9 % | 80,8 % | **0,86** | 0,90 |
+
+No pasa el criterio. Con la v7, cuando es coherente en los dos órdenes acierta 93,8 % lejos y
+96,5 % cerca; las contradicciones son 14 % y 7 %.
+
+**Rúbrica v7** (`rubrica_mismo_cargo_v7.md`). Al revisar los desacuerdos lejanos, muchos eran entre
+el autor y la letra de la v6, no errores del modelo. El autor decidió seis aclaraciones: un título
+que no nombra un puesto → `no`; una palabra cortada se reconstruye solo si es seguro, si no → `no`;
+entre palabras de puesto distintas solo separa la tabla de niveles (paso 2); la acotación separa
+si lleva a otro oficio o sector, o si la palabra genérica es ambigua; la sección no separa, el tipo
+de vehículo o licencia y la especialidad sí (paso 4); ser un puesto y apoyarlo son puestos
+distintos, sea o no un mando (paso 5). Ejemplos inventados, comprobado que no aparecen en ningún
+conjunto juzgado. Se corrigieron 3 juicios de la auditoría de D-045 con nota (`SENIOR 3`, error al
+marcar; `OBRERO ENCARTONADO ETIQUETADO` / `OPERADOR DE ETIQUETADO` → `si` y `AUXILIAR DE` /
+`AUXILIAR DE PATIO` → `no` por la v7). `calibra` sigue juzgada con la v6: límite declarado.
+
+**Circularidad, declarada:** la v7 se escribió mirando esos 130 pares, así que el 93,8 % es
+optimista. **Decisión del autor:**
+1. **Regla de uso:** solo cuentan las etiquetas en que GLM es coherente en los dos órdenes; las
+   contradicciones se apartan (como los incoherentes de Gemini en D-036).
+2. **Validación limpia antes de entrenar:** 100 pares lejanos **nuevos** (no usados para la v7),
+   juzgados a ciegas por el autor con la v7. **Se usa GLM si, en los coherentes, coincide con el
+   autor ≥ 90 % y es coherente en ≥ 85 % de los pares.** Si no, no se usa.
