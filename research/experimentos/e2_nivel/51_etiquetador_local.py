@@ -35,7 +35,11 @@ SAL = AQUI / "salidas"
 RUBRICA = AQUI / "rubrica_mismo_cargo_v6.md"
 # los tres de la primera idea (Qwen3-235B, Qwen3-32B, Qwen2.5-72B) se cambiaron por una generacion
 # mas nueva y mas chica: la red del servidor estaba a 0,5 MB/s (2026-10-05)
-MODELOS = ("qwen35-35b-a3b-fp8", "gemma4-26b-a4b", "qwen35-122b-a10b-fp8")
+MODELOS = ("qwen35-35b-a3b-fp8", "gemma4-26b-a4b", "qwen35-122b-a10b-fp8", "glm-5.3-flash")
+# GLM-5.3-Flash lo sirve la Universidad en el propio H200 (API compatible con OpenAI, sin clave);
+# se usa con 8 peticiones a la vez como maximo: es un recurso compartido
+API = {"glm-5.3-flash": ("http://172.28.230.10:12559/v1/chat/completions", "zai-org/GLM-5.3-Flash")}
+CONCURRENCIA = 8
 UMBRAL_LEJOS, KAPPA_CERCA = 0.85, 0.79
 
 INSTRUCCION = """Eres un analista de benchmarking salarial. Vas a recibir dos titulos de
@@ -79,7 +83,40 @@ def conjuntos():
     return d
 
 
+def pedir_api(url, nombre, sis, a, b, intentos=5):
+    import urllib.request
+    cuerpo = {"model": nombre, "temperature": 0, "max_tokens": 300, "seed": 20261005,
+              "messages": [{"role": "system", "content": sis},
+                           {"role": "user", "content": "A: {}\nB: {}".format(a, b)}],
+              "response_format": {"type": "json_schema",
+                                  "json_schema": {"name": "veredicto", "schema": ESQUEMA}},
+              "chat_template_kwargs": {"enable_thinking": False}}
+    for k in range(intentos):
+        try:
+            r = urllib.request.Request(url, data=json.dumps(cuerpo).encode(),
+                                       headers={"Content-Type": "application/json"})
+            return json.load(urllib.request.urlopen(r, timeout=180))["choices"][0]["message"]["content"]
+        except Exception as e:                       # noqa: BLE001 - se reintenta y se registra
+            err = repr(e)
+            time.sleep(2 * (k + 1))
+    return "ERROR " + err
+
+
+def correr_api(modelo, filas, sis):
+    from concurrent.futures import ThreadPoolExecutor
+    url, nombre = API[modelo]
+    with ThreadPoolExecutor(CONCURRENCIA) as ex:
+        return list(ex.map(lambda f: pedir_api(url, nombre, sis, f[2], f[3]), filas))
+
+
 def correr(modelo, tp):
+    if modelo in API:
+        d = conjuntos()
+        sis, sha = sistema()
+        filas = [(r.id, o, a, b) for r in d.itertuples() for o, a, b in (("ab", r.a, r.b), ("ba", r.b, r.a))]
+        t0 = time.time()
+        textos = correr_api(modelo, filas, sis)
+        return guardar(modelo, filas, textos, sha, time.time() - t0)
     from vllm import LLM, SamplingParams
     try:
         from vllm.sampling_params import StructuredOutputsParams
@@ -97,10 +134,12 @@ def correr(modelo, tp):
                  {"role": "user", "content": "A: {}\nB: {}".format(a, b)}] for _, _, a, b in filas]
     t0 = time.time()
     salidas = llm.chat(mensajes, sp, chat_template_kwargs={"enable_thinking": False})
-    seg = time.time() - t0
+    guardar(modelo, filas, [s.outputs[0].text for s in salidas], sha, time.time() - t0)
+
+
+def guardar(modelo, filas, textos, sha, seg):
     out = []
-    for (i, o, a, b), s in zip(filas, salidas):
-        txt = s.outputs[0].text
+    for (i, o, a, b), txt in zip(filas, textos):
         try:
             r = json.loads(txt)
             out.append((i, o, a, b, r["mismo"], r["paso"], r["razon"], ""))
