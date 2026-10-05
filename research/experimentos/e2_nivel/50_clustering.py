@@ -111,14 +111,14 @@ def puntuar(parte, de):
 
 
 class Juez:
-    """La v3 al vuelo, con cache: los pares entre clusters que ninguna fuente propuso."""
+    """El juez al vuelo, con cache: los pares entre clusters que ninguna fuente propuso."""
 
-    def __init__(self, tit, cache):
+    def __init__(self, tit, cache, ruta=V3):
         from transformers import AutoTokenizer
         self.e22, self.e31 = cargar("e22", "22_entrenar_cross.py"), cargar("e31", "31_h4_prueba2.py")
         self.tok = AutoTokenizer.from_pretrained(RAIZ / "modelos" / "mdeberta-xnli")
-        self.inf = json.loads((V3 / "info.json").read_text(encoding="utf-8"))
-        self.m = self.e22.construir(V3, False, "cuda")
+        self.inf = json.loads((ruta / "info.json").read_text(encoding="utf-8"))
+        self.m = self.e22.construir(ruta, False, "cuda")
         self.tit, self.cache, self.nuevos = tit, cache, 0
 
     def P(self, pares):
@@ -134,7 +134,17 @@ class Juez:
         return np.array([self.cache[p] for p in pares])
 
 
-def agrupar(de, regla="completo"):
+def es_cargo(n):
+    """D-047: los nodos que Gemini no pudo describir (basura de planilla, areas, productos) no son
+    cargos y quedan solos en el clustering."""
+    desc = pd.read_csv(SAL / "46_descripciones.csv", keep_default_na=False)
+    m = np.zeros(n, bool)
+    for k, r in zip(desc["nodo"], desc["respuesta"]):
+        m[int(k)] = bool(json.loads(r)["descripcion"].strip())
+    return m
+
+
+def agrupar(de, regla="completo", solo_cargos=False):
     p_min = P_MIN[regla]
     sufijo = "" if regla == "suma" else "_" + regla
     _, tit, _, _, _, _ = cargar("e47", "47_pares_bi_encoder.py").nodos_y_capa0()
@@ -159,6 +169,10 @@ def agrupar(de, regla="completo"):
     c_sen = {k: {sen[k]} for k in range(n)}
     c_gra = {k: gra[k] for k in range(n)}
     aristas = d[(d["P"] >= 0.5) & ~d["bloqueado"]].sort_values("P", ascending=False)
+    if solo_cargos:
+        ok = es_cargo(n)
+        aristas = aristas[ok[aristas["i"].to_numpy()] & ok[aristas["j"].to_numpy()]]
+        sufijo += "_cargos"
     motivo = {"unidos": 0, "mismo cluster": 0, "candado": 0, "tope": 0, "par con P < minimo": 0,
               "suma de log-odds <= 0": 0}
     t0 = time.time()
@@ -230,6 +244,7 @@ if __name__ == "__main__":
     ap.add_argument("--parte", type=int, default=0)
     ap.add_argument("--de", type=int, default=3)
     ap.add_argument("--regla", default="completo", choices=list(P_MIN))
+    ap.add_argument("--solo-cargos", action="store_true", help="D-047: los no-cargos quedan solos")
     a = ap.parse_args()
     {"candidatos": candidatos, "puntuar": lambda: puntuar(a.parte, a.de),
-     "agrupar": lambda: agrupar(a.de, a.regla)}[a.etapa]()
+     "agrupar": lambda: agrupar(a.de, a.regla, a.solo_cargos)}[a.etapa]()
