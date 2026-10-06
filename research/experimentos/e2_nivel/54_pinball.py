@@ -120,7 +120,14 @@ def una_variante(nom, clusters):
     print("{}: el juez asigno {:,} titulos de {:,}".format(
         sufijo, int(np.isfinite(out["p_juez"].to_numpy(float)).sum()) if "p_juez" in out else 0, len(cargos)))
     pd.DataFrame({"empresa": v["empresa_ruc"].to_numpy(), "cargo": v["cargo_norm"].to_numpy(),
-                  "pinball": perdida, "directa": directa, "p_juez": p_juez}).to_parquet(
+                  "pinball": perdida, "directa": directa, "p_juez": p_juez,
+                  # para la cobertura de las bandas (58): el voto y la banda que recibio
+                  "voto": v["voto"].to_numpy(float),
+                  **{c: out[c].reindex(v["cargo_norm"]).to_numpy(float)
+                     for c in ("p10_log", "p25_log", "p75_log", "p90_log") if c in out},
+                  "base": out["base"].reindex(v["cargo_norm"]).to_numpy(),
+                  "confianza": out["confianza"].reindex(v["cargo_norm"]).to_numpy(),
+                  "empresas_ref": out["empresas"].reindex(v["cargo_norm"]).to_numpy()}).to_parquet(
         SAL / "54_{}.parquet".format(sufijo), index=False)
     print("{}: {:,} votos de {:,} empresas apartadas; grupos {:,}".format(
         sufijo, len(v), v["empresa_ruc"].nunique(), len(set(np.asarray(base.grupo).tolist()))))
