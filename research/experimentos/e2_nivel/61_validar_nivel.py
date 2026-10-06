@@ -110,7 +110,13 @@ def medir():
     e41 = cargar("e41", "41_base_v16.py")
     mk = e41.cargar_marco()[["cargo_norm", "empresa_ruc", "y"]].dropna()
     mk["cargo_norm"] = mk["cargo_norm"].astype(str)
-    sin = q[q["tabla"].isna() & (q["nivel"] > 0)].set_index("titulo")["nivel"]
+    # «sin palabra de rango» por GRUPO de la base, como en `muestra`: fuera tambien las erratas de
+    # una palabra de rango (`SUPERVOSR`, `JEDE DE VENTAS`), que la tabla no reconoce pero la capa 0
+    # une a su grupo. (Corregido 2026-10-06: la primera corrida filtraba por titulo y las contaba.)
+    b = base()
+    b["rango"] = [nivel_rubrica(t) is not None for t in b["titulo"]]
+    con_rango = set(b.loc[b.groupby("grupo")["rango"].transform("any"), "titulo"])
+    sin = q[q["tabla"].isna() & (q["nivel"] > 0) & ~q["titulo"].isin(con_rango)].set_index("titulo")["nivel"]
     m = mk[mk["cargo_norm"].isin(sin.index)].copy()
     m["nivel"] = sin.reindex(m["cargo_norm"]).to_numpy()
     rng = np.random.default_rng(SEM)
@@ -134,7 +140,7 @@ def medir():
     out.append("\n>>> b) {} <<<".format("CUMPLE" if ok_b else "NO CUMPLE"))
     # c) kappa
     f = SAL / "61_nivel_para_juzgar.csv"
-    if f.exists():
+    if f.exists() and "sin_c" not in sys.argv:            # `sin_c`: a y b antes de que el autor cierre c
         j = pd.read_csv(f, sep=None, engine="python", encoding="utf-8-sig", dtype=str, keep_default_na=False)
         j = j[j["nivel"].str.strip() != ""]
         if len(j) == 100:
