@@ -94,18 +94,27 @@ def una_variante(nom, clusters):
     kw = {}
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
-    if nom in ("clusters", "placebo"):
+    if nom in ("clusters", "placebo", "juez", "juez_placebo"):
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
     base = BaseReferencia.construir(tr, emb, e41._Ajustes.get_sbu, **kw)
+    if nom in ("juez", "juez_placebo"):                       # D-048: el juez en la consulta
+        from benchmarking.producto.juez import cargar as cargar_juez
+        base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/22_modelos_v3/elegido")
+        assert base.juez is not None, "no se pudo cargar el juez"
+        base.juez_placebo = nom == "juez_placebo"
     cargos = sorted(set(v["cargo_norm"]))
     out = base.referenciar(cargos, emb).set_index("cargo")
     perdida = pinball(v["voto"].to_numpy(float),
                       out["p25_log"].reindex(v["cargo_norm"]).to_numpy(float),
                       out["p75_log"].reindex(v["cargo_norm"]).to_numpy(float))
     directa = (out["base"].reindex(v["cargo_norm"]) == "datos directos").to_numpy()
+    p_juez = (out["p_juez"].reindex(v["cargo_norm"]).to_numpy(float) if "p_juez" in out
+              else np.full(len(v), np.nan))
     sufijo = nom if nom in ("v15", "v16") else "{}_{}".format(nom, pathlib.Path(clusters).stem)
+    print("{}: el juez asigno {:,} titulos de {:,}".format(
+        sufijo, int(np.isfinite(out["p_juez"].to_numpy(float)).sum()) if "p_juez" in out else 0, len(cargos)))
     pd.DataFrame({"empresa": v["empresa_ruc"].to_numpy(), "cargo": v["cargo_norm"].to_numpy(),
-                  "pinball": perdida, "directa": directa}).to_parquet(
+                  "pinball": perdida, "directa": directa, "p_juez": p_juez}).to_parquet(
         SAL / "54_{}.parquet".format(sufijo), index=False)
     print("{}: {:,} votos de {:,} empresas apartadas; grupos {:,}".format(
         sufijo, len(v), v["empresa_ruc"].nunique(), len(set(np.asarray(base.grupo).tolist()))))
@@ -138,7 +147,7 @@ def juntar():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo"])
+    ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     a = ap.parse_args()

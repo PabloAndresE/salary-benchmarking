@@ -114,7 +114,13 @@ MIN_PERSONAS = 10
 # DIRECTA: 57,7% -> 64,1% de la gente contestada con datos de su propio puesto en vez de
 # por analogia. Bajar a 0,93 sube la cobertura a 66,1% pero el efecto vuelve a cero.
 UMBRAL_FUSION = 0.95
-PALABRA_MIN_ERRATA = 4  # D-041: con capa 0, el dedazo va en una palabra de 4+ letras
+PALABRA_MIN_ERRATA = 4
+# D-048: el juez en la consulta. Un titulo nuevo (ni tal cual ni por la capa 0) se juzga contra los
+# grupos cercanos en la zona en que la v3 se valido; si alguno tiene P >= P_JUEZ y ningun candado lo
+# impide, recibe los datos de ese grupo en vez de una analogia.
+COS_JUEZ = 0.90
+N_CAND_JUEZ = 10
+P_JUEZ = 0.5  # D-041: con capa 0, el dedazo va en una palabra de 4+ letras
 VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
 TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
 
@@ -1097,6 +1103,52 @@ class BaseReferencia:
         return max(cands, key=lambda i: (self.emp[i], self.celdas[i] == atomo,
                                          -len(self.celdas[i]))) if cands else None
 
+    def _asignar_con_juez(self, unicos, vec, sim):
+        """D-048: titulo nuevo -> (celda del grupo elegido, P) cuando el juez lo reconoce.
+
+        Solo para titulos que no estan en la base ni por la capa 0. Candidatos: hasta
+        `N_CAND_JUEZ` grupos distintos entre los vecinos con coseno >= `COS_JUEZ` (la zona en que la
+        v3 se valido, la misma del clustering de D-046), sin los que bloquea un candado (nivel de la
+        rubrica, seniority, numero de grado). Se elige el de mayor P si llega a `P_JUEZ`. Todos los
+        pares de la consulta se juzgan en un solo lote. `juez_placebo` (solo para medir) elige un
+        candidato AL AZAR en vez del mejor, cuando el mejor llega a `P_JUEZ`.
+        """
+        from .capa0 import compatibles
+        pend, cands_de = [], {}
+        for k, t in enumerate(unicos):
+            if t in self.idx or (self.capa0 is not None and self._por_capa0(t) is not None):
+                continue
+            vistos, cands = set(), []
+            for j, s_ in zip(vec[k], sim[k]):
+                if s_ < COS_JUEZ:
+                    break
+                g = int(self.grupo[j])
+                if g in vistos:
+                    continue
+                vistos.add(g)
+                c = str(self.celdas[j])
+                na, nb = nivel_rubrica(t), nivel_rubrica(c)
+                if ((na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c)
+                        or not compatibles(t, c)):
+                    continue
+                cands.append(int(j))
+                if len(cands) == N_CAND_JUEZ:
+                    break
+            if cands:
+                cands_de[t] = cands
+                pend += [(t, j) for j in cands]
+        if not pend:
+            return {}
+        P = self.juez.P([(t, str(self.celdas[j])) for t, j in pend])
+        mejor = {}
+        for (t, j), p in zip(pend, P):
+            if p >= P_JUEZ and (t not in mejor or p > mejor[t][1]):
+                mejor[t] = (j, float(p))
+        if getattr(self, "juez_placebo", False):
+            rng = np.random.default_rng(99)
+            mejor = {t: (int(rng.choice(cands_de[t])), p) for t, (_, p) in mejor.items()}
+        return mejor
+
     def _por_grado(self, titulo):
         """La celda de la base que es `titulo` salvo el grado (D-037), o None.
 
@@ -1362,7 +1414,7 @@ class BaseReferencia:
                           "rubro_nivel": "",
                           **_cols_sector(None),
                           "tu_empresa": False, "tu_influencia": np.nan,
-                          "similitud": 0.0}
+                          "p_juez": np.nan, "similitud": 0.0}
             for q in CUANTILES:
                 for suf in ("_log", "per_log"):
                     fila_vacia[f"p{int(q * 100)}{suf}"] = np.nan
@@ -1372,6 +1424,8 @@ class BaseReferencia:
         Q = np.vstack([X_por_etiqueta[t] for t in unicos]).astype(float)
         Q /= np.linalg.norm(Q, axis=1, keepdims=True)
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
+        asignado = (self._asignar_con_juez(unicos, vec, sim)
+                    if getattr(self, "juez", None) is not None else {})
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None
         # Una sola pasada por el padron para todo el informe, no una por cargo.
@@ -1398,6 +1452,10 @@ class BaseReferencia:
                 # D-037: `AUXILIAR 3 DE CONTABILIDAD` de un cliente es el mismo puesto que
                 # el `AUXILIAR 1 DE CONTABILIDAD` de la base. Misma regla que al construir.
                 propio = self._por_grado(t)
+            p_juez = np.nan
+            if propio is None and t in asignado:
+                # D-048: ni tal cual ni por la capa 0, pero el juez lo reconoce en un grupo
+                propio, p_juez = asignado[t]
             if propio is not None and self.celdas[propio] != t:
                 cargo_base = self.celdas[propio]
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
@@ -1589,6 +1647,8 @@ class BaseReferencia:
                         # Con que titulo de la base se emparejo, cuando fue solo por el
                         # grado (D-037). Vacio si el titulo estaba tal cual.
                         "cargo_base": cargo_base,
+                        # D-048: P del juez cuando el grupo lo asigno el juez; vacio si no
+                        "p_juez": round(float(p_juez), 3) if np.isfinite(p_juez) else np.nan,
                         "incert_centro": round(incert, 4),
                         "segmento": seg or "", "rubro": usado,
                         # A QUE NIVEL se comparo: el front tiene que poder decir
