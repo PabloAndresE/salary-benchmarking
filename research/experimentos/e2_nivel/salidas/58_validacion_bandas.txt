@@ -1,0 +1,56 @@
+1. COBERTURA: ¿cae el voto de una empresa nueva dentro de la banda de su cargo?
+   votos con banda: 38,450 (de 1,442 empresas apartadas)
+   esperado si la banda esta bien calibrada: 50 % en p25-p75, 80 % en p10-p90
+   TODOS                              n=38,450   p25-p75 54.6%   p10-p90 82.1%   debajo de p25 19.0%
+   por tipo:
+     asignado por el juez             n= 6,628   p25-p75 54.2%   p10-p90 80.9%   debajo de p25 16.7%
+     datos directos                   n=21,710   p25-p75 50.0%   p10-p90 78.7%   debajo de p25 23.2%
+     por analogia                     n=10,112   p25-p75 64.5%   p10-p90 90.3%   debajo de p25 11.6%
+   por confianza:
+     ALTA                             n=14,077   p25-p75 50.5%   p10-p90 79.4%   debajo de p25 22.5%
+     BAJA                             n=15,740   p25-p75 62.3%   p10-p90 88.4%   debajo de p25 13.4%
+     MEDIA                            n= 8,633   p25-p75 47.1%   p10-p90 75.3%   debajo de p25 23.7%
+   por respaldo:
+     3-5                              n= 1,353   p25-p75 56.2%   p10-p90 76.9%   debajo de p25 19.2%
+     6-10                             n= 2,579   p25-p75 47.5%   p10-p90 71.2%   debajo de p25 21.0%
+     11-30                            n= 5,020   p25-p75 47.8%   p10-p90 76.9%   debajo de p25 22.8%
+     31-100                           n=10,936   p25-p75 55.5%   p10-p90 84.4%   debajo de p25 18.2%
+     >100                             n=18,562   p25-p75 56.7%   p10-p90 84.1%   debajo de p25 18.3%
+
+2. COHERENCIA INTERNA (base_v17, 7,056 grupos con >= 3 empresas)
+
+   GRADO (mayor numero, mas sueldo): 32 pares en 22 familias; en el orden esperado 41% (ponderado por personas 32%); diferencia mediana -4.1%
+      invertido: OPERADOR 1                         (grado menor) gana +4% frente a OPERADOR 2                         (mas alto)
+      invertido: TRABAJADOR AGRICOLA 1              (grado menor) gana +4% frente a TRABAJADOR AGRICOLA 3              (mas alto)
+      invertido: SOLDADOR 2                         (grado menor) gana +41% frente a SOLDADOR 3                         (mas alto)
+      invertido: MECANICO 2                         (grado menor) gana +36% frente a MECANICO 3                         (mas alto)
+      invertido: MECANICO 1                         (grado menor) gana +5% frente a MECANICO 3                         (mas alto)
+      invertido: SOLDADOR 1                         (grado menor) gana +30% frente a SOLDADOR 3                         (mas alto)
+      invertido: MIRADOR 1                          (grado menor) gana +67% frente a MIRADOR 2                          (mas alto)
+      invertido: ASISTENTE CONTABILIDAD 1           (grado menor) gana +10% frente a ASISTENTE CONTABILIDAD 2           (mas alto)
+      invertido: TRABAJADOR AGRICOLA 1              (grado menor) gana +4% frente a TRABAJADOR AGRICOLA 2              (mas alto)
+      invertido: ASISTENTE DE OFICINA 3             (grado menor) gana +11% frente a ASISTENTE DE OFICINA 4             (mas alto)
+
+   SENIORITY (JR < sin marca < SR): 239 pares en 117 familias; en el orden esperado 84% (ponderado por personas 93%); diferencia mediana +37.6%
+      invertido: EJECUTIVO NEGOCIOS                 (menos senior) gana +14% frente a EJECUTIVO SENIOR NEGOCIOS          (mas alto)
+      invertido: EJECUTIVO                          (menos senior) gana +41% frente a EJECUTIVO SENIOR                   (mas alto)
+      invertido: ASESOR COMERCIAL SENIOR            (menos senior) gana +29% frente a ASESOR COMERCIAL CORPORATIVO       (mas alto)
+      invertido: DESARROLLADOR DE SOFTWARE          (menos senior) gana +1% frente a DESARROLLADOR DE SOFTWARE SENIOR   (mas alto)
+      invertido: EJECUTIVO COMERCIAL JR             (menos senior) gana +12% frente a EJECUTIVO COMERCIAL                (mas alto)
+      invertido: TECNICO JUNIOR                     (menos senior) gana +7% frente a TECNICO                            (mas alto)
+      invertido: CONSULTOR                          (menos senior) gana +1% frente a CONSULTOR SENIOR                   (mas alto)
+      invertido: GEOLOGA JUNIOR                     (menos senior) gana +16% frente a GEOLOGA                            (mas alto)
+      invertido: ASESOR                             (menos senior) gana +21% frente a ASESOR SENIOR                      (mas alto)
+      invertido: ASESOR OPERATIVO JUNIOR            (menos senior) gana +16% frente a ASESOR OPERATIVO                   (mas alto)
+
+   NIVEL (misma area, mas nivel, mas sueldo): 5,262 pares en 663 familias; en el orden esperado 93% (ponderado por personas 95%); diferencia mediana +87.9%
+      invertido: ADMINISTRADOR DE LOCAL             (nivel menor) gana +49% frente a JEFE DE LOCAL                      (mas alto)
+      invertido: ADMINISTRADOR CAMPO                (nivel menor) gana +53% frente a SUPERVISOR CAMPO                   (mas alto)
+      invertido: ADMINISTRADOR CAMPO                (nivel menor) gana +41% frente a JEFE CAMPO                         (mas alto)
+      invertido: ADMINISTRADOR DE ALMACEN           (nivel menor) gana +36% frente a SUBJEFE DE ALMACEN                 (mas alto)
+      invertido: EJECUTIVO OPERATIVO                (nivel menor) gana +19% frente a TECNICO OPERATIVO                  (mas alto)
+      invertido: AUXILIAR ALMACEN                   (nivel menor) gana +2% frente a SUBJEFE DE ALMACEN                 (mas alto)
+      invertido: ANALISTA LOGISTICA                 (nivel menor) gana +5% frente a SUPERVISOR LOGISTICA               (mas alto)
+      invertido: AUXILIAR ENFERMERIA                (nivel menor) gana +0% frente a TECNICO DE ENFERMERIA              (mas alto)
+      invertido: TECNICO PLANTA                     (nivel menor) gana +16% frente a SUPERVISOR PLANTA                  (mas alto)
+      invertido: AYUDANTE DE PINTOR                 (nivel menor) gana +0% frente a TECNICO PINTOR                     (mas alto)
