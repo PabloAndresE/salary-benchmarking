@@ -27,7 +27,7 @@ sys.path.insert(0, str(RAIZ / "src"))
 from benchmarking.producto.nivel import nivel_rubrica  # noqa: E402
 
 SEM, N_REP = 20261006, 400
-ETQ = SAL / "60_niveles_qwen.parquet"
+ETQ = SAL / ("60_niveles_qwen_v2.parquet" if "v2" in sys.argv else "60_niveles_qwen.parquet")
 
 
 def cargar(nombre, archivo):
@@ -97,7 +97,7 @@ def escalera(m, col, rng):
 def medir():
     q = pd.read_parquet(ETQ)
     q = q[q["nivel"] >= 0]
-    out = ["61 · VALIDACION DEL NIVEL DE QWEN (D-049)", "etiquetas: {:,} titulos".format(len(q))]
+    out = ["61 · VALIDACION DEL NIVEL DE QWEN (D-049), {}".format(ETQ.name), "etiquetas: {:,} titulos".format(len(q))]
     # a) control
     q["tabla"] = [nivel_rubrica(t) for t in q["titulo"]]
     c = q[q["tabla"].notna() & (q["nivel"] > 0)]
@@ -152,7 +152,7 @@ def medir():
                 pd.crosstab(jj["nivel_autor"].astype(int), jj["nivel_qwen"].astype(int)).to_string()]
         else:
             out.append("\nc) AUTOR: faltan juicios ({} de 100)".format(len(j)))
-    (SAL / "61_validacion_nivel.txt").write_text("\n".join(out) + "\n", encoding="utf-8")
+    (SAL / "61_validacion_nivel{}.txt".format("_v2" if "v2" in sys.argv else "")).write_text("\n".join(out) + "\n", encoding="utf-8")
     print("\n".join(out))
 
 

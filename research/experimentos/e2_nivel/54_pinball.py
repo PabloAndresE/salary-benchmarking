@@ -44,6 +44,7 @@ SEM, N_REPLICAS = 20260917, 400          # los de `10`
 # NO se pueden emparejar (lo comprobado: 324 de 1.343 empresas en comun). `--entorno` marca el
 # archivo para comparar solo corridas del mismo entorno.
 ENTORNO = ""
+NIVEL_IDIOMA = "v2"          # el nivel del producto sobre el que se mide la capa de idioma (D-050)
 
 
 def cargar(nombre, archivo):
@@ -98,18 +99,37 @@ def una_variante(nom, clusters):
     kw = {}
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
-    con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo")
+    con_idioma = ("idioma", "idioma_placebo")
+    con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo") + con_idioma
     con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo") + con_nivel
     if nom in ("clusters", "placebo") + con_juez:
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
     if nom in con_nivel:                 # D-049: el nivel de Qwen (y su placebo: permutado entre titulos)
-        q = pd.read_parquet(SAL / ("60_niveles_qwen.parquet" if "v1" in nom else "60_niveles_qwen_v2.parquet"))
+        q = pd.read_parquet(SAL / ("60_niveles_qwen.parquet" if ("v1" in nom or (nom in con_idioma and NIVEL_IDIOMA == "v1"))
+                                   else "60_niveles_qwen_v2.parquet"))
         niveles = dict(zip(q["titulo"].astype(str), q["nivel"].astype(int)))
-        if nom.endswith("placebo"):
+        if nom.endswith("placebo") and nom not in con_idioma:
             t_ = list(niveles)
             niveles = dict(zip(t_, np.random.default_rng(7).permutation([niveles[x] for x in t_])))
         kw["niveles"] = niveles
+    if nom in con_idioma:                # D-050: los titulos en ingles entran al grupo de su traduccion
+        r = pd.read_parquet(SAL / "64_idioma_resueltos.parquet")
+        r = r[r["destino"] != ""]
+        dest = r["destino"].to_numpy()
+        if nom == "idioma_placebo":                    # el grupo de OTRO titulo resuelto
+            dest = np.random.default_rng(5).permutation(dest)
+        g = kw["grupos"]
+        for t, d_ in zip(r["titulo"], dest):
+            if t in g and d_ in g:
+                g[t] = g[d_]
+        et = np.load(SAL / "64_emb_traducciones.npz", allow_pickle=True)
+        emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
     base = BaseReferencia.construir(tr, emb, e41._Ajustes.get_sbu, **kw)
+    if nom in con_idioma:
+        from benchmarking.producto import idioma
+        base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
+        assert base.traductor is not None
+        base.idioma_placebo = nom == "idioma_placebo"
     if nom in con_juez:                                       # D-048: el juez en la consulta
         from benchmarking.producto.juez import cargar as cargar_juez
         base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/22_modelos_v3/elegido")
@@ -175,7 +195,8 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo",
                                            "juez_tabla", "juez_vecinos", "juez_vecinos_placebo",
-                                           "nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo"])
+                                           "nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo",
+                                           "idioma", "idioma_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")

@@ -1180,6 +1180,67 @@ class BaseReferencia:
             mejor = {t: (int(rng.choice(cands_de[t])), p) for t, (_, p) in mejor.items()}
         return mejor
 
+    def resolver_idioma(self, titulos, X_por_etiqueta):
+        """D-050: titulo en ingles -> (celda, via, P del juez o NaN, traduccion), por su traduccion.
+
+        La traduccion se busca tal cual, por la capa 0 y por el juez (si su embedding esta en
+        `X_por_etiqueta`, ver `traducciones_a_embeber`). Despues, el candado entre el titulo
+        ORIGINAL y la celda encontrada: nivel de la rubrica, seniority y numero de grado.
+        `idioma_placebo` (solo para medir) cambia cada destino por el de otro titulo resuelto."""
+        from .capa0 import compatibles
+        from .idioma import es_ingles
+        tr = getattr(self, "traductor", None)
+        if tr is None:
+            return {}
+        cand = [t for t in titulos if es_ingles(t)]
+        if not cand:
+            return {}
+        trad = tr.traducir(cand)
+        out, al_juez = {}, []
+        for t in cand:
+            tt = trad[t]
+            if not tt or tt == t:
+                continue
+            j = self.idx.get(tt)
+            if j is None and self.capa0 is not None:
+                j = self._por_capa0(tt)
+            if j is not None:
+                out[t] = (int(j), "traduccion", np.nan, tt)
+            elif getattr(self, "juez", None) is not None and tt in X_por_etiqueta:
+                al_juez.append(t)
+        if al_juez:
+            tts = sorted({trad[t] for t in al_juez})
+            Q = np.vstack([X_por_etiqueta[x] for x in tts]).astype(float)
+            Q /= np.linalg.norm(Q, axis=1, keepdims=True)
+            vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
+            asig = self._asignar_con_juez(tts, vec, sim)
+            for t in al_juez:
+                if trad[t] in asig:
+                    j, p = asig[trad[t]]
+                    out[t] = (int(j), "traduccion y juez", float(p), trad[t])
+        ok = {}
+        for t, v in out.items():
+            c = str(self.celdas[v[0]])
+            na, nb = nivel_rubrica(t), nivel_rubrica(c)
+            if ((na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c)
+                    or not compatibles(t, c)):
+                continue
+            ok[t] = v
+        if getattr(self, "idioma_placebo", False) and len(ok) > 1:
+            ts = sorted(ok)
+            dest = np.random.default_rng(5).permutation([ok[t][0] for t in ts])
+            ok = {t: (int(d),) + ok[t][1:] for t, d in zip(ts, dest)}
+        return ok
+
+    def traducciones_a_embeber(self, titulos):
+        """Las traducciones de los titulos en ingles, para embeberlas antes de `referenciar`."""
+        from .idioma import es_ingles
+        tr = getattr(self, "traductor", None)
+        if tr is None:
+            return []
+        cand = [t for t in titulos if es_ingles(t)]
+        return sorted({x for x in tr.traducir(cand).values() if x})
+
     def _por_grado(self, titulo):
         """La celda de la base que es `titulo` salvo el grado (D-037), o None.
 
@@ -1475,6 +1536,7 @@ class BaseReferencia:
         asignado = (self._asignar_con_juez(unicos, vec, sim)
                     if getattr(self, "juez", None) is not None else {})
         niv_consulta = self._nivel_consulta(unicos, Q)
+        idioma = self.resolver_idioma(unicos, X_por_etiqueta)
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None
         # Una sola pasada por el padron para todo el informe, no una por cargo.
@@ -1505,6 +1567,14 @@ class BaseReferencia:
             if propio is None and t in asignado:
                 # D-048: ni tal cual ni por la capa 0, pero el juez lo reconoce en un grupo
                 propio, p_juez = asignado[t]
+            traduccion = ""
+            if t in idioma:
+                # D-050: un titulo en ingles SIN datos directos propios se busca por su traduccion,
+                # antes que por la capa 0 o el juez sobre el texto en ingles (el juez no se valido ahi)
+                ex = self.idx.get(t)
+                if not (ex is not None and self.emp[ex] >= MIN_EMPRESAS
+                        and self.personas[ex] >= self.min_personas):
+                    propio, _, p_juez, traduccion = idioma[t]
             if propio is not None and self.celdas[propio] != t:
                 cargo_base = self.celdas[propio]
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
@@ -1706,6 +1776,8 @@ class BaseReferencia:
                         # Con que titulo de la base se emparejo, cuando fue solo por el
                         # grado (D-037). Vacio si el titulo estaba tal cual.
                         "cargo_base": cargo_base,
+                        # D-050: la traduccion con que se resolvio un titulo en ingles
+                        "traduccion": traduccion,
                         # D-048: P del juez cuando el grupo lo asigno el juez; vacio si no
                         "p_juez": round(float(p_juez), 3) if np.isfinite(p_juez) else np.nan,
                         "incert_centro": round(incert, 4),
