@@ -6169,3 +6169,30 @@ descripción de Gemini dice «supervisa». Son las palabras que `nivel.py` ya ma
    léxico (ajuste por nivel, `lambda` y efecto por nivel); los candados de agrupación siguen con la tabla.
    Se adopta la mejor variante que no empeore frente a la tabla y cuyo placebo sí empeore.
 4. El desempate por sueldo se mide después, como otra variante de d.
+
+## D-050 — Capa de idioma: los títulos en inglés se resuelven en su equivalente en español. Registrado antes de medir
+
+**Por qué (decisión del autor).** La base tiene unos 2.500 títulos en inglés (≈ 37.600 personas, sobre todo
+de multinacionales) separados de su equivalente en español (`PAYROLL ANALYST` / `ANALISTA DE NOMINA`), y
+los clientes también escriben en inglés. El producto va a correr en otra infraestructura, sin los
+servicios de la universidad, así que todo debe ser local.
+
+**Cómo:**
+1. **Detector:** un título es inglés si al menos la mitad de sus palabras están en una lista versionada
+   de palabras de cargo en inglés y ninguna es un conector en español (DE, DEL, Y, LA, PARA…).
+2. **Traductor local** `Helsinki-NLP/opus-mt-en-es` (300 MB, CPU): se traduce la frase
+   `He works as a <título en minúsculas>.` y se quita `Trabaja como`. Probado en 18 títulos: dentro de
+   una frase traduce bien; el título suelto en mayúsculas, no.
+3. **Resolución:** la traducción, normalizada, se busca como cualquier título: tal cual, por la capa 0 y
+   por el juez (coseno ≥ 0,90, P ≥ 0,5). Si encuentra grupo y ningún candado lo impide entre el original
+   en inglés y ese grupo (nivel de la rúbrica, seniority, grado), el título en inglés queda resuelto.
+4. **En la base,** el título en inglés entra al grupo encontrado, como los sinónimos (D-047). **En la
+   consulta,** un título en inglés que no tiene datos directos propios se busca por su traducción. Se
+   muestra el original.
+
+**Criterios (fijados antes de medir):**
+- a) **Auditoría ciega del autor:** 50 pares (título en inglés, títulos del grupo asignado), sorteados con
+  peso por personas entre los resueltos; ≥ 90 % de «sí» con la rúbrica v7.
+- b) **Pinball** con el protocolo de D-046 / D-048, contra el producto vigente en ese momento. El placebo
+  asigna cada título en inglés al grupo de otro título resuelto. Se adopta si no empeora donde actúa (IC
+  no entero sobre cero) y el placebo sí empeora.
