@@ -1,0 +1,10 @@
+55 · AUDITORIA DEL CLUSTERING EN LA ZONA CONFIABLE (D-046 a, rubrica v7)
+juntados: 100 pares; el autor dice si en 97% (exigido >= 90 %)
+no juntados (coseno >= 0,85): 100 pares; el autor dice si en 78% (descriptivo)
+
+>>> CRITERIO D-046 a: CUMPLE <<<
+
+juntados que el autor separa:
+   OPERADOR CS / OPERADOR CSC
+   ASISTENTE ADMINISTRATIVA DE OPERACIONES / ASISTENTE ADMINISTRATIVO Y DE MANTENIMIENTO
+   ASISTENTE DE DISENO Y DESARROLLO / ASISTENTE DE DISENO Y DESARROLLO MECANICO

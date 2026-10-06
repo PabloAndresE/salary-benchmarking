@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 
 sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "src"))
 AQUI = pathlib.Path(__file__).resolve().parent
 SAL = AQUI / "salidas"
 CLUSTERS = "50_clusters_confiable_cargos.parquet"
@@ -71,7 +72,74 @@ def main(n_anclas):
         len(out), out["ancla"].nunique(), per_cl[lab[anclas]].sum() / per.sum()))
 
 
+def aplicar(archivo_clusters=CLUSTERS, salida="50_clusters_confiable_cargos_sinonimos.parquet"):
+    """Une los clusters con los sinonimos APROBADOS, con dos protecciones: dos grupos no se juntan si
+    entre ellos hay un par que el autor RECHAZO, ni si un candado (nivel de la rubrica, seniority,
+    numero de grado) lo impide. Se procesa de mas a menos personas."""
+    from benchmarking.producto import capa0 as c0m
+    from benchmarking.producto.nivel import nivel_rubrica, seniority_lexica
+    e47 = cargar("e47", "47_pares_bi_encoder.py")
+    _, tit, _, per, _, _ = e47.nodos_y_capa0()
+    cl = pd.read_parquet(SAL / archivo_clusters)
+    lab = cl["cluster"].to_numpy()
+    idx = {str(t): k for k, t in enumerate(tit)}
+    s = pd.read_csv(SAL / "56_sinonimos_para_aprobar.csv", encoding="utf-8-sig", dtype=str,
+                    keep_default_na=False)
+    s["aprobar"] = s["aprobar"].str.strip().str.lower()
+    s["ci"] = [lab[idx[a]] for a in s["ancla"]]
+    s["cj"] = [lab[idx[p]] for p in s["propuesta"]]
+    rechazos = {frozenset((a, b)) for a, b in zip(s.loc[s["aprobar"] == "no", "ci"], s.loc[s["aprobar"] == "no", "cj"])}
+    miembros = {}
+    for k, c in enumerate(lab):
+        miembros.setdefault(int(c), []).append(k)
+    niv = {c: {nivel_rubrica(tit[k]) for k in m} - {None} for c, m in miembros.items()}
+    sen = {c: {seniority_lexica(tit[k]) for k in m} for c, m in miembros.items()}
+    gra = {c: frozenset().union(*[c0m.grado_numerico(tit[k]) for k in m]) for c, m in miembros.items()}
+    padre = {c: c for c in miembros}
+
+    def raiz(x):
+        while padre[x] != x:
+            padre[x] = padre[padre[x]]
+            x = padre[x]
+        return x
+    grupo_de = {c: {c} for c in miembros}
+    ap = s[s["aprobar"] == "si"].copy()
+    ap["p"] = [per[miembros[a]].sum() + per[miembros[b]].sum() for a, b in zip(ap["ci"], ap["cj"])]
+    motivo = {"unidos": 0, "ya juntos": 0, "rechazo del autor": 0, "candado": 0}
+    aplicadas = []
+    for a, b in zip(ap.sort_values("p", ascending=False)["ci"], ap.sort_values("p", ascending=False)["cj"]):
+        ra, rb = raiz(int(a)), raiz(int(b))
+        if ra == rb:
+            motivo["ya juntos"] += 1
+            continue
+        if any(frozenset((x, y)) in rechazos for x in grupo_de[ra] for y in grupo_de[rb]):
+            motivo["rechazo del autor"] += 1
+            continue
+        if len(niv[ra] | niv[rb]) > 1 or sen[ra] != sen[rb] or (gra[ra] and gra[rb] and gra[ra] != gra[rb]):
+            motivo["candado"] += 1
+            continue
+        padre[rb] = ra
+        aplicadas.append((int(a), int(b)))
+        grupo_de[ra] |= grupo_de.pop(rb)
+        niv[ra] |= niv.pop(rb)
+        sen.pop(rb)
+        gra[ra] = gra[ra] | gra.pop(rb)
+        motivo["unidos"] += 1
+    nuevo = np.array([raiz(int(c)) for c in lab])
+    cl.assign(cluster=nuevo).to_parquet(SAL / salida, index=False)
+    pd.DataFrame(aplicadas, columns=["ci", "cj"]).to_parquet(SAL / "56_uniones_aplicadas.parquet", index=False)
+    print("sinonimos aplicados: " + json.dumps(motivo, ensure_ascii=False))
+    print("clusters: {:,} -> {:,}".format(len(set(lab.tolist())), len(set(nuevo.tolist()))))
+    tam = pd.Series(per).groupby(nuevo).sum().sort_values(ascending=False)
+    for c in tam.index[:15]:
+        m = [k for k in range(len(tit)) if nuevo[k] == c]
+        top = [str(tit[k]) for k in sorted(m, key=lambda k: -per[k])[:8]]
+        print("   {:>7,} personas, {:>3} grupos | {}".format(int(tam[c]), len(m), " ; ".join(top)))
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--anclas", type=int, default=100)
-    main(ap.parse_args().anclas)
+    ap.add_argument("--aplicar", action="store_true", help="une los clusters con lo aprobado")
+    a_ = ap.parse_args()
+    aplicar() if a_.aplicar else main(a_.anclas)

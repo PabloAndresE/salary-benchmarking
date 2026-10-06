@@ -5987,3 +5987,41 @@ por título sin puesto, uno por nivel y uno por ámbito).
 3. **Los sinónimos lejanos que importan van a un diccionario aprobado por el autor**, como las
    erratas y abreviaturas de la capa 0: las propuestas de Gemini que existen en la base, para los
    cargos con más personas, en una lista para aprobar o rechazar.
+
+### Resultado de D-046 con el clustering en la zona confiable, y decisión (2026-10-06)
+
+**Clustering** (`50_clustering.py agrupar --regla confiable --solo-cargos`): 58.051 grupos de la capa 0 →
+**39.261 clusters**; el mayor, 34 grupos; el tope de 60 no se tocó; la v3 puntuó al vuelo solo 141 pares.
+
+**a. Auditoría ciega** (`55`, rúbrica v7, autor): de 100 pares juntados, **95 % `si` con los juicios
+ciegos** y 97 % tras revisar 18 juicios con Claude (2 de ellos eran juntados; los cambios llevan nota).
+**Cumple (≥ 90 %).** De los 100 cercanos (coseno ≥ 0,85) no juntados, 74–78 % también eran el mismo
+cargo: el clustering es conservador.
+
+**b. Pinball** (`54`, 35.223 votos de 1.343 empresas apartadas):
+
+| base | pinball | cobertura directa | frente a v15 |
+|---|---|---|---|
+| v15 | 0,13513 | 54,3 % | — |
+| v16 (capa 0) | 0,13520 | 53,9 % | +0,00016, no se distingue |
+| **clustering confiable** | **0,13473** | **58,4 %** | **+0,00004 [−0,00041, +0,00051], no empeora** |
+| su placebo | 0,14101 | 56,4 % | +0,00303 [+0,00224, +0,00395], **empeora** |
+| clustering + sinónimos | 0,13521 | 58,5 % | +0,00062 [−0,00005, +0,00135] |
+
+**Cumple: la base agrupada no empeora las bandas, el placebo sí, y suma 4 puntos de cobertura directa.**
+
+**Sinónimos** (`56`): el autor revisó 515 pares de las 91 anclas con más personas. Tras la revisión con
+Claude quedaron 441 aprobados (columna `cambio` con cada corrección: el ancla restaurada al título de la
+base, un par contra la tabla de niveles, seguridad ocupacional frente a vigilancia, y los puentes que
+encadenaban oficios: campo con planta, venta con crédito bancario, y los genéricos `AUXILIAR GENERAL`,
+`ASISTENTE` y el grupo ambiguo «de servicio»). Aplicados con dos protecciones (un rechazo del autor entre
+los grupos, o un candado, impide la unión), unen 39.261 → 39.018. **Frente al clustering solo empeoran
+el pinball (+0,00058 [+0,00015, +0,00099]) y suben la cobertura solo 0,1 puntos**: juntan grupos grandes y
+heterogéneos de cargos que ya tenían datos propios.
+
+**Decisión del autor:**
+1. **`base_v17` = capa 0 v1 + clustering en la zona confiable, sin sinónimos.** Reemplaza a la v15.
+2. **Los sinónimos aprobados no fusionan la base: se usan en el buscador de cargos del front
+   (`/puestos`)**, para que escribir `CONDUCTOR` sugiera `CHOFER` o `JORNALERO` sugiera `TRABAJADOR
+   AGRICOLA`, marcados como sinónimo. Usarlos también como respaldo al consultar un título sin datos
+   propios queda como idea a medir aparte.
