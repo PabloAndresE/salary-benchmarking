@@ -54,7 +54,16 @@ Reglas:
   dice claro, solo uno.
 - Si no es un cargo (un codigo, un nombre de contrato, texto sin sentido), `nivel` = 0 y `posibles` = [0].
 
-Responde solo con el JSON pedido; `razon` en una frase de 25 palabras como maximo."""
+{extra}Responde solo con el JSON pedido; `razon` en una frase de 25 palabras como maximo."""
+
+# v2 (enmienda de D-049): la v1 subia a 3 cargos operativos porque la descripcion dice «supervisa»
+EXTRA_V2 = """- INSPECTOR, AGENTE, GESTOR, OFICIAL y MAYORDOMO no son rango: clasificalos por la funcion; por
+  defecto son 1 (operativo) o 2 (tecnico o profesional). INSPECTOR DE CALIDAD es 1 o 2, no 3.
+- `supervisa`, `coordina` o `controla` en la descripcion NO suben el nivel: casi todas las
+  descripciones lo dicen. Sube a 3 o mas solo por el TITULO: personas o un area a cargo, o un rol
+  de experto (arquitecto de soluciones, especialista, lider tecnico).
+"""
+VERSIONES = {"v1": INSTRUCCION.replace("{extra}", ""), "v2": INSTRUCCION.replace("{extra}", EXTRA_V2)}
 
 ESQUEMA = {"type": "object",
            "properties": {"razon": {"type": "string", "maxLength": 300},
@@ -83,14 +92,15 @@ def descripciones():
     return out
 
 
-def mensaje(t, desc):
+def mensaje(t, desc, instruccion):
     u = "Titulo: {}".format(t)
     if desc:
         u += "\nDescripcion: {}".format(desc)
-    return [{"role": "system", "content": INSTRUCCION}, {"role": "user", "content": u}]
+    return [{"role": "system", "content": instruccion}, {"role": "user", "content": u}]
 
 
-def main(tp, n):
+def main(tp, n, version):
+    instruccion = VERSIONES[version]
     # el nvcc del servidor (12.5) no compila los kernels JIT de DeepGEMM ni los de FlashInfer (all-reduce, muestreo)
     os.environ.setdefault("VLLM_USE_DEEP_GEMM", "0")
     os.environ.setdefault("VLLM_ALLREDUCE_USE_FLASHINFER", "0")
@@ -115,7 +125,7 @@ def main(tp, n):
               gdn_prefill_backend="triton")
     sp = SamplingParams(temperature=0.0, max_tokens=400, seed=20261006, **guia)
     t0 = time.time()
-    sal = llm.chat([mensaje(t, desc.get(t, "")) for t in tit], sp,
+    sal = llm.chat([mensaje(t, desc.get(t, ""), instruccion) for t in tit], sp,
                    chat_template_kwargs={"enable_thinking": False})
     filas = []
     for t, s in zip(tit, sal):
@@ -128,8 +138,9 @@ def main(tp, n):
             filas.append((t, -1, "", "[]", "", t in desc, str(txt)[:200]))
     d = pd.DataFrame(filas, columns=["titulo", "nivel", "explicito", "posibles", "razon", "con_desc", "error"])
     d["modelo"] = MODELO
-    d["instruccion_sha"] = hashlib.sha256(INSTRUCCION.encode()).hexdigest()[:12]
-    nombre = "60_niveles_qwen{}.parquet".format("_prueba" if n else "")
+    d["instruccion_sha"] = hashlib.sha256(instruccion.encode()).hexdigest()[:12]
+    nombre = "60_niveles_qwen{}{}.parquet".format("" if version == "v1" else "_" + version,
+                                                  "_prueba" if n else "")
     d.to_parquet(SAL / nombre, index=False)
     seg = time.time() - t0
     print("{:,} en {:.0f} s; errores {}".format(len(d), seg, int((d["error"] != "").sum())))
@@ -140,5 +151,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--tp", type=int, default=2)
     ap.add_argument("--n", type=int, default=0, help="solo una muestra (prueba)")
+    ap.add_argument("--version", choices=["v1", "v2"], default="v2")
     a = ap.parse_args()
-    main(a.tp, a.n)
+    main(a.tp, a.n, a.version)

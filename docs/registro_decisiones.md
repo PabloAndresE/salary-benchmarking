@@ -6141,3 +6141,31 @@ desempate. Por eso las pruebas b y c se miden con el nivel **sin** sueldo.
   no empeora frente a la tabla (IC no entero sobre cero), siempre que su placebo sí empeore.
 
 Si a, b o c fallan, el clasificador no entra al producto.
+
+### D-049, resultados de la v1 y enmienda (2026-10-06, decisión del autor: el clasificador va al producto)
+
+**v1** (65.181 títulos, 33 min, 0 errores):
+- **a) Cumple:** 96,8 % de coincidencia con la tabla en 43.263 títulos con palabra de rango.
+- **b) No cumple:** en 19.453 títulos sin palabra de rango (por grupo, sin las erratas de rango), los pasos
+  1→2 (+0,63) y 4→5 (+0,63) suben, pero 2→3 (−0,08 [−0,18, +0,04]) y 3→4 (+0,39 [−0,27, +0,67]) no. El
+  placebo no muestra escalera. La tabla sí escalona en los títulos con rango (+0,50, +0,20, +0,38, +0,67).
+- **c) Cumple:** κ ponderado de 0,77 con el autor. Antes de ver las etiquetas de Qwen, el autor cambió 9 de
+  sus 100 juicios por coherencia con la escala; el original está en `61_nivel_para_juzgar_original.csv`.
+
+Diagnóstico de b: el nivel 3 de Qwen sin palabra de rango lo llenan cargos operativos (`INSPECTOR DE
+CALIDAD`, `AGENTE DE OPERACIONES TERRESTRES`, `GESTOR DE COBRANZAS`, `MAYORDOMO`), que suben porque la
+descripción de Gemini dice «supervisa». Son las palabras que `nivel.py` ya marcaba como ambiguas.
+
+**Enmienda:**
+1. **Instrucciones v2:** `INSPECTOR`, `AGENTE`, `GESTOR`, `OFICIAL` y `MAYORDOMO` se clasifican por la función
+   (por defecto 1 o 2). «Supervisa» o «coordina» en una descripción genérica no sube el nivel; solo lo
+   sube tener personas a cargo dicho en el título.
+2. **b pasa a ser descriptivo:** la regla v2 nació de ver estos sueldos, así que b ya no es una prueba
+   limpia. La v2 se juzga por a (≥ 90 %), c (κ ≥ 0,6 con los mismos 100 títulos; las discrepancias
+   título por título de la v1 no se miraron) y d.
+3. **d) Pinball con empresas apartadas**, que no vieron estos datos: la tabla, Qwen v1 y Qwen v2, cada una
+   con su placebo de niveles permutados. En los títulos de la base el nivel viene de Qwen; en los que no
+   están (la consulta) viene del clasificador pequeño. En este paso el nivel de Qwen reemplaza solo al
+   léxico (ajuste por nivel, `lambda` y efecto por nivel); los candados de agrupación siguen con la tabla.
+   Se adopta la mejor variante que no empeore frente a la tabla y cuyo placebo sí empeore.
+4. El desempate por sueldo se mide después, como otra variante de d.
