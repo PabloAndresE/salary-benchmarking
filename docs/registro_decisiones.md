@@ -6075,3 +6075,28 @@ Solo afecta a las sugerencias del formulario, no a las bandas.
 - **Grados agrupados para mostrar:** `LABORATORISTA 1`, `2`, `4` salen como una sugerencia con la lista
   `grados` (cada uno con sus empresas y personas) y `cargo_sin_grado`. Cada grado sigue siendo su propio
   puesto con su banda (criterio A de D-040).
+
+### Niveles en inglés y el juez filtra los vecinos de la analogía (2026-10-06, decisión del autor)
+
+**Origen:** `SALES DEVELOPMENT REPRESENTATIVE` (2 empresas, por analogía) salía con referencia $2.282 y banda
+p10–p90 de $604 a $8.621: sus 25 vecinos incluían `SALES MANAGER` y `SALES DIRECTOR` ($11.226), y como
+`REPRESENTATIVE` no estaba en la tabla de niveles, el ajuste por nivel no podía descontarlos.
+
+**Cambios:** (1) la tabla de niveles (`RANGOS` y `RANGOS_RUBRICA`) suma los equivalentes en inglés y
+`REPRESENTANTE` / `REPRESENTATIVE` en el nivel 1; `ASSISTANT MANAGER` = 4 también en el léxico; `HEAD`,
+`LEAD` y `OFFICER` no entran (ambiguas). (2) En la analogía, el juez descarta los vecinos con P < 0,5 si
+quedan al menos 3.
+
+**Medido** (`54_pinball.py`, 38.450 votos, mismo entorno; placebo = descartar la misma cantidad de vecinos al azar):
+
+| frente a | cambio | pinball donde actúa |
+|---|---|---|
+| producto hoy | tabla en inglés | +0,00005 [−0,00030, +0,00042], no empeora |
+| tabla | + filtro de vecinos por el juez | −0,00167 [−0,00441, +0,00124], no empeora (apunta a mejorar) |
+| tabla | placebo del filtro | **+0,00414 [+0,00234, +0,00583], empeora** |
+
+Cumplen el criterio de D-046 / D-048: **se activan.** `demo/base_v18.npz` = la v17 con la tabla nueva (mismos
+grupos; cambian el nivel guardado y el efecto por nivel). El SDR queda en $2.050 con banda p10–p90 de $971 a
+$4.328 (ancho relativo 0,99 → 0,45). Sigue alta frente a sus pares SDR / BDR: la tabla pone en nivel 1 tanto a
+`SALES DEVELOPMENT REPRESENTATIVE` como a `SALES REPRESENTATIVE`. Lo que los distinguiría es un
+clasificador de nivel (propuesta D-049, pendiente).

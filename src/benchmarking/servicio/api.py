@@ -397,6 +397,8 @@ class Motor:
         # apaga. Sin pesos o sin torch, el servicio sigue sin el (por analogia, como antes).
         ruta_juez = os.environ.get("JUEZ", "modelos/juez_v3")
         self.base.juez = None if ruta_juez.lower() == "no" else juez_mod.cargar(ruta_juez)
+        # 2026-10-06: el juez tambien filtra los vecinos de la analogia (`JUEZ_VECINOS=no` lo apaga)
+        self.base.juez_vecinos = os.environ.get("JUEZ_VECINOS", "si").lower() != "no"
         print("[juez] " + ("{} en {}".format(self.base.juez.nombre, self.base.juez.dispositivo)
                            if self.base.juez is not None else "sin juez: titulos nuevos por analogia"),
               flush=True)
