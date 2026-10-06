@@ -51,6 +51,14 @@ RANGOS = {
     "SUPERVISOR": 3, "COORDINADOR": 3, "ESPECIALISTA": 3,
     "JEFE": 4, "SUBGERENTE": 4,
     "GERENTE": 5, "DIRECTOR": 5, "VICEPRESIDENTE": 5, "PRESIDENTE": 5,
+    # 2026-10-06, decision del autor: los equivalentes en INGLES de las mismas palabras, y
+    # REPRESENTANTE / REPRESENTATIVE en el nivel 1 (como ASESOR y EJECUTIVO). Sin ellos, un
+    # `SALES DEVELOPMENT REPRESENTATIVE` no tenia nivel y su analogia no podia descontar a los
+    # `SALES MANAGER` y `SALES DIRECTOR` vecinos. HEAD, LEAD y OFFICER no entran: ambiguas.
+    "REPRESENTANTE": 1, "REPRESENTATIVE": 1, "ASSISTANT": 1, "INTERN": 1,
+    "ANALYST": 2, "TECHNICIAN": 2,
+    "COORDINATOR": 3, "SPECIALIST": 3,
+    "MANAGER": 5, "PRESIDENT": 5,
 }
 NIVELES = (1, 2, 3, 4, 5)
 
@@ -115,6 +123,8 @@ def nivel_lexico(etiqueta):
     error va en la direccion del ruido, no del sesgo.
     """
     hallados = _PATRON.findall(str(etiqueta).upper())
+    if "ASSISTANT" in hallados and "MANAGER" in hallados:      # como en la rubrica
+        return 4
     return max((RANGOS[h] for h in hallados), default=None)
 
 
@@ -215,6 +225,8 @@ RANGOS_RUBRICA = dict(RANGOS) | {
     "ADMINISTRADOR": 2, "CONTROLLER": 2, "CONSULTOR": 2,
     "ENCARGADO": 3, "SUBJEFE": 3,
     "MANAGER": 5,
+    # 2026-10-06: los equivalentes en ingles de la tabla (ver RANGOS)
+    "EXECUTIVE": 1, "ADVISOR": 1, "CONSULTANT": 2,
 }
 _SOLO_AL_INICIO = {"TECNICO", "ESPECIALISTA"}
 

@@ -98,14 +98,19 @@ def una_variante(nom, clusters):
     kw = {}
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
-    if nom in ("clusters", "placebo", "juez", "juez_placebo"):
+    con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo")
+    if nom in ("clusters", "placebo") + con_juez:
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
     base = BaseReferencia.construir(tr, emb, e41._Ajustes.get_sbu, **kw)
-    if nom in ("juez", "juez_placebo"):                       # D-048: el juez en la consulta
+    if nom in con_juez:                                       # D-048: el juez en la consulta
         from benchmarking.producto.juez import cargar as cargar_juez
         base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/22_modelos_v3/elegido")
         assert base.juez is not None, "no se pudo cargar el juez"
         base.juez_placebo = nom == "juez_placebo"
+        # 2026-10-06: el juez filtra los vecinos de la analogia (y su placebo). `juez_tabla` es el
+        # producto con la tabla de niveles en ingles; los de abajo, ademas, con el filtro.
+        base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo")
+        base.juez_vecinos_placebo = nom == "juez_vecinos_placebo"
     cargos = sorted(set(v["cargo_norm"]))
     out = base.referenciar(cargos, emb).set_index("cargo")
     perdida = pinball(v["voto"].to_numpy(float),
@@ -160,7 +165,8 @@ def juntar():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo"])
+    ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo",
+                                           "juez_tabla", "juez_vecinos", "juez_vecinos_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")

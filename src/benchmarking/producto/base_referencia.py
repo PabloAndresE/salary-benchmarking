@@ -120,7 +120,10 @@ PALABRA_MIN_ERRATA = 4
 # impide, recibe los datos de ese grupo en vez de una analogia.
 COS_JUEZ = 0.90
 N_CAND_JUEZ = 10
-P_JUEZ = 0.5  # D-041: con capa 0, el dedazo va en una palabra de 4+ letras
+P_JUEZ = 0.5
+# El juez tambien FILTRA LOS VECINOS DE LA ANALOGIA (2026-10-06, en medicion): fuera los que la v3
+# dice que no son el mismo cargo (P < P_JUEZ), si quedan al menos MIN_VECINOS_JUEZ.
+MIN_VECINOS_JUEZ = 3  # D-041: con capa 0, el dedazo va en una palabra de 4+ letras
 VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
 TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
 
@@ -1524,6 +1527,16 @@ class BaseReferencia:
                     if quedan.any():
                         j, s = j[quedan], s[quedan]
                 j, s = j[:VECINOS], s[:VECINOS]
+                if getattr(self, "juez_vecinos", False) and getattr(self, "juez", None) is not None:
+                    pv = self.juez.P([(t, str(self.celdas[x])) for x in j])
+                    queda = pv >= P_JUEZ
+                    if getattr(self, "juez_vecinos_placebo", False):
+                        # PLACEBO: se queda la MISMA cantidad de vecinos, pero al azar
+                        rng_v = np.random.default_rng(abs(hash(t)) % (2 ** 32))
+                        queda = np.zeros(len(j), bool)
+                        queda[rng_v.choice(len(j), int((pv >= P_JUEZ).sum()), replace=False)] = True
+                    if queda.sum() >= MIN_VECINOS_JUEZ:
+                        j, s = j[queda], s[queda]
                 # `lambda` DEL ESCALON del puesto preguntado. Varia 18x del nivel 1 al 5
                 # y con el global se castigaba de menos justo arriba, que es donde mas
                 # duele: la respuesta se arrastraba hacia vecinos que no eran.
