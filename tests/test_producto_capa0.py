@@ -237,3 +237,18 @@ def test_sinonimos_por_grupo_simetricos_y_por_capa0(tmp_path):     # D-046/D-047
     assert m[gc] == {gd} and m[gd] == {gc}                 # simetrico; lo que no existe se ignora
     assert sinonimos.grupo_de(b, "1. CHOFER.") == gc        # por la capa 0 (codigo y puntuacion)
     assert b.grupo[b.idx["CHOFER"]] != b.grupo[b.idx["CONDUCTOR"]]   # la base no se fusiona
+
+
+def test_sinonimos_de_consulta_escrito_a_grupo(tmp_path):            # D-048
+    from benchmarking.producto import sinonimos
+    filas = [(f"E{i}", t, 0.7) for t in ("ODONTOLOGO", "CAJERO") for i in range(12)]
+    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
+    emb = {"ODONTOLOGO": np.array([1.0, 0.0]), "CAJERO": np.array([0.0, 1.0])}
+    b = BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=None, capa0=Capa0())
+    d = tmp_path / "sinonimos_v9"
+    d.mkdir()
+    (d / "consulta.csv").write_text("escrito,cargo_base\ndentista,ODONTOLOGO\nX,NO EXISTE\n",
+                                    encoding="utf-8")
+    m = sinonimos.de_consulta(b, sinonimos.cargar_consulta("v9", base=tmp_path))
+    assert m == {sinonimos.clave(b, "DENTISTA"): b.grupo[b.idx["ODONTOLOGO"]]}
+    assert sinonimos.clave(b, "DENTISTA.") == sinonimos.clave(b, "DENTISTA")   # capa 0

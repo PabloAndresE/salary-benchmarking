@@ -39,3 +39,28 @@ def por_grupo(base, pares):
         out.setdefault(ga, set()).add(gb)
         out.setdefault(gb, set()).add(ga)
     return out
+
+
+def cargar_consulta(version=VERSION, base=DATOS):
+    """(escrito, cargo_base) de `consulta.csv`: lo que alguien teclea -> un cargo de la base."""
+    f = base / "sinonimos_{}".format(version) / "consulta.csv"
+    if not f.exists():
+        return []
+    with open(f, encoding="utf-8") as fh:
+        return [(r["escrito"].strip().upper(), r["cargo_base"].strip().upper())
+                for r in csv.DictReader(fh) if r.get("escrito") and r.get("cargo_base")]
+
+
+def de_consulta(base, pares):
+    """clave del texto escrito (atomo de la capa 0, o el texto) -> grupo de la base."""
+    out = {}
+    for escrito, cargo in pares:
+        g = grupo_de(base, cargo)
+        if g is not None:
+            out[clave(base, escrito)] = g
+    return out
+
+
+def clave(base, texto):
+    c0 = getattr(base, "capa0", None)
+    return c0.atomo(str(texto)) if c0 is not None else str(texto).strip().upper()

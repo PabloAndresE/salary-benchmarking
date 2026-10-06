@@ -387,6 +387,7 @@ class Motor:
         self.n_grafias = {g: len(v) for g, v in porgrupo.items()}
         # D-046/D-047: los sinonimos aprobados no tocan la base; sirven al buscador de cargos
         self.sinonimos = sinonimos.por_grupo(self.base, sinonimos.cargar_pares())
+        self.sinonimos_consulta = sinonimos.de_consulta(self.base, sinonimos.cargar_consulta())
         # D-048: el juez v3 para los titulos nuevos. `JUEZ` = carpeta con los pesos; `JUEZ=no` lo
         # apaga. Sin pesos o sin torch, el servicio sigue sin el (por analogia, como antes).
         ruta_juez = os.environ.get("JUEZ", "modelos/juez_v3")
@@ -1092,6 +1093,10 @@ def excel(tid: str):
         headers={"Content-Disposition": f'attachment; filename="informe_{tid[:8]}.xlsx"'})
 
 
+N_REORDENAR = 50          # cuantos puestos reordena el juez en /puestos (D-048)
+P_SEGURO = 0.9            # desde aqui, entre sugerencias manda el parecido
+
+
 @app.get("/puestos")
 def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
     """Que puestos de la base se parecen a `q`. Para el buscador de correcciones.
@@ -1120,8 +1125,9 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
         raise HTTPException(503, "no se pudo embeber el texto; reintenta")
     Q = np.vstack([m.emb[t]]).astype(float)
     Q /= np.linalg.norm(Q, axis=1, keepdims=True)
-    vec, sim = _vecinos(Q, m.base.Z, min(limite * 6, len(m.base.celdas)),
-                        excluir_propio=False)
+    # con juez se piden mas vecinos: el juez reordena los N_REORDENAR primeros PUESTOS (no grafias)
+    vec, sim = _vecinos(Q, m.base.Z, min(max(limite * 6, 300 if m.base.juez else 0),
+                                         len(m.base.celdas)), excluir_propio=False)
     # UNA FILA POR PUESTO, NO POR GRAFIA. La base guarda 65.181 titulos que son 50.420
     # puestos: `VENDEDOR`, `VENDEDOR.`, `VENDEDORA`, `VEENDEDOR` y `VENDERDOR` son el
     # mismo, y la fusion ya lo sabe. Sin colapsar, buscar `VENDEDOR` devolvia ocho
@@ -1174,6 +1180,19 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
     out.sort(key=lambda r: -r["similitud"])
     for r in out:
         r["sinonimo"] = False
+        r["p_juez"] = None
+    # REORDEN POR EL JUEZ (D-048). El embedding ordena por como SUENA: `DENTISTA` traia arriba
+    # `HIGIENISTA`, `TELEFONISTA` y `EBANISTA`, y `ODONTOLOGIA` cuarto. La v3 juzga los
+    # N_REORDENAR mas parecidos contra lo escrito y se ordenan por su P; `p_juez` le dice al front
+    # cuales son el mismo cargo con seguridad. Solo cambia el ORDEN de las sugerencias, no las bandas.
+    if m.base.juez is not None and out:
+        top = out[:N_REORDENAR]
+        for r, p in zip(top, m.base.juez.P([(t, r["cargo"]) for r in top])):
+            r["p_juez"] = round(float(p), 3)
+        # por encima de P_SEGURO el juez ya dice "el mismo cargo": entre esos manda el parecido, para
+        # que el titulo exacto no quede detras de sus variantes con funcion anadida (todas P ~ 0,99)
+        top.sort(key=lambda r: (-min(r["p_juez"], P_SEGURO), -r["similitud"]))
+        out = top + out[N_REORDENAR:]
     # SINONIMOS APROBADOS POR EL AUTOR (D-046, D-047), JUSTO DESPUES DEL CARGO ESCRITO. Si lo
     # escrito es un cargo de la base (tal cual o por la capa 0), sus sinonimos van detras de el
     # aunque el embedding los ponga lejos: `CONDUCTOR` esta en el puesto 1.312 de `CHOFER`.
@@ -1189,9 +1208,20 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
             extra.append({"cargo": cargo, "grafias": m.n_grafias.get(g, 1),
                           "empresas": int(m.base.emp[i]), "personas": int(m.base.personas[i]),
                           "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
-                          "sobre_el_ruido": False, "sinonimo": True})
+                          "sobre_el_ruido": False, "sinonimo": True, "p_juez": None})
         pos = next((k + 1 for k, r in enumerate(out) if r["cargo"] == m.etiqueta.get(g0)), 0)
         out = out[:pos] + extra + out[pos:]
+    # SINONIMOS DE CONSULTA (`consulta.csv`): un titulo que no existe en la base y no se parece por
+    # las letras al cargo que nombra (`DENTISTA` -> `ODONTOLOGO`). Su grupo va PRIMERO.
+    gq = m.sinonimos_consulta.get(sinonimos.clave(m.base, t))
+    if gq is not None:
+        i = int(np.flatnonzero(np.asarray(m.base.grupo) == gq)[0])
+        cargo = m.etiqueta.get(gq, str(m.base.celdas[i]))
+        out = [r for r in out if r["cargo"] != cargo]
+        out.insert(0, {"cargo": cargo, "grafias": m.n_grafias.get(gq, 1),
+                       "empresas": int(m.base.emp[i]), "personas": int(m.base.personas[i]),
+                       "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
+                       "sobre_el_ruido": False, "sinonimo": True, "p_juez": None})
     return out[:limite]
 
 
