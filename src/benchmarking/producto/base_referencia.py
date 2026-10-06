@@ -124,6 +124,8 @@ P_JUEZ = 0.5
 # El juez tambien FILTRA LOS VECINOS DE LA ANALOGIA (2026-10-06, en medicion): fuera los que la v3
 # dice que no son el mismo cargo (P < P_JUEZ), si quedan al menos MIN_VECINOS_JUEZ.
 MIN_VECINOS_JUEZ = 3  # D-041: con capa 0, el dedazo va en una palabra de 4+ letras
+# D-049: el clasificador de nivel da su clase solo si es al menos asi de probable
+P_NIVEL_CLF = 0.5
 VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
 TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
 
@@ -686,6 +688,18 @@ def _lambda_por_nivel(m, W, vec, sim, niveles, lam_global, minimo=200):
     return out
 
 
+
+def _entrenar_clf_nivel(Z, niv, semilla=20261006):
+    """D-049: regresion logistica embedding -> nivel (1-5), con las etiquetas que tienen nivel.
+    Devuelve (pesos, sesgos, clases) para guardarlos en la base sin depender de sklearn al cargar."""
+    from sklearn.linear_model import LogisticRegression
+    ok = np.isfinite(niv)
+    if ok.sum() < 100 or len(set(niv[ok].astype(int))) < 2:
+        return None
+    m = LogisticRegression(max_iter=1000, C=10.0, random_state=semilla)
+    m.fit(Z[ok], niv[ok].astype(int))
+    return (m.coef_.astype(np.float32), m.intercept_.astype(np.float32), m.classes_.astype(np.int64))
+
 class BaseReferencia:
     """Construida una vez sobre el universo; se consulta por titulo."""
 
@@ -802,6 +816,10 @@ class BaseReferencia:
         self.nivel = (np.full(len(self.celdas), np.nan) if nivel is None
                       else np.asarray(nivel, dtype=float))
         self.efecto = dict(efecto or {})
+        # D-049: clasificador de nivel para los titulos que no estan en la base (la consulta):
+        # (pesos, sesgos, clases) de una regresion logistica sobre el embedding, entrenada con
+        # el nivel de Qwen de las etiquetas de la base. None: la consulta usa la tabla de palabras.
+        self.clf_nivel = None
         # dispersion del efecto entre escalones: es la incertidumbre que queda cuando
         # NO se sabe el nivel del puesto que se pregunta
         v = list(self.efecto.values())
@@ -813,7 +831,7 @@ class BaseReferencia:
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
                   genero=True, mapa_genero=None, grado=False, mapa_grado=None, capa0=None,
-                  scvs=None, grupos=None):
+                  scvs=None, grupos=None, niveles=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `grupos` (D-046) es un dict etiqueta -> id de grupo que REEMPLAZA la agrupacion final,
@@ -883,6 +901,15 @@ class BaseReferencia:
         Z /= np.linalg.norm(Z, axis=1, keepdims=True)
         niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan
                         for c in celdas], dtype=float)
+        # D-049: `niveles` (etiqueta -> nivel 1-5 de Qwen; 0 = no es un cargo) reemplaza al lexico
+        # en el ajuste por nivel, `lambda` por nivel y el segmento. Los candados siguen con la
+        # tabla (`niv_c`). Las etiquetas sin nivel de Qwen conservan el lexico.
+        clf_nivel = None
+        if niveles is not None:
+            niv = np.array([float(niveles[c]) if niveles.get(c, 0) >= 1 else
+                            (np.nan if c in niveles else n_)
+                            for c, n_ in zip(celdas, niv)], dtype=float)
+            clf_nivel = _entrenar_clf_nivel(Z, niv)
         n = len(celdas)
         # D-040: con capa 0, el CANDADO de las fusiones usa el nivel de la rubrica (criterio
         # C). `niv` sigue siendo el lexico de siempre para lambda, el vecindario y el efecto
@@ -1075,6 +1102,7 @@ class BaseReferencia:
                     meta_ruc, pad_ruc))
         base.capa0 = capa0
         base.grado_consulta = bool(grado)      # D-037: la consulta por grado, si se encendio
+        base.clf_nivel = clf_nivel
         return base
 
     def empresas_de(self, i_celda: int) -> np.ndarray:
@@ -1287,7 +1315,9 @@ class BaseReferencia:
             escalares=np.array([self.tau2, self.sigma2, self.lam], dtype=float),
             # D-040: la capa 0 viaja con la base, para que la consulta use sus reglas.
             capa0_json=np.array(self.capa0.a_json() if self.capa0 is not None else ""),
-            grado_consulta=np.array(bool(self.grado_consulta)))
+            grado_consulta=np.array(bool(self.grado_consulta)),
+            **({} if self.clf_nivel is None else
+               dict(clf_W=self.clf_nivel[0], clf_b=self.clf_nivel[1], clf_k=self.clf_nivel[2])))
 
     @classmethod
     def cargar(cls, ruta, sbu):
@@ -1339,9 +1369,24 @@ class BaseReferencia:
                 base.capa0 = Capa0.de_json(str(z["capa0_json"]), base.celdas)
             if "grado_consulta" in z.files:
                 base.grado_consulta = bool(z["grado_consulta"])
+            if "clf_W" in z.files:
+                base.clf_nivel = (z["clf_W"], z["clf_b"], z["clf_k"])
             return base
 
     # -- consulta --------------------------------------------------------------
+
+    def _nivel_consulta(self, titulos, Q):
+        """Nivel de cada titulo preguntado que no este en la base. Con el clasificador de D-049,
+        la clase mas probable si su probabilidad llega a `P_NIVEL_CLF` (si no, None: no se
+        sabe y se paga en el intervalo); sin el, la tabla de palabras de siempre."""
+        if getattr(self, "clf_nivel", None) is None:
+            return [nivel_lexico(t) for t in titulos]
+        Wc, bc, kc = self.clf_nivel
+        z = Q @ np.asarray(Wc, dtype=float).T + np.asarray(bc, dtype=float)
+        p = np.exp(z - z.max(axis=1, keepdims=True))
+        p /= p.sum(axis=1, keepdims=True)
+        mejor = p.argmax(axis=1)
+        return [int(kc[i]) if p[r, i] >= P_NIVEL_CLF else None for r, i in enumerate(mejor)]
 
     def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None,
                     rubro=None, ruc=None, ciiu=None):
@@ -1429,6 +1474,7 @@ class BaseReferencia:
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
         asignado = (self._asignar_con_juez(unicos, vec, sim)
                     if getattr(self, "juez", None) is not None else {})
+        niv_consulta = self._nivel_consulta(unicos, Q)
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None
         # Una sola pasada por el padron para todo el informe, no una por cargo.
@@ -1544,7 +1590,7 @@ class BaseReferencia:
                 # Si el titulo no declara rango se usa la media de los `lambda` de sus
                 # vecinos que si lo declaran. Sin pesos a proposito: los pesos dependen de
                 # `lambda`, y usarlos aqui seria circular.
-                mi_niv = self.nivel[propio] if propio is not None else nivel_lexico(t)
+                mi_niv = self.nivel[propio] if propio is not None else niv_consulta[k]
                 lam_i = None
                 if self.lam_nivel:
                     if mi_niv is not None and np.isfinite(mi_niv):
@@ -1568,7 +1614,7 @@ class BaseReferencia:
                 # Si no se sabe el nivel del puesto preguntado no se puede ajustar, y esa
                 # ignorancia se paga en el intervalo (`var_nivel`), no fingiendo certeza.
                 aj = np.zeros(len(j))
-                mi = self.nivel[propio] if propio is not None else nivel_lexico(t)
+                mi = self.nivel[propio] if propio is not None else niv_consulta[k]
                 if mi is not None and np.isfinite(mi) and self.efecto:
                     ei = self.efecto.get(int(mi), 0.0)
                     aj = np.array([ei - self.efecto.get(int(nj), ei)

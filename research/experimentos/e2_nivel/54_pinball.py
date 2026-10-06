@@ -98,9 +98,17 @@ def una_variante(nom, clusters):
     kw = {}
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
-    con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo")
+    con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo")
+    con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo") + con_nivel
     if nom in ("clusters", "placebo") + con_juez:
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
+    if nom in con_nivel:                 # D-049: el nivel de Qwen (y su placebo: permutado entre titulos)
+        q = pd.read_parquet(SAL / ("60_niveles_qwen.parquet" if "v1" in nom else "60_niveles_qwen_v2.parquet"))
+        niveles = dict(zip(q["titulo"].astype(str), q["nivel"].astype(int)))
+        if nom.endswith("placebo"):
+            t_ = list(niveles)
+            niveles = dict(zip(t_, np.random.default_rng(7).permutation([niveles[x] for x in t_])))
+        kw["niveles"] = niveles
     base = BaseReferencia.construir(tr, emb, e41._Ajustes.get_sbu, **kw)
     if nom in con_juez:                                       # D-048: el juez en la consulta
         from benchmarking.producto.juez import cargar as cargar_juez
@@ -109,7 +117,7 @@ def una_variante(nom, clusters):
         base.juez_placebo = nom == "juez_placebo"
         # 2026-10-06: el juez filtra los vecinos de la analogia (y su placebo). `juez_tabla` es el
         # producto con la tabla de niveles en ingles; los de abajo, ademas, con el filtro.
-        base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo")
+        base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo") + con_nivel
         base.juez_vecinos_placebo = nom == "juez_vecinos_placebo"
     cargos = sorted(set(v["cargo_norm"]))
     out = base.referenciar(cargos, emb).set_index("cargo")
@@ -166,7 +174,8 @@ def juntar():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo",
-                                           "juez_tabla", "juez_vecinos", "juez_vecinos_placebo"])
+                                           "juez_tabla", "juez_vecinos", "juez_vecinos_placebo",
+                                           "nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
