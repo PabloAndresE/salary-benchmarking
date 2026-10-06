@@ -24,14 +24,15 @@ def leer(v):
     return pd.read_parquet(SAL / ("54_" + v + SUF))[["empresa", "cargo", "pinball", "base"]]
 
 
-ref = leer("juez_vecinos")
-out = ["63 · NIVEL (D-049 d): diferencia de pinball frente al producto de hoy (la tabla); negativo = mejor"]
-for v in sys.argv[1:]:
+REF = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--ref=")), "juez_vecinos")
+ref = leer(REF)
+out = ["63 · NIVEL (D-049 d): diferencia de pinball frente a {}; negativo = mejor".format(REF)]
+for v in [a for a in sys.argv[1:] if not a.startswith("--ref=")]:
     d = ref.merge(leer(v), on=["empresa", "cargo"], suffixes=("_0", "_1"))
     d["dif"] = d["pinball_1"] - d["pinball_0"]
     rng = np.random.default_rng(11)
     m, lo, hi = e54.ic(d["dif"].to_numpy(), d["empresa"].to_numpy(), rng)
-    a = d[d["dif"].abs() > 1e-12]
+    a = d[d["dif"].abs() > 1e-6]          # mas chico es ruido de redondeo (1e-11)
     ma, la, ha = e54.ic(a["dif"].to_numpy(), a["empresa"].to_numpy(), rng)
     veredicto = "EMPEORA" if la > 0 else ("MEJORA" if ha < 0 else "no se distingue")
     out.append("   {:<20} todos {:+.5f} [{:+.5f}, {:+.5f}] | donde actua ({:,} votos, {:.1%}) {:+.5f} [{:+.5f}, {:+.5f}] {}".format(

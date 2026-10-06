@@ -401,7 +401,8 @@ class Motor:
         # 2026-10-06: el juez tambien filtra los vecinos de la analogia (`JUEZ_VECINOS=no` lo apaga)
         self.base.juez_vecinos = os.environ.get("JUEZ_VECINOS", "si").lower() != "no"
         # D-050: capa de idioma, el traductor local ingles -> espanol. `TRADUCTOR=no` la apaga.
-        ruta_tr = os.environ.get("TRADUCTOR", "modelos/opus-mt-en-es")
+        # apagada por defecto: para el SUELDO empeora (D-050, la prima de los titulos en ingles)
+        ruta_tr = os.environ.get("TRADUCTOR", "no")
         self.base.traductor = None if ruta_tr.lower() == "no" else idioma_mod.cargar(ruta_tr)
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
                              else "sin traductor: los titulos en ingles se buscan tal cual"), flush=True)

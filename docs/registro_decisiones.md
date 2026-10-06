@@ -6237,3 +6237,26 @@ la diluye. **La unión en la base no se adopta.**
 **sin datos directos propios** (el caso de un título nuevo) se busca por su traducción, con los mismos
 candados. Su placebo cambia el destino por el de otro título resuelto. Mismo criterio: no empeora donde
 actúa y el placebo sí empeora.
+
+### D-050, enmienda «solo en la consulta»: no cumple. La traducción no se usa para el sueldo (2026-10-06)
+
+| Variante (frente al nivel v2) | Donde actúa |
+|---|---|
+| `idioma_consulta` | 665 votos: +0,019 [+0,004, +0,032], **empeora** |
+| su placebo | 716 votos: +0,061 [+0,038, +0,087], empeora |
+| `idioma` (base y consulta), recalculado | +0,00111 [+0,00048, +0,00186], empeora |
+
+(«Donde actúa» pasa a ser |diferencia| > 1e-6: las diferencias de 1e-11 son redondeo. El nivel v2 no cambia
+con este umbral: 13.804 votos, −0,00334.)
+
+**Por qué:** en esos 665 votos, el sueldo real frente al centro de la banda (mediana, en log) pasa de +0,26
+con la analogía a +0,35 con la traducción, y los votos por encima del p75 suben de 36 % a 50 %. Un cargo
+con título en inglés gana alrededor de 40 % más que el grupo equivalente en español (casi siempre es una
+multinacional). La traducción encuentra el cargo correcto (auditoría 100 %), pero asigna el sueldo del
+mercado local.
+
+**Decisión:** la capa de idioma queda **apagada para el sueldo** (en la API, `TRADUCTOR=no` por defecto). Se
+puede usar para buscar y mostrar el equivalente en español. Idea para después: traducción más una prima por
+título en inglés, estimada aparte y medida con pinball.
+
+**Producto:** `demo/base_v19.npz` = la v18 con el nivel de Qwen v2 y el clasificador de la consulta (D-049).
