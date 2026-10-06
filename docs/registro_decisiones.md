@@ -6218,3 +6218,22 @@ El autor juzgó a ciegas 50 pares (título en inglés, grupo en español): 100 %
 Resolución en `base_v18`: 2.237 de 3.827 títulos en inglés (876 por traducción exacta o capa 0; 1.361 con
 el juez sobre la traducción); 1.954 se unen a otro grupo (24.609 personas). El pinball (b) se mide sobre el
 nivel v2.
+
+### D-050, criterio b: no cumple; enmienda «solo en la consulta» (2026-10-06)
+
+**Medido** (pinball frente al nivel v2, 38.450 votos):
+
+| Votos | idioma (base y consulta) | placebo |
+|---|---|---|
+| Todos | +0,00097 [+0,00034, +0,00155], **empeora** | +0,00201, empeora |
+| Títulos en inglés (1.572) | +0,0036 [−0,0013, +0,0088] | +0,0337 [+0,0229, +0,0481] |
+| Resto | +0,00023 [−0,00021, +0,00059] | +0,00040 |
+
+Los títulos en inglés pasan de 29 % a 51 % con datos directos, pero la banda empeora. Lectura: el título
+en inglés lleva información de sueldo (casi siempre es de una multinacional), y unirlo al grupo en español
+la diluye. **La unión en la base no se adopta.**
+
+**Enmienda (antes de medir):** variante `idioma_consulta`. La base no se toca. Solo un título en inglés
+**sin datos directos propios** (el caso de un título nuevo) se busca por su traducción, con los mismos
+candados. Su placebo cambia el destino por el de otro título resuelto. Mismo criterio: no empeora donde
+actúa y el placebo sí empeora.
