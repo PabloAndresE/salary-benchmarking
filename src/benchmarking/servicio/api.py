@@ -51,6 +51,7 @@ from ..config.settings import cargar_settings
 from ..evaluacion import embeddings
 from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
+from ..producto import sinonimos
 from ..producto.base_referencia import (MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
                                         BaseReferencia, _vecinos)
 from ..producto.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
@@ -399,6 +400,8 @@ class Motor:
             porgrupo.setdefault(int(self.base.grupo[i]), []).append(str(c))
         self.etiqueta = {g: _representante(v, frec) for g, v in porgrupo.items()}
         self.n_grafias = {g: len(v) for g, v in porgrupo.items()}
+        # D-046/D-047: los sinonimos aprobados no tocan la base; sirven al buscador de cargos
+        self.sinonimos = sinonimos.por_grupo(self.base, sinonimos.cargar_pares())
         self.capacidades = capacidades_de(self.base)
         faltan = [(n, p) for n, _, p in CAPACIDADES if not self.capacidades[n]]
         print(f"[base] {ruta_base}  {len(self.base.celdas):,} puestos  "
@@ -1177,7 +1180,32 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
     # front decide que pinta y como. Ordenar aqui por algo que no es parecido era meter
     # un criterio que no se puede validar.
     out.sort(key=lambda r: -r["similitud"])
+    for r in out:
+        r["sinonimo"] = False
+    # SINONIMOS APROBADOS POR EL AUTOR (D-046, D-047), JUSTO DESPUES DEL CARGO ESCRITO. Si lo
+    # escrito es un cargo de la base (tal cual o por la capa 0), sus sinonimos van detras de el
+    # aunque el embedding los ponga lejos: `CONDUCTOR` esta en el puesto 1.312 de `CHOFER`.
+    g0 = sinonimos.grupo_de(m.base, t)
+    if g0 is not None and m.sinonimos.get(g0):
+        ya = {r["cargo"] for r in out}
+        extra = []
+        for g in sorted(m.sinonimos[g0], key=lambda g: -_personas_de_grupo(m, g)):
+            i = int(np.flatnonzero(np.asarray(m.base.grupo) == g)[0])
+            cargo = m.etiqueta.get(g, str(m.base.celdas[i]))
+            if cargo in ya:
+                continue
+            extra.append({"cargo": cargo, "grafias": m.n_grafias.get(g, 1),
+                          "empresas": int(m.base.emp[i]), "personas": int(m.base.personas[i]),
+                          "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
+                          "sobre_el_ruido": False, "sinonimo": True})
+        pos = next((k + 1 for k, r in enumerate(out) if r["cargo"] == m.etiqueta.get(g0)), 0)
+        out = out[:pos] + extra + out[pos:]
     return out[:limite]
+
+
+def _personas_de_grupo(m, g):
+    i = np.flatnonzero(np.asarray(m.base.grupo) == g)
+    return int(m.base.personas[i[0]]) if len(i) else 0
 
 
 @app.get("/referencia")

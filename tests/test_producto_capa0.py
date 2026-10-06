@@ -217,3 +217,23 @@ def test_grupos_inyectados_reemplazan_la_agrupacion():                 # D-046
                                  grupos={"CHOFER": 7, "CONDUCTOR": 7})
     assert b.grupo[b.idx["CHOFER"]] == b.grupo[b.idx["CONDUCTOR"]]
     assert b.grupo[b.idx["CAJERO"]] != b.grupo[b.idx["CHOFER"]]
+
+
+def test_sinonimos_por_grupo_simetricos_y_por_capa0(tmp_path):     # D-046/D-047
+    from benchmarking.producto import sinonimos
+    filas = [(f"E{i}", t, 0.7 + 0.01 * (i % 5)) for t in ("CHOFER", "CONDUCTOR", "CAJERO")
+             for i in range(12)]
+    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
+    emb = {"CHOFER": np.array([1.0, 0.0]), "CONDUCTOR": np.array([0.0, 1.0]),
+           "CAJERO": np.array([0.7, -0.7])}
+    b = BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=None, capa0=Capa0())
+    d = tmp_path / "sinonimos_v9"
+    d.mkdir()
+    (d / "sinonimos.csv").write_text("titulo_a,titulo_b\nCHOFER,CONDUCTOR\nCHOFER,NO EXISTE\n",
+                                     encoding="utf-8")
+    pares = sinonimos.cargar_pares("v9", base=tmp_path)
+    m = sinonimos.por_grupo(b, pares)
+    gc, gd = b.grupo[b.idx["CHOFER"]], b.grupo[b.idx["CONDUCTOR"]]
+    assert m[gc] == {gd} and m[gd] == {gc}                 # simetrico; lo que no existe se ignora
+    assert sinonimos.grupo_de(b, "1. CHOFER.") == gc        # por la capa 0 (codigo y puntuacion)
+    assert b.grupo[b.idx["CHOFER"]] != b.grupo[b.idx["CONDUCTOR"]]   # la base no se fusiona

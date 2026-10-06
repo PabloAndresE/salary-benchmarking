@@ -1,0 +1,6 @@
+57 · BASE v17: CAPA 0 v1 + CLUSTERING CON LA v3 EN LA ZONA CONFIABLE (D-046)
+titulos 65,181; grupos v15 50,296 -> v17 39,261; el mayor de la v17: 130 titulos
+titulos que cambian de grupo frente a la v15: 34,309 (52.6%); personas-titulo 76.4%
+bandas de los que cambian (exp(dif) - 1), mediana del valor absoluto: p10 2.8%, p25 5.5%, p50 7.5%, p75 6.1%
+alguna banda se mueve > 5 %: 27,087 titulos, 31.0% de las personas-titulo
+(277 s)
