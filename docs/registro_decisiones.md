@@ -6025,3 +6025,33 @@ heterogéneos de cargos que ya tenían datos propios.
    (`/puestos`)**, para que escribir `CONDUCTOR` sugiera `CHOFER` o `JORNALERO` sugiera `TRABAJADOR
    AGRICOLA`, marcados como sinónimo. Usarlos también como respaldo al consultar un título sin datos
    propios queda como idea a medir aparte.
+
+---
+
+## D-048 — El juez v3 en la consulta, para los títulos nuevos del cliente
+
+**Fecha:** 2026-10-06
+**Origen:** decisión del autor: el producto sale ya como versión inicial, y la v3 tiene que trabajar
+en cada consulta, no solo al construir la base.
+
+**Cómo funciona** (`producto/juez.py`, `BaseReferencia._asignar_con_juez`). Un título que no está en la
+base ni por la capa 0 se juzga contra hasta 10 grupos distintos entre sus vecinos con coseno ≥ 0,90 (la
+zona en que la v3 se validó, la misma del clustering de D-046), sin los que bloquea un candado (nivel de
+la rúbrica, seniority, número de grado). Si el mejor tiene P ≥ 0,5, el título recibe los datos de ese
+grupo (`p_juez` en la salida); si no, sigue por analogía, como antes. El juez puntúa exactamente como al
+medirse (plantilla, dos órdenes, P = P(A⇒B)·P(B⇒A), T = 1,243, fp32). El servicio lo carga de `JUEZ`
+(por defecto `modelos/juez_v3`); sin pesos o sin `torch`, sigue sin él.
+
+**Medido antes de activarlo** (`54_pinball.py`, protocolo de D-025 / D-031, base agrupada de D-046,
+38.450 votos; las tres corridas en el mismo entorno). **Error encontrado y corregido:** la primera
+comparación mezclaba corridas de dos entornos de Python, que sortean distinto las empresas apartadas
+(solo 324 de 1.343 en común); se descartó y se rehízo con las tres en el mismo entorno.
+
+| | votos donde actúa | pinball donde actúa | pinball, todos | cobertura directa |
+|---|---|---|---|---|
+| sin juez | — | — | — | 56,5 % |
+| **con juez** | 6.628 (17,2 %) | **+0,00081 [−0,00176, +0,00336], no empeora** | +0,00005 [−0,00021, +0,00033] | **64,1 %** |
+| placebo (candidato al azar) | 6.628 | **+0,00341 [+0,00112, +0,00576], empeora** | +0,00034 [+0,00007, +0,00059] | 63,6 % |
+
+**Se activa:** no empeora las bandas, el placebo sí (la v3 elige bien el grupo) y suma **7,6 puntos de
+cobertura directa**. Costo: la v3 en cada consulta (en GPU, décimas de segundo por título nuevo).

@@ -40,6 +40,10 @@ from benchmarking.producto import capa0 as c0mod  # noqa: E402
 from benchmarking.producto.base_referencia import BaseReferencia  # noqa: E402
 
 SEM, N_REPLICAS = 20260917, 400          # los de `10`
+# La particion de empresas depende de las versiones de numpy/pandas: corridas de entornos distintos
+# NO se pueden emparejar (lo comprobado: 324 de 1.343 empresas en comun). `--entorno` marca el
+# archivo para comparar solo corridas del mismo entorno.
+ENTORNO = ""
 
 
 def cargar(nombre, archivo):
@@ -111,6 +115,8 @@ def una_variante(nom, clusters):
     p_juez = (out["p_juez"].reindex(v["cargo_norm"]).to_numpy(float) if "p_juez" in out
               else np.full(len(v), np.nan))
     sufijo = nom if nom in ("v15", "v16") else "{}_{}".format(nom, pathlib.Path(clusters).stem)
+    if ENTORNO:
+        sufijo += "_" + ENTORNO
     print("{}: el juez asigno {:,} titulos de {:,}".format(
         sufijo, int(np.isfinite(out["p_juez"].to_numpy(float)).sum()) if "p_juez" in out else 0, len(cargos)))
     pd.DataFrame({"empresa": v["empresa_ruc"].to_numpy(), "cargo": v["cargo_norm"].to_numpy(),
@@ -150,5 +156,7 @@ if __name__ == "__main__":
     ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
+    ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
     a = ap.parse_args()
+    ENTORNO = a.entorno
     juntar() if a.juntar else una_variante(a.variante, a.clusters)

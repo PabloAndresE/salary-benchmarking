@@ -51,6 +51,7 @@ from ..config.settings import cargar_settings
 from ..evaluacion import embeddings
 from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
+from ..producto import juez as juez_mod
 from ..producto import sinonimos
 from ..producto.base_referencia import (ruta_base_mas_nueva, MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
                                         BaseReferencia, _vecinos)
@@ -386,6 +387,13 @@ class Motor:
         self.n_grafias = {g: len(v) for g, v in porgrupo.items()}
         # D-046/D-047: los sinonimos aprobados no tocan la base; sirven al buscador de cargos
         self.sinonimos = sinonimos.por_grupo(self.base, sinonimos.cargar_pares())
+        # D-048: el juez v3 para los titulos nuevos. `JUEZ` = carpeta con los pesos; `JUEZ=no` lo
+        # apaga. Sin pesos o sin torch, el servicio sigue sin el (por analogia, como antes).
+        ruta_juez = os.environ.get("JUEZ", "modelos/juez_v3")
+        self.base.juez = None if ruta_juez.lower() == "no" else juez_mod.cargar(ruta_juez)
+        print("[juez] " + ("{} en {}".format(self.base.juez.nombre, self.base.juez.dispositivo)
+                           if self.base.juez is not None else "sin juez: titulos nuevos por analogia"),
+              flush=True)
         self.capacidades = capacidades_de(self.base)
         faltan = [(n, p) for n, _, p in CAPACIDADES if not self.capacidades[n]]
         print(f"[base] {ruta_base}  {len(self.base.celdas):,} puestos  "
