@@ -1,0 +1,144 @@
+"""D-049: Qwen3.5-122B (local) etiqueta el nivel jerarquico de cada titulo de `base_v18`.
+
+Recibe el titulo y, si existe, la descripcion de Gemini (D-045, `46_descripciones.csv`). NO ve
+sueldos. Temperatura 0, sin razonamiento, salida JSON guiada (como `51`).
+
+    CUDA_VISIBLE_DEVICES=1,3 ../../../.venv-llm/bin/python 60_etiquetar_nivel.py --tp 2
+    CUDA_VISIBLE_DEVICES=1,3 ../../../.venv-llm/bin/python 60_etiquetar_nivel.py --tp 2 --n 300   # prueba
+
+SALIDA: salidas/60_niveles_qwen.parquet (titulo, nivel, explicito, posibles, razon, error)
+"""
+import argparse
+import hashlib
+import json
+import os
+import pathlib
+import sys
+import time
+
+import numpy as np
+import pandas as pd
+
+sys.stdout.reconfigure(encoding="utf-8")
+AQUI = pathlib.Path(__file__).resolve().parent
+RAIZ = AQUI.parents[2]
+SAL = AQUI / "salidas"
+MODELO = "qwen35-122b-a10b-fp8"
+BASE = "base_v18.npz"
+
+INSTRUCCION = """Eres un analista de compensaciones en Ecuador. Recibes el titulo de un cargo (tal como lo
+escribio una empresa, a veces con abreviaturas, errores o en ingles) y, a veces, una descripcion breve
+de sus funciones. Clasificalo en un NIVEL JERARQUICO de esta escala:
+
+1  operativo, auxiliar, asistente, ayudante, de apoyo, practicante, obrero, operador, vendedor,
+   asesor, ejecutivo o representante comercial, guardia, chofer, cajero, mensajero.
+2  tecnico o profesional que trabaja por su cuenta, sin equipo a cargo: analista, tecnico, contador,
+   medico, ingeniero, abogado, docente, desarrollador, consultor.
+3  especialista experto, coordinador o supervisor: coordina personas o procesos, o es la referencia
+   tecnica de su area, sin ser jefe de area.
+4  jefe o subgerente: responsable formal de un area o departamento y de su equipo.
+5  gerente, director, vicepresidente, presidente o alta direccion.
+
+Reglas:
+- Decide por lo que el cargo ES, no por lo que podria cobrar.
+- Si el titulo declara el escalon con una palabra de rango (AUXILIAR, ASISTENTE, ANALISTA, TECNICO,
+  COORDINADOR, SUPERVISOR, ESPECIALISTA, ENCARGADO, JEFE, SUBGERENTE, GERENTE, DIRECTOR, ASESOR,
+  EJECUTIVO...), ESE escalon manda. La descripcion es generica: solo sirve cuando el titulo no lo declara.
+- `ASISTENTE DE GERENCIA` es un asistente (1): lo que va tras DE dice a quien apoya, no su nivel.
+- La seniority (JUNIOR, SENIOR, I, II, 1, 2) NO cambia el nivel: es un matiz dentro del escalon.
+- En ingles: MANAGER = 5 salvo ASSISTANT MANAGER (4); HEAD OF = 4 o 5 segun el alcance; LEAD = 3;
+  OFFICER y ASSOCIATE segun las funciones.
+- `explicito` = `si` si el titulo declara el escalon (una palabra de rango clara); `no` si lo infieres de
+  la ocupacion o de la descripcion.
+- `posibles` = todos los niveles que el texto admite razonablemente (incluye `nivel`). Si el texto lo
+  dice claro, solo uno.
+- Si no es un cargo (un codigo, un nombre de contrato, texto sin sentido), `nivel` = 0 y `posibles` = [0].
+
+Responde solo con el JSON pedido; `razon` en una frase de 25 palabras como maximo."""
+
+ESQUEMA = {"type": "object",
+           "properties": {"razon": {"type": "string", "maxLength": 300},
+                          "nivel": {"type": "integer", "enum": [0, 1, 2, 3, 4, 5]},
+                          "explicito": {"type": "string", "enum": ["si", "no"]},
+                          "posibles": {"type": "array", "items": {"type": "integer", "enum": [0, 1, 2, 3, 4, 5]},
+                                       "minItems": 1, "maxItems": 5}},
+           "required": ["razon", "nivel", "explicito", "posibles"]}
+
+
+def titulos():
+    b = np.load(RAIZ / "demo" / BASE, allow_pickle=True)
+    return [str(c) for c in b["celdas"]]
+
+
+def descripciones():
+    d = pd.read_csv(SAL / "46_descripciones.csv", keep_default_na=False)
+    out = {}
+    for t, r in zip(d["titulo"], d["respuesta"]):
+        try:
+            x = json.loads(r).get("descripcion", "").strip()
+        except (ValueError, AttributeError):
+            x = ""
+        if x:
+            out[str(t)] = x
+    return out
+
+
+def mensaje(t, desc):
+    u = "Titulo: {}".format(t)
+    if desc:
+        u += "\nDescripcion: {}".format(desc)
+    return [{"role": "system", "content": INSTRUCCION}, {"role": "user", "content": u}]
+
+
+def main(tp, n):
+    # el nvcc del servidor (12.5) no compila los kernels JIT de DeepGEMM ni los de FlashInfer (all-reduce, muestreo)
+    os.environ.setdefault("VLLM_USE_DEEP_GEMM", "0")
+    os.environ.setdefault("VLLM_ALLREDUCE_USE_FLASHINFER", "0")
+    os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+    os.environ["PATH"] = str(pathlib.Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]  # ninja
+    from vllm import LLM, SamplingParams
+    try:
+        from vllm.sampling_params import StructuredOutputsParams
+        guia = {"structured_outputs": StructuredOutputsParams(json=ESQUEMA)}
+    except ImportError:
+        from vllm.sampling_params import GuidedDecodingParams
+        guia = {"guided_decoding": GuidedDecodingParams(json=ESQUEMA)}
+    tit = titulos()
+    if n:
+        tit = list(pd.Series(tit).sample(n, random_state=20261006))
+    desc = descripciones()
+    print("{:,} titulos; con descripcion {:,}".format(len(tit), sum(t in desc for t in tit)), flush=True)
+    llm = LLM(model=str(RAIZ / "modelos" / MODELO), tensor_parallel_size=tp, max_model_len=4096,
+              gpu_memory_utilization=0.85, seed=20261006,
+              # (ver arriba) sin la fusion all-reduce + norma y con el prefill GDN de triton
+              compilation_config={"pass_config": {"fuse_allreduce_rms": False}},
+              gdn_prefill_backend="triton")
+    sp = SamplingParams(temperature=0.0, max_tokens=400, seed=20261006, **guia)
+    t0 = time.time()
+    sal = llm.chat([mensaje(t, desc.get(t, "")) for t in tit], sp,
+                   chat_template_kwargs={"enable_thinking": False})
+    filas = []
+    for t, s in zip(tit, sal):
+        txt = s.outputs[0].text
+        try:
+            r = json.loads(txt)
+            pos = sorted(set(int(x) for x in r["posibles"]) | {int(r["nivel"])})
+            filas.append((t, int(r["nivel"]), r["explicito"], json.dumps(pos), r["razon"], t in desc, ""))
+        except (ValueError, KeyError, TypeError):
+            filas.append((t, -1, "", "[]", "", t in desc, str(txt)[:200]))
+    d = pd.DataFrame(filas, columns=["titulo", "nivel", "explicito", "posibles", "razon", "con_desc", "error"])
+    d["modelo"] = MODELO
+    d["instruccion_sha"] = hashlib.sha256(INSTRUCCION.encode()).hexdigest()[:12]
+    nombre = "60_niveles_qwen{}.parquet".format("_prueba" if n else "")
+    d.to_parquet(SAL / nombre, index=False)
+    seg = time.time() - t0
+    print("{:,} en {:.0f} s; errores {}".format(len(d), seg, int((d["error"] != "").sum())))
+    print(d["nivel"].value_counts().sort_index().to_dict(), d["explicito"].value_counts().to_dict())
+
+
+if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--tp", type=int, default=2)
+    ap.add_argument("--n", type=int, default=0, help="solo una muestra (prueba)")
+    a = ap.parse_args()
+    main(a.tp, a.n)
