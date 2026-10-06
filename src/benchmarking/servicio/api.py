@@ -388,6 +388,11 @@ class Motor:
         # D-046/D-047: los sinonimos aprobados no tocan la base; sirven al buscador de cargos
         self.sinonimos = sinonimos.por_grupo(self.base, sinonimos.cargar_pares())
         self.sinonimos_consulta = sinonimos.de_consulta(self.base, sinonimos.cargar_consulta())
+        # Las palabras que aparecen en algun titulo de la base. Ante una palabra desconocida
+        # (`DESTISTA`, `ODONTOLGO`) el juez extrapola y da P altas a cualquier cosa: ahi no se le cree.
+        from ..producto.capa0 import limpiar
+        from ..ingesta.composicion import _norm
+        self.vocabulario = {w for c in self.base.celdas for w in limpiar(_norm(str(c))).split()}
         # D-048: el juez v3 para los titulos nuevos. `JUEZ` = carpeta con los pesos; `JUEZ=no` lo
         # apaga. Sin pesos o sin torch, el servicio sigue sin el (por analogia, como antes).
         ruta_juez = os.environ.get("JUEZ", "modelos/juez_v3")
@@ -1094,11 +1099,13 @@ def excel(tid: str):
 
 
 N_REORDENAR = 50          # cuantos puestos reordena el juez en /puestos (D-048)
+P_MIN_SUGERENCIA = 0.5    # bajo esto el juez dice "no es el mismo cargo": no se sugiere (decision del autor)
+N_RESPALDO = 3            # si nada llega a `p_min`, las N mas probables, marcadas `seguro: false`
 P_SEGURO = 0.9            # desde aqui, entre sugerencias manda el parecido
 
 
 @app.get("/puestos")
-def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
+def puestos(q: str, limite: int = 12, p_min: float = P_MIN_SUGERENCIA, m: Motor = Depends(motor)):
     """Que puestos de la base se parecen a `q`. Para el buscador de correcciones.
 
     PARA QUE EXISTE. `DENTISTA` no esta en la base y se resuelve por analogia contra
@@ -1222,7 +1229,63 @@ def puestos(q: str, limite: int = 12, m: Motor = Depends(motor)):
                        "empresas": int(m.base.emp[i]), "personas": int(m.base.personas[i]),
                        "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
                        "sobre_el_ruido": False, "sinonimo": True, "p_juez": None})
-    return out[:limite]
+    out = _filtrar_por_juez(out, t, p_min, m)
+    return _agrupar_grados(out)[:limite]
+
+
+def _filtrar_por_juez(out, t, p_min, m):
+    """DECISION DEL AUTOR (2026-10-06): las sugerencias que el juez da por distintas (P < p_min) no
+    se muestran. Cambia la regla original de "no se filtra nada, el front decide", ahora que el
+    orden lo da un juez validado. Siempre quedan el cargo escrito y los sinonimos; si no queda
+    nada mas, las N_RESPALDO mas probables con `seguro: false`, para no dejar al usuario sin
+    opciones (titulos raros o con erratas). Sin juez no se filtra.
+
+    PALABRA DESCONOCIDA: si lo escrito tiene una palabra que no aparece en ningun titulo de la base
+    (`DESTISTA`), el juez no es confiable (dio P > 0,9 a `DESTALLE`, `ESTADISTICA`, `DISENADOR`):
+    nada es `seguro` salvo el cargo escrito y los sinonimos, y `palabras_desconocidas` lo dice
+    para que el front sugiera revisar la ortografia."""
+    from ..producto.capa0 import limpiar
+    from ..ingesta.composicion import _norm
+    desconocidas = [w for w in limpiar(_norm(t)).split() if w not in m.vocabulario]
+    for r in out:
+        r["palabras_desconocidas"] = desconocidas
+        r["seguro"] = bool(r["sinonimo"] or r["similitud"] >= 0.999
+                           or (not desconocidas and r["p_juez"] is not None and r["p_juez"] >= p_min))
+    if m.base.juez is None:
+        return out
+    seguros = [r for r in out if r["seguro"]]
+    if any(not r["sinonimo"] and r["similitud"] < 0.999 for r in seguros):
+        return seguros
+    resto = sorted((r for r in out if not r["seguro"]), key=lambda r: -(r["p_juez"] or 0))
+    return seguros + resto[:N_RESPALDO]
+
+
+def _agrupar_grados(out):
+    """`LABORATORISTA 1`, `LABORATORISTA 2`, `LABORATORISTA 4` en UNA sugerencia, con la lista de
+    grados en `grados`. Cada grado sigue siendo su propio puesto con su banda (D-040, criterio A:
+    el grado es un escalon de ~7 %): solo se juntan para MOSTRAR. Principal: la version sin grado
+    si esta; si no, la mejor ubicada. Solo el numero de grado al FINAL del titulo."""
+    from ..producto.capa0 import grado_numerico, quitar_grado_final
+    grupos, orden = {}, []
+    for r in out:
+        clave = quitar_grado_final(r["cargo"]) if grado_numerico(r["cargo"]) else r["cargo"]
+        if clave not in grupos:
+            grupos[clave] = []
+            orden.append(clave)
+        grupos[clave].append(r)
+    res = []
+    for clave in orden:
+        filas = grupos[clave]
+        sin_grado = [r for r in filas if not grado_numerico(r["cargo"])]
+        principal = dict(sin_grado[0] if sin_grado else filas[0])
+        principal["cargo_sin_grado"] = clave
+        con_grado = [r for r in filas if grado_numerico(r["cargo"])]
+        principal["grados"] = [
+            {"grado": sorted(grado_numerico(r["cargo"]))[0], "cargo": r["cargo"],
+             "empresas": r["empresas"], "personas": r["personas"], "p_juez": r["p_juez"]}
+            for r in sorted(con_grado, key=lambda r: sorted(grado_numerico(r["cargo"]))[0])]
+        res.append(principal)
+    return res
 
 
 def _personas_de_grupo(m, g):

@@ -6055,3 +6055,23 @@ comparación mezclaba corridas de dos entornos de Python, que sortean distinto l
 
 **Se activa:** no empeora las bandas, el placebo sí (la v3 elige bien el grupo) y suma **7,6 puntos de
 cobertura directa**. Costo: la v3 en cada consulta (en GPU, décimas de segundo por título nuevo).
+
+### El buscador de cargos (`/puestos`) con el juez (2026-10-06, decisiones del autor)
+
+Solo afecta a las sugerencias del formulario, no a las bandas.
+- **Reorden por el juez:** la v3 juzga los 50 puestos más parecidos por embedding y se ordenan por su P
+  (`p_juez`); desde P ≥ 0,9 manda el parecido, para que el título exacto quede primero. Antes, `DENTISTA`
+  traía arriba `HIGIENISTA`, `TELEFONISTA` y `EBANISTA` (riman); ahora, lo odontológico.
+- **Sinónimos de consulta** (`producto/datos/sinonimos_v1/consulta.csv`, lo llena el autor): un texto
+  que no existe en la base → un cargo de la base, que sale primero (`DENTISTA` → `ODONTOLOGO`).
+- **Filtro en P ≥ 0,5** (`p_min`, el mismo umbral del juez en la consulta). **Cambia la regla original
+  de `/puestos`** («no se filtra nada; el front decide»), ahora que el orden lo da un juez validado.
+  Siempre quedan el cargo escrito y los sinónimos; si no queda nada más, las 3 más probables con
+  `seguro: false`.
+- **Palabra desconocida:** si lo escrito tiene una palabra que no aparece en ningún título de la base
+  (`DESTISTA`, `ODONTOLGO`), no se le cree al juez (daba P > 0,9 a `DESTALLE`, `ESTADISTICA`,
+  `DISENADOR`): nada es `seguro` salvo el cargo escrito y los sinónimos, y `palabras_desconocidas` lo
+  avisa.
+- **Grados agrupados para mostrar:** `LABORATORISTA 1`, `2`, `4` salen como una sugerencia con la lista
+  `grados` (cada uno con sus empresas y personas) y `cargo_sin_grado`. Cada grado sigue siendo su propio
+  puesto con su banda (criterio A de D-040).
