@@ -6100,3 +6100,44 @@ grupos; cambian el nivel guardado y el efecto por nivel). El SDR queda en $2.050
 $4.328 (ancho relativo 0,99 → 0,45). Sigue alta frente a sus pares SDR / BDR: la tabla pone en nivel 1 tanto a
 `SALES DEVELOPMENT REPRESENTATIVE` como a `SALES REPRESENTATIVE`. Lo que los distinguiría es un
 clasificador de nivel (propuesta D-049, pendiente).
+
+## D-049 — Clasificador de nivel jerárquico: Qwen etiqueta y un modelo pequeño lo aprende. Registrado antes de medir
+
+**Por qué.** El nivel hoy sale de una tabla de palabras (`nivel_lexico`, `nivel_rubrica`). El 56 % de la gente
+trabaja en títulos sin palabra de rango, y en los que la tienen la tabla no distingue matices. Ejemplos:
+`SALES DEVELOPMENT REPRESENTATIVE` y `SALES REPRESENTATIVE` quedan en el mismo nivel, y `HEAD OF`, `LEAD` y
+`OFFICER` no tienen nivel. Sin nivel, la analogía no puede descontar a los vecinos de otro escalón.
+
+**Escala** (la misma de `RANGOS`, para que `efecto_nivel`, `lambda` por nivel y los candados sigan sirviendo):
+1 operativo, auxiliar, asistente o de apoyo; 2 técnico o profesional que trabaja solo (analista, contador,
+médico, ingeniero); 3 especialista, coordinador o supervisor; 4 jefe o subgerente de un área; 5 gerente,
+director o alta dirección. Cuando el texto no lo dice, `no_explicito` con el nivel más probable y los posibles.
+
+**Etiquetas.** Qwen3.5-122B-A10B (fp8, local, sin costo), sin razonamiento, temperatura 0 y salida JSON guiada.
+Recibe el título y, si existe, la descripción de Gemini (D-045) y devuelve `nivel`, `explicito` (si/no) y
+`posibles` (los niveles que el texto admite). **No ve sueldos.** Etiqueta los 65.181 títulos de `base_v18`.
+
+**Modelo de la consulta.** Un clasificador pequeño entrenado con esas etiquetas: regresión logística sobre el
+embedding del título, sin enmascarar el rango porque la etiqueta ya no viene de la palabra. Lo necesita la
+consulta, porque un título nuevo no está en la base.
+
+**El sueldo (decisión del autor).** Puede desempatar el nivel, pero no el cargo. Solo en grupos de la base con
+≥ 3 empresas, solo cuando Qwen dice `no_explicito`, y solo entre los `posibles` que dio Qwen: se elige el que
+deja el sueldo relativo del grupo más cerca de la escalera de su área. Solo alimenta el ajuste por nivel de la
+analogía, nunca los candados de agrupación, para que el sueldo no separe ni junte cargos. Va en la base,
+nunca en la consulta (un título nuevo no tiene sueldo). En el pinball, el sueldo es solo el de las empresas de
+entrenamiento. Esto cambia la regla de `nivel.py` («el nivel nunca por lo que cobra») únicamente en este
+desempate. Por eso las pruebas b y c se miden con el nivel **sin** sueldo.
+
+**Criterios (fijados antes de medir):**
+- a) **Control:** en los títulos con palabra de rango no ambigua, Qwen coincide con la tabla en ≥ 90 %.
+- b) **Escalera:** en los títulos sin palabra de rango, la mediana del sueldo sube en cada escalón del nivel
+  de Qwen sin sueldo (IC 95 % > 0 por escalón, bootstrap por empresa). El placebo (niveles permutados) no
+  muestra escalera.
+- c) **Juicio del autor:** κ ponderado ≥ 0,6 frente a 100 títulos sin palabra de rango que el autor clasifica
+  a ciegas, sorteados con peso por personas.
+- d) **Uso en el producto:** pinball con el protocolo de D-046 / D-048, más su placebo. Tres variantes: la
+  tabla de hoy, el clasificador sin sueldo y el clasificador con el desempate por sueldo. Se adopta la que
+  no empeora frente a la tabla (IC no entero sobre cero), siempre que su placebo sí empeore.
+
+Si a, b o c fallan, el clasificador no entra al producto.
