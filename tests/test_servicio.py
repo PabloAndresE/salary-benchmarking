@@ -666,8 +666,12 @@ def test_puestos_busca_vecinos_con_su_RESPALDO(cliente):
     d = r.json()
     assert d and len(d) <= 3
     for f in d:
-        assert set(f) == {"cargo", "grafias", "empresas", "personas", "similitud",
-                          "sobre_el_ruido"}
+        # los de siempre, mas los del juez (D-048), los sinonimos (D-047) y los grados agrupados
+        assert {"cargo", "grafias", "empresas", "personas", "similitud",
+                "sobre_el_ruido"} <= set(f)
+        assert set(f) <= {"cargo", "grafias", "empresas", "personas", "similitud", "sobre_el_ruido",
+                          "sinonimo", "p_juez", "seguro", "palabras_desconocidas", "grados",
+                          "cargo_sin_grado"}
 
 
 def test_puestos_ordena_por_PARECIDO(cliente):

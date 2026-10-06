@@ -51,6 +51,7 @@ from ..config.settings import cargar_settings
 from ..evaluacion import embeddings
 from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
+from ..producto import idioma as idioma_mod
 from ..producto import juez as juez_mod
 from ..producto import sinonimos
 from ..producto.base_referencia import (ruta_base_mas_nueva, MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
@@ -399,6 +400,11 @@ class Motor:
         self.base.juez = None if ruta_juez.lower() == "no" else juez_mod.cargar(ruta_juez)
         # 2026-10-06: el juez tambien filtra los vecinos de la analogia (`JUEZ_VECINOS=no` lo apaga)
         self.base.juez_vecinos = os.environ.get("JUEZ_VECINOS", "si").lower() != "no"
+        # D-050: capa de idioma, el traductor local ingles -> espanol. `TRADUCTOR=no` la apaga.
+        ruta_tr = os.environ.get("TRADUCTOR", "modelos/opus-mt-en-es")
+        self.base.traductor = None if ruta_tr.lower() == "no" else idioma_mod.cargar(ruta_tr)
+        print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
+                             else "sin traductor: los titulos en ingles se buscan tal cual"), flush=True)
         print("[juez] " + ("{} en {}".format(self.base.juez.nombre, self.base.juez.dispositivo)
                            if self.base.juez is not None else "sin juez: titulos nuevos por analogia"),
               flush=True)
@@ -424,6 +430,8 @@ class Motor:
         Es la unica parte con dependencia de red, y por eso el informe va por lotes: en
         una API sincrona esto serian 100-300 ms de latencia impredecible por peticion.
         """
+        # D-050: tambien las traducciones de los titulos en ingles, que se buscan por ellas
+        titulos = list(titulos) + self.base.traducciones_a_embeber([t for t in titulos if t])
         faltan = sorted({t for t in titulos if t and t not in self.emb})
         if not faltan:
             return 0
