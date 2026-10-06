@@ -52,7 +52,7 @@ from ..evaluacion import embeddings
 from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
 from ..producto import sinonimos
-from ..producto.base_referencia import (MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
+from ..producto.base_referencia import (ruta_base_mas_nueva, MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
                                         BaseReferencia, _vecinos)
 from ..producto.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
 from ..producto.formato import validar as validar_formato
@@ -351,24 +351,8 @@ def capacidades_de(base) -> dict:
 
 
 def _ruta_base_por_defecto() -> str:
-    """La base mas nueva de `demo/`, por numero de version.
-
-    NO por fecha de modificacion: copiar un fichero viejo lo volveria el mas nuevo. Y no
-    una constante escrita a mano, que es como se llego a servir la v8 durante una semana
-    mientras se construian la v9 a la v13.
-    """
-    import re
-    d = pathlib.Path("demo")
-    if not d.is_dir():
-        return "demo/base_referencia.npz"
-    cand = []
-    for f in d.glob("base_v*.npz"):
-        m = re.fullmatch(r"base_v(\d+)", f.stem)
-        if m:
-            cand.append((int(m.group(1)), f))
-    if not cand:
-        return "demo/base_referencia.npz"
-    return str(max(cand)[1]).replace("\\", "/")
+    """La base mas nueva de `demo/`, por numero de version (ver `ruta_base_mas_nueva`)."""
+    return ruta_base_mas_nueva("demo")
 
 
 class Motor:

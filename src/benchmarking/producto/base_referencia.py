@@ -289,6 +289,26 @@ CORTE_ALTA = 0.05       # el centro se conoce a mejor que +/-5%
 CORTE_MEDIA = 0.15
 
 
+def ruta_base_mas_nueva(carpeta="demo", defecto="demo/base_referencia.npz") -> str:
+    """La base mas nueva de `carpeta`, por numero de version (`base_v17.npz` > `base_v16.npz`).
+
+    NO por fecha de modificacion: copiar un fichero viejo lo volveria el mas nuevo. Y no una
+    constante escrita a mano, que es como se llego a servir la v8 durante una semana mientras se
+    construian la v9 a la v13, y como `grafias` siguio leyendo la v15 con la v17 ya construida.
+    La usan el servicio y la linea de comandos.
+    """
+    import pathlib as _pl
+    d = _pl.Path(carpeta)
+    if not d.is_dir():
+        return defecto
+    cand = []
+    for f in d.glob("base_v*.npz"):
+        m = re.fullmatch(r"base_v(\d+)", f.stem)
+        if m:
+            cand.append((int(m.group(1)), f))
+    return str(max(cand)[1]).replace("\\", "/") if cand else defecto
+
+
 def _confianza(var_centro):
     """ALTA / MEDIA / BAJA por cuanto puede moverse el CENTRO. Devuelve (etiqueta, pct).
 

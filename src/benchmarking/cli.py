@@ -67,7 +67,8 @@ def main():
     gr.add_argument("--nomina", default=None,
                     help="Excel o CSV del que se sacan los cargos (se deduplican)")
     gr.add_argument("--columna", default=None, help="columna de cargo (se autodetecta)")
-    gr.add_argument("--base", default="demo/base_v15.npz", help="base serializada")
+    gr.add_argument("--base", default=None,
+                    help="base serializada (por defecto, la mas nueva de demo/)")
     gr.add_argument("--anio", type=int, default=2026, help="anio del SBU para los dolares")
     gr.add_argument("--vecinos", type=int, default=0, metavar="K",
                     help="ademas, los K grupos mas parecidos que NO se fusionaron")
@@ -91,6 +92,9 @@ def main():
         if not cargos:
             ap.error("hace falta al menos un cargo, o --nomina")
         s = cargar_settings()
+        if args.base is None:
+            from .producto.base_referencia import ruta_base_mas_nueva
+            args.base = ruta_base_mas_nueva("demo")
         insp = Inspector(args.base)
         sbu = s.get_sbu(args.anio)
         print("base: %s | %d titulos | %d puestos | SBU %d = $%.0f\n"
