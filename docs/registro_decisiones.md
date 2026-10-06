@@ -6196,3 +6196,25 @@ servicios de la universidad, así que todo debe ser local.
 - b) **Pinball** con el protocolo de D-046 / D-048, contra el producto vigente en ese momento. El placebo
   asigna cada título en inglés al grupo de otro título resuelto. Se adopta si no empeora donde actúa (IC
   no entero sobre cero) y el placebo sí empeora.
+
+### D-049, resultados de la v2: se adopta (2026-10-06)
+
+| | v1 | v2 |
+|---|---|---|
+| a) control | 96,8 % | 97,1 % |
+| c) κ con el autor | 0,77 | 0,83 |
+| b) escalera (descriptiva en la v2) | 2→3 −0,08, 3→4 n. s. | 1→2 +0,65, 2→3 +0,13 [+0,04, +0,27], 3→4 +0,19 [−0,43, +0,46] (3.468 personas en el nivel 4), 4→5 +0,68 |
+| d) pinball frente a la tabla, donde actúa (13.804 votos, 36 %) | −0,00277 [−0,00410, −0,00166] | **−0,00334 [−0,00494, −0,00204]** |
+| d) placebo (niveles permutados) | +0,01634, empeora | +0,01681, empeora |
+
+**Se adopta la v2.** Mejora las bandas frente a la tabla (el IC queda entero bajo cero) y su placebo empeora.
+En los títulos de la base, el nivel viene de Qwen v2. En la consulta, para un título que no está en la base,
+viene de la regresión logística sobre el embedding (`62`: acierta el nivel de Qwen en 92 % de los grupos no
+vistos, 81 % sin palabra de rango). Esa regresión viaja dentro de la base y no necesita GPU.
+
+### D-050, criterio a: cumple (2026-10-06)
+
+El autor juzgó a ciegas 50 pares (título en inglés, grupo en español): 100 % de «sí» (exigido ≥ 90 %).
+Resolución en `base_v18`: 2.237 de 3.827 títulos en inglés (876 por traducción exacta o capa 0; 1.361 con
+el juez sobre la traducción); 1.954 se unen a otro grupo (24.609 personas). El pinball (b) se mide sobre el
+nivel v2.
