@@ -416,10 +416,12 @@ class Motor:
         # de los titulos en ingles); `IDIOMA_SUELDO=si` lo haria, solo para medir. `TRADUCTOR=no` lo apaga.
         ruta_tr = os.environ.get("TRADUCTOR", "modelos/opus-mt-en-es")
         self.base.traductor = None if ruta_tr.lower() == "no" else idioma_mod.cargar(ruta_tr)
-        self.base.idioma_sueldo = os.environ.get("IDIOMA_SUELDO", "no").lower() == "si"
-        # D-055: con la prima guardada en la base, un titulo en ingles sin datos propios toma la banda de
-        # su equivalente en espanol corrida por la prima (`IDIOMA_PRIMA=no` lo apaga)
-        if self.base.traductor is None or os.environ.get("IDIOMA_PRIMA", "si").lower() == "no":
+        # 2026-10-07, decision de producto del autor: un titulo en ingles SIN datos directos propios (un
+        # cargo nuevo) toma la banda de su equivalente en espanol, tal cual y sin prima. Medido en D-050
+        # (`idioma_consulta`): +0,019 donde actua, subestima (prima del ingles ~30-40 %). Los clusters de la
+        # base no se tocan. `IDIOMA_SUELDO=no` lo apaga; `IDIOMA_PRIMA=si` usaria la prima de D-055.
+        self.base.idioma_sueldo = os.environ.get("IDIOMA_SUELDO", "si").lower() == "si"
+        if self.base.traductor is None or os.environ.get("IDIOMA_PRIMA", "no").lower() != "si":
             self.base.idioma_prima = None
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
                              else "sin traductor: los titulos en ingles se buscan tal cual"), flush=True)

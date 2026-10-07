@@ -6477,3 +6477,13 @@ global +0,26; por nivel: 1 +0,16, 2 +0,31, 3 +0,33, 4 +0,10, 5 +0,42). La API la
 
 La API entrega `rango_desde` / `rango_hasta` = p25 / p75 de la banda de empresas, como el rango que se
 muestra; p10–p90 queda como detalle. No cambia ningún cálculo. Nota para el front: `docs/api_para_el_front.md`.
+
+### Títulos en inglés nuevos → banda del equivalente en español, sin prima (2026-10-07, decisión de producto del autor)
+
+En la consulta, un título en inglés **sin datos directos propios** (un cargo nuevo) se resuelve en su
+equivalente en español (D-050) y toma esa banda, tal cual y sin prima. Los títulos en inglés con datos propios
+en la base mantienen su banda. Los clusters no cambian. Es la variante `idioma_consulta` de D-050, que se
+midió y **empeora** donde actúa (+0,019 [+0,004, +0,032]): subestima, porque los cargos en inglés suelen
+pagar 30–40 % más. El autor la elige por simplicidad y por ser explicable («tu cargo equivale a X en el
+mercado ecuatoriano»), con bandas más angostas. D-055 (con prima) queda desactivado (`IDIOMA_PRIMA=no`); la
+prima sigue guardada en la base.
