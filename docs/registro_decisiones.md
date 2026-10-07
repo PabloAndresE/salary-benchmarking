@@ -6543,3 +6543,19 @@ otro grupo por encima. Se calculó sobre `base_v22`, sin sueldos.
 **Medición:** pinball frente a `nivel_v3` (que también reestimó su `k`). Placebo: los vectores de e5
 permutados entre títulos. Control descriptivo: e5 sin ajustar. **Criterio:** se adopta si no empeora donde
 actúa y el placebo sí empeora. Se reportan además el ancho y la cobertura de p25–p75 de la analogía.
+
+### D-057, resultado: cumple, se adopta (2026-10-07)
+
+| | `nivel_v3` (Vertex) | `e5` | `e5_sin_ajustar` (control) |
+|---|---|---|---|
+| donde actúa | — | −0,00077 [−0,00257, +0,00108], no se distingue | +0,00144 [−0,00061, +0,00327] |
+| pinball de la analogía | 0,1578 | 0,1564 | 0,1569 |
+| ancho p25–p75 de la analogía | ×1,68 | ×1,74 | ×1,75 |
+| analogía dentro de p25–p75 | 45,8 % | 45,8 % | 47,0 % |
+| asignados por el juez en la consulta | 6.422 | 6.929 | 13.037 |
+| `k` (analogía / directo) | 0,633 / 0,937 | 0,709 / 0,962 | 0,686 / 0,992 |
+
+El placebo (vectores permutados) da +0,04061 donde actúa y empeora. **Cumple y se adopta.** No angosta las
+bandas: el `k` recalibrado para e5 es mayor y mantiene la cobertura. Gana en velocidad (`67`: un título
+15–21 ms local contra 371 ms con Vertex; 500 títulos en 0,25 s con GPU o 3,9 s con CPU, contra 11,3 s) y
+quita la dependencia de Vertex en la consulta.
