@@ -87,19 +87,20 @@ def main(lista, salida):
          "- **Ancho** = p75 / p25: cuántas veces el tope del rango supera su piso (menos es más angosto).",
          "- **Cómo**: *directos* (el cargo, o su equivalente en español, tiene ≥ 3 empresas) o *analogía* "
          "(cargos parecidos, ajustados por nivel). Confianza **BAJA** = referencia orientativa.", "",
-         "| # | Cargo | Se resolvió como | Cómo (Vertex / e5) | Vertex: ref. · rango | e5: ref. · rango "
-         "| Ancho Vertex → e5 | Confianza e5 |",
-         "|---|---|---|---|---|---|---|---|"]
+         "| # | Cargo | Vertex: equivalente · cómo | Vertex: ref. · rango | e5: equivalente · cómo "
+         "| e5: ref. · rango | Ancho Vertex → e5 |",
+         "|---|---|---|---|---|---|---|"]
     anchos = []
     for i, (o, t) in enumerate(zip(originales, titulos), 1):
         a, b = v.loc[t], e.loc[t]
-        res = b.get("equivalente") or b.get("cargo_base") or ""
+        ra = a.get("equivalente") or a.get("cargo_base") or "—"
+        rb = b.get("equivalente") or b.get("cargo_base") or "—"
         wa, wb = a["rango_hasta"] / a["rango_desde"], b["rango_hasta"] / b["rango_desde"]
         anchos.append((wa, wb, b["base"]))
-        L.append("| {} | {} | {} | {} / {} | {} · {}–{} | {} · {}–{} | ×{:.2f} → ×{:.2f} | {} |".format(
-            i, o, res or "—", COMO.get(a["base"], a["base"]), COMO.get(b["base"], b["base"]),
-            usd(a["referencia"]), usd(a["rango_desde"]), usd(a["rango_hasta"]),
-            usd(b["referencia"]), usd(b["rango_desde"]), usd(b["rango_hasta"]), wa, wb, b["confianza"]))
+        L.append("| {} | {} | {} · {} | {} · {}–{} | {} · {} | {} · {}–{} | ×{:.2f} → ×{:.2f} |".format(
+            i, o, ra, COMO.get(a["base"], a["base"]), usd(a["referencia"]), usd(a["rango_desde"]),
+            usd(a["rango_hasta"]), rb, COMO.get(b["base"], b["base"]), usd(b["referencia"]),
+            usd(b["rango_desde"]), usd(b["rango_hasta"]), wa, wb))
     wa = np.array([x[0] for x in anchos])
     wb = np.array([x[1] for x in anchos])
     cuenta = collections.Counter(COMO.get(x[2], x[2]) for x in anchos)

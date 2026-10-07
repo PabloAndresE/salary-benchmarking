@@ -6559,3 +6559,10 @@ El placebo (vectores permutados) da +0,04061 donde actúa y empeora. **Cumple y 
 bandas: el `k` recalibrado para e5 es mayor y mantiene la cobertura. Gana en velocidad (`67`: un título
 15–21 ms local contra 371 ms con Vertex; 500 títulos en 0,25 s con GPU o 3,9 s con CPU, contra 11,3 s) y
 quita la dependencia de Vertex en la consulta.
+**Decisión del autor: e5 no se activa; el producto sigue con Vertex** (2026-10-07). Revisando una lista de
+cargos (`68`), el autor ve más cerca de la realidad a Vertex. Causa en el caso más distinto (`SALES DEVELOPMENT
+REPRESENTATIVE`): la traducción («representante de desarrollo de ventas») se resuelve con Vertex en
+`REPRESENTANTE DE VENTAS` (78 empresas, P del juez 0,97) y con e5 en `DESARROLLADOR DE VENTAS` (2 empresas),
+porque e5 pesa más la forma de la palabra. Sin datos directos, cae a la analogía entre títulos en inglés de
+multinacionales ($1.889 contra $860). Lo mismo con `HEAD OF HR`: `JEFE DE RECURSOS HUMANO` con Vertex,
+`JEFE DE RRHH` con e5. Observación aparte: esos dos grupos deberían ser uno (candidato a sinónimo).
