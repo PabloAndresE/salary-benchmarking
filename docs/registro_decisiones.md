@@ -6260,3 +6260,28 @@ puede usar para buscar y mostrar el equivalente en español. Idea para después:
 título en inglés, estimada aparte y medida con pinball.
 
 **Producto:** `demo/base_v19.npz` = la v18 con el nivel de Qwen v2 y el clasificador de la consulta (D-049).
+
+## D-051 — Recalibrar el ancho de las bandas que salen del modelo. Registrado antes de medir
+
+**Por qué.** En el producto con nivel v2 (`54_nivel_v2`), las bandas por analogía tienen el 65 % de los
+votos de empresas apartadas dentro de p25–p75, cuando lo esperado es 50 %: son demasiado anchas (ancho
+p25–p75 mediano de 129 %), y el pinball castiga el ancho de sobra. Los datos directos con cuantiles
+empíricos están en 50 %. (Una lente por «tipo de empresa» se descartó antes de registrarla: dependería de
+cómo rotula la empresa, se podría manipular, y el dato que la motivaba salió de explorar la validación.)
+
+**Qué.** Cuando la banda sale del modelo normal (`mu ± z·sd_modelo`), su `sd` se multiplica por un factor:
+`k_analogia` para la analogía y `k_directo` para los datos directos sin cuantiles empíricos. La banda de
+personas, la confianza y el centro no cambian.
+
+**Cómo se estima `k`, sin tocar la validación.** Dentro del 75 % de entrenamiento de `54`, se aparta otro
+25 % de empresas (semilla fija). Se construye la base con el resto, se consultan los cargos de esas empresas
+y `k = mediana(|voto − mu| / sd_modelo) / 0,6745`, por tipo de banda. Luego la base se construye con todo el
+entrenamiento y se aplica `k`.
+
+**Criterios:**
+- a) **Pinball** frente al producto vigente (nivel v2): el IC donde actúa no queda entero sobre cero.
+- b) **Cobertura** p25–p75 de la analogía en la validación entre 45 % y 55 %.
+- c) **Control:** la escala inversa (`1/k`) sí empeora.
+
+Se adopta si se cumplen a, b y c. El `k` del producto se estima igual sobre la base completa (partición
+interna de todas las empresas de entrenamiento y validación) y se guarda en la base.
