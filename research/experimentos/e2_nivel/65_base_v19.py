@@ -1,4 +1,4 @@
-"""La base v19 = la v18 con el nivel de Qwen v2 y su clasificador para la consulta (D-049), y, con
+"""La base v19 (con `--calibra`, la v20: D-051) = la v18 con el nivel de Qwen v2 y su clasificador para la consulta (D-049), y, con
 `--idioma`, los titulos en ingles en el grupo de su traduccion (D-050).
 
     ../../../.venv/bin/python 65_base_v19.py [--idioma]
@@ -30,7 +30,7 @@ def cargar(nombre, archivo):
     return m
 
 
-def main(con_idioma):
+def main(con_idioma, con_calibra=False):
     t0 = time.time()
     e41, e54 = cargar("e41", "41_base_v16.py"), cargar("e54", "54_pinball.py")
     marco = e41.cargar_marco()
@@ -49,12 +49,23 @@ def main(con_idioma):
     niveles = dict(zip(q["titulo"].astype(str), q["nivel"].astype(int)))
     b = BaseReferencia.construir(marco, emb, e41._Ajustes.get_sbu, umbral_fusion=None,
                                  capa0=c0mod.nueva("v1"), grupos=grupos, niveles=niveles)
-    b.guardar(RAIZ / "demo" / "base_v19.npz")
+    nombre = "base_v19.npz"
+    if con_calibra:                      # D-051: k por particion interna de TODAS las empresas
+        from benchmarking.producto.juez import cargar as cargar_juez
+        juez = cargar_juez(RAIZ / "modelos" / "juez_v3")
+
+        def preparar(base):
+            base.juez, base.juez_vecinos = juez, True
+        b.escala_banda = e54.estimar_escala(marco, emb, dict(umbral_fusion=None, capa0=c0mod.nueva("v1"),
+                                                                grupos=grupos, niveles=niveles),
+                                            e41._Ajustes.get_sbu, preparar)
+        nombre = "base_v20.npz"
+    b.guardar(RAIZ / "demo" / nombre)
     out = ["65 · BASE v19: nivel de Qwen v2 + clasificador de la consulta (D-049){}".format(
                "; titulos en ingles unidos a su traduccion (D-050): {:,}".format(unidos) if con_idioma else ""),
            "titulos {:,}; grupos {:,}; con nivel {:.1%}; clasificador: {}".format(
                len(b.celdas), len(set(np.asarray(b.grupo).tolist())), np.isfinite(b.nivel).mean(),
-               "si" if b.clf_nivel is not None else "NO"),
+               "si" if b.clf_nivel is not None else "NO") + "; escala de banda: {}".format(b.escala_banda),
            "({:.0f} s)".format(time.time() - t0)]
     (SAL / "65_base_v19.txt").write_text("\n".join(out) + "\n", encoding="utf-8")
     print("\n".join(out))
@@ -63,4 +74,6 @@ def main(con_idioma):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--idioma", action="store_true")
-    main(ap.parse_args().idioma)
+    ap.add_argument("--calibra", action="store_true", help="D-051: con la escala de banda -> base_v20")
+    a = ap.parse_args()
+    main(a.idioma, a.calibra)

@@ -6285,3 +6285,19 @@ entrenamiento y se aplica `k`.
 
 Se adopta si se cumplen a, b y c. El `k` del producto se estima igual sobre la base completa (partición
 interna de todas las empresas de entrenamiento y validación) y se guarda en la base.
+
+### D-051, resultados: cumple, se adopta (2026-10-07)
+
+`k` estimado con la partición interna del entrenamiento: analogía 0,637, directo 0,945.
+
+| | nivel v2 (antes) | calibra | escala inversa |
+|---|---|---|---|
+| a) pinball donde actúa (17.349 votos, 45 %) | — | **−0,00369 [−0,00469, −0,00271]** | +0,02112, empeora |
+| b) analogía dentro de p25–p75 | 64,6 % | **46,2 %** | 83,3 % |
+| analogía dentro de p10–p90 | 89,7 % | 72,9 % | 97,6 % |
+| directos dentro de p25–p75 / p10–p90 | 49,5 % / 77,8 % | 49,2 % / 77,5 % | — |
+
+Cumple a, b y c. Nota: con un solo factor, el p10–p90 de la analogía queda por debajo del 80 % (las colas son
+más pesadas que una normal). Un segundo factor para las colas sería otra decisión, con su propia medición.
+**Producto:** `demo/base_v20.npz` = la v19 con `k` estimado igual, sobre todas las empresas de la base.
+`k` del producto (partición interna de todas las empresas): analogía 0,691, directo 1,049.

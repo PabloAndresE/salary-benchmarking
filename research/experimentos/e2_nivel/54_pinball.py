@@ -80,6 +80,32 @@ def grupos_de_clusters(archivo, placebo=False):
     return {c: por_grupo[g16[c]] for c in celdas if g16[c] in por_grupo}
 
 
+def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
+    """D-051: k = mediana(|voto - mu| / sd_modelo) / 0,6745 por tipo de banda del modelo, con una
+    particion interna: la base se construye con el 75 % de las empresas de `marco` y se consultan
+    los cargos del otro 25 %."""
+    rng = np.random.default_rng(semilla)
+    emp = np.array(sorted(marco["empresa_ruc"].unique()))
+    aparte = set(rng.choice(emp, len(emp) // 4, replace=False))
+    a = marco[~marco["empresa_ruc"].isin(aparte)]
+    b = marco[marco["empresa_ruc"].isin(aparte)]
+    vb = (b.dropna(subset=["y"]).groupby(["cargo_norm", "empresa_ruc"], sort=False)["y"]
+            .median().reset_index().rename(columns={"y": "voto"}))
+    base = BaseReferencia.construir(a, emb, sbu, **kw)
+    preparar(base)
+    o = base.referenciar(sorted(set(vb["cargo_norm"])), emb).set_index("cargo").reindex(vb["cargo_norm"])
+    d = pd.DataFrame({"voto": vb["voto"].to_numpy(float), "mu": o["referencia_log"].to_numpy(float),
+                      "sd": o["sd_modelo"].to_numpy(float), "de": o["banda_de"].to_numpy(),
+                      "base": o["base"].to_numpy()})
+    d = d[(d["de"] == "modelo") & np.isfinite(d["voto"]) & (d["sd"] > 0)]
+    k = {}
+    for tipo, m in (("analogia", d["base"] == "por analogia"), ("directo", d["base"] != "por analogia")):
+        z = np.abs(d.loc[m, "voto"] - d.loc[m, "mu"]) / d.loc[m, "sd"]
+        if len(z) >= 100:
+            k[tipo] = float(np.median(z) / 0.6745)
+    return k
+
+
 def una_variante(nom, clusters):
     e41 = cargar("e41", "41_base_v16.py")
     mk = e41.cargar_marco()
@@ -99,8 +125,9 @@ def una_variante(nom, clusters):
     kw = {}
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
-    con_idioma = ("idioma", "idioma_placebo")
-    con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo") + con_idioma
+    con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
+    con_calibra = ("calibra", "calibra_inversa")
+    con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo") + con_idioma + con_calibra
     con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo") + con_nivel
     if nom in ("clusters", "placebo") + con_juez:
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
@@ -116,6 +143,8 @@ def una_variante(nom, clusters):
         r = pd.read_parquet(SAL / "64_idioma_resueltos.parquet")
         r = r[r["destino"] != ""]
         dest = r["destino"].to_numpy()
+        if nom.startswith("idioma_consulta"):          # enmienda: la base no se toca
+            dest = np.array([""] * len(dest))
         if nom == "idioma_placebo":                    # el grupo de OTRO titulo resuelto
             dest = np.random.default_rng(5).permutation(dest)
         g = kw["grupos"]
@@ -129,16 +158,22 @@ def una_variante(nom, clusters):
         from benchmarking.producto import idioma
         base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
         assert base.traductor is not None
-        base.idioma_placebo = nom == "idioma_placebo"
-    if nom in con_juez:                                       # D-048: el juez en la consulta
-        from benchmarking.producto.juez import cargar as cargar_juez
-        base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/22_modelos_v3/elegido")
-        assert base.juez is not None, "no se pudo cargar el juez"
-        base.juez_placebo = nom == "juez_placebo"
-        # 2026-10-06: el juez filtra los vecinos de la analogia (y su placebo). `juez_tabla` es el
-        # producto con la tabla de niveles en ingles; los de abajo, ademas, con el filtro.
-        base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo") + con_nivel
-        base.juez_vecinos_placebo = nom == "juez_vecinos_placebo"
+        base.idioma_placebo = nom in ("idioma_placebo", "idioma_consulta_placebo")
+    def preparar(base):
+        if nom in con_juez:                                   # D-048: el juez en la consulta
+            from benchmarking.producto.juez import cargar as cargar_juez
+            base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/22_modelos_v3/elegido")
+            assert base.juez is not None, "no se pudo cargar el juez"
+            base.juez_placebo = nom == "juez_placebo"
+            # 2026-10-06: el juez filtra los vecinos de la analogia (y su placebo). `juez_tabla` es el
+            # producto con la tabla de niveles en ingles; los de abajo, ademas, con el filtro.
+            base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo") + con_nivel
+            base.juez_vecinos_placebo = nom == "juez_vecinos_placebo"
+    preparar(base)
+    if nom in con_calibra:               # D-051: k por particion interna del entrenamiento
+        k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar)
+        print("escala de banda (particion interna): " + str(k), flush=True)
+        base.escala_banda = k if nom == "calibra" else {t: 1.0 / x for t, x in k.items()}
     cargos = sorted(set(v["cargo_norm"]))
     out = base.referenciar(cargos, emb).set_index("cargo")
     perdida = pinball(v["voto"].to_numpy(float),
@@ -196,7 +231,8 @@ if __name__ == "__main__":
     ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo",
                                            "juez_tabla", "juez_vecinos", "juez_vecinos_placebo",
                                            "nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo",
-                                           "idioma", "idioma_placebo"])
+                                           "idioma", "idioma_placebo", "idioma_consulta",
+                                           "idioma_consulta_placebo", "calibra", "calibra_inversa"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")

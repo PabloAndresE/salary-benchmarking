@@ -820,6 +820,9 @@ class BaseReferencia:
         # (pesos, sesgos, clases) de una regresion logistica sobre el embedding, entrenada con
         # el nivel de Qwen de las etiquetas de la base. None: la consulta usa la tabla de palabras.
         self.clf_nivel = None
+        # D-051: factor del ancho de las bandas que salen del modelo normal, por tipo
+        # (`analogia`, `directo`). Vacio = 1, el comportamiento de antes.
+        self.escala_banda = {}
         # dispersion del efecto entre escalones: es la incertidumbre que queda cuando
         # NO se sabe el nivel del puesto que se pregunta
         v = list(self.efecto.values())
@@ -1377,6 +1380,8 @@ class BaseReferencia:
             # D-040: la capa 0 viaja con la base, para que la consulta use sus reglas.
             capa0_json=np.array(self.capa0.a_json() if self.capa0 is not None else ""),
             grado_consulta=np.array(bool(self.grado_consulta)),
+            esc_k=np.array(sorted(self.escala_banda), dtype=object),
+            esc_v=np.array([self.escala_banda[k] for k in sorted(self.escala_banda)], dtype=float),
             **({} if self.clf_nivel is None else
                dict(clf_W=self.clf_nivel[0], clf_b=self.clf_nivel[1], clf_k=self.clf_nivel[2])))
 
@@ -1430,6 +1435,8 @@ class BaseReferencia:
                 base.capa0 = Capa0.de_json(str(z["capa0_json"]), base.celdas)
             if "grado_consulta" in z.files:
                 base.grado_consulta = bool(z["grado_consulta"])
+            if "esc_k" in z.files:
+                base.escala_banda = {str(k): float(v) for k, v in zip(z["esc_k"], z["esc_v"])}
             if "clf_W" in z.files:
                 base.clf_nivel = (z["clf_W"], z["clf_b"], z["clf_k"])
             return base
@@ -1750,8 +1757,12 @@ class BaseReferencia:
             # saliera BAJA, porque el suelo teorico y la dispersion observada no son la
             # misma cosa: los votos observados llevan ademas su propio ruido sigma/n.
             sd_modelo = float(np.sqrt(var))
+            banda_de = "empirica"
             if banda is None:
-                banda = {q: mu + Z_NORMAL[q] * sd_modelo for q in CUANTILES}
+                banda_de = "modelo"
+                k_b = (getattr(self, "escala_banda", None) or {}).get(
+                    "analogia" if base == "por analogia" else "directo", 1.0)
+                banda = {q: mu + Z_NORMAL[q] * sd_modelo * k_b for q in CUANTILES}
             if banda_per is None:
                 sdp = float(np.sqrt(var_per))
                 banda_per = {q: mu + Z_NORMAL[q] * sdp for q in CUANTILES}
@@ -1773,6 +1784,8 @@ class BaseReferencia:
                         "p10per_log": banda_per[0.10], "p25per_log": banda_per[0.25],
                         "p75per_log": banda_per[0.75], "p90per_log": banda_per[0.90],
                         "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
+                        # D-051: si la banda sale de los cuantiles de las empresas o del modelo
+                        "banda_de": banda_de, "sd_modelo": sd_modelo,
                         # Con que titulo de la base se emparejo, cuando fue solo por el
                         # grado (D-037). Vacio si el titulo estaba tal cual.
                         "cargo_base": cargo_base,
