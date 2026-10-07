@@ -28,7 +28,8 @@
 - `confianza` = `BAJA`: mostrar como «referencia orientativa: hay pocos datos de este cargo en el mercado»
   (más tenue, o con aviso).
 - `equivalente`: para un título en inglés, el cargo en español de la base donde se resuelve
-  (`PAYROLL ANALYST` → `ANALISTA DE NOMINA`). Mostrarlo como «equivalente en la base».
+  (`PAYROLL ANALYST` → `ANALISTA DE NOMINA`). **La banda es la de ese equivalente**: el mismo cargo da la
+  misma banda en inglés y en español. Mostrarlo como «equivalente en la base».
 - `base` puede ser `datos directos`, `por analogia` o `por traduccion`.
 
 ## `/puestos` (buscador del formulario)
