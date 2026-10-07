@@ -6311,3 +6311,24 @@ empresas: `lectura_mercado` y la nueva `posicion_mercado` (percentil aproximado,
 la referencia, p75 y p90, y recortado a [10, 90]). Consecuencia esperada: más personas salen fuera del 50 %
 central que con la banda de personas, porque esta no lleva la dispersión dentro de cada nómina. El front
 debe rotularlo «frente a lo que pagan las empresas por este cargo».
+
+## D-052 — El nivel de Qwen en los candados: un nivel por grupo y candado de nivel en la consulta. Registrado antes de medir
+
+**Diagnóstico** (`base_v20`): 943 de los 12.108 grupos con más de un título mezclan niveles de Qwen (6,4 %
+de las personas). Casi siempre es ruido de Qwen entre grafías del mismo cargo (`CONTADOR GENERAL` 2 o 4,
+`ADMINISTRADOR` 2 o 4, `MECANICO` 1 o 2), no grupos mal hechos (la auditoría del clustering dio 95 %).
+**No se parten grupos.**
+
+**Cambios:**
+1. **`nivel_grupo`:** cada título toma el nivel mayoritario de su grupo, ponderado por personas. Solo cambia
+   el ajuste por nivel de la analogía.
+2. **`candado_nivel`:** cuando el juez asigna un título nuevo a un grupo en la consulta (D-048), el candado
+   usa el nivel del clasificador para el título (si da clase) y el nivel del grupo, en lugar de la tabla de
+   palabras. Si los dos se conocen y difieren, se bloquea.
+
+**Variantes**, sobre el producto vigente (nivel v2 + D-051, con `k` reestimado igual): `nivel_grupo`;
+`nivel_grupo` + `candado_nivel`; y sus placebos (los niveles de grupo permutados entre grupos; los niveles
+de la consulta permutados entre títulos).
+
+**Criterio:** se adopta cada cambio si no empeora donde actúa frente al producto vigente (IC no entero sobre
+cero) y su placebo sí empeora.

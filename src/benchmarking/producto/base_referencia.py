@@ -1137,7 +1137,7 @@ class BaseReferencia:
         return max(cands, key=lambda i: (self.emp[i], self.celdas[i] == atomo,
                                          -len(self.celdas[i]))) if cands else None
 
-    def _asignar_con_juez(self, unicos, vec, sim):
+    def _asignar_con_juez(self, unicos, vec, sim, niv_consulta=None):
         """D-048: titulo nuevo -> (celda del grupo elegido, P) cuando el juez lo reconoce.
 
         Solo para titulos que no estan en la base ni por la capa 0. Candidatos: hasta
@@ -1148,6 +1148,10 @@ class BaseReferencia:
         candidato AL AZAR en vez del mejor, cuando el mejor llega a `P_JUEZ`.
         """
         from .capa0 import compatibles
+        if niv_consulta is not None and getattr(self, "candado_nivel_placebo", False):
+            # D-052, solo para medir: el candado con niveles de la consulta permutados (el ajuste
+            # por nivel de la analogia sigue con los suyos)
+            niv_consulta = list(np.random.default_rng(9).permutation(np.array(niv_consulta, dtype=object)))
         pend, cands_de = [], {}
         for k, t in enumerate(unicos):
             if t in self.idx or (self.capa0 is not None and self._por_capa0(t) is not None):
@@ -1161,7 +1165,12 @@ class BaseReferencia:
                     continue
                 vistos.add(g)
                 c = str(self.celdas[j])
-                na, nb = nivel_rubrica(t), nivel_rubrica(c)
+                if getattr(self, "candado_nivel", False) and niv_consulta is not None:
+                    # D-052: el nivel del clasificador para el titulo y el del grupo (Qwen)
+                    na = niv_consulta[k]
+                    nb = self.nivel[j] if np.isfinite(self.nivel[j]) else None
+                else:
+                    na, nb = nivel_rubrica(t), nivel_rubrica(c)
                 if ((na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c)
                         or not compatibles(t, c)):
                     continue
@@ -1443,6 +1452,21 @@ class BaseReferencia:
 
     # -- consulta --------------------------------------------------------------
 
+    def nivel_por_grupo(self, placebo=False, semilla=8):
+        """D-052: cada titulo toma el nivel mayoritario de su grupo, ponderado por personas.
+        `placebo` permuta esos niveles entre grupos (solo para medir)."""
+        d = pd.DataFrame({"g": self.grupo, "n": self.nivel,
+                          "w": np.maximum(np.asarray(self.personas, float), 1.0)})
+        d = d[np.isfinite(d["n"])]
+        if d.empty:
+            return
+        maj = d.groupby(["g", "n"])["w"].sum().reset_index().sort_values("w").groupby("g").tail(1)
+        mapa = dict(zip(maj["g"], maj["n"]))
+        if placebo:
+            ks = list(mapa)
+            mapa = dict(zip(ks, np.random.default_rng(semilla).permutation([mapa[k] for k in ks])))
+        self.nivel = np.array([mapa.get(int(g), np.nan) for g in self.grupo], dtype=float)
+
     def _nivel_consulta(self, titulos, Q):
         """Nivel de cada titulo preguntado que no este en la base. Con el clasificador de D-049,
         la clase mas probable si su probabilidad llega a `P_NIVEL_CLF` (si no, None: no se
@@ -1540,9 +1564,9 @@ class BaseReferencia:
         Q = np.vstack([X_por_etiqueta[t] for t in unicos]).astype(float)
         Q /= np.linalg.norm(Q, axis=1, keepdims=True)
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
-        asignado = (self._asignar_con_juez(unicos, vec, sim)
-                    if getattr(self, "juez", None) is not None else {})
         niv_consulta = self._nivel_consulta(unicos, Q)
+        asignado = (self._asignar_con_juez(unicos, vec, sim, niv_consulta)
+                    if getattr(self, "juez", None) is not None else {})
         idioma = self.resolver_idioma(unicos, X_por_etiqueta)
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None

@@ -126,7 +126,8 @@ def una_variante(nom, clusters):
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
-    con_calibra = ("calibra", "calibra_inversa")
+    con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo")
+    con_calibra = ("calibra", "calibra_inversa") + con_d052
     con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo") + con_idioma + con_calibra
     con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo") + con_nivel
     if nom in ("clusters", "placebo") + con_juez:
@@ -160,6 +161,10 @@ def una_variante(nom, clusters):
         assert base.traductor is not None
         base.idioma_placebo = nom in ("idioma_placebo", "idioma_consulta_placebo")
     def preparar(base):
+        if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
+            base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")
+            base.candado_nivel = nom.startswith("candado_nivel")
+            base.candado_nivel_placebo = nom == "candado_nivel_placebo"
         if nom in con_juez:                                   # D-048: el juez en la consulta
             from benchmarking.producto.juez import cargar as cargar_juez
             base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/22_modelos_v3/elegido")
@@ -173,7 +178,7 @@ def una_variante(nom, clusters):
     if nom in con_calibra:               # D-051: k por particion interna del entrenamiento
         k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar)
         print("escala de banda (particion interna): " + str(k), flush=True)
-        base.escala_banda = k if nom == "calibra" else {t: 1.0 / x for t, x in k.items()}
+        base.escala_banda = k if nom != "calibra_inversa" else {t: 1.0 / x for t, x in k.items()}
     cargos = sorted(set(v["cargo_norm"]))
     out = base.referenciar(cargos, emb).set_index("cargo")
     perdida = pinball(v["voto"].to_numpy(float),
@@ -232,7 +237,9 @@ if __name__ == "__main__":
                                            "juez_tabla", "juez_vecinos", "juez_vecinos_placebo",
                                            "nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo",
                                            "idioma", "idioma_placebo", "idioma_consulta",
-                                           "idioma_consulta_placebo", "calibra", "calibra_inversa"])
+                                           "idioma_consulta_placebo", "calibra", "calibra_inversa",
+                                           "nivel_grupo", "nivel_grupo_placebo", "candado_nivel",
+                                           "candado_nivel_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
