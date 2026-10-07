@@ -203,13 +203,25 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     out["vs_politica_interna"] = (np.exp(y - ref - ancla) - 1.0).round(4)
     out["confianza"] = confianza
 
-    # UNA PERSONA se compara contra la banda de PERSONAS. La de empresas es mas estrecha
-    # —no lleva la dispersion dentro de la nomina— y usarla aqui hace que la gente parezca
-    # mas rara de lo que es, sobre todo en los cargos comprimidos.
+    # UNA PERSONA se ubica en la banda de MERCADO, que es la de EMPRESAS (2026-10-07, decision
+    # del autor): "frente a lo que pagan las empresas por este cargo". Antes era la de personas;
+    # la de empresas es mas estrecha —no lleva la dispersion dentro de cada nomina—, asi que mas
+    # gente sale fuera del 50 % central. Es lo que se quiere leer en un benchmark, y es la banda
+    # validada (D-051).
     yv = y.to_numpy(float)
-    p10, p25 = col("p10per_log").to_numpy(float), col("p25per_log").to_numpy(float)
-    p75, p90 = col("p75per_log").to_numpy(float), col("p90per_log").to_numpy(float)
+    p10, p25 = col("p10_log").to_numpy(float), col("p25_log").to_numpy(float)
+    p75, p90 = col("p75_log").to_numpy(float), col("p90_log").to_numpy(float)
     out["lectura_mercado"] = _lectura(yv, p10, p25, p75, p90)
+    # La POSICION de la persona en esa banda, como percentil aproximado del mercado: se interpola
+    # entre p10, p25, la mediana (la referencia), p75 y p90. Fuera de [p10, p90] se queda en 10 o
+    # 90 —la banda no dice mas alla—, y `lectura_mercado` ya dice "muy por debajo / encima".
+    pos = np.full(len(yv), np.nan)
+    rv = ref.to_numpy(float)
+    for i in range(len(yv)):
+        xs = np.array([p10[i], p25[i], rv[i], p75[i], p90[i]])
+        if np.isfinite(yv[i]) and np.isfinite(xs).all() and np.all(np.diff(xs) >= 0):
+            pos[i] = np.interp(yv[i], xs, [10, 25, 50, 75, 90])
+    out["posicion_mercado"] = np.round(pos)
     # Para la equidad interna se descuenta el nivel de la empresa y se mira contra la
     # misma banda: "si mi empresa pagara a mercado, .donde estaria esta persona?".
     a = ancla.to_numpy(float)

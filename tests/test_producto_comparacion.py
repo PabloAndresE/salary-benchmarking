@@ -112,15 +112,25 @@ def test_el_mismo_exceso_NO_significa_lo_mismo_en_dos_cargos():
     assert d.loc["ESTRECHO", "lectura_mercado"] == "muy por encima"
 
 
-def test_la_persona_se_compara_contra_la_banda_de_PERSONAS():
-    # La banda de empresas no lleva `sigma` y es mas estrecha. Usarla junto al sueldo de
-    # una persona la hace parecer mas rara de lo que es. `detalle` usa la de personas.
+def test_la_persona_se_ubica_en_la_banda_de_EMPRESAS():
+    # 2026-10-07, decision del autor: el mercado es la banda de empresas (cada empresa cuenta
+    # una vez) y cada persona se ubica DENTRO de ella. La de personas, mas ancha, ya no decide
+    # la lectura: el mismo sueldo que cabia en ella sale "muy por encima" del mercado.
     df = pd.DataFrame({"cargo": ["X"], "sueldo": [np.exp(1.25) * 470]})
     r = _ref([1.0], ["ALTA"], ancho=0.10)          # banda de EMPRESAS estrecha
     for q, z in ((10, -2.0), (25, -1.0), (75, 1.0), (90, 2.0)):
         r[f"p{q}per_log"] = 1.0 + z * 0.40         # la de PERSONAS, mucho mas ancha
     det, _, _ = comparar(df, "sueldo", "cargo", r, _sbu, 2025)
-    assert det["lectura_mercado"].iloc[0] == "en linea", "cae dentro de la de personas"
+    assert det["lectura_mercado"].iloc[0] == "muy por encima"
+    assert det["posicion_mercado"].iloc[0] == 90
+
+
+def test_posicion_mercado_interpola_entre_percentiles():
+    df = pd.DataFrame({"cargo": ["X", "X"], "sueldo": [np.exp(1.0) * 470, np.nan]})
+    r = _ref([1.0, 1.0], ["ALTA", "ALTA"], ancho=0.10)
+    det, _, _ = comparar(df, "sueldo", "cargo", r, _sbu, 2025)
+    assert det["posicion_mercado"].iloc[0] == 50, "en la referencia es la mediana"
+    assert np.isnan(det["posicion_mercado"].iloc[1])
 
 
 def test_lee_los_sueldos_como_los_escribe_rrhh():

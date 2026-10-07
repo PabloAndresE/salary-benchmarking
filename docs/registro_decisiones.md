@@ -6301,3 +6301,13 @@ Cumple a, b y c. Nota: con un solo factor, el p10–p90 de la analogía queda po
 más pesadas que una normal). Un segundo factor para las colas sería otra decisión, con su propia medición.
 **Producto:** `demo/base_v20.npz` = la v19 con `k` estimado igual, sobre todas las empresas de la base.
 `k` del producto (partición interna de todas las empresas): analogía 0,691, directo 1,049.
+
+### La banda de mercado es la de empresas (2026-10-07, decisión de producto del autor)
+
+`p10`..`p90` de la API pasan a ser la banda de **empresas**: cada empresa cuenta una vez, como en las
+encuestas salariales ponderadas por organización, y es la banda validada con pinball (D-051). La de
+personas queda como detalle en `p10_per`..`p90_per`. Cada persona de la nómina se ubica dentro de la banda de
+empresas: `lectura_mercado` y la nueva `posicion_mercado` (percentil aproximado, interpolado entre p10, p25,
+la referencia, p75 y p90, y recortado a [10, 90]). Consecuencia esperada: más personas salen fuera del 50 %
+central que con la banda de personas, porque esta no lleva la dispersión dentro de cada nómina. El front
+debe rotularlo «frente a lo que pagan las empresas por este cargo».

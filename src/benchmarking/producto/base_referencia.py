@@ -1840,9 +1840,14 @@ class BaseReferencia:
             for col, nueva in (("referencia_log", "referencia"),
                                ("p10_log", "p10_emp"), ("p25_log", "p25_emp"),
                                ("p75_log", "p75_emp"), ("p90_log", "p90_emp"),
-                               ("p10per_log", "p10"), ("p25per_log", "p25"),
-                               ("p75per_log", "p75"), ("p90per_log", "p90")):
+                               ("p10per_log", "p10_per"), ("p25per_log", "p25_per"),
+                               ("p75per_log", "p75_per"), ("p90per_log", "p90_per")):
                 out[nueva] = (np.exp(out[col]) * f).round(2)
+            # 2026-10-07, decision del autor: la banda de MERCADO es la de empresas (cada empresa
+            # cuenta una vez; es la validada con pinball, D-051). `p10`..`p90` son esa banda; la
+            # de personas queda como detalle en `p10_per`..`p90_per`.
+            for q in ("p10", "p25", "p75", "p90"):
+                out[q] = out[q + "_emp"]
         return out
 
 
