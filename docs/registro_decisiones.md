@@ -6332,3 +6332,16 @@ de la consulta permutados entre títulos).
 
 **Criterio:** se adopta cada cambio si no empeora donde actúa frente al producto vigente (IC no entero sobre
 cero) y su placebo sí empeora.
+
+### D-052, resultados: se adoptan los dos, son neutros (2026-10-07)
+
+| | donde actúa | placebo |
+|---|---|---|
+| `nivel_grupo` frente al producto (nivel v2 + D-051) | 13.804 votos: +0,00029 [−0,00006, +0,00062], no se distingue | +0,02357, empeora |
+| `candado_nivel` frente a `nivel_grupo` | +0,00007 [−0,00064, +0,00086], no se distingue | +0,01607, empeora |
+
+Cumplen el criterio (no empeoran; los placebos sí) y se adoptan, pero no mejoran el pinball. Lo que aportan
+es coherencia: un solo nivel por cargo, y el juez deja de asignar unos 200 títulos nuevos a grupos de otro
+nivel (6.422 → 6.216 asignaciones en las empresas apartadas). En todo `nivel_grupo` la diferencia es
++0,00009 [+0,00001, +0,00018]: mínima, pero sobre cero; queda anotado. En la API se activan al cargar la base
+(`NIVEL_GRUPO=no` los apaga).

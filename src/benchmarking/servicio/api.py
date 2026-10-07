@@ -405,6 +405,10 @@ class Motor:
         self.base.juez = None if ruta_juez.lower() == "no" else juez_mod.cargar(ruta_juez)
         # 2026-10-06: el juez tambien filtra los vecinos de la analogia (`JUEZ_VECINOS=no` lo apaga)
         self.base.juez_vecinos = os.environ.get("JUEZ_VECINOS", "si").lower() != "no"
+        # D-052: un nivel por grupo y el candado de nivel en la consulta (`NIVEL_GRUPO=no` los apaga)
+        if os.environ.get("NIVEL_GRUPO", "si").lower() != "no" and getattr(self.base, "clf_nivel", None) is not None:
+            self.base.nivel_por_grupo()
+            self.base.candado_nivel = True
         # D-050: capa de idioma, el traductor local ingles -> espanol. `TRADUCTOR=no` la apaga.
         # apagada por defecto: para el SUELDO empeora (D-050, la prima de los titulos en ingles)
         ruta_tr = os.environ.get("TRADUCTOR", "no")
