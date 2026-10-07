@@ -1704,6 +1704,18 @@ class BaseReferencia:
                     # de producto— pero solo pasa en bases degeneradas de un solo puesto.
                     if quedan.any():
                         j, s = j[quedan], s[quedan]
+                if getattr(self, "vecinos_por_grupo", False):
+                    # D-054: cada grupo vecino cuenta UNA vez (su grafia mas parecida); antes las
+                    # grafias de un mismo grupo entraban como vecinos distintos y multiplicaban su peso
+                    _, prim = np.unique(self.grupo[j], return_index=True)
+                    prim = np.sort(prim)
+                    if getattr(self, "vecinos_por_grupo_placebo", False):
+                        # solo para medir: se quitan tantos vecinos AL AZAR como duplicados habia
+                        n_dup = min(len(j), VECINOS) - len(prim[prim < VECINOS])
+                        rng_g = np.random.default_rng(abs(hash(t)) % (2 ** 32))
+                        cab = np.arange(min(len(j), VECINOS + n_dup))
+                        prim = np.sort(rng_g.choice(cab, len(cab) - n_dup, replace=False)) if n_dup > 0 else cab
+                    j, s = j[prim], s[prim]
                 j, s = j[:VECINOS], s[:VECINOS]
                 if getattr(self, "juez_vecinos", False) and getattr(self, "juez", None) is not None:
                     pv = self.juez.P([(t, str(self.celdas[x])) for x in j])

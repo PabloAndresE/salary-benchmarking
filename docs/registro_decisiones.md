@@ -6416,3 +6416,20 @@ votos con cambios mínimos que diluyen un efecto localizado. En adelante, las va
 calibración se miden con el `k` fijo del producto vigente.
 
 **Producto:** `demo/base_v21.npz` = la v20 con los niveles v3 (D-052 activo en la API).
+
+## D-054 — En la analogía, cada grupo vecino cuenta una vez. Registrado antes de medir
+
+**Por qué** (caso `HEAD OF CUSTOMER SUCCESS`, señalado por el autor): los vecinos de la analogía son
+grafías, no grupos. Las grafías de un mismo grupo entran como vecinos distintos con los mismos
+estadísticos: `CUSTOMER SERVICES TEAM LEADER`, `CUSTOMER SERVICE TEAM LEADER` y `CUSTOMER EXPERIENCE
+LEADER` (un grupo de 3 empresas) sumaban 40 % del peso, y `CUSTOMER SUCCESS MANAGER` entraba dos veces. Ya
+se corregía el conteo de empresas (`n_emp`), pero no los pesos.
+
+**Cambio** (`vecinos_por_grupo`): de los vecinos ordenados por parecido, se toma la primera grafía de cada
+grupo (la de mayor coseno) hasta `VECINOS` grupos, antes del filtro del juez.
+
+**Medición:** pinball frente a `nivel_v3` (el producto vigente), con el `k` de D-051 **fijo** en el que
+obtuvo `nivel_v3` (analogía 0,6334, directo 0,9371), para aislar el cambio. Placebo: en vez de quitar los
+duplicados, se quita la misma cantidad de vecinos al azar.
+
+**Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora.

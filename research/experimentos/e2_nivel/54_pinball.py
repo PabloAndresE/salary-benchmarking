@@ -126,7 +126,8 @@ def una_variante(nom, clusters):
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
-    con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo")
+    con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo")
+    con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
     con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo") + con_idioma + con_calibra
@@ -172,6 +173,9 @@ def una_variante(nom, clusters):
                     base.desempatar_nivel_por_sueldo(posibles, placebo=nom.endswith("placebo"))), flush=True)
             base.candado_nivel = nom.startswith("candado_nivel") or nom in con_v3
             base.candado_nivel_placebo = nom == "candado_nivel_placebo"
+        if nom in con_d054:              # D-054: cada grupo vecino cuenta una vez (y su placebo)
+            base.vecinos_por_grupo = True
+            base.vecinos_por_grupo_placebo = nom == "vecinos_grupo_placebo"
         if nom in con_juez:                                   # D-048: el juez en la consulta
             from benchmarking.producto.juez import cargar as cargar_juez
             base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/22_modelos_v3/elegido")
@@ -182,7 +186,9 @@ def una_variante(nom, clusters):
             base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo") + con_nivel
             base.juez_vecinos_placebo = nom == "juez_vecinos_placebo"
     preparar(base)
-    if nom in con_calibra:               # D-051: k por particion interna del entrenamiento
+    if nom in con_d054:                  # k FIJO, el de `nivel_v3` (anotado en D-053): aisla el cambio
+        base.escala_banda = {"analogia": 0.6333673690668041, "directo": 0.9371366258107973}
+    elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
         k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar)
         print("escala de banda (particion interna): " + str(k), flush=True)
         base.escala_banda = k if nom != "calibra_inversa" else {t: 1.0 / x for t, x in k.items()}
@@ -247,7 +253,8 @@ if __name__ == "__main__":
                                            "idioma_consulta_placebo", "calibra", "calibra_inversa",
                                            "nivel_grupo", "nivel_grupo_placebo", "candado_nivel",
                                            "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
-                                           "nivel_v3_sueldo", "nivel_v3_sueldo_placebo"])
+                                           "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
+                                           "vecinos_grupo_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
