@@ -6461,3 +6461,14 @@ equivalentes con más datos, pero la traducción sola subestima (D-050: la prima
 **Medición:** pinball frente a `nivel_v3`, con el `k` fijo. Placebo: la misma π, con la traducción hacia el
 grupo de otro título resuelto. **Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora.
 Se reportan también la cobertura de p25–p75 en los votos donde actúa y π por nivel.
+
+### D-055, resultado: cumple, se adopta con reservas (2026-10-07)
+
+π con la base de entrenamiento: 204 pares, global +0,26. Donde actúa (344 votos, 0,9 %): **+0,0163
+[−0,0039, +0,0373], no se distingue**; placebo +0,0889 [+0,0478, +0,1265], empeora. Cumple el criterio y se
+adopta. Reservas, anotadas: el punto apunta a peor y las bandas se ensanchan (p25–p75 de ×1,76 a ×2,21). Lo
+que se gana es calibración: dentro de p25–p75, de 35 % a 44 %.
+
+**Producto:** `demo/base_v22.npz` = la v21 con π estimada sobre toda la base y guardada en ella (438 pares;
+global +0,26; por nivel: 1 +0,16, 2 +0,31, 3 +0,33, 4 +0,10, 5 +0,42). La API la usa si carga el traductor
+(`IDIOMA_PRIMA=no` la apaga).

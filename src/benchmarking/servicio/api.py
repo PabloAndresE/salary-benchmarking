@@ -415,6 +415,10 @@ class Motor:
         ruta_tr = os.environ.get("TRADUCTOR", "modelos/opus-mt-en-es")
         self.base.traductor = None if ruta_tr.lower() == "no" else idioma_mod.cargar(ruta_tr)
         self.base.idioma_sueldo = os.environ.get("IDIOMA_SUELDO", "no").lower() == "si"
+        # D-055: con la prima guardada en la base, un titulo en ingles sin datos propios toma la banda de
+        # su equivalente en espanol corrida por la prima (`IDIOMA_PRIMA=no` lo apaga)
+        if self.base.traductor is None or os.environ.get("IDIOMA_PRIMA", "si").lower() == "no":
+            self.base.idioma_prima = None
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
                              else "sin traductor: los titulos en ingles se buscan tal cual"), flush=True)
         print("[juez] " + ("{} en {}".format(self.base.juez.nombre, self.base.juez.dispositivo)
