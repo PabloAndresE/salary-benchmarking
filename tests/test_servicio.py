@@ -671,7 +671,7 @@ def test_puestos_busca_vecinos_con_su_RESPALDO(cliente):
                 "sobre_el_ruido"} <= set(f)
         assert set(f) <= {"cargo", "grafias", "empresas", "personas", "similitud", "sobre_el_ruido",
                           "sinonimo", "p_juez", "seguro", "palabras_desconocidas", "grados",
-                          "cargo_sin_grado"}
+                          "cargo_sin_grado", "equivalente", "traduccion"}
 
 
 def test_puestos_ordena_por_PARECIDO(cliente):

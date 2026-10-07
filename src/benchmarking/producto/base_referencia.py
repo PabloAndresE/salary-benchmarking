@@ -1627,7 +1627,10 @@ class BaseReferencia:
                 # D-048: ni tal cual ni por la capa 0, pero el juez lo reconoce en un grupo
                 propio, p_juez = asignado[t]
             traduccion = ""
-            if t in idioma:
+            # D-050: el equivalente en espanol se MUESTRA siempre; solo con `idioma_sueldo` (medido:
+            # empeora, la prima de los titulos en ingles) se usa ademas para calcular la banda
+            equivalente = str(self.celdas[idioma[t][0]]) if t in idioma else ""
+            if t in idioma and getattr(self, "idioma_sueldo", False):
                 # D-050: un titulo en ingles SIN datos directos propios se busca por su traduccion,
                 # antes que por la capa 0 o el juez sobre el texto en ingles (el juez no se valido ahi)
                 ex = self.idx.get(t)
@@ -1843,6 +1846,7 @@ class BaseReferencia:
                         "cargo_base": cargo_base,
                         # D-050: la traduccion con que se resolvio un titulo en ingles
                         "traduccion": traduccion,
+                        "equivalente": equivalente,
                         # D-048: P del juez cuando el grupo lo asigno el juez; vacio si no
                         "p_juez": round(float(p_juez), 3) if np.isfinite(p_juez) else np.nan,
                         "incert_centro": round(incert, 4),

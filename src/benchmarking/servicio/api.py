@@ -203,7 +203,7 @@ SALIDA_MODELO = (
     "antiguedad_tramo",
     "referencia", "sueldo_actual",
     "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
-    "posicion_mercado",
+    "posicion_mercado", "equivalente",
     "p10", "p25", "p75", "p90", "confianza", "incert_centro", "ancho_rel",
     "base", "empresas", "personas", "similitud", "segmento", "rubro",
     # A QUE NIVEL se comparo ese cargo. Sin esto, `rubro: "G47"` obliga al front a
@@ -409,10 +409,12 @@ class Motor:
         if os.environ.get("NIVEL_GRUPO", "si").lower() != "no" and getattr(self.base, "clf_nivel", None) is not None:
             self.base.nivel_por_grupo()
             self.base.candado_nivel = True
-        # D-050: capa de idioma, el traductor local ingles -> espanol. `TRADUCTOR=no` la apaga.
-        # apagada por defecto: para el SUELDO empeora (D-050, la prima de los titulos en ingles)
-        ruta_tr = os.environ.get("TRADUCTOR", "no")
+        # D-050: el traductor local ingles -> espanol, para MOSTRAR el equivalente en espanol
+        # (`equivalente`, y primero en `/puestos`). No calcula bandas: para el sueldo empeora (la prima
+        # de los titulos en ingles); `IDIOMA_SUELDO=si` lo haria, solo para medir. `TRADUCTOR=no` lo apaga.
+        ruta_tr = os.environ.get("TRADUCTOR", "modelos/opus-mt-en-es")
         self.base.traductor = None if ruta_tr.lower() == "no" else idioma_mod.cargar(ruta_tr)
+        self.base.idioma_sueldo = os.environ.get("IDIOMA_SUELDO", "no").lower() == "si"
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
                              else "sin traductor: los titulos en ingles se buscan tal cual"), flush=True)
         print("[juez] " + ("{} en {}".format(self.base.juez.nombre, self.base.juez.dispositivo)
@@ -1249,6 +1251,22 @@ def puestos(q: str, limite: int = 12, p_min: float = P_MIN_SUGERENCIA, m: Motor 
                        "empresas": int(m.base.emp[i]), "personas": int(m.base.personas[i]),
                        "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
                        "sobre_el_ruido": False, "sinonimo": True, "p_juez": None})
+    # EQUIVALENTE EN ESPANOL (D-050, solo para mostrar). Un titulo en ingles se traduce y se
+    # resuelve en la base (tal cual, capa 0 o juez, con candados); ese cargo va PRIMERO.
+    for r in out:
+        r["equivalente"] = False
+    if getattr(m.base, "traductor", None) is not None:
+        res = m.base.resolver_idioma([t], m.emb)
+        if t in res:
+            j, _, _, tt = res[t]
+            g = int(m.base.grupo[j])
+            cargo = m.etiqueta.get(g, str(m.base.celdas[j]))
+            out = [r for r in out if r["cargo"] != cargo]
+            out.insert(0, {"cargo": cargo, "grafias": m.n_grafias.get(g, 1),
+                           "empresas": int(m.base.emp[j]), "personas": int(m.base.personas[j]),
+                           "similitud": round(float(Q[0] @ m.base.Z[j] / np.linalg.norm(m.base.Z[j])), 3),
+                           "sobre_el_ruido": False, "sinonimo": False, "p_juez": None,
+                           "equivalente": True, "traduccion": tt})
     out = _filtrar_por_juez(out, t, p_min, m)
     return _agrupar_grados(out)[:limite]
 
@@ -1269,12 +1287,12 @@ def _filtrar_por_juez(out, t, p_min, m):
     desconocidas = [w for w in limpiar(_norm(t)).split() if w not in m.vocabulario]
     for r in out:
         r["palabras_desconocidas"] = desconocidas
-        r["seguro"] = bool(r["sinonimo"] or r["similitud"] >= 0.999
+        r["seguro"] = bool(r["sinonimo"] or r.get("equivalente") or r["similitud"] >= 0.999
                            or (not desconocidas and r["p_juez"] is not None and r["p_juez"] >= p_min))
     if m.base.juez is None:
         return out
     seguros = [r for r in out if r["seguro"]]
-    if any(not r["sinonimo"] and r["similitud"] < 0.999 for r in seguros):
+    if any(not r["sinonimo"] and not r.get("equivalente") and r["similitud"] < 0.999 for r in seguros):
         return seguros
     resto = sorted((r for r in out if not r["seguro"]), key=lambda r: -(r["p_juez"] or 0))
     return seguros + resto[:N_RESPALDO]

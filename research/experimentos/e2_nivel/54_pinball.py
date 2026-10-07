@@ -163,6 +163,7 @@ def una_variante(nom, clusters):
         base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
         assert base.traductor is not None
         base.idioma_placebo = nom in ("idioma_placebo", "idioma_consulta_placebo")
+        base.idioma_sueldo = True            # lo que se midio en D-050
     def preparar(base):
         if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
             base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")

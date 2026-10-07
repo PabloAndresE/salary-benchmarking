@@ -6386,3 +6386,11 @@ se aplicaba a `nivel_grupo_placebo` y a `candado_nivel_placebo`. Así, el placeb
 los niveles y no solo los del candado, como se había registrado. Su «empeora» no prueba lo registrado. Se
 corrige el código y se vuelven a correr los dos placebos (los archivos anteriores quedan con el sufijo
 `_MAL`). La adopción de D-052 queda pendiente de ese resultado.
+
+### D-050, uso de presentación (2026-10-07, decisión del autor)
+
+El traductor vuelve a cargarse en la API, solo para **mostrar**. `/referencia` y el informe traen
+`equivalente` (el cargo en español de la base donde se resuelve el título en inglés), y `/puestos` pone ese
+cargo primero (`equivalente: true`, con su `traduccion`). La banda no cambia: sigue siendo la del título en
+inglés o la de la analogía (`IDIOMA_SUELDO=si` usaría la traducción para el sueldo, pero eso se midió y
+empeora). Ejemplo: `PAYROLL ANALYST` → `ANALISTA DE NOMINA`; `HEAD OF SALES` → `JEFE DE VENTAS`.
