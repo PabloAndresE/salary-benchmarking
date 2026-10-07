@@ -33,7 +33,7 @@ def cargar(nombre, archivo):
     return m
 
 
-def main(n_anclas):
+def main(n_anclas, desde=0, salida="56_sinonimos_para_aprobar.csv"):
     e47 = cargar("e47", "47_pares_bi_encoder.py")
     e43, tit, _, per, c0, a2n = e47.nodos_y_capa0()
     lab = pd.read_parquet(SAL / CLUSTERS)["cluster"].to_numpy()
@@ -48,7 +48,7 @@ def main(n_anclas):
                 filas.append((i, j))
     d = pd.DataFrame(filas, columns=["i", "j"]).drop_duplicates()
     anclas = (pd.Series(per_cl[lab[d["i"]]].to_numpy(), index=d["i"]).groupby(level=0).first()
-              .sort_values(ascending=False).index[:n_anclas])
+              .sort_values(ascending=False).index[desde:desde + n_anclas])
     d = d[d["i"].isin(anclas)].copy()
     # un par por pareja de clusters (si dos anclas del mismo cluster proponen el mismo destino)
     d["ci"], d["cj"] = lab[d["i"]], lab[d["j"]]
@@ -67,7 +67,12 @@ def main(n_anclas):
     orden = out.groupby("ancla")["personas_ancla"].transform("max")
     out = out.assign(_o=orden).sort_values(["_o", "ancla", "personas_propuesta"],
                                            ascending=[False, True, False]).drop(columns="_o")
-    out.to_csv(SAL / "56_sinonimos_para_aprobar.csv", index=False, encoding="utf-8-sig")
+    if desde:                            # ronda 2+: fuera los pares que el autor ya juzgo
+        previa = pd.read_csv(SAL / "56_sinonimos_para_aprobar.csv", encoding="utf-8-sig", dtype=str,
+                             keep_default_na=False)
+        vistos = {frozenset(x) for x in zip(previa["ancla"], previa["propuesta"])}
+        out = out[[frozenset(x) not in vistos for x in zip(out["ancla"], out["propuesta"])]]
+    out.to_csv(SAL / salida, index=False, encoding="utf-8-sig")
     print("{} pares de {} anclas; las anclas cubren {:.1%} de las personas".format(
         len(out), out["ancla"].nunique(), per_cl[lab[anclas]].sum() / per.sum()))
 
@@ -140,6 +145,8 @@ def aplicar(archivo_clusters=CLUSTERS, salida="50_clusters_confiable_cargos_sino
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--anclas", type=int, default=100)
+    ap.add_argument("--desde", type=int, default=0, help="ronda 2: las anclas desde esta posicion")
+    ap.add_argument("--salida", default="56_sinonimos_para_aprobar.csv")
     ap.add_argument("--aplicar", action="store_true", help="une los clusters con lo aprobado")
     a_ = ap.parse_args()
-    aplicar() if a_.aplicar else main(a_.anclas)
+    aplicar() if a_.aplicar else main(a_.anclas, a_.desde, a_.salida)

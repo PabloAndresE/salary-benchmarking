@@ -6504,8 +6504,8 @@ comando que el autor había rechazado, pero que ya se había ejecutado.
 ## D-056 — Unir los grupos que solo difieren en el grado. Registrado antes de medir
 
 **Por qué.** Para tener más cargos con datos directos. El candado de grado (D-041) separa `LABORATORISTA 1`,
-`2` y `4`, pero entre empresas el número de grado no ordena el sueldo (D-058 exploratorio: 41 % de pares en
-el orden esperado, como el azar). En `base_v22`: 468 familias de grado con más de un grupo (1.224 grupos,
+`2` y `4`, pero entre empresas el número de grado no ordena el sueldo (script `58`, exploratorio: 41 % de pares
+en el orden esperado, como el azar). En `base_v22`: 468 familias de grado con más de un grupo (1.224 grupos,
 158 mil personas); en 103 el grupo mayor tiene < 3 empresas y la familia unida tendría ≥ 3.
 
 **Cambio** (`grados`): sobre los grupos de la base (el clustering inyectado), se unen todos los grupos que
@@ -6516,3 +6516,30 @@ título con grado. Solo cambia la agrupación final; la consulta sigue igual.
 claves permutadas entre los títulos con grado (une grupos no relacionados con la misma estructura).
 **Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora. Se reporta también cuántos votos
 pasan de analogía a datos directos.
+
+### D-056, resultado: pasa la regla, pero no se activa (2026-10-07)
+
+`grados` frente a `nivel_v3` (k fijo): 796 familias, 1.388 grupos unidos. Donde actúa (78 % de los votos, por
+los cambios globales de la base): +0,00043 [−0,00008, +0,00091], no se distingue; el placebo da +0,00069
+[+0,00021, +0,00118] y empeora. Pasa la regla, pero no cumple su propósito: solo 250 votos pasan de analogía
+a datos directos (63,9 % → 64,4 %), y en esos 250 la banda se ensancha (×1,45 → ×1,50) y el pinball empeora
+(0,133 → 0,140). Recomendación de Claude: no activarlo, porque dentro de una familia el grado sí separa
+sueldos. **Queda inactivo hasta que el autor decida.**
+
+## D-057 — e5 ajustado (D-045) en lugar de Vertex para buscar vecinos. Registrado antes de medir
+
+**Por qué.** En D-045, la precisión@25 juzgada por la v3 fue 86–88 % con el e5 ajustado (variante B),
+contra 69 % con Vertex. En el caso `SALES DEVELOPMENT REPRESENTATIVE`, Vertex trae `SALES COORDINATOR`
+(n3), `SALES MANAGER` (n4) y `SALES SPECIALIST` (n2) entre los 10 primeros; e5 trae solo representantes de
+ventas de nivel 1. Si se adopta, además, el producto deja de depender de Vertex para embeber.
+
+**Cambio** (`e5`): los embeddings de la base y de la consulta son los del e5 ajustado
+(`48_bi_encoder_B3/semilla_1`, prefijo `query: `, promedio, largo 32). Los grupos de la base no cambian.
+Todo lo que usa el embedding se reestima con él: `lambda`, el clasificador de nivel y el `k` de D-051 (por
+la partición interna, porque las distancias cambian). El umbral del juez en la consulta (0,90 con Vertex)
+pasa al equivalente en e5, **0,8258**: el que deja la misma proporción de títulos (61,5 %) con un vecino de
+otro grupo por encima. Se calculó sobre `base_v22`, sin sueldos.
+
+**Medición:** pinball frente a `nivel_v3` (que también reestimó su `k`). Placebo: los vectores de e5
+permutados entre títulos. Control descriptivo: e5 sin ajustar. **Criterio:** se adopta si no empeora donde
+actúa y el placebo sí empeora. Se reportan además el ancho y la cobertura de p25–p75 de la analogía.

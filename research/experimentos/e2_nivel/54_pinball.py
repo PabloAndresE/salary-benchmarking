@@ -165,13 +165,20 @@ def una_variante(nom, clusters):
            .median().reset_index().rename(columns={"y": "voto"}))
     b15 = np.load(RAIZ / "demo" / "base_v15.npz", allow_pickle=True)
     emb = {str(c): z for c, z in zip(b15["celdas"], b15["Z"])}
+    if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):   # D-057: los vectores de e5 (de todos los titulos)
+        b22 = np.load(RAIZ / "demo" / "base_v22.npz", allow_pickle=True)
+        E = np.load(SAL / ("e5_sin_ajustar_base_v22.npy" if nom == "e5_sin_ajustar" else "e5B_base_v22.npy"))
+        if nom == "e5_placebo":
+            E = E[np.random.default_rng(13).permutation(len(E))]
+        emb = {str(c): z for c, z in zip(b22["celdas"], E)}
     kw = {}
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
     con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                 "grados", "grados_placebo")
-    con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054
+    con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar")
+    con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
     con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo") + con_idioma + con_calibra
@@ -212,6 +219,8 @@ def una_variante(nom, clusters):
         base.idioma_placebo = nom in ("idioma_placebo", "idioma_consulta_placebo")
         base.idioma_sueldo = True            # lo que se midio en D-050
     def preparar(base):
+        if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):
+            base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
         if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
             base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")
             if nom.startswith("nivel_v3_sueldo"):        # D-053: el sueldo desempata los inseguros
@@ -309,7 +318,7 @@ if __name__ == "__main__":
                                            "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
                                            "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
-                                           "grados", "grados_placebo"])
+                                           "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")

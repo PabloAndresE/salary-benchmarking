@@ -1158,7 +1158,7 @@ class BaseReferencia:
                 continue
             vistos, cands = set(), []
             for j, s_ in zip(vec[k], sim[k]):
-                if s_ < COS_JUEZ:
+                if s_ < getattr(self, "cos_juez", COS_JUEZ):      # D-057: otro modelo, otro umbral
                     break
                 g = int(self.grupo[j])
                 if g in vistos:
