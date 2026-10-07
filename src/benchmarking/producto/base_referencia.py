@@ -1244,6 +1244,35 @@ class BaseReferencia:
             ok = {t: (int(d),) + ok[t][1:] for t, d in zip(ts, dest)}
         return ok
 
+    def estimar_prima_idioma(self, X_por_etiqueta, min_pares=20):
+        """D-055: la prima del titulo en ingles, `m(ingles) - m(su equivalente en espanol)`, sobre los
+        titulos en ingles de la base con datos directos cuya traduccion cae en OTRO grupo con datos.
+        Mediana por nivel (>= `min_pares`) y global; varianza `(1,4826 MAD)^2`. Guarda y devuelve
+        `self.idioma_prima` = {nivel o "global": (pi, var)}."""
+        from .idioma import es_ingles
+        ing = [c for c in self.celdas if es_ingles(c) and self.emp[self.idx[c]] >= MIN_EMPRESAS]
+        r = self.resolver_idioma(ing, X_por_etiqueta)
+        filas = []
+        for t, v in r.items():
+            i, j = self.idx[t], v[0]
+            if self.grupo[i] != self.grupo[j] and self.emp[j] >= MIN_EMPRESAS:
+                filas.append((self.nivel[i], float(self.m[i] - self.m[j])))
+        if not filas:
+            self.idioma_prima = None
+            return {}
+        d = np.array(filas, dtype=float)
+
+        def est(x):
+            med = float(np.median(x))
+            return med, float((1.4826 * np.median(np.abs(x - med))) ** 2)
+        out = {"global": est(d[:, 1]), "pares": len(d)}
+        for lv in range(1, 6):
+            x = d[d[:, 0] == lv, 1]
+            if len(x) >= min_pares:
+                out[lv] = est(x)
+        self.idioma_prima = {k: v for k, v in out.items() if k != "pares"}
+        return out
+
     def traducciones_a_embeber(self, titulos):
         """Las traducciones de los titulos en ingles, para embeberlas antes de `referenciar`."""
         from .idioma import es_ingles
@@ -1630,6 +1659,17 @@ class BaseReferencia:
             # D-050: el equivalente en espanol se MUESTRA siempre; solo con `idioma_sueldo` (medido:
             # empeora, la prima de los titulos en ingles) se usa ademas para calcular la banda
             equivalente = str(self.celdas[idioma[t][0]]) if t in idioma else ""
+            prima_t = None
+            if t in idioma and getattr(self, "idioma_prima", None):
+                # D-055: sin datos directos propios, la banda del equivalente en espanol mas la prima
+                ex = self.idx.get(t)
+                jt = idioma[t][0]
+                if (not (ex is not None and self.emp[ex] >= MIN_EMPRESAS
+                         and self.personas[ex] >= self.min_personas)
+                        and self.emp[jt] >= MIN_EMPRESAS and self.personas[jt] >= self.min_personas):
+                    propio, traduccion = jt, idioma[t][3]
+                    lv = niv_consulta[k] or (self.nivel[jt] if np.isfinite(self.nivel[jt]) else None)
+                    prima_t = self.idioma_prima.get(int(lv) if lv else -1, self.idioma_prima["global"])
             if t in idioma and getattr(self, "idioma_sueldo", False):
                 # D-050: un titulo en ingles SIN datos directos propios se busca por su traduccion,
                 # antes que por la capa 0 o el juez sobre el texto en ingles (el juez no se valido ahi)
@@ -1833,6 +1873,16 @@ class BaseReferencia:
             if banda_per is None:
                 sdp = float(np.sqrt(var_per))
                 banda_per = {q: mu + Z_NORMAL[q] * sdp for q in CUANTILES}
+            if prima_t is not None:
+                # D-055: se corre por la prima y se ensancha por su incertidumbre
+                pi_, var_pi = prima_t
+                sd_b = (banda[0.75] - banda[0.25]) / (2.0 * 0.6745)
+                sd_bp = (banda_per[0.75] - banda_per[0.25]) / (2.0 * 0.6745)
+                mu += pi_
+                banda = {q: mu + Z_NORMAL[q] * np.sqrt(sd_b ** 2 + var_pi) for q in CUANTILES}
+                banda_per = {q: mu + Z_NORMAL[q] * np.sqrt(sd_bp ** 2 + var_pi) for q in CUANTILES}
+                var_centro += var_pi
+                base, banda_de = "por traduccion", "modelo"
             # DESPLAZAMIENTO POR TAMANO. Mueve el centro y la banda entera; no reestima
             # la anchura, que esta medido que no mejora. Cero fuera de los cargos altos.
             if k_seg is not None and propio is not None:

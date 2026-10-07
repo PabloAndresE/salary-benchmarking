@@ -126,7 +126,7 @@ def una_variante(nom, clusters):
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
-    con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo")
+    con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo")
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
@@ -188,6 +188,14 @@ def una_variante(nom, clusters):
     preparar(base)
     if nom in con_d054:                  # k FIJO, el de `nivel_v3` (anotado en D-053): aisla el cambio
         base.escala_banda = {"analogia": 0.6333673690668041, "directo": 0.9371366258107973}
+    if nom.startswith("idioma_prima"):   # D-055: traduccion + prima del titulo en ingles
+        from benchmarking.producto import idioma
+        base.vecinos_por_grupo = False
+        base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
+        et = np.load(SAL / "64_emb_traducciones.npz", allow_pickle=True)
+        emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
+        print("prima: {}".format(base.estimar_prima_idioma(emb)), flush=True)
+        base.idioma_placebo = nom == "idioma_prima_placebo"     # despues de estimar: misma prima
     elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
         k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar)
         print("escala de banda (particion interna): " + str(k), flush=True)
@@ -254,7 +262,7 @@ if __name__ == "__main__":
                                            "nivel_grupo", "nivel_grupo_placebo", "candado_nivel",
                                            "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
                                            "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
-                                           "vecinos_grupo_placebo"])
+                                           "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")

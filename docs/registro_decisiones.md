@@ -6433,3 +6433,31 @@ obtuvo `nivel_v3` (analogía 0,6334, directo 0,9371), para aislar el cambio. Pla
 duplicados, se quita la misma cantidad de vecinos al azar.
 
 **Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora.
+
+### D-054, resultado: no se adopta (2026-10-07)
+
+`vecinos_grupo` frente a `nivel_v3` (k fijo): donde actúa, +0,00004 [−0,00150, +0,00144]. El placebo da
++0,00019 [−0,00085, +0,00116] y **no empeora**. Cobertura de la analogía en p25–p75: 45,8 % → 46,2 %. No
+se adopta. En el caso que lo motivó tampoco ayuda (`HEAD OF CUSTOMER SUCCESS`: $6.359 → $6.495): el
+problema de ese caso es la falta de datos, no el conteo.
+
+## D-055 — Títulos en inglés sin datos propios: traducción + prima del título en inglés. Registrado antes de medir
+
+**Por qué** (caso `HEAD OF CUSTOMER SUCCESS`, autor): sin datos propios, la analogía estira desde gerentes
+en inglés de nivel 3 (+79 % por el salto de nivel) y la banda queda en $2.800–$14.600. En español hay
+equivalentes con más datos, pero la traducción sola subestima (D-050: la prima del título en inglés;
+`HEAD OF SALES` $3.171 frente a `JEFE DE VENTAS` $1.500).
+
+**Cambio** (`idioma_prima`):
+1. **La prima π en la base:** para cada título en inglés con ≥ 3 empresas cuya traducción se resuelve
+   (D-050) en otro grupo con ≥ 3 empresas, se toma `d = m(inglés) − m(grupo en español)`. π es la mediana
+   de `d` por nivel (el del grupo del título en inglés), con ≥ 20 pares; si no, la global. La varianza de π
+   es `(1,4826·MAD(d))²`. Con la base de entrenamiento en el pinball.
+2. **En la consulta:** un título en inglés sin datos directos propios, cuya traducción cae en un grupo con
+   datos directos, toma la banda de ese grupo corrida por π (del nivel del clasificador para el título, o
+   si no, el del grupo). Su ancho suma la varianza de π: `sd = √(sd_banda² + var_π)`. Se rotula
+   `por traduccion`.
+
+**Medición:** pinball frente a `nivel_v3`, con el `k` fijo. Placebo: la misma π, con la traducción hacia el
+grupo de otro título resuelto. **Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora.
+Se reportan también la cobertura de p25–p75 en los votos donde actúa y π por nivel.
