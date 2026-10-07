@@ -6345,3 +6345,36 @@ es coherencia: un solo nivel por cargo, y el juez deja de asignar unos 200 títu
 nivel (6.422 → 6.216 asignaciones en las empresas apartadas). En todo `nivel_grupo` la diferencia es
 +0,00009 [+0,00001, +0,00018]: mínima, pero sobre cero; queda anotado. En la API se activan al cargar la base
 (`NIVEL_GRUPO=no` los apaga).
+
+## D-053 — Nivel v3 (sin reglas fijas que sesguen) y el sueldo como desempate en los casos inseguros. Registrado antes de medir
+
+**Por qué.** El autor encontró `HEAD OF CUSTOMER SUCCESS` (nivel 5) asignado por el juez al grupo
+`CUSTOMER SUCCESS MANAGER`, que Qwen v2 puso en 5 por una regla de las instrucciones («MANAGER = 5»). Al
+revisar: 758 de 917 títulos con MANAGER quedaron en 5, y Qwen dio **un solo nivel posible en el 95 % de
+toda la base**. Las causas son dos reglas fijas («la palabra de rango manda», «si lo dice claro, solo uno»),
+y por eso el desempate por sueldo de D-049 casi nunca tendría a qué agarrarse.
+
+**Instrucciones v3** (`60_etiquetar_nivel.py --version v3`): el inglés se clasifica por función (MANAGER
+de área o equipo 4–5; de cartera, cuenta, producto o proyecto 2–3). `posibles` debe incluir todos los
+niveles que el título puede tener en distintas empresas, con una lista de palabras ambiguas en español e
+inglés. `nivel` sigue siendo el más probable, y con palabra de rango en español, el de la tabla. Los
+cambios salieron de un caso señalado por el autor, no de mirar sueldos.
+
+**Desempate por sueldo** (decisión del autor; amplía D-049):
+- Solo en grupos de la base con ≥ 3 empresas cuyo nivel (mayoritario, D-052) tenga más de un posible.
+- Se elige, entre los `posibles`, el nivel cuya mediana salarial esté más cerca de la mediana del grupo.
+  La escalera de medianas se calcula con los títulos de un solo posible, con el mismo sueldo de la base.
+- El nivel desempatado alimenta el ajuste por nivel de la analogía **y el candado de la consulta** (el juez
+  no asigna un título nuevo a un grupo de otro nivel). Nunca alimenta la agrupación de la base.
+- En el pinball, el sueldo es solo el de las empresas de entrenamiento.
+
+**Criterios:**
+- a) Control ≥ 90 % (`nivel` frente a la tabla).
+- c) κ ponderado ≥ 0,6 con los 100 juicios del autor.
+- d) Pinball:
+  - `nivel_v3` frente al producto vigente (v2 + D-051 + D-052);
+  - `nivel_v3_sueldo` frente a `nivel_v3`;
+  - placebos: niveles v3 permutados entre títulos, y desempate que elige un posible al azar.
+
+Cada uno se adopta si no empeora donde actúa y su placebo sí empeora. Se reporta además cuántos títulos
+tienen más de un posible.

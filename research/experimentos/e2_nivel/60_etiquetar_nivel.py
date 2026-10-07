@@ -63,7 +63,43 @@ EXTRA_V2 = """- INSPECTOR, AGENTE, GESTOR, OFICIAL y MAYORDOMO no son rango: cla
   descripciones lo dicen. Sube a 3 o mas solo por el TITULO: personas o un area a cargo, o un rol
   de experto (arquitecto de soluciones, especialista, lider tecnico).
 """
-VERSIONES = {"v1": INSTRUCCION.replace("{extra}", ""), "v2": INSTRUCCION.replace("{extra}", EXTRA_V2)}
+# v3 (D-053): la v2 marcaba UN solo nivel posible en el 95 % de los titulos, por dos reglas de estas
+# instrucciones ("la palabra de rango manda", "MANAGER = 5"): ni el sueldo podia desempatar. La v3 quita
+# la regla fija del ingles y pide `posibles` honestos para las palabras ambiguas.
+_V3_INGLES_V2 = """- En ingles: MANAGER = 5 salvo ASSISTANT MANAGER (4); HEAD OF = 4 o 5 segun el alcance; LEAD = 3;
+  OFFICER y ASSOCIATE segun las funciones.
+"""
+_V3_INGLES = """- En ingles los titulos no fijan el nivel por la palabra, sino por la FUNCION. MANAGER con un area o
+  un equipo a cargo (SALES MANAGER, PLANT MANAGER, HR MANAGER) es 4 o 5; MANAGER de una cartera, una
+  cuenta, un producto o un proyecto (ACCOUNT MANAGER, KEY ACCOUNT MANAGER, CUSTOMER SUCCESS MANAGER,
+  PRODUCT MANAGER, PROJECT MANAGER) suele ser 2 o 3. GENERAL MANAGER, COUNTRY MANAGER, DIRECTOR, VP,
+  CHIEF = 5. HEAD OF = 4 o 5. LEAD o TEAM LEAD = 3. OFFICER, ASSOCIATE, PARTNER y EXECUTIVE, por la
+  funcion. ASSISTANT MANAGER = 4 si es subgerente, 1 si es asistente.
+"""
+_V3_POSIBLES_V2 = """- `posibles` = todos los niveles que el texto admite razonablemente (incluye `nivel`). Si el texto lo
+  dice claro, solo uno.
+"""
+_V3_POSIBLES = """- `posibles` = TODOS los niveles que ese titulo puede tener en distintas empresas (incluye `nivel`).
+  Se usa para desempatar con otros datos, asi que no lo recortes: un solo nivel SOLO si no hay duda
+  posible (AUXILIAR DE BODEGA, GERENTE GENERAL). Son AMBIGUOS y casi siempre llevan varios:
+  MANAGER, HEAD, LEAD, OFFICER, ASSOCIATE; GERENTE DE CUENTA(S) / DE PRODUCTO / DE PROYECTO / DE
+  TIENDA / DE AGENCIA / DE ZONA (2 a 5); JEFE DE TURNO / DE GRUPO / DE CUADRILLA / DE LINEA (3 o 4);
+  ADMINISTRADOR (2 a 5); ENCARGADO (1 a 3); COORDINADOR (2 o 3); ESPECIALISTA (2 o 3); DIRECTOR de
+  escuela, de obra o de proyecto (3 a 5); EJECUTIVO y ASESOR (1 o 2); SUPERVISOR (3 o 4).
+- `nivel` = el MAS probable. Con una palabra de rango en espanol, el de esa palabra en la escala de
+  arriba; en ingles, por la funcion.
+"""
+INSTRUCCION_V3 = (INSTRUCCION.replace(_V3_INGLES_V2, _V3_INGLES).replace(_V3_POSIBLES_V2, _V3_POSIBLES)
+                  .replace("""- Si el titulo declara el escalon con una palabra de rango (AUXILIAR, ASISTENTE, ANALISTA, TECNICO,
+  COORDINADOR, SUPERVISOR, ESPECIALISTA, ENCARGADO, JEFE, SUBGERENTE, GERENTE, DIRECTOR, ASESOR,
+  EJECUTIVO...), ESE escalon manda. La descripcion es generica: solo sirve cuando el titulo no lo declara.""",
+                           """- Si el titulo declara el escalon con una palabra de rango (AUXILIAR, ASISTENTE, ANALISTA, TECNICO,
+  COORDINADOR, SUPERVISOR, ESPECIALISTA, ENCARGADO, JEFE, SUBGERENTE, GERENTE, DIRECTOR, ASESOR,
+  EJECUTIVO...), ese escalon es `nivel`; las palabras ambiguas de abajo llevan ademas sus otros
+  niveles en `posibles`. La descripcion es generica: solo sirve cuando el titulo no lo declara."""))
+assert INSTRUCCION_V3.count("ambiguas de abajo") == 1 and _V3_INGLES in INSTRUCCION_V3 and _V3_POSIBLES in INSTRUCCION_V3
+VERSIONES = {"v1": INSTRUCCION.replace("{extra}", ""), "v2": INSTRUCCION.replace("{extra}", EXTRA_V2),
+             "v3": INSTRUCCION_V3.replace("{extra}", EXTRA_V2)}
 
 ESQUEMA = {"type": "object",
            "properties": {"razon": {"type": "string", "maxLength": 300},
@@ -151,6 +187,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--tp", type=int, default=2)
     ap.add_argument("--n", type=int, default=0, help="solo una muestra (prueba)")
-    ap.add_argument("--version", choices=["v1", "v2"], default="v2")
+    ap.add_argument("--version", choices=["v1", "v2", "v3"], default="v3")
     a = ap.parse_args()
     main(a.tp, a.n, a.version)
