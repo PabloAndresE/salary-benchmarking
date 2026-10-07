@@ -30,7 +30,7 @@ def cargar(nombre, archivo):
     return m
 
 
-def main(con_idioma, con_calibra=False):
+def main(con_idioma, con_calibra=False, version="v2"):
     t0 = time.time()
     e41, e54 = cargar("e41", "41_base_v16.py"), cargar("e54", "54_pinball.py")
     marco = e41.cargar_marco()
@@ -45,7 +45,7 @@ def main(con_idioma, con_calibra=False):
             if d and t in grupos and d in grupos and grupos[t] != grupos[d]:
                 grupos[t] = grupos[d]
                 unidos += 1
-    q = pd.read_parquet(SAL / "60_niveles_qwen_v2.parquet")
+    q = pd.read_parquet(SAL / "60_niveles_qwen_{}.parquet".format(version))
     niveles = dict(zip(q["titulo"].astype(str), q["nivel"].astype(int)))
     b = BaseReferencia.construir(marco, emb, e41._Ajustes.get_sbu, umbral_fusion=None,
                                  capa0=c0mod.nueva("v1"), grupos=grupos, niveles=niveles)
@@ -59,7 +59,7 @@ def main(con_idioma, con_calibra=False):
         b.escala_banda = e54.estimar_escala(marco, emb, dict(umbral_fusion=None, capa0=c0mod.nueva("v1"),
                                                                 grupos=grupos, niveles=niveles),
                                             e41._Ajustes.get_sbu, preparar)
-        nombre = "base_v20.npz"
+        nombre = "base_v20.npz" if version == "v2" else "base_v21.npz"
     b.guardar(RAIZ / "demo" / nombre)
     out = ["65 · BASE v19: nivel de Qwen v2 + clasificador de la consulta (D-049){}".format(
                "; titulos en ingles unidos a su traduccion (D-050): {:,}".format(unidos) if con_idioma else ""),
@@ -75,5 +75,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--idioma", action="store_true")
     ap.add_argument("--calibra", action="store_true", help="D-051: con la escala de banda -> base_v20")
+    ap.add_argument("--nivel", choices=["v2", "v3"], default="v2", help="D-053: v3 -> base_v21")
     a = ap.parse_args()
-    main(a.idioma, a.calibra)
+    main(a.idioma, a.calibra, a.nivel)

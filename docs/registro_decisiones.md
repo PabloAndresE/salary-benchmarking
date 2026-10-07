@@ -6399,3 +6399,20 @@ empeora). Ejemplo: `PAYROLL ANALYST` → `ANALISTA DE NOMINA`; `HEAD OF SALES` �
 - `candado_nivel_placebo` (solo los niveles del candado permutados): +0,00113 [+0,00023, +0,00219], empeora.
 
 **D-052 se confirma adoptado.**
+
+### D-053, resultados (2026-10-07)
+
+- a) control 91,5 %; c) κ 0,84; títulos con más de un posible: 52 % (v2: 5 %). MANAGER en nivel 5: 154 de
+  917 (v2: 758). `CUSTOMER SUCCESS MANAGER` pasa a 3 [2, 3].
+- d) `nivel_v3` frente al producto (v2 + D-051 + D-052): +0,00067 [−0,00021, +0,00165], no se distingue;
+  placebo +0,01546, empeora. **Cumple, se adopta.**
+- d) `nivel_v3_sueldo` frente a `nivel_v3` (2.285 grupos desempatados, 956 cambian de nivel): +0,00032
+  [−0,00050, +0,00121]; su placebo (posible al azar): +0,00030 [−0,00060, +0,00115], **no empeora**. **El
+  desempate por sueldo no se adopta:** no se distingue de elegir al azar entre los posibles.
+
+Límite del protocolo, anotado para la próxima vez (no cambia esta decisión): cada variante reestima el factor
+de ancho de D-051, que mueve un poco todas las bandas de la analogía. Así, «donde actúa» incluye ~17 mil
+votos con cambios mínimos que diluyen un efecto localizado. En adelante, las variantes que no tocan la
+calibración se miden con el `k` fijo del producto vigente.
+
+**Producto:** `demo/base_v21.npz` = la v20 con los niveles v3 (D-052 activo en la API).
