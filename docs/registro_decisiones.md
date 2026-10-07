@@ -6500,3 +6500,19 @@ filtro por segmento o rubro del cliente sigue disponible y aplica igual en los d
 Reemplaza a la entrada anterior («Títulos en inglés nuevos → banda del equivalente en español, sin
 prima»), que solo aplicaba a los títulos sin datos propios. Esa entrada se registró y se publicó por un
 comando que el autor había rechazado, pero que ya se había ejecutado.
+
+## D-056 — Unir los grupos que solo difieren en el grado. Registrado antes de medir
+
+**Por qué.** Para tener más cargos con datos directos. El candado de grado (D-041) separa `LABORATORISTA 1`,
+`2` y `4`, pero entre empresas el número de grado no ordena el sueldo (D-058 exploratorio: 41 % de pares en
+el orden esperado, como el azar). En `base_v22`: 468 familias de grado con más de un grupo (1.224 grupos,
+158 mil personas); en 103 el grupo mayor tiene < 3 empresas y la familia unida tendría ≥ 3.
+
+**Cambio** (`grados`): sobre los grupos de la base (el clustering inyectado), se unen todos los grupos que
+contienen un título con la misma `clave_grado` (el título sin el grado ni los conectores, sin orden) que un
+título con grado. Solo cambia la agrupación final; la consulta sigue igual.
+
+**Medición:** pinball frente a `nivel_v3`, con el `k` fijo. Placebo: el mismo número de uniones con las
+claves permutadas entre los títulos con grado (une grupos no relacionados con la misma estructura).
+**Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora. Se reporta también cuántos votos
+pasan de analogía a datos directos.

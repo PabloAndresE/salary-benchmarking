@@ -80,6 +80,49 @@ def grupos_de_clusters(archivo, placebo=False):
     return {c: por_grupo[g16[c]] for c in celdas if g16[c] in por_grupo}
 
 
+def unir_grados(grupos, placebo=False, semilla=12):
+    """D-056: en el dict titulo -> grupo, une todos los grupos que contienen un titulo con la misma
+    `clave_grado` que un titulo con grado (y el titulo sin grado de esa clave, `LABORATORISTA`).
+    `placebo`: los mismos tamanos de familia, con grupos cualesquiera de la base elegidos al azar.
+    Devuelve (familias con mas de un grupo, grupos unidos)."""
+    from benchmarking.producto.nivel import clave_grado, tiene_grado
+    fam = {}
+    for t in grupos:
+        if tiene_grado(t) and clave_grado(t) is not None:
+            fam.setdefault(clave_grado(t), set()).add(grupos[t])
+    for t, g in grupos.items():
+        k = clave_grado(t)
+        if k in fam:
+            fam[k].add(g)
+    fams = [sorted(gs) for gs in fam.values() if len(gs) > 1]
+    if placebo:
+        todos = sorted(set(grupos.values()))           # grupos cualesquiera, no relacionados
+        pool = list(np.random.default_rng(semilla).choice(todos, sum(len(gs) for gs in fams), replace=False))
+        nuevas, i = [], 0
+        for gs in fams:
+            nuevas.append(sorted(pool[i:i + len(gs)]))
+            i += len(gs)
+        fams = [gs for gs in nuevas if len(gs) > 1]
+    fam = {k: set(gs) for k, gs in enumerate(fams)}
+    padre = {}
+
+    def raiz(x):
+        while padre.get(x, x) != x:
+            x = padre[x]
+        return x
+    for gs in fam.values():
+        gs = sorted(gs)
+        for g in gs[1:]:
+            a, b = raiz(gs[0]), raiz(g)
+            if a != b:
+                padre[b] = a
+    n_fam = sum(len(gs) > 1 for gs in fam.values())
+    unidos = sum(1 for g in set(grupos.values()) if raiz(g) != g)
+    for t in grupos:
+        grupos[t] = raiz(grupos[t])
+    return n_fam, unidos
+
+
 def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
     """D-051: k = mediana(|voto - mu| / sd_modelo) / 0,6745 por tipo de banda del modelo, con una
     particion interna: la base se construye con el 75 % de las empresas de `marco` y se consultan
@@ -126,7 +169,8 @@ def una_variante(nom, clusters):
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
-    con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo")
+    con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
+                "grados", "grados_placebo")
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
@@ -158,6 +202,8 @@ def una_variante(nom, clusters):
                 g[t] = g[d_]
         et = np.load(SAL / "64_emb_traducciones.npz", allow_pickle=True)
         emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
+    if nom in ("grados", "grados_placebo"):     # D-056: une los grupos que solo difieren en el grado
+        print("grados: {}".format(unir_grados(kw["grupos"], placebo=nom == "grados_placebo")), flush=True)
     base = BaseReferencia.construir(tr, emb, e41._Ajustes.get_sbu, **kw)
     if nom in con_idioma:
         from benchmarking.producto import idioma
@@ -173,7 +219,7 @@ def una_variante(nom, clusters):
                     base.desempatar_nivel_por_sueldo(posibles, placebo=nom.endswith("placebo"))), flush=True)
             base.candado_nivel = nom.startswith("candado_nivel") or nom in con_v3
             base.candado_nivel_placebo = nom == "candado_nivel_placebo"
-        if nom in con_d054:              # D-054: cada grupo vecino cuenta una vez (y su placebo)
+        if nom in ("vecinos_grupo", "vecinos_grupo_placebo"):    # D-054 (y su placebo)
             base.vecinos_por_grupo = True
             base.vecinos_por_grupo_placebo = nom == "vecinos_grupo_placebo"
         if nom in con_juez:                                   # D-048: el juez en la consulta
@@ -262,7 +308,8 @@ if __name__ == "__main__":
                                            "nivel_grupo", "nivel_grupo_placebo", "candado_nivel",
                                            "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
                                            "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
-                                           "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo"])
+                                           "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
+                                           "grados", "grados_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
