@@ -6472,3 +6472,8 @@ que se gana es calibración: dentro de p25–p75, de 35 % a 44 %.
 **Producto:** `demo/base_v22.npz` = la v21 con π estimada sobre toda la base y guardada en ella (438 pares;
 global +0,26; por nivel: 1 +0,16, 2 +0,31, 3 +0,33, 4 +0,10, 5 +0,42). La API la usa si carga el traductor
 (`IDIOMA_PRIMA=no` la apaga).
+
+### Rango de mercado = p25–p75 (2026-10-07, decisión de producto del autor)
+
+La API entrega `rango_desde` / `rango_hasta` = p25 / p75 de la banda de empresas, como el rango que se
+muestra; p10–p90 queda como detalle. No cambia ningún cálculo. Nota para el front: `docs/api_para_el_front.md`.

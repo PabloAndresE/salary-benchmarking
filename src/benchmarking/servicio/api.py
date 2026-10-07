@@ -94,6 +94,8 @@ UNIDADES = {
     "p10_per": {"unidad": "usd"}, "p25_per": {"unidad": "usd"},
     "p75_per": {"unidad": "usd"}, "p90_per": {"unidad": "usd"},
     "posicion_mercado": {"unidad": "percentil", "rango": [10, 90]},
+    # el rango de mercado que se MUESTRA: p25-p75 de la banda de empresas
+    "rango_desde": {"unidad": "usd"}, "rango_hasta": {"unidad": "usd"},
     "vs_mercado": {"unidad": "ratio", "formato": "+0.0%"},
     "vs_politica_interna": {"unidad": "ratio", "formato": "+0.0%"},
     "brecha_grafia": {"unidad": "ratio", "formato": "+0.0%"},
@@ -203,7 +205,7 @@ SALIDA_MODELO = (
     "antiguedad_tramo",
     "referencia", "sueldo_actual",
     "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
-    "posicion_mercado", "equivalente",
+    "posicion_mercado", "equivalente", "rango_desde", "rango_hasta",
     "p10", "p25", "p75", "p90", "confianza", "incert_centro", "ancho_rel",
     "base", "empresas", "personas", "similitud", "segmento", "rubro",
     # A QUE NIVEL se comparo ese cargo. Sin esto, `rubro: "G47"` obliga al front a

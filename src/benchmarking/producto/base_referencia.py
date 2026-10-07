@@ -1972,6 +1972,9 @@ class BaseReferencia:
             # de personas queda como detalle en `p10_per`..`p90_per`.
             for q in ("p10", "p25", "p75", "p90"):
                 out[q] = out[q + "_emp"]
+            # 2026-10-07, decision del autor: el RANGO DE MERCADO que se muestra es p25-p75 (el 50 %
+            # central de las empresas), como en las encuestas salariales; p10-p90 queda de detalle
+            out["rango_desde"], out["rango_hasta"] = out["p25"], out["p75"]
         return out
 
 
