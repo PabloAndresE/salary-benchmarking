@@ -6394,3 +6394,8 @@ El traductor vuelve a cargarse en la API, solo para **mostrar**. `/referencia` y
 cargo primero (`equivalente: true`, con su `traduccion`). La banda no cambia: sigue siendo la del título en
 inglés o la de la analogía (`IDIOMA_SUELDO=si` usaría la traducción para el sueldo, pero eso se midió y
 empeora). Ejemplo: `PAYROLL ANALYST` → `ANALISTA DE NOMINA`; `HEAD OF SALES` → `JEFE DE VENTAS`.
+**Placebos corregidos** (2026-10-07):
+- `nivel_grupo_placebo` (solo los niveles de grupo permutados): +0,02694 [+0,02318, +0,03117], empeora.
+- `candado_nivel_placebo` (solo los niveles del candado permutados): +0,00113 [+0,00023, +0,00219], empeora.
+
+**D-052 se confirma adoptado.**
