@@ -6487,3 +6487,16 @@ midió y **empeora** donde actúa (+0,019 [+0,004, +0,032]): subestima, porque l
 pagar 30–40 % más. El autor la elige por simplicidad y por ser explicable («tu cargo equivale a X en el
 mercado ecuatoriano»), con bandas más angostas. D-055 (con prima) queda desactivado (`IDIOMA_PRIMA=no`); la
 prima sigue guardada en la base.
+
+### El mismo cargo, la misma banda, en inglés y en español (2026-10-07, decisión de producto del autor)
+
+En la consulta, todo título en inglés que se resuelve en un equivalente en español (D-050) toma **la banda
+de ese equivalente, tal cual**, aunque tenga datos propios en la base. Si no se resuelve, usa sus datos o la
+analogía. Los clusters de la base no se tocan, y la prima de D-055 queda apagada (`IDIOMA_PRIMA=no`). Motivo:
+que un cliente no vea dos bandas distintas para el mismo cargo según cómo lo escriba. Costo medido y aceptado:
+para los cargos de multinacionales la banda queda por debajo de lo que pagan (prima del inglés ~30–40 %;
+`idioma` y `idioma_consulta` empeoraron en D-050). Tamaño y actividad no corrigen esa prima (medido), pero el
+filtro por segmento o rubro del cliente sigue disponible y aplica igual en los dos idiomas.
+Reemplaza a la entrada anterior («Títulos en inglés nuevos → banda del equivalente en español, sin
+prima»), que solo aplicaba a los títulos sin datos propios. Esa entrada se registró y se publicó por un
+comando que el autor había rechazado, pero que ya se había ejecutado.

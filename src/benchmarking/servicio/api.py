@@ -420,7 +420,10 @@ class Motor:
         # cargo nuevo) toma la banda de su equivalente en espanol, tal cual y sin prima. Medido en D-050
         # (`idioma_consulta`): +0,019 donde actua, subestima (prima del ingles ~30-40 %). Los clusters de la
         # base no se tocan. `IDIOMA_SUELDO=no` lo apaga; `IDIOMA_PRIMA=si` usaria la prima de D-055.
-        self.base.idioma_sueldo = os.environ.get("IDIOMA_SUELDO", "si").lower() == "si"
+        # Desde la decision siguiente del autor (misma fecha): EL MISMO CARGO, LA MISMA BANDA en ingles y
+        # en espanol: se usa el equivalente aunque el titulo en ingles tenga datos propios ("siempre").
+        self.base.idioma_sueldo = ("siempre" if os.environ.get("IDIOMA_SUELDO", "siempre").lower() != "no"
+                                   else False)
         if self.base.traductor is None or os.environ.get("IDIOMA_PRIMA", "no").lower() != "si":
             self.base.idioma_prima = None
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None

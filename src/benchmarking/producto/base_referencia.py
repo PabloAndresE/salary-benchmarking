@@ -1680,7 +1680,10 @@ class BaseReferencia:
                 # D-050: un titulo en ingles SIN datos directos propios se busca por su traduccion,
                 # antes que por la capa 0 o el juez sobre el texto en ingles (el juez no se valido ahi)
                 ex = self.idx.get(t)
-                if not (ex is not None and self.emp[ex] >= MIN_EMPRESAS
+                # `idioma_sueldo == "siempre"` (2026-10-07, decision de producto del autor): el mismo
+                # cargo da la misma banda en ingles y en espanol, aunque el titulo en ingles tenga datos
+                if getattr(self, "idioma_sueldo", False) == "siempre" or not (
+                        ex is not None and self.emp[ex] >= MIN_EMPRESAS
                         and self.personas[ex] >= self.min_personas):
                     propio, _, p_juez, traduccion = idioma[t]
             if propio is not None and self.celdas[propio] != t:
