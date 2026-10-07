@@ -6378,3 +6378,11 @@ cambios salieron de un caso señalado por el autor, no de mirar sueldos.
 
 Cada uno se adopta si no empeora donde actúa y su placebo sí empeora. Se reporta además cuántos títulos
 tienen más de un posible.
+
+### D-052, corrección (2026-10-07): los placebos estaban mal especificados
+
+En `54_pinball.py`, la condición que permuta el nivel de Qwen título por título (el placebo de D-049) también
+se aplicaba a `nivel_grupo_placebo` y a `candado_nivel_placebo`. Así, el placebo del candado permutó todos
+los niveles y no solo los del candado, como se había registrado. Su «empeora» no prueba lo registrado. Se
+corrige el código y se vuelven a correr los dos placebos (los archivos anteriores quedan con el sufijo
+`_MAL`). La adopción de D-052 queda pendiente de ese resultado.

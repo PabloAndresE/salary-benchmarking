@@ -126,7 +126,8 @@ def una_variante(nom, clusters):
     if nom != "v15":
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
-    con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo")
+    con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo")
+    con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
     con_nivel = ("nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo") + con_idioma + con_calibra
     con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo") + con_nivel
@@ -134,9 +135,11 @@ def una_variante(nom, clusters):
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
     if nom in con_nivel:                 # D-049: el nivel de Qwen (y su placebo: permutado entre titulos)
         q = pd.read_parquet(SAL / ("60_niveles_qwen.parquet" if ("v1" in nom or (nom in con_idioma and NIVEL_IDIOMA == "v1"))
+                                   else "60_niveles_qwen_v3.parquet" if nom in con_v3
                                    else "60_niveles_qwen_v2.parquet"))
+        posibles = {str(t): json.loads(x) for t, x in zip(q["titulo"], q["posibles"])}
         niveles = dict(zip(q["titulo"].astype(str), q["nivel"].astype(int)))
-        if nom.endswith("placebo") and nom not in con_idioma:
+        if nom.endswith("placebo") and nom not in con_idioma + con_d052 or nom == "nivel_v3_placebo":
             t_ = list(niveles)
             niveles = dict(zip(t_, np.random.default_rng(7).permutation([niveles[x] for x in t_])))
         kw["niveles"] = niveles
@@ -163,7 +166,10 @@ def una_variante(nom, clusters):
     def preparar(base):
         if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
             base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")
-            base.candado_nivel = nom.startswith("candado_nivel")
+            if nom.startswith("nivel_v3_sueldo"):        # D-053: el sueldo desempata los inseguros
+                print("desempate por sueldo (grupos, cambian): {}".format(
+                    base.desempatar_nivel_por_sueldo(posibles, placebo=nom.endswith("placebo"))), flush=True)
+            base.candado_nivel = nom.startswith("candado_nivel") or nom in con_v3
             base.candado_nivel_placebo = nom == "candado_nivel_placebo"
         if nom in con_juez:                                   # D-048: el juez en la consulta
             from benchmarking.producto.juez import cargar as cargar_juez
@@ -239,7 +245,8 @@ if __name__ == "__main__":
                                            "idioma", "idioma_placebo", "idioma_consulta",
                                            "idioma_consulta_placebo", "calibra", "calibra_inversa",
                                            "nivel_grupo", "nivel_grupo_placebo", "candado_nivel",
-                                           "candado_nivel_placebo"])
+                                           "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
+                                           "nivel_v3_sueldo", "nivel_v3_sueldo_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")

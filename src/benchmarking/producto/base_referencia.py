@@ -1467,6 +1467,34 @@ class BaseReferencia:
             mapa = dict(zip(ks, np.random.default_rng(semilla).permutation([mapa[k] for k in ks])))
         self.nivel = np.array([mapa.get(int(g), np.nan) for g in self.grupo], dtype=float)
 
+    def desempatar_nivel_por_sueldo(self, posibles, placebo=False, min_emp=3, semilla=10):
+        """D-053: en los grupos con >= `min_emp` empresas cuyo representante (el titulo con mas
+        personas) tiene varios niveles `posibles` (Qwen), se elige el posible cuya mediana salarial
+        esta mas cerca de la del grupo. La escalera de medianas sale de los grupos de un solo
+        posible. Usa `m` de la base (en el pinball, solo entrenamiento). Va DESPUES de
+        `nivel_por_grupo`; cambia `self.nivel` de todo el grupo. `placebo` elige un posible al azar.
+        Devuelve cuantos grupos se desempataron y cuantos cambiaron de nivel."""
+        d = pd.DataFrame({"t": self.celdas, "g": self.grupo, "m": self.m, "emp": self.emp,
+                          "w": np.asarray(self.personas, float), "n": self.nivel})
+        rep = d.sort_values("w").groupby("g").tail(1).set_index("g")
+        rep["pos"] = [sorted(k for k in posibles.get(t, []) if k >= 1) for t in rep["t"]]
+        uno = rep[(rep["pos"].str.len() == 1) & (rep["emp"] >= min_emp)]
+        escalera = uno.groupby(uno["pos"].str[0])["m"].median().to_dict()
+        rng = np.random.default_rng(semilla)
+        nuevo, n_des, n_cambia = {}, 0, 0
+        for g, r in rep[(rep["pos"].str.len() > 1) & (rep["emp"] >= min_emp)].iterrows():
+            cand = [k for k in r["pos"] if k in escalera]
+            if len(cand) < 2:
+                continue
+            k = (int(rng.choice(cand)) if placebo
+                 else min(cand, key=lambda x: abs(r["m"] - escalera[x])))
+            n_des += 1
+            n_cambia += int(not (np.isfinite(r["n"]) and int(r["n"]) == k))
+            nuevo[int(g)] = float(k)
+        if nuevo:
+            self.nivel = np.array([nuevo.get(int(g), n) for g, n in zip(self.grupo, self.nivel)], dtype=float)
+        return n_des, n_cambia
+
     def _nivel_consulta(self, titulos, Q):
         """Nivel de cada titulo preguntado que no este en la base. Con el clasificador de D-049,
         la clase mas probable si su probabilidad llega a `P_NIVEL_CLF` (si no, None: no se
