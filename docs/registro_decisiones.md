@@ -6691,3 +6691,10 @@ empresa con los datos de entrenamiento, en lugar de π.
 
 **Criterio** (decisión de coherencia del producto, no de precisión): se adopta **salvo que empeore donde actúa
 con significancia** (IC entero sobre cero). Se reporta el costo y se corre también su placebo.
+
+### D-061, resultado: se adopta (2026-10-08)
+
+Donde actúa (853 votos): +0,00249 [−0,00295, +0,00959], no se distingue (placebo +0,00570 [−0,00172, +0,01228]).
+No empeora con significancia: según su criterio, **se adopta** como regla de coherencia del producto, con un costo
+en precisión nulo o mínimo. `demo/base_v25.npz` = la v24 con esta corrección, usando el `e` de D-060 estimado con
+toda la base.

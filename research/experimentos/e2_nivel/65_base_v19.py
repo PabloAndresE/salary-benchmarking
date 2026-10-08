@@ -83,8 +83,11 @@ def main(con_idioma, con_calibra=False, version="v2", con_e5=False, con_limpieza
         b.efecto_sen = efecto_seniority(marco)
         print("seniority: {}".format(b.efecto_sen), flush=True)
         nombre = "base_v24.npz"
-    if con_coherencia:                   # D-059: prima tipica de seniority mas los datos propios
-        print("coherencia: {}".format(b.coherencia_seniority()), flush=True)
+    if con_coherencia:                   # D-061: con la prima de dentro de la empresa (D-060) si la hay
+        e_ = getattr(b, "efecto_sen", None)
+        print("coherencia: {}".format(b.coherencia_seniority(
+            prima={k: v for k, v in e_.items() if k in (1, -1)} if e_ else None)), flush=True)
+        nombre = "base_v25.npz"
     b.guardar(RAIZ / "demo" / nombre)
     out = ["65 · BASE v19: nivel de Qwen v2 + clasificador de la consulta (D-049){}".format(
                "; titulos en ingles unidos a su traduccion (D-050): {:,}".format(unidos) if con_idioma else ""),
