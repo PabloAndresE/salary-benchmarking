@@ -1530,6 +1530,51 @@ class BaseReferencia:
             self.nivel = np.array([nuevo.get(int(g), n) for g, n in zip(self.grupo, self.nivel)], dtype=float)
         return n_des, n_cambia
 
+    def coherencia_seniority(self, n0=10.0, min_familia=10, placebo=False, semilla=15):
+        """D-059: corre el centro y la banda de los grupos senior (y junior) hacia `base + prima tipica`,
+        con peso `n0` empresas frente a sus `n` empresas. Devuelve un resumen."""
+        from .nivel import _PATRON_SEN
+        d = pd.DataFrame({"t": self.celdas, "g": self.grupo, "m": self.m, "emp": self.emp,
+                          "w": np.asarray(self.personas, float)})
+        d["fam"] = [re.sub(r"\s+", " ", _PATRON_SEN.sub(" ", t)).strip(" -/") for t in d["t"]]
+        d["s"] = [seniority_lexica(t) for t in d["t"]]
+        rep = (d[d["s"].isin([-1, 0, 1])].sort_values("w").groupby(["fam", "s"]).tail(1)
+               .set_index(["fam", "s"]))
+        pares = {}
+        for sv in (1, -1):
+            for fam in rep.index.get_level_values(0).unique():
+                if (fam, 0) in rep.index and (fam, sv) in rep.index:
+                    b_, x_ = rep.loc[(fam, 0)], rep.loc[(fam, sv)]
+                    if int(b_["g"]) != int(x_["g"]):
+                        pares.setdefault(sv, []).append((int(b_["g"]), float(b_["m"]), int(b_["emp"]),
+                                                         int(x_["g"]), float(x_["m"]), int(x_["emp"])))
+        out, delta = {}, {}
+        rng = np.random.default_rng(semilla)
+        for sv, ps in pares.items():
+            ok = [x[4] - x[1] for x in ps if x[2] >= min_familia and x[5] >= min_familia]
+            if len(ok) < 5:
+                continue
+            pi = float(np.median(ok))
+            bases = [(x[1], x[2]) for x in ps]
+            if placebo:                                   # la base de OTRA familia, al azar
+                bases = [bases[i] for i in rng.permutation(len(bases))]
+            n_mov = 0
+            for (gb, mb_, eb_, gx, mx, ex), (mb, eb) in zip(ps, bases):
+                if eb < MIN_EMPRESAS:
+                    continue
+                nuevo = (ex * mx + n0 * (mb + pi)) / (ex + n0)
+                delta[gx] = nuevo - mx
+                n_mov += 1
+            out["pi_" + ("sr" if sv == 1 else "jr")] = round(pi, 3)
+            out["familias_" + ("sr" if sv == 1 else "jr")] = len(ps)
+            out["movidos_" + ("sr" if sv == 1 else "jr")] = n_mov
+        if delta:
+            dd = np.array([delta.get(int(g), 0.0) for g in self.grupo])
+            self.m = self.m + dd
+            self.bandas = self.bandas + dd[:, None]
+            self.bandas_per = self.bandas_per + dd[:, None]
+        return out
+
     def _nivel_consulta(self, titulos, Q):
         """Nivel de cada titulo preguntado que no este en la base. Con el clasificador de D-049,
         la clase mas probable si su probabilidad llega a `P_NIVEL_CLF` (si no, None: no se

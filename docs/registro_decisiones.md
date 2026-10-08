@@ -6609,3 +6609,25 @@ CFO, CMO, CIO, CHRO) y `MANAGING DIRECTOR`, reemplazados por su equivalente en i
 MANAGER`, `COO` → `OPERATIONS MANAGER`), que el traductor pasa a «gerente general», «gerente de operaciones», etc.
 Antes, `CHIEF OPERATIONAL OFFICER` se traducía «jefe de operaciones» (nivel 4), y `CEO` y `MANAGING DIRECTOR` ni
 se detectaban como inglés. Se completa la lista del detector (CEO, MANAGING, EMPLOYMENT, CONSULTING…).
+
+## D-059 — Coherencia de seniority dentro de una familia: prima típica más los datos propios. Registrado antes de medir
+
+**Por qué** (autor): `CONSULTOR SENIOR` ($1.585, 11 empresas) queda por debajo de `CONSULTOR` ($1.608, 30), y
+`INGENIERO DE SOFTWARE SENIOR` ($3.260, 6) es 2,4 veces `INGENIERO DE SOFTWARE` ($1.358, 9). Con pocas empresas,
+la mediana de un cargo senior o junior es ruidosa.
+
+**Cambio** (`coherencia`):
+- **Familia:** el título sin sus marcas de seniority (`_PATRON_SEN`). En cada familia, el grupo base es el
+  del título sin marca (s = 0) con más personas; el senior, el de s = 1 (SR, SENIOR); el junior, el de
+  s = −1 (JR, JUNIOR). Solo cuando son grupos distintos.
+- **Prima típica:** π_SR = mediana de `m(senior) − m(base)` en las familias con ≥ 10 empresas en los dos
+  grupos; igual para π_JR. Con la base de entrenamiento en el pinball.
+- **Combinación:** si el grupo base tiene ≥ 3 empresas, el centro del senior pasa a
+  `(n_S·m_S + 10·(m_B + π_SR)) / (n_S + 10)`, con n_S el número de empresas del senior (una prima de 10
+  empresas de peso). La banda entera (empresas y personas) se corre lo mismo que el centro. Igual para el
+  junior.
+
+**Medición:** pinball frente a `nivel_v3` con `k` fijo. Placebo: cada grupo senior o junior se empareja con un
+grupo base al azar, en lugar del de su familia, con la misma π. **Criterio:** se adopta si no empeora donde
+actúa y el placebo sí empeora. Se reportan π_SR, π_JR, cuántos grupos se mueven y cuántas inversiones
+(senior < base) quedan.

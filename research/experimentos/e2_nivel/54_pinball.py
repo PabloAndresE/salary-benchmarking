@@ -177,7 +177,7 @@ def una_variante(nom, clusters):
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
     con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                 "grados", "grados_placebo", "limpieza", "limpieza_placebo", "limpieza_siglas",
-                "limpieza_siglas_placebo")
+                "limpieza_siglas_placebo", "coherencia", "coherencia_placebo")
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar")
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
@@ -258,6 +258,8 @@ def una_variante(nom, clusters):
     preparar(base)
     if nom in con_d054:                  # k FIJO, el de `nivel_v3` (anotado en D-053): aisla el cambio
         base.escala_banda = {"analogia": 0.6333673690668041, "directo": 0.9371366258107973}
+    if nom.startswith("coherencia"):     # D-059: prima tipica de seniority mas los datos propios
+        print("coherencia: {}".format(base.coherencia_seniority(placebo=nom.endswith("placebo"))), flush=True)
     if nom.startswith("idioma_prima"):   # D-055: traduccion + prima del titulo en ingles
         from benchmarking.producto import idioma
         base.vecinos_por_grupo = False
@@ -335,7 +337,7 @@ if __name__ == "__main__":
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                                            "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
-                                           "limpieza_siglas_placebo"])
+                                           "limpieza_siglas_placebo", "coherencia", "coherencia_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
