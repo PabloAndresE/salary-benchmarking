@@ -6631,3 +6631,17 @@ la mediana de un cargo senior o junior es ruidosa.
 grupo base al azar, en lugar del de su familia, con la misma π. **Criterio:** se adopta si no empeora donde
 actúa y el placebo sí empeora. Se reportan π_SR, π_JR, cuántos grupos se mueven y cuántas inversiones
 (senior < base) quedan.
+
+### D-058, resultados: se adopta la limpieza de cortados y códigos; las siglas no (2026-10-08)
+
+| | donde actúa | placebo |
+|---|---|---|
+| `limpieza` (A + B) | 11.620 votos: **−0,00022 [−0,00042, −0,00003], mejora** | +0,00006 [−0,00018, +0,00032], no se distingue |
+| `limpieza_siglas` (A + B + C) | +0,00018 [−0,00002, +0,00038], no se distingue | +0,00032 [+0,00005, +0,00063], empeora |
+
+Con la regla literal se adoptaría la variante que no mejora y se rechazaría la que sí. **Aclaración de la regla
+(autor, a propuesta de Claude):** el placebo existe para descartar que «cualquier cambio ayuda». Cuando la
+variante mejora con significancia, basta con que su placebo no mejore. Por eso **se adopta `limpieza`** (A + B):
+los conectores finales, los títulos cortados y los códigos se unen al grupo de su título limpio. **No se adopta
+`limpieza_siglas`:** no aporta y el punto apunta a peor. Efecto chico: 35 votos pasan a datos directos. Los
+títulos sucios con mucha gente ya estaban agrupados por el clustering.
