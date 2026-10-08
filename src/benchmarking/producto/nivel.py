@@ -378,3 +378,22 @@ def efecto_nivel(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc",
     g = d.groupby("nivel")["r"].agg(ag)
     centro = g.median() if estimador == "mediana" else g.mean()
     return {int(k): float(v - centro) for k, v in g.items()}
+
+
+def efecto_seniority(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc"):
+    """D-060: cuanto paga la seniority, en log, DENTRO DE LA EMPRESA: SR frente al mismo titulo sin marca, y
+    sin marca frente a JR (misma familia = el titulo sin sus marcas). {-1, 0, 0.5, 1} -> efecto."""
+    d = marco[[col, col_y, col_empresa]].dropna(subset=[col_y]).copy()
+    d[col] = d[col].astype(str)
+    t = pd.Series(d[col].unique())
+    fam = dict(zip(t, [re.sub(r"\s+", " ", _PATRON_SEN.sub(" ", x)).strip(" -/") for x in t]))
+    sen = dict(zip(t, [seniority_lexica(x) for x in t]))
+    d["fam"], d["s"] = d[col].map(fam), d[col].map(sen)
+    g = d[d["s"].isin([-1, 0, 1])].groupby([col_empresa, "fam", "s"])[col_y].median().unstack("s")
+    e = {0: 0.0}
+    if 1 in g and 0 in g and g[[0, 1]].dropna().shape[0] >= 30:
+        e[1] = float((g[1] - g[0]).dropna().median())
+        e[0.5] = e[1] / 2
+    if -1 in g and 0 in g and g[[-1, 0]].dropna().shape[0] >= 30:
+        e[-1] = -float((g[0] - g[-1]).dropna().median())
+    return e

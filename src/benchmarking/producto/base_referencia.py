@@ -1880,6 +1880,18 @@ class BaseReferencia:
                         penal_nivel = float((pv * (ef_vec[hay] - media) ** 2).sum())
                     else:
                         penal_nivel = self.var_nivel
+                ef_sen = getattr(self, "efecto_sen", None)
+                if ef_sen:
+                    # D-060: el escalon de seniority (medido dentro de la empresa), aparte del de nivel
+                    s_q = seniority_lexica(t)
+                    if getattr(self, "efecto_sen_placebo", False):
+                        rng_s = np.random.default_rng(abs(hash(t)) % (2 ** 32))
+                        marcas, frec = zip(*self.frec_sen.items())
+                        s_v = rng_s.choice(marcas, len(j), p=np.array(frec) / sum(frec))
+                    else:
+                        s_v = [seniority_lexica(str(self.celdas[x])) for x in j]
+                    if s_q in ef_sen:
+                        aj = aj + np.array([ef_sen[s_q] - ef_sen[sv] if sv in ef_sen else 0.0 for sv in s_v])
                 mu = float((peso * (self.m[j] + aj)).sum())
                 # Las dos partes NO se promedian igual. El error de medicion de cada
                 # vecino es independiente y se cancela al promediar (suma de peso^2). La

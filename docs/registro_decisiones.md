@@ -6654,3 +6654,21 @@ tampoco. **No se adopta:** forzar la prima de seniority no acerca las bandas a l
 inversión senior < base se trata como un aviso de presentación, no como un ajuste de cálculo.
 **Producto:** `demo/base_v23.npz` = la v21 (nivel v3, `k` reestimado: analogía 0,697, directo 1,045) con la limpieza de
 D-058: 39.261 → 39.143 grupos. Sin la prima de D-055 (apagada). La API la toma por ser la más nueva.
+
+## D-060 — El efecto de seniority en el ajuste por escalón de la analogía. Registrado antes de medir
+
+**Por qué** (autor: «senior sí sube tu sueldo»). Dentro de la misma empresa, el título SENIOR gana +26 % sobre
+el mismo título sin marca (mediana de 599 pares; más en el 87 %), y el título sin marca +28 % sobre el JUNIOR
+(473 pares; 82 %). La seniority es un escalón de sueldo real. La decisión de diseño de tratarla solo como
+candado y no como ajuste fue un error. D-059 no mejoró porque ajustaba los cargos con datos propios, donde la
+diferencia entre empresas tapa la prima; donde debería ayudar es en la analogía, igual que el nivel.
+
+**Cambio** (`ajuste_seniority`): en la analogía, a cada vecino se le suma `e(s_consulta) − e(s_vecino)`, con
+s = −1 (JR), 0, 0,5 (SEMI SENIOR) o 1 (SR), aparte del ajuste por nivel. `e` se estima **dentro de la
+empresa** con los datos de entrenamiento: `e(1)` = mediana de `y(SR) − y(sin marca)` entre títulos de la misma
+familia en la misma empresa, `e(−1)` = −(mediana de `y(sin marca) − y(JR)`), `e(0)` = 0 y `e(0,5)` = e(1)/2.
+Otras marcas (TRAINEE, CORPORATIVO) no se ajustan.
+
+**Medición:** pinball frente a `nivel_v3` con el `k` fijo. Placebo: la marca de seniority de cada vecino se
+sortea con las frecuencias observadas. **Criterio** (aclarado en D-058): se adopta si mejora y su placebo no
+mejora, o si no empeora y su placebo sí empeora.
