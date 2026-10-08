@@ -36,6 +36,8 @@ cuarentena/
 !src/benchmarking/producto/datos/capa0_*/*.csv
 # el glosario de terminos de RR. HH. en ingles (2026-10-08): terminos genericos, no datos de clientes
 !src/benchmarking/producto/datos/glosario_*/*.csv
+# los sinonimos aprobados por el autor (D-047): datos del producto, solo titulos de cargo (2026-10-08)
+!src/benchmarking/producto/datos/sinonimos_*/*.csv
 # log del uvicorn local
 uvicorn.log
 !**/esquema_plantilla.yaml
