@@ -6604,3 +6604,8 @@ existe y ningún candado lo impide: nivel de la rúbrica, seniority, grado):
 `limpieza` (A + B) y `limpieza_siglas` (A + B + C), cada una con su placebo: el mismo número de uniones, con
 destinos al azar entre los grupos de la base. Se reportan además cuántos votos pasan a datos directos y el
 ancho de banda. **Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora.
+**Glosario, alta dirección** (2026-10-08, decisión del autor): se agregan `CHIEF … OFFICER`, sus siglas (CEO, COO, CTO,
+CFO, CMO, CIO, CHRO) y `MANAGING DIRECTOR`, reemplazados por su equivalente en inglés corriente (`CEO` → `GENERAL
+MANAGER`, `COO` → `OPERATIONS MANAGER`), que el traductor pasa a «gerente general», «gerente de operaciones», etc.
+Antes, `CHIEF OPERATIONAL OFFICER` se traducía «jefe de operaciones» (nivel 4), y `CEO` y `MANAGING DIRECTOR` ni
+se detectaban como inglés. Se completa la lista del detector (CEO, MANAGING, EMPLOYMENT, CONSULTING…).

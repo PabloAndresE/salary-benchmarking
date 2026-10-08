@@ -8,3 +8,8 @@ Origen: `research/experimentos/e2_nivel/69_glosario.py` (Qwen local propone, sol
 distinto). El autor aprobo 86; se sacaron 22 que rompian otras traducciones (palabras sueltas que forman
 parte de frases: CARE, BACK, LINE, KEY...; terminos con rango; palabras ya en espanol) y se corrigieron dos
 (QUALITY ASSURANCE -> ASEGURAMIENTO DE CALIDAD; INSIDE SALES -> VENTAS INTERNAS).
+
+2026-10-08: se agregan los cargos de alta direccion (CHIEF ... OFFICER y sus siglas, CEO y MANAGING DIRECTOR):
+sin ellos, `CHIEF OPERATIONAL OFFICER` se traducia «jefe de operaciones» (nivel 4). Su reemplazo es el
+equivalente en INGLES corriente (`CEO` -> `GENERAL MANAGER`), que el traductor pasa bien al espanol: con
+`GERENTE` metido en una frase en ingles escribia «GERRENTE» y desordenaba («del general gerente»).
