@@ -6581,3 +6581,26 @@ En los 35 cargos de la lista del autor cambian 8. Entre ellos: `Collections Assi
 colecciones» a «asistente de cobranzas», `Collections Analyst` deja la analogía por «analista de cobranzas», y
 `CX Specialist` se resuelve en «especialista experiencia del cliente». Es una corrección de traducción, no
 del modelo de bandas: no lleva pinball.
+
+## D-058 — Capa 0 v2: limpieza de títulos cortados, con códigos o con siglas sueltas. Registrado antes de medir
+
+**Por qué** (autor, revisando los candidatos del juez): `CONSULTOR DE`, `CONSULTOR MM`, `CONTADOR GENERAL 102`.
+En `base_v22` hay 7.899 títulos sucios (12 %, 10,3 % de las personas): 774 terminan en conector (6,5 % de las
+personas), 479 llevan número o código y 6.646 una sigla o código raro. Además, hay truncamiento sistemático
+en 40, 50, 60 y 64 caracteres. Fragmentan los datos (menos empresas por cargo, bandas más anchas) y ocupan
+lugares entre los candidatos.
+
+**Reglas** (sobre los títulos, sin sueldos; cada título sucio se une al grupo de su título limpio si ese
+existe y ningún candado lo impide: nivel de la rúbrica, seniority, grado):
+- **A, cortados:** (i) se quitan los conectores finales (DE, DEL, Y, LA…), y si queda un título de la base, ese
+  es el destino; (ii) si el título mide 40, 50, 60 o 64 caracteres o termina en conector, y exactamente un
+  grupo tiene títulos más largos que empiezan igual, ese grupo es el destino.
+- **B, códigos:** se quitan los números de 2 o más cifras y los prefijos de lista (`1060 - `, `024 `, `2.`, ` 102`);
+  los grados (1–9, romanos) no se tocan.
+- **C, siglas** (variante aparte): se quitan los tokens de ≤ 4 letras que no aparecen en al menos 20 títulos
+  de la base (MM, FA, TOC).
+
+**Medición** (sin auditoría, por decisión del autor): pinball frente a `nivel_v3` con `k` fijo. Dos variantes,
+`limpieza` (A + B) y `limpieza_siglas` (A + B + C), cada una con su placebo: el mismo número de uniones, con
+destinos al azar entre los grupos de la base. Se reportan además cuántos votos pasan a datos directos y el
+ancho de banda. **Criterio:** se adopta si no empeora donde actúa y el placebo sí empeora.

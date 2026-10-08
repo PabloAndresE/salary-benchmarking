@@ -176,7 +176,8 @@ def una_variante(nom, clusters):
         kw = dict(umbral_fusion=None, capa0=c0mod.nueva("v1"))
     con_idioma = ("idioma", "idioma_placebo", "idioma_consulta", "idioma_consulta_placebo")
     con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
-                "grados", "grados_placebo")
+                "grados", "grados_placebo", "limpieza", "limpieza_placebo", "limpieza_siglas",
+                "limpieza_siglas_placebo")
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar")
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
@@ -209,6 +210,20 @@ def una_variante(nom, clusters):
                 g[t] = g[d_]
         et = np.load(SAL / "64_emb_traducciones.npz", allow_pickle=True)
         emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
+    if nom.startswith("limpieza"):               # D-058: capa 0 v2, cada titulo sucio al grupo de su limpio
+        lim = pd.read_parquet(SAL / "71_limpieza.parquet")
+        if not nom.startswith("limpieza_siglas"):
+            lim = lim[lim["regla"] != "C_sigla"]
+        dest = lim["destino"].to_numpy()
+        if nom.endswith("placebo"):                # destinos al azar entre los titulos de la base
+            todos = np.array(sorted(kw["grupos"]))
+            dest = np.random.default_rng(14).choice(todos, len(dest), replace=False)
+        g, n = kw["grupos"], 0
+        for t, d_ in zip(lim["titulo"], dest):
+            if t in g and d_ in g and g[t] != g[d_]:
+                g[t] = g[d_]
+                n += 1
+        print("limpieza: {} titulos unidos".format(n), flush=True)
     if nom in ("grados", "grados_placebo"):     # D-056: une los grupos que solo difieren en el grado
         print("grados: {}".format(unir_grados(kw["grupos"], placebo=nom == "grados_placebo")), flush=True)
     base = BaseReferencia.construir(tr, emb, e41._Ajustes.get_sbu, **kw)
@@ -318,7 +333,9 @@ if __name__ == "__main__":
                                            "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
                                            "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
-                                           "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar"])
+                                           "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar",
+                                           "limpieza", "limpieza_placebo", "limpieza_siglas",
+                                           "limpieza_siglas_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
