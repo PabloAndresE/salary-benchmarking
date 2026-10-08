@@ -6672,3 +6672,9 @@ Otras marcas (TRAINEE, CORPORATIVO) no se ajustan.
 **Medición:** pinball frente a `nivel_v3` con el `k` fijo. Placebo: la marca de seniority de cada vecino se
 sortea con las frecuencias observadas. **Criterio** (aclarado en D-058): se adopta si mejora y su placebo no
 mejora, o si no empeora y su placebo sí empeora.
+
+### D-060, resultado: cumple, se adopta (2026-10-08)
+
+Donde actúa (651 votos): **−0,00842 [−0,01609, −0,00147], mejora**; placebo (3.958 votos): +0,00114 [−0,00020,
++0,00252], no mejora. Por seniority de la consulta: senior −0,02617 [−0,04320, −0,00753]; sin marca y junior,
+neutros. **Se adopta.** `e` se estima con toda la base y se guarda en ella (`base_v24`).

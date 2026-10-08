@@ -1419,6 +1419,9 @@ class BaseReferencia:
             capa0_json=np.array(self.capa0.a_json() if self.capa0 is not None else ""),
             grado_consulta=np.array(bool(self.grado_consulta)),
             esc_k=np.array(sorted(self.escala_banda), dtype=object),
+            # D-060: el escalon de seniority (dentro de la empresa) y la frecuencia de cada marca
+            sen_k=np.array(sorted(getattr(self, "efecto_sen", None) or {}), dtype=float),
+            sen_v=np.array([self.efecto_sen[k] for k in sorted(getattr(self, "efecto_sen", None) or {})], dtype=float),
             # D-055: la prima del titulo en ingles, {nivel o -1 (global): (pi, var)}
             pri_k=np.array([(-1 if k == "global" else int(k)) for k in (getattr(self, "idioma_prima", None) or {})], dtype=np.int64),
             pri_v=np.array([v for v in (getattr(self, "idioma_prima", None) or {}).values()], dtype=float).reshape(-1, 2),
@@ -1476,6 +1479,9 @@ class BaseReferencia:
                 base.capa0 = Capa0.de_json(str(z["capa0_json"]), base.celdas)
             if "grado_consulta" in z.files:
                 base.grado_consulta = bool(z["grado_consulta"])
+            if "sen_k" in z.files and len(z["sen_k"]):
+                base.efecto_sen = {(int(k) if float(k).is_integer() else float(k)): float(v)
+                                   for k, v in zip(z["sen_k"], z["sen_v"])}
             if "pri_k" in z.files and len(z["pri_k"]):
                 base.idioma_prima = {("global" if int(k) == -1 else int(k)): (float(v[0]), float(v[1]))
                                      for k, v in zip(z["pri_k"], z["pri_v"])}

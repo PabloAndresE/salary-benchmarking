@@ -30,7 +30,8 @@ def cargar(nombre, archivo):
     return m
 
 
-def main(con_idioma, con_calibra=False, version="v2", con_e5=False, con_limpieza=False, con_coherencia=False):
+def main(con_idioma, con_calibra=False, version="v2", con_e5=False, con_limpieza=False, con_coherencia=False,
+         con_seniority=False):
     t0 = time.time()
     e41, e54 = cargar("e41", "41_base_v16.py"), cargar("e54", "54_pinball.py")
     marco = e41.cargar_marco()
@@ -77,6 +78,11 @@ def main(con_idioma, con_calibra=False, version="v2", con_e5=False, con_limpieza
                                             e41._Ajustes.get_sbu, preparar)
         nombre = ("base_v20.npz" if version == "v2" else "base_e5.npz" if con_e5
                   else "base_v23.npz" if con_limpieza else "base_v21.npz")
+    if con_seniority:                    # D-060: el escalon de seniority en la analogia
+        from benchmarking.producto.nivel import efecto_seniority
+        b.efecto_sen = efecto_seniority(marco)
+        print("seniority: {}".format(b.efecto_sen), flush=True)
+        nombre = "base_v24.npz"
     if con_coherencia:                   # D-059: prima tipica de seniority mas los datos propios
         print("coherencia: {}".format(b.coherencia_seniority()), flush=True)
     b.guardar(RAIZ / "demo" / nombre)
@@ -98,5 +104,6 @@ if __name__ == "__main__":
     ap.add_argument("--e5", action="store_true", help="D-057 (en medicion): vectores de e5 -> base_e5")
     ap.add_argument("--limpieza", action="store_true", help="D-058: cortados y codigos -> base_v23")
     ap.add_argument("--coherencia", action="store_true", help="D-059: coherencia de seniority")
+    ap.add_argument("--seniority", action="store_true", help="D-060: escalon de seniority -> base_v24")
     a = ap.parse_args()
-    main(a.idioma, a.calibra, a.nivel, a.e5, a.limpieza, a.coherencia)
+    main(a.idioma, a.calibra, a.nivel, a.e5, a.limpieza, a.coherencia, a.seniority)
