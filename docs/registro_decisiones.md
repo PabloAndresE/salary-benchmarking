@@ -6652,3 +6652,5 @@ títulos sucios con mucha gente ya estaban agrupados por el clustering.
 +0,00177 [−0,00468, +0,00831], no se distingue (el punto apunta a peor); placebo +0,00547 [−0,00135, +0,01182],
 tampoco. **No se adopta:** forzar la prima de seniority no acerca las bandas a lo que pagan las empresas. La
 inversión senior < base se trata como un aviso de presentación, no como un ajuste de cálculo.
+**Producto:** `demo/base_v23.npz` = la v21 (nivel v3, `k` reestimado: analogía 0,697, directo 1,045) con la limpieza de
+D-058: 39.261 → 39.143 grupos. Sin la prima de D-055 (apagada). La API la toma por ser la más nueva.
