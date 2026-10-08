@@ -6566,3 +6566,18 @@ REPRESENTATIVE`): la traducción («representante de desarrollo de ventas») se 
 porque e5 pesa más la forma de la palabra. Sin datos directos, cae a la analogía entre títulos en inglés de
 multinacionales ($1.889 contra $860). Lo mismo con `HEAD OF HR`: `JEFE DE RECURSOS HUMANO` con Vertex,
 `JEFE DE RRHH` con e5. Observación aparte: esos dos grupos deberían ser uno (candidato a sinónimo).
+
+### Glosario de RR. HH. en inglés para la capa de idioma (2026-10-08, decisión del autor)
+
+Antes de traducir, los términos aprobados se reemplazan por su forma en español (`COLLECTIONS` → `COBRANZAS`,
+`HR` → `RECURSOS HUMANOS`, `CX` → `EXPERIENCIA DEL CLIENTE`, `AR` → `CUENTAS POR COBRAR`…), y el traductor
+ordena el resto. Lista de `69_glosario.py`: Qwen local propone; solo los términos que el traductor decía
+distinto. El autor aprobó 86. Al probarlos sobre títulos reales, 22 rompían traducciones que salían bien
+(`HEALTH CARE` → «salud atención al cliente», `BACK END` → «final de apoyo», `SALES REPRESENTANTE` →
+«representante legal»), así que se sacaron; además se corrigieron dos. Quedan 64, en
+`src/benchmarking/producto/datos/glosario_v1/glosario.csv` (versionado).
+
+En los 35 cargos de la lista del autor cambian 8. Entre ellos: `Collections Assistant` pasa de «asistente de
+colecciones» a «asistente de cobranzas», `Collections Analyst` deja la analogía por «analista de cobranzas», y
+`CX Specialist` se resuelve en «especialista experiencia del cliente». Es una corrección de traducción, no
+del modelo de bandas: no lleva pinball.
