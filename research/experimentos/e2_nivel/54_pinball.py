@@ -178,7 +178,7 @@ def una_variante(nom, clusters):
     con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                 "grados", "grados_placebo", "limpieza", "limpieza_placebo", "limpieza_siglas",
                 "limpieza_siglas_placebo", "coherencia", "coherencia_placebo", "seniority",
-                "seniority_placebo")
+                "seniority_placebo", "coherencia_intra", "coherencia_intra_placebo")
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar")
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
@@ -266,7 +266,12 @@ def una_variante(nom, clusters):
         base.frec_sen = {k: marcas.count(k) for k in base.efecto_sen}
         base.efecto_sen_placebo = nom.endswith("placebo")
         print("seniority: {}".format(base.efecto_sen), flush=True)
-    if nom.startswith("coherencia"):     # D-059: prima tipica de seniority mas los datos propios
+    if nom.startswith("coherencia_intra"):   # D-061: la misma coherencia, con la prima de dentro de la empresa
+        from benchmarking.producto.nivel import efecto_seniority
+        e_ = efecto_seniority(tr)
+        print("coherencia_intra: {}".format(base.coherencia_seniority(
+            placebo=nom.endswith("placebo"), prima={k: v for k, v in e_.items() if k in (1, -1)})), flush=True)
+    elif nom.startswith("coherencia"):   # D-059: prima tipica de seniority mas los datos propios
         print("coherencia: {}".format(base.coherencia_seniority(placebo=nom.endswith("placebo"))), flush=True)
     if nom.startswith("idioma_prima"):   # D-055: traduccion + prima del titulo en ingles
         from benchmarking.producto import idioma
@@ -346,7 +351,8 @@ if __name__ == "__main__":
                                            "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",
-                                           "seniority", "seniority_placebo"])
+                                           "seniority", "seniority_placebo", "coherencia_intra",
+                                           "coherencia_intra_placebo"])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")

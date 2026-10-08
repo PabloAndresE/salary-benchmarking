@@ -6678,3 +6678,16 @@ mejora, o si no empeora y su placebo sí empeora.
 Donde actúa (651 votos): **−0,00842 [−0,01609, −0,00147], mejora**; placebo (3.958 votos): +0,00114 [−0,00020,
 +0,00252], no mejora. Por seniority de la consulta: senior −0,02617 [−0,04320, −0,00753]; sin marca y junior,
 neutros. **Se adopta.** `e` se estima con toda la base y se guarda en ella (`base_v24`).
+
+## D-061 — Coherencia de seniority con la prima medida dentro de la empresa (decisión de producto del autor). Registrado antes de medir
+
+**Por qué:** el autor quiere que `CONSULTOR SENIOR` ($1.585, 11 empresas) no quede por debajo de `CONSULTOR`
+($1.697, 31). D-059 hacía eso con una prima estimada entre empresas (+37 %) y salió neutra. D-060 midió la prima
+**dentro de la empresa**: SR +26 % (e = 0,229), JR −19 % (e = −0,214).
+
+**Cambio:** el mismo de D-059 (familia por título sin marcas; centro del senior o junior =
+`(n·m + 10·(m_base + e)) / (n + 10)`; la banda se corre igual), pero con `e` de D-060, estimado dentro de la
+empresa con los datos de entrenamiento, en lugar de π.
+
+**Criterio** (decisión de coherencia del producto, no de precisión): se adopta **salvo que empeore donde actúa
+con significancia** (IC entero sobre cero). Se reporta el costo y se corre también su placebo.
