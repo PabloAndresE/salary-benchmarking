@@ -5,6 +5,11 @@
 basta) con el titulo dentro de una frase, que es como traduce bien:
 `He works as a payroll analyst.` -> `Trabaja como analista de nominas.`
 
+GLOSARIO (2026-10-08): antes de traducir, los terminos de RR. HH. aprobados por el autor se reemplazan por su
+forma en espanol (`COLLECTIONS ASSISTANT` -> `COBRANZAS ASSISTANT` -> `ASISTENTE DE COBRANZAS`); el traductor
+ordena el resto. Sin el, `collections` salia `colecciones`. Va en `datos/glosario_v1/glosario.csv`
+(`termino,es`), versionado.
+
 Sin `transformers` o sin los pesos, el traductor no se carga y el producto sigue sin la capa.
 """
 import pathlib
@@ -52,10 +57,32 @@ def normalizar(t):
     return re.sub(r"\s+", " ", t.upper().strip().rstrip(".")).strip()
 
 
+GLOSARIO = pathlib.Path(__file__).resolve().parent / "datos" / "glosario_v1" / "glosario.csv"
+
+
+def cargar_glosario(ruta=GLOSARIO):
+    """{termino en ingles: forma en espanol}, o {} si no hay archivo."""
+    import csv
+    ruta = pathlib.Path(ruta)
+    if not ruta.exists():
+        return {}
+    with open(ruta, encoding="utf-8-sig", newline="") as f:
+        return {r["termino"].strip().upper(): normalizar(r["es"]) for r in csv.DictReader(f)
+                if r.get("termino", "").strip() and r.get("es", "").strip()}
+
+
+def aplicar_glosario(t, glosario):
+    """Reemplaza los terminos del glosario (los mas largos primero, por palabra completa)."""
+    t = str(t).upper()
+    for k in sorted(glosario, key=len, reverse=True):
+        t = re.sub(r"(?<![A-Z])" + re.escape(k) + r"(?![A-Z])", glosario[k], t)
+    return t
+
+
 class Traductor:
     PLANTILLA = "He works as a {}."
 
-    def __init__(self, ruta, lote=64):
+    def __init__(self, ruta, lote=64, glosario=None):
         import torch
         from transformers import MarianMTModel, MarianTokenizer
         self.torch = torch
@@ -63,6 +90,7 @@ class Traductor:
         self.m = MarianMTModel.from_pretrained(ruta).eval()
         self.lote = lote
         self.cache = {}
+        self.glosario = cargar_glosario() if glosario is None else glosario
 
     def _limpiar(self, s):
         s = re.sub(r"^\s*(trabaja|trabajo|el trabaja|ella trabaja)\s+(como|de)\s+(un |una )?", "", s, flags=re.I)
@@ -73,7 +101,7 @@ class Traductor:
         falta = [t for t in dict.fromkeys(titulos) if t not in self.cache]
         for i in range(0, len(falta), self.lote):
             parte = falta[i:i + self.lote]
-            frases = [self.PLANTILLA.format(str(t).lower().strip()) for t in parte]
+            frases = [self.PLANTILLA.format(aplicar_glosario(t, self.glosario).lower().strip()) for t in parte]
             with self.torch.no_grad():
                 x = self.tok(frases, return_tensors="pt", padding=True, truncation=True, max_length=64)
                 o = self.m.generate(**x, num_beams=4, max_new_tokens=48)
