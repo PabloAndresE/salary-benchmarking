@@ -6645,3 +6645,10 @@ variante mejora con significancia, basta con que su placebo no mejore. Por eso *
 los conectores finales, los títulos cortados y los códigos se unen al grupo de su título limpio. **No se adopta
 `limpieza_siglas`:** no aporta y el punto apunta a peor. Efecto chico: 35 votos pasan a datos directos. Los
 títulos sucios con mucha gente ya estaban agrupados por el clustering.
+
+### D-059, resultado: no se adopta (2026-10-08)
+
+π_SR +0,315, π_JR −0,185 (entrenamiento); 405 grupos senior y 318 junior movidos. Donde actúa (826 votos):
++0,00177 [−0,00468, +0,00831], no se distingue (el punto apunta a peor); placebo +0,00547 [−0,00135, +0,01182],
+tampoco. **No se adopta:** forzar la prima de seniority no acerca las bandas a lo que pagan las empresas. La
+inversión senior < base se trata como un aviso de presentación, no como un ajuste de cálculo.

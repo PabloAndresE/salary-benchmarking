@@ -30,7 +30,7 @@ def cargar(nombre, archivo):
     return m
 
 
-def main(con_idioma, con_calibra=False, version="v2", con_e5=False):
+def main(con_idioma, con_calibra=False, version="v2", con_e5=False, con_limpieza=False, con_coherencia=False):
     t0 = time.time()
     e41, e54 = cargar("e41", "41_base_v16.py"), cargar("e54", "54_pinball.py")
     marco = e41.cargar_marco()
@@ -45,6 +45,12 @@ def main(con_idioma, con_calibra=False, version="v2", con_e5=False):
         emb = {c: e5[c] for c in celdas}
     grupos = e54.grupos_de_clusters("50_clusters_confiable_cargos.parquet")
     unidos = 0
+    if con_limpieza:                     # D-058: cortados y codigos al grupo de su titulo limpio (sin siglas)
+        lim = pd.read_parquet(SAL / "71_limpieza.parquet")
+        for t, d in zip(lim["titulo"], lim["destino"][lim["regla"] != "C_sigla"].reindex(lim.index)):
+            if isinstance(d, str) and t in grupos and d in grupos and grupos[t] != grupos[d]:
+                grupos[t] = grupos[d]
+                unidos += 1
     if con_idioma:
         r = pd.read_parquet(SAL / "64_idioma_resueltos.parquet")
         for t, d in zip(r["titulo"], r["destino"]):
@@ -69,7 +75,10 @@ def main(con_idioma, con_calibra=False, version="v2", con_e5=False):
         b.escala_banda = e54.estimar_escala(marco, emb, dict(umbral_fusion=None, capa0=c0mod.nueva("v1"),
                                                                 grupos=grupos, niveles=niveles),
                                             e41._Ajustes.get_sbu, preparar)
-        nombre = "base_v20.npz" if version == "v2" else "base_e5.npz" if con_e5 else "base_v21.npz"
+        nombre = ("base_v20.npz" if version == "v2" else "base_e5.npz" if con_e5
+                  else "base_v23.npz" if con_limpieza else "base_v21.npz")
+    if con_coherencia:                   # D-059: prima tipica de seniority mas los datos propios
+        print("coherencia: {}".format(b.coherencia_seniority()), flush=True)
     b.guardar(RAIZ / "demo" / nombre)
     out = ["65 · BASE v19: nivel de Qwen v2 + clasificador de la consulta (D-049){}".format(
                "; titulos en ingles unidos a su traduccion (D-050): {:,}".format(unidos) if con_idioma else ""),
@@ -87,5 +96,7 @@ if __name__ == "__main__":
     ap.add_argument("--calibra", action="store_true", help="D-051: con la escala de banda -> base_v20")
     ap.add_argument("--nivel", choices=["v2", "v3"], default="v2", help="D-053: v3 -> base_v21")
     ap.add_argument("--e5", action="store_true", help="D-057 (en medicion): vectores de e5 -> base_e5")
+    ap.add_argument("--limpieza", action="store_true", help="D-058: cortados y codigos -> base_v23")
+    ap.add_argument("--coherencia", action="store_true", help="D-059: coherencia de seniority")
     a = ap.parse_args()
-    main(a.idioma, a.calibra, a.nivel, a.e5)
+    main(a.idioma, a.calibra, a.nivel, a.e5, a.limpieza, a.coherencia)
