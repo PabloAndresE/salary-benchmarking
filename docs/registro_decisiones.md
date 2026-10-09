@@ -6698,3 +6698,77 @@ Donde actúa (853 votos): +0,00249 [−0,00295, +0,00959], no se distingue (plac
 No empeora con significancia: según su criterio, **se adopta** como regla de coherencia del producto, con un costo
 en precisión nulo o mínimo. `demo/base_v25.npz` = la v24 con esta corrección, usando el `e` de D-060 estimado con
 toda la base.
+
+## D-062 — Un título en inglés se busca entero por su traducción, también por analogía. Registrado antes de medir
+
+**Por qué** (revisión de la lista de 35 cargos, 2026-10-09; decisión del autor: «head es jefe»):
+
+- **Analogía.** Cuando la traducción de un título en inglés no encuentra un grupo con datos, la analogía se calcula
+  con el embedding del título **en inglés**. Así, `HEAD OF AI` sale a $3.273 y `JEFE DE IA` (su traducción) a
+  $1.907. Con «HEAD = JEFE» del autor y «mismo cargo, misma banda» (2026-10-07), el título en inglés debe buscarse
+  por su traducción en todo: vecinos, nivel de la consulta, juez y seniority.
+- **Candado de nivel.** El candado entre el título original y el equivalente encontrado lee `EXECUTIVE` de
+  `CHIEF EXECUTIVE OFFICER` como «ejecutivo» (nivel 1). Por eso rechaza `GERENTE GENERAL` (nivel 5), y `CEO` y
+  `Chief Executive Officer` dan $3.110 y $4.807.
+
+**Cambio** (`idioma_por_traduccion`):
+
+1. Para un título en inglés con traducción embebida, la consulta usa la traducción: vecinos, clasificador de nivel,
+   juez de la consulta, filtro de vecinos del juez y marca de seniority.
+2. En el candado de `resolver_idioma`, el nivel de la rúbrica del título original se lee después del glosario
+   cuando el glosario cambia la cabeza del título (`CHIEF EXECUTIVE OFFICER` → `GENERAL MANAGER`, nivel 5).
+
+**Medición:** pinball, con empresas apartadas, frente al producto vigente con la capa de idioma en
+«siempre» (D-060 + D-061 + traductor), con el `k` fijo. Se mide **donde actúa** (los votos cuya banda cambia).
+Placebo: a cada título en inglés se le da la traducción embebida de **otro** título en inglés.
+
+**Criterio** (regla de producto del autor, como D-061): se adopta **salvo que empeore donde actúa con
+significancia** (IC entero sobre cero). Se reportan el costo y el placebo.
+
+## D-063 — Tamaño de empresa por nivel del cargo, estandarizado. Registrado antes de medir
+
+**Por qué** (revisión de la lista, 2026-10-09):
+
+- **Sin tamaño, COO y CTO cobran más que el CEO.** `GERENTE DE OPERACIONES` está en $3.628, `GERENTE DE
+  TECNOLOGIA` en $4.482 y `GERENTE GENERAL` en $3.110. La causa no es el cargo: es qué empresas lo tienen. El
+  gerente general está en 778 empresas, muchas pequeñas; el de tecnología, casi solo en las grandes.
+- **Con tamaño, la inversión sigue en las PEQUEÑAS y MEDIANAS.** El ajuste vigente (D-018, `ajuste_seg`) solo se
+  aplica cuando el cargo tiene ≥ 10 empresas de ese tamaño; si no, deja el centro global, cargado a las grandes.
+  En PEQUEÑA, COO da $2.434 y CEO $1.555; CTO $4.482. Tampoco se aplica a la analogía.
+
+**Cambio** (`tamano_estandar`): el efecto del tamaño se estima **por nivel del cargo** (1–5), no cargo por cargo.
+
+- **Estimación.** Con los votos (mediana por cargo y empresa; empresas con segmento conocido), se alterna:
+  1. `m*_g` = mediana de `voto − δ(L, s)` del grupo `g`;
+  2. `δ(L, s)` = mediana de `voto − m*_g` entre las empresas de tamaño `s` y nivel `L`.
+
+  Tres vueltas. `δ(L, ·)` se centra para que su promedio sobre las empresas del nivel `L` sea 0.
+- **Sin tamaño del cliente.** El centro y la banda de cada grupo se corren `m*_g − m_g`: un mercado «de
+  composición promedio», el mismo para todos los cargos. Los vecinos de la analogía entran ya corridos. Solo se
+  corren los grupos con ≥ 3 empresas con segmento.
+- **Con tamaño `s`.** Al resultado anterior se le suma `δ(L, s)`, con `L` el nivel del grupo, o el de la consulta en
+  la analogía. Reemplaza a `ajuste_seg` (D-018).
+
+**Medición:** pinball (p25–p75), con empresas apartadas (las de validación con segmento conocido), con el `k`
+fijo. Variantes:
+
+- (A) producto sin tamaño;
+- (B) producto con el segmento de cada empresa (D-018);
+- (C) `tamano_estandar` con el segmento de cada empresa;
+- (C0) `tamano_estandar` sin segmento;
+- placebo de (C): la tabla `δ(L, ·)` con los segmentos permutados dentro de cada nivel.
+
+La primaria se declara antes, como pide la nota de D-018: **el sesgo del centro por segmento**, mediana de
+`voto − referencia` por segmento en los niveles 4–5, y su recorrido (máximo − mínimo). Es el defecto que se
+corrige: un defecto de localización, que el pinball de bandas anchas castiga poco.
+
+**Criterio:**
+
+- **(C) se adopta** si cumple las tres:
+  1. su recorrido del sesgo en niveles 4–5 es menor que el de (B);
+  2. su pinball frente a (B) no empeora con significancia;
+  3. el placebo no reduce el recorrido tanto como (C).
+- **(C0), el default sin tamaño**, es una regla de coherencia (que el CEO no quede bajo el COO). Se adopta salvo que
+  su pinball frente a (A) empeore con significancia.
+
+Se reporta, como descripción, cuántos `GERENTE DE X` de la lista quedan sobre `GERENTE GENERAL`, en cada variante.
