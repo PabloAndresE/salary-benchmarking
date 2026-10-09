@@ -401,6 +401,8 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
 # de `GERENTE GENERAL` es +-95%. El argumento es probablemente cierto y NO se usa, porque
 # cambiar la metrica despues de ver el resultado vacia el pre-registro de sentido. Para
 # volver a intentarlo hay que declarar antes cual es la primaria correcta y por que.
+# D-064: las siglas de cargos de direccion del glosario, cuyo nivel se lee despues del glosario en el candado
+SIGLAS_DIRECCION = frozenset("CEO CFO CTO COO CMO CIO CHRO".split())
 NIVEL_MIN_SEGMENTAR = 4
 MIN_EMPRESAS_SEGMENTO = 10
 SEGMENTOS = ("MICROEMPRESA", "PEQUENA", "MEDIANA", "GRANDE")
@@ -1254,7 +1256,13 @@ class BaseReferencia:
         if not activo or tr is None or not getattr(tr, "glosario", None):
             return t
         from .idioma import aplicar_glosario
-        g = aplicar_glosario(t, tr.glosario)
+        if getattr(self, "idioma_por_traduccion", False):
+            glos = tr.glosario
+        else:
+            # D-064: solo los cargos de direccion (CEO, CHIEF ... OFFICER): con todo el glosario, `IT QUALITY
+            # ASSURANCE ANALYST` tambien cambiaba de cabeza y saltaba el candado (D-062, el unico voto movido)
+            glos = {k: v for k, v in tr.glosario.items() if k.startswith("CHIEF ") or k in SIGLAS_DIRECCION}
+        g = aplicar_glosario(t, glos)
         return g if g.split()[:1] != str(t).upper().split()[:1] else t
 
     def _buscados(self, unicos, X_por_etiqueta):

@@ -6821,3 +6821,31 @@ el centro hacia un mercado «de composición promedio» saca la referencia del m
 (`segmento`, o derivado del RUC). Sin tamaño la referencia es la de siempre: un `GERENTE DE TECNOLOGIA` está en
 empresas más grandes que el `GERENTE GENERAL` promedio, y la cifra global lo refleja. Para que los cargos altos
 tengan sentido entre sí, **hay que pedir el tamaño**.
+
+### D-062, resultado: no se adopta (2026-10-09)
+
+**Buscar por la traducción** (`trad` frente a `trad_base`), donde actúa (851 votos, 2,2 %): **+0,04777 [+0,02573,
++0,06931], empeora** (placebo: +0,01152, también empeora). Donde actúa, la referencia baja un 22 % (mediana), y esas
+empresas ya pagaban un 27 % sobre la referencia anterior. Es la prima del título en inglés de D-050/D-055: quien
+escribe `HEAD OF`, `COUNTRY MANAGER` o `IT BUSINESS PARTNER` en inglés es, en general, una multinacional que paga
+más que el `JEFE DE` local. Según su criterio, **no se adopta**: «HEAD = JEFE» sigue valiendo para el **equivalente
+que se muestra**, pero en la analogía el título en inglés se sigue buscando como está.
+
+**Solo el candado con el glosario** (`trad_candado`): cambia 1 voto (`IT QUALITY ASSURANCE ANALYST INTERMEDIAT`,
++0,339). No mide nada sobre los cargos de dirección. Ese voto lo movió que el glosario cambiara la cabeza `IT`, y el
+arreglo no iba dirigido a eso: no se adopta así.
+
+## D-064 — El candado de idioma lee los cargos de dirección después del glosario (regla de producto del autor)
+
+**Por qué:** el autor pidió corregir que `CEO` y `Chief Executive Officer` den bandas distintas ($3.110 frente a
+$4.807). El glosario, ya aprobado, los lleva a los dos a `GENERAL MANAGER`. El candado leía `EXECUTIVE` como nivel 1
+y rechazaba `GERENTE GENERAL`.
+
+**Cambio** (`candado_glosario`): en el candado de `resolver_idioma`, el nivel de la rúbrica del título original se
+lee después del glosario **solo con los términos de dirección**: `CHIEF ... OFFICER`, CEO, CFO, CTO, COO, CMO, CIO
+y CHRO. Afecta a 17 títulos de la base (`CFO | ECUADOR`, `CHIEF PEOPLE OFFICER`, `CTO-CHIEF TECHNOLOGY
+OFFICER`…).
+
+**Medición:** el candado con todo el glosario movió un único voto de validación, y ninguno de dirección. Con solo
+los términos de dirección, el cambio no toca ningún voto de validación: no hay nada que medir con el pinball. Es una
+regla de coherencia (el mismo cargo da la misma banda), coherente con el glosario aprobado. **Se adopta.**

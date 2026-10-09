@@ -429,6 +429,9 @@ class Motor:
         # referencia no cambia. `TAMANO=no` vuelve a D-018. Necesita una base con `ajuste_tam` (v26 o mas nueva).
         self.base.tamano_estandar = (os.environ.get("TAMANO", "si").lower() != "no"
                                      and getattr(self.base, "ajuste_tam", None) is not None)
+        # D-064: en el candado de idioma, `CHIEF EXECUTIVE OFFICER` se lee como `GENERAL MANAGER` (glosario) y no
+        # como un ejecutivo de nivel 1: el mismo cargo que `CEO`. `CANDADO_GLOSARIO=no` lo apaga.
+        self.base.candado_glosario = os.environ.get("CANDADO_GLOSARIO", "si").lower() != "no"
         if self.base.traductor is None or os.environ.get("IDIOMA_PRIMA", "no").lower() != "si":
             self.base.idioma_prima = None
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
