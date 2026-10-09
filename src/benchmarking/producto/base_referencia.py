@@ -1233,7 +1233,7 @@ class BaseReferencia:
         ok = {}
         for t, v in out.items():
             c = str(self.celdas[v[0]])
-            na, nb = nivel_rubrica(t), nivel_rubrica(c)
+            na, nb = nivel_rubrica(self._titulo_para_candado(t)), nivel_rubrica(c)
             if ((na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c)
                     or not compatibles(t, c)):
                 continue
@@ -1243,6 +1243,37 @@ class BaseReferencia:
             dest = np.random.default_rng(5).permutation([ok[t][0] for t in ts])
             ok = {t: (int(d),) + ok[t][1:] for t, d in zip(ts, dest)}
         return ok
+
+    def _titulo_para_candado(self, t):
+        """D-062: el titulo cuyo nivel de rubrica se compara en el candado de idioma. Con `idioma_por_traduccion`,
+        si el glosario cambia la CABEZA del titulo (`CHIEF EXECUTIVE OFFICER` -> `GENERAL MANAGER`) se lee el
+        nivel despues del glosario: si no, `EXECUTIVE` contaba como ejecutivo (nivel 1). Un complemento
+        (`EXECUTIVE ASSISTANT TO THE CEO`) no cambia la cabeza y el titulo queda tal cual."""
+        tr = getattr(self, "traductor", None)
+        activo = getattr(self, "idioma_por_traduccion", False) or getattr(self, "candado_glosario", False)
+        if not activo or tr is None or not getattr(tr, "glosario", None):
+            return t
+        from .idioma import aplicar_glosario
+        g = aplicar_glosario(t, tr.glosario)
+        return g if g.split()[:1] != str(t).upper().split()[:1] else t
+
+    def _buscados(self, unicos, X_por_etiqueta):
+        """D-062: el texto con que se BUSCA cada titulo. Con `idioma_por_traduccion` (y el mismo cargo = la misma
+        banda, `idioma_sueldo == "siempre"`), un titulo en ingles se busca por su traduccion si esta embebida:
+        vecinos, nivel de la consulta, juez y seniority. `idioma_por_traduccion_placebo` (solo para medir) le da a
+        cada titulo en ingles la traduccion de OTRO."""
+        tr = getattr(self, "traductor", None)
+        if (not getattr(self, "idioma_por_traduccion", False) or tr is None
+                or getattr(self, "idioma_sueldo", False) != "siempre"):
+            return list(unicos)
+        from .idioma import es_ingles
+        ing = [t for t in unicos if es_ingles(t)]
+        trad = tr.traducir(ing) if ing else {}
+        par = {t: trad[t] for t in ing if trad.get(t) and trad[t] != t and trad[t] in X_por_etiqueta}
+        if getattr(self, "idioma_por_traduccion_placebo", False) and len(par) > 1:
+            ks = sorted(par)
+            par = dict(zip(ks, np.random.default_rng(6).permutation([par[k] for k in ks])))
+        return [par.get(t, t) for t in unicos]
 
     def estimar_prima_idioma(self, X_por_etiqueta, min_pares=20):
         """D-055: la prima del titulo en ingles, `m(ingles) - m(su equivalente en espanol)`, sobre los
@@ -1426,6 +1457,9 @@ class BaseReferencia:
             pri_k=np.array([(-1 if k == "global" else int(k)) for k in (getattr(self, "idioma_prima", None) or {})], dtype=np.int64),
             pri_v=np.array([v for v in (getattr(self, "idioma_prima", None) or {}).values()], dtype=float).reshape(-1, 2),
             esc_v=np.array([self.escala_banda[k] for k in sorted(self.escala_banda)], dtype=float),
+            # D-063: el tamano por nivel (corrimiento estandarizado por grupo y efecto por nivel x segmento)
+            **({} if getattr(self, "ajuste_tam", None) is None else
+               dict(tam_aj=np.asarray(self.ajuste_tam, dtype=float), tam_delta=np.asarray(self.delta_tam, dtype=float))),
             **({} if self.clf_nivel is None else
                dict(clf_W=self.clf_nivel[0], clf_b=self.clf_nivel[1], clf_k=self.clf_nivel[2])))
 
@@ -1482,6 +1516,8 @@ class BaseReferencia:
             if "sen_k" in z.files and len(z["sen_k"]):
                 base.efecto_sen = {(int(k) if float(k).is_integer() else float(k)): float(v)
                                    for k, v in zip(z["sen_k"], z["sen_v"])}
+            if "tam_aj" in z.files:
+                base.ajuste_tam, base.delta_tam = np.asarray(z["tam_aj"], float), np.asarray(z["tam_delta"], float)
             if "pri_k" in z.files and len(z["pri_k"]):
                 base.idioma_prima = {("global" if int(k) == -1 else int(k)): (float(v[0]), float(v[1]))
                                      for k, v in zip(z["pri_k"], z["pri_v"])}
@@ -1535,6 +1571,55 @@ class BaseReferencia:
         if nuevo:
             self.nivel = np.array([nuevo.get(int(g), n) for g, n in zip(self.grupo, self.nivel)], dtype=float)
         return n_des, n_cambia
+
+    def estandarizar_tamano(self, marco, col="cargo_norm", vueltas=3, min_emp=3, min_votos=30, min_grupo=5,
+                            placebo=False):
+        """D-063: el efecto del tamano de empresa POR NIVEL del cargo, y el centro de cada grupo estandarizado.
+
+        Votos = mediana de `y` por (grupo, empresa), solo empresas con segmento. Se alterna
+        `m*_g` = mediana de `voto - delta(L, s)` y `delta(L, s)` = mediana de `voto - m*_g` en el nivel `L` y el
+        segmento `s` (>= `min_votos`; si no, 0), centrado para que su promedio sobre los votos del nivel sea 0.
+        `delta` sale solo de los grupos con >= `min_grupo` empresas: en uno de una empresa el residuo es 0 por
+        construccion, y esos ceros arrastraban la mediana a 0 (corregido antes de ver resultados).
+        `ajuste_tam` (por celda) = `m*_g - mediana(voto)` del grupo, en los grupos con >= `min_emp` empresas con
+        segmento; 0 en el resto. `delta_tam` [nivel 0..5, segmento]. `placebo` (solo para medir) permuta los
+        segmentos de `delta` dentro de cada nivel. Devuelve un resumen."""
+        d = marco[[col, "empresa_ruc", "segmento", "y"]].dropna(subset=["y"]).copy()
+        d["i"] = d[col].astype(str).map(self.idx)
+        d["k"] = d["segmento"].map(lambda v: SEGMENTOS.index(_norm_segmento(v)) if _norm_segmento(v) else -1)
+        d = d[d["i"].notna() & (d["k"] >= 0)]
+        d["g"] = self.grupo[d["i"].astype(int).to_numpy()]
+        v = d.groupby(["g", "empresa_ruc"], sort=False).agg(voto=("y", "median"), k=("k", "first"),
+                                                           i=("i", "first")).reset_index()
+        niv = self.nivel[v["i"].astype(int).to_numpy()]
+        v = v[np.isfinite(niv)].copy()
+        v["L"] = niv[np.isfinite(niv)].astype(int)
+        delta = np.zeros((6, len(SEGMENTOS)))
+        for _ in range(vueltas):
+            v["r"] = v["voto"] - delta[v["L"].to_numpy(), v["k"].to_numpy()]
+            ms = v.groupby("g")["r"].median()
+            v["e"] = v["voto"] - v["g"].map(ms)
+            nuevo = np.zeros_like(delta)
+            grandes = v["g"].map(v.groupby("g").size()) >= min_grupo
+            for (lv, k), x in v[grandes].groupby(["L", "k"])["e"]:
+                if len(x) >= min_votos:
+                    nuevo[lv, k] = float(x.median())
+            for lv in range(6):
+                pesos = np.bincount(v.loc[grandes & (v["L"] == lv), "k"], minlength=len(SEGMENTOS)).astype(float)
+                if pesos.sum():
+                    nuevo[lv] -= float((pesos * nuevo[lv]).sum() / pesos.sum())
+            delta = nuevo
+        v["r"] = v["voto"] - delta[v["L"].to_numpy(), v["k"].to_numpy()]
+        cuenta = v.groupby("g").size()
+        corr = (v.groupby("g")["r"].median() - v.groupby("g")["voto"].median())[cuenta >= min_emp]
+        self.ajuste_tam = np.nan_to_num(pd.Series(self.grupo).map(corr).to_numpy(float))
+        if placebo:
+            rng = np.random.default_rng(16)
+            delta = np.vstack([fila[rng.permutation(len(fila))] for fila in delta])
+        self.delta_tam = delta
+        return {"votos": len(v), "grupos_corridos": int(len(corr)),
+                "corrimiento_mediano_abs": float(np.median(np.abs(corr))) if len(corr) else 0.0,
+                "delta": {lv: dict(zip(SEGMENTOS, np.round(delta[lv], 3))) for lv in range(1, 6)}}
 
     def coherencia_seniority(self, n0=10.0, min_familia=10, placebo=False, semilla=15, prima=None):
         """D-059: corre el centro y la banda de los grupos senior (y junior) hacia `base + prima tipica`,
@@ -1681,12 +1766,15 @@ class BaseReferencia:
             out = pd.DataFrame([dict(fila_vacia) for _ in titulos])
             out.insert(0, "cargo", titulos)
             return out
-        Q = np.vstack([X_por_etiqueta[t] for t in unicos]).astype(float)
+        buscados = self._buscados(unicos, X_por_etiqueta)
+        Q = np.vstack([X_por_etiqueta[b] for b in buscados]).astype(float)
         Q /= np.linalg.norm(Q, axis=1, keepdims=True)
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
-        niv_consulta = self._nivel_consulta(unicos, Q)
-        asignado = (self._asignar_con_juez(unicos, vec, sim, niv_consulta)
+        niv_consulta = self._nivel_consulta(buscados, Q)
+        asignado = (self._asignar_con_juez(buscados, vec, sim, niv_consulta)
                     if getattr(self, "juez", None) is not None else {})
+        # `_asignar_con_juez` devuelve por texto buscado; se vuelve al titulo preguntado
+        asignado = {t: asignado[b] for t, b in zip(unicos, buscados) if b in asignado}
         idioma = self.resolver_idioma(unicos, X_por_etiqueta)
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None
@@ -1795,6 +1883,17 @@ class BaseReferencia:
                 if np.isfinite(qp).all():
                     banda_per = dict(zip(CUANTILES, qp))
                 mejor, directo_ok = 1.0, True
+                niv_tam = self.nivel[propio]
+                if (getattr(self, "tamano_estandar", False) and getattr(self, "ajuste_tam", None) is not None
+                        and (k_seg is not None or getattr(self, "tamano_sin_segmento", False))):
+                    # D-063: el centro de un mercado de composicion promedio; la banda se corre igual. Solo con el
+                    # tamano del cliente: sin el (C0) empeora el pinball y no se adopto
+                    a_t = float(self.ajuste_tam[propio])
+                    mu += a_t
+                    if banda is not None:
+                        banda = {q: x + a_t for q, x in banda.items()}
+                    if banda_per is not None:
+                        banda_per = {q: x + a_t for q, x in banda_per.items()}
             else:
                 j, s = vec[k], sim[k]
                 # Se descarta el GRUPO propio entero, no solo la etiqueta exacta. Si la
@@ -1824,7 +1923,7 @@ class BaseReferencia:
                     j, s = j[prim], s[prim]
                 j, s = j[:VECINOS], s[:VECINOS]
                 if getattr(self, "juez_vecinos", False) and getattr(self, "juez", None) is not None:
-                    pv = self.juez.P([(t, str(self.celdas[x])) for x in j])
+                    pv = self.juez.P([(buscados[k], str(self.celdas[x])) for x in j])
                     queda = pv >= P_JUEZ
                     if getattr(self, "juez_vecinos_placebo", False):
                         # PLACEBO: se queda la MISMA cantidad de vecinos, pero al azar
@@ -1895,7 +1994,7 @@ class BaseReferencia:
                 ef_sen = getattr(self, "efecto_sen", None)
                 if ef_sen:
                     # D-060: el escalon de seniority (medido dentro de la empresa), aparte del de nivel
-                    s_q = seniority_lexica(t)
+                    s_q = seniority_lexica(buscados[k])
                     if getattr(self, "efecto_sen_placebo", False):
                         rng_s = np.random.default_rng(abs(hash(t)) % (2 ** 32))
                         marcas, frec = zip(*self.frec_sen.items())
@@ -1904,6 +2003,10 @@ class BaseReferencia:
                         s_v = [seniority_lexica(str(self.celdas[x])) for x in j]
                     if s_q in ef_sen:
                         aj = aj + np.array([ef_sen[s_q] - ef_sen[sv] if sv in ef_sen else 0.0 for sv in s_v])
+                if (getattr(self, "tamano_estandar", False) and getattr(self, "ajuste_tam", None) is not None
+                        and (k_seg is not None or getattr(self, "tamano_sin_segmento", False))):
+                    aj = aj + self.ajuste_tam[j]           # D-063: vecinos ya estandarizados por tamano
+                niv_tam = mi
                 mu = float((peso * (self.m[j] + aj)).sum())
                 # Las dos partes NO se promedian igual. El error de medicion de cada
                 # vecino es independiente y se cancela al promediar (suma de peso^2). La
@@ -1963,7 +2066,16 @@ class BaseReferencia:
                 base, banda_de = "por traduccion", "modelo"
             # DESPLAZAMIENTO POR TAMANO. Mueve el centro y la banda entera; no reestima
             # la anchura, que esta medido que no mejora. Cero fuera de los cargos altos.
-            if k_seg is not None and propio is not None:
+            if (k_seg is not None and getattr(self, "tamano_estandar", False)
+                    and getattr(self, "delta_tam", None) is not None):
+                # D-063: el efecto del tamano del cliente segun el NIVEL del cargo; reemplaza a `ajuste_seg`
+                aj_seg = (float(self.delta_tam[int(niv_tam), k_seg])
+                          if niv_tam is not None and np.isfinite(niv_tam) else 0.0)
+                if aj_seg:
+                    mu += aj_seg
+                    banda = {q: v + aj_seg for q, v in banda.items()}
+                    banda_per = {q: v + aj_seg for q, v in banda_per.items()}
+            elif k_seg is not None and propio is not None:
                 aj_seg = float(self.ajuste_seg[propio, k_seg])
                 if aj_seg:
                     mu += aj_seg

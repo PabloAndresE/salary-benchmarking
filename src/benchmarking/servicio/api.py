@@ -424,6 +424,11 @@ class Motor:
         # en espanol: se usa el equivalente aunque el titulo en ingles tenga datos propios ("siempre").
         self.base.idioma_sueldo = ("siempre" if os.environ.get("IDIOMA_SUELDO", "siempre").lower() != "no"
                                    else False)
+        # D-063: con el tamano del cliente (`segmento`, o el del RUC), el efecto del tamano segun el NIVEL del
+        # cargo, para todos los cargos y tambien en la analogia; reemplaza a `ajuste_seg` (D-018). Sin tamano, la
+        # referencia no cambia. `TAMANO=no` vuelve a D-018. Necesita una base con `ajuste_tam` (v26 o mas nueva).
+        self.base.tamano_estandar = (os.environ.get("TAMANO", "si").lower() != "no"
+                                     and getattr(self.base, "ajuste_tam", None) is not None)
         if self.base.traductor is None or os.environ.get("IDIOMA_PRIMA", "no").lower() != "si":
             self.base.idioma_prima = None
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None

@@ -6772,3 +6772,52 @@ corrige: un defecto de localización, que el pinball de bandas anchas castiga po
   su pinball frente a (A) empeore con significancia.
 
 Se reporta, como descripción, cuántos `GERENTE DE X` de la lista quedan sobre `GERENTE GENERAL`, en cada variante.
+
+**Corrección de implementación de D-063 (2026-10-09, antes de ver resultados).** En la primera corrida, `δ(L, s)`
+salía 0 en los niveles 1–3. La causa: los grupos de una sola empresa tienen residuo 0 por construcción y
+arrastraban la mediana. Ahora `δ` se estima solo con grupos de ≥ 5 empresas con segmento. El corrimiento por grupo
+(≥ 3 empresas) no cambia. Las tres variantes con `tamano_estandar` se relanzaron antes de terminar; no se vio
+ningún pinball ni sesgo.
+
+### D-063, resultado: (C) se adopta, (C0) no (2026-10-09)
+
+Efecto del tamaño por nivel (`δ`, estimado con el entrenamiento), en log:
+
+| Nivel | MICRO | PEQUEÑA | MEDIANA | GRANDE |
+|---|---|---|---|---|
+| 1 | 0,00 | 0,00 | 0,00 | 0,00 |
+| 2 | −0,05 | −0,11 | −0,02 | +0,02 |
+| 3 | +0,05 | −0,06 | −0,05 | +0,02 |
+| 4 | 0,00 | −0,24 | −0,16 | +0,07 |
+| 5 | −0,57 | −0,46 | −0,15 | +0,16 |
+
+**Primaria: sesgo del centro en los niveles 4–5** (2.987 votos con segmento; mediana de voto − referencia):
+
+| Variante | MICRO | PEQUEÑA | MEDIANA | GRANDE | Recorrido |
+|---|---|---|---|---|---|
+| (A) sin tamaño | −0,5 % | −27,4 % | −12,5 % | +17,5 % | 44,9 pts |
+| (B) D-018 | −0,5 % | −14,8 % | −6,2 % | +10,3 % | 25,1 pts |
+| **(C)** | +19,8 % | **−4,2 %** | **−0,8 %** | **+8,3 %** | **24,0 pts** |
+| placebo | −7,9 % | −18,5 % | −0,2 % | +32,3 % | 50,8 pts |
+
+El recorrido de (C) es menor que el de (B) y el del placebo, con IC anchos ([5,4; 67,7]). Lo que lo infla es
+MICROEMPRESA (pocas, `δ` de −57 % en el nivel 5, que se pasa). Sin ella, el recorrido baja de 25,1 a 12,5 puntos.
+
+**Pinball:**
+
+| Comparación | Todos | Donde actúa |
+|---|---|---|
+| (C) frente a (B) | −0,00149 [−0,00216, −0,00077] | **−0,00468 [−0,00676, −0,00266]**, mejora (11.598 votos) |
+| placebo frente a (B) | — | +0,00490 [+0,00241, +0,00732], empeora |
+| (C) frente a (B), solo votos con segmento | — | −0,00831 [−0,01117, −0,00533] |
+| (C) frente a (A), solo votos con segmento | — | −0,00886 [−0,01203, −0,00530] |
+
+**(C) cumple los tres puntos del criterio: se adopta.**
+
+**(C0), sin tamaño**, frente a (A): +0,00248 [+0,00151, +0,00364] donde actúa, **empeora: no se adopta.** Corregir
+el centro hacia un mercado «de composición promedio» saca la referencia del mercado real de ese cargo.
+
+**En el producto:** el corrimiento por grupo y `δ` se aplican **solo cuando se conoce el tamaño del cliente**
+(`segmento`, o derivado del RUC). Sin tamaño la referencia es la de siempre: un `GERENTE DE TECNOLOGIA` está en
+empresas más grandes que el `GERENTE GENERAL` promedio, y la cifra global lo refleja. Para que los cargos altos
+tengan sentido entre sí, **hay que pedir el tamaño**.

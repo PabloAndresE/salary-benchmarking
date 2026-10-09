@@ -149,6 +149,12 @@ def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
     return k
 
 
+# D-062 y D-063: variantes sobre el producto vigente (v25: D-060 + D-061, con el k fijo)
+CON_TRAD = ("trad_base", "trad", "trad_placebo", "trad_candado")
+CON_TAM = ("tam_A", "tam_B", "tam_C", "tam_C0", "tam_C_placebo")
+PRODUCTO_V25 = CON_TRAD + CON_TAM
+
+
 def una_variante(nom, clusters):
     e41 = cargar("e41", "41_base_v16.py")
     mk = e41.cargar_marco()
@@ -178,7 +184,7 @@ def una_variante(nom, clusters):
     con_d054 = ("vecinos_grupo", "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                 "grados", "grados_placebo", "limpieza", "limpieza_placebo", "limpieza_siglas",
                 "limpieza_siglas_placebo", "coherencia", "coherencia_placebo", "seniority",
-                "seniority_placebo", "coherencia_intra", "coherencia_intra_placebo")
+                "seniority_placebo", "coherencia_intra", "coherencia_intra_placebo") + PRODUCTO_V25
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar")
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
@@ -259,14 +265,14 @@ def una_variante(nom, clusters):
     preparar(base)
     if nom in con_d054:                  # k FIJO, el de `nivel_v3` (anotado en D-053): aisla el cambio
         base.escala_banda = {"analogia": 0.6333673690668041, "directo": 0.9371366258107973}
-    if nom.startswith("seniority"):      # D-060: el escalon de seniority en la analogia
+    if nom.startswith("seniority") or nom in PRODUCTO_V25:      # D-060: el escalon de seniority en la analogia
         from benchmarking.producto.nivel import efecto_seniority, seniority_lexica
         base.efecto_sen = efecto_seniority(tr)
         marcas = [seniority_lexica(c) for c in base.celdas]
         base.frec_sen = {k: marcas.count(k) for k in base.efecto_sen}
         base.efecto_sen_placebo = nom.endswith("placebo")
         print("seniority: {}".format(base.efecto_sen), flush=True)
-    if nom.startswith("coherencia_intra"):   # D-061: la misma coherencia, con la prima de dentro de la empresa
+    if nom.startswith("coherencia_intra") or nom in PRODUCTO_V25:   # D-061: la misma coherencia, con la prima de dentro de la empresa
         from benchmarking.producto.nivel import efecto_seniority
         e_ = efecto_seniority(tr)
         print("coherencia_intra: {}".format(base.coherencia_seniority(
@@ -285,11 +291,49 @@ def una_variante(nom, clusters):
         k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar)
         print("escala de banda (particion interna): " + str(k), flush=True)
         base.escala_banda = k if nom != "calibra_inversa" else {t: 1.0 / x for t, x in k.items()}
+    if nom in CON_TRAD:                  # D-062: el mismo cargo = la misma banda; buscar por la traduccion
+        from benchmarking.producto import idioma
+        base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
+        base.idioma_sueldo = "siempre"
+        base.idioma_por_traduccion = nom in ("trad", "trad_placebo")
+        base.candado_glosario = nom == "trad_candado"     # D-062, solo el candado con el glosario
+        base.idioma_por_traduccion_placebo = nom == "trad_placebo"
+        for f in ("64_emb_traducciones.npz", "72_emb_traducciones.npz"):
+            et = np.load(SAL / f, allow_pickle=True)
+            emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
+    if nom in CON_TAM and nom not in ("tam_A", "tam_B"):     # D-063: el tamano por nivel
+        print("tamano: {}".format(base.estandarizar_tamano(tr, placebo=nom == "tam_C_placebo")), flush=True)
+        base.tamano_estandar = True
+        base.tamano_sin_segmento = True      # como se midio: (C0) y los votos sin segmento de (C) con el corrimiento
     cargos = sorted(set(v["cargo_norm"]))
     out = base.referenciar(cargos, emb).set_index("cargo")
-    perdida = pinball(v["voto"].to_numpy(float),
-                      out["p25_log"].reindex(v["cargo_norm"]).to_numpy(float),
-                      out["p75_log"].reindex(v["cargo_norm"]).to_numpy(float))
+    seg_v = np.array([""] * len(v), dtype=object)
+    if nom in CON_TAM:                   # el segmento (y el nivel) de cada voto, para el sesgo por segmento
+        from benchmarking.producto.base_referencia import SEGMENTOS, _norm_segmento
+        seg_e = ts.groupby("empresa_ruc")["segmento"].first().map(lambda x: _norm_segmento(x) or "")
+        seg_v = v["empresa_ruc"].map(seg_e).fillna("").to_numpy(object)
+        if nom in ("tam_B", "tam_C", "tam_C_placebo"):   # a cada voto, la banda del tamano de SU empresa
+            out = out.copy()
+            for sg in SEGMENTOS:
+                if not (seg_v == sg).any():
+                    continue
+                cs = sorted(set(v["cargo_norm"][seg_v == sg]))
+                o_s = base.referenciar(cs, emb, segmento=sg).set_index("cargo")
+                for c_ in ("referencia_log", "p10_log", "p25_log", "p75_log", "p90_log"):
+                    out[c_ + "_" + sg] = o_s[c_].reindex(out.index)
+        def col_v(c_):
+            x = out[c_].reindex(v["cargo_norm"]).to_numpy(float).copy()
+            for sg in SEGMENTOS:
+                if c_ + "_" + sg in out:
+                    m_ = seg_v == sg
+                    x[m_] = out[c_ + "_" + sg].reindex(v["cargo_norm"][m_]).to_numpy(float)
+            return x
+        votos_cols = {c_: col_v(c_) for c_ in ("referencia_log", "p10_log", "p25_log", "p75_log", "p90_log")}
+    else:
+        votos_cols = None
+    def por_voto(c_):
+        return votos_cols[c_] if votos_cols is not None else out[c_].reindex(v["cargo_norm"]).to_numpy(float)
+    perdida = pinball(v["voto"].to_numpy(float), por_voto("p25_log"), por_voto("p75_log"))
     directa = (out["base"].reindex(v["cargo_norm"]) == "datos directos").to_numpy()
     p_juez = (out["p_juez"].reindex(v["cargo_norm"]).to_numpy(float) if "p_juez" in out
               else np.full(len(v), np.nan))
@@ -302,8 +346,9 @@ def una_variante(nom, clusters):
                   "pinball": perdida, "directa": directa, "p_juez": p_juez,
                   # para la cobertura de las bandas (58): el voto y la banda que recibio
                   "voto": v["voto"].to_numpy(float),
-                  **{c: out[c].reindex(v["cargo_norm"]).to_numpy(float)
-                     for c in ("p10_log", "p25_log", "p75_log", "p90_log") if c in out},
+                  **{c: por_voto(c) for c in ("p10_log", "p25_log", "p75_log", "p90_log") if c in out},
+                  "referencia_log": por_voto("referencia_log"), "segmento": seg_v,
+                  "nivel": [float(base.nivel[base.idx[c]]) if c in base.idx else np.nan for c in v["cargo_norm"]],
                   "base": out["base"].reindex(v["cargo_norm"]).to_numpy(),
                   "confianza": out["confianza"].reindex(v["cargo_norm"]).to_numpy(),
                   "empresas_ref": out["empresas"].reindex(v["cargo_norm"]).to_numpy()}).to_parquet(
@@ -352,7 +397,7 @@ if __name__ == "__main__":
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",
                                            "seniority", "seniority_placebo", "coherencia_intra",
-                                           "coherencia_intra_placebo"])
+                                           "coherencia_intra_placebo", *PRODUCTO_V25])
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
