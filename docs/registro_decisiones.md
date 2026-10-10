@@ -7140,3 +7140,42 @@ El extremo superior pasa el margen de +0,001: **no cumple la no inferioridad, no
 acercar al azar, pero acercar el grupo chico al grande cuesta algo de precisión: los grupos chicos tienen pagos
 propios distintos. Los pares de la ronda 2 aprobados por el autor pasan al **buscador** (`sinonimos_v2`, uso de
 D-047, sin tocar las bandas).
+
+## D-071 — Los títulos en inglés con el mismo equivalente comparten una banda. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-10: «dale»). Con D-067 se ven tres bandas distintas para lo que es la misma gerencia
+general en inglés:
+
+| Título | Referencia | Respaldo |
+|---|---|---|
+| `MANAGING DIRECTOR` | $9.073 | 7 empresas, datos propios |
+| `GENERAL MANAGER` | $8.804 | 5 empresas, datos propios |
+| `CEO` | $4.366 | `GERENTE GENERAL` + prima (sus 5 empresas no llegan al mínimo de personas) |
+
+En toda la base hay 124 equivalentes en español con ≥ 2 títulos en inglés con datos.
+
+**Cambio** (`familia_ingles`). Los títulos en inglés **de la base** con datos directos cuya traducción se resuelve en
+el mismo grupo G forman la **familia en inglés de G**. Un título en inglés que se resuelve en G y cuya familia no
+está vacía (lo tenga o no a él) toma una sola banda:
+
+- **centro:** la media de los centros de la familia, ponderada por precisión (`W`);
+- **banda:** la del miembro con más empresas, corrida a ese centro;
+- **empresas:** la suma de las de la familia.
+
+Si la familia está vacía, sigue D-067 (equivalente más prima). El equivalente en español (`GERENTE GENERAL`) no
+cambia: entre idiomas la diferencia es la prima, mostrada aparte.
+
+**Medición:** frente a `prima` (el producto de D-067), con la familia armada solo con el entrenamiento. Placebo:
+las familias permutadas, de modo que cada título toma la familia de **otro** equivalente que tiene familia.
+**Criterio:** regla de producto (no inferior, protocolo v2). Se reporta la variante frente al placebo.
+
+## D-072 — Sinónimos: se muestra el del grupo grande, sin cambiar la cifra (presentación)
+
+**Por qué:** D-070 (acercar la cifra al grupo grande) no pasó. Pero que `JEFE DE RRHH` ($1.229, 29 empresas) y
+`JEFE DE RECURSOS HUMANOS` ($1.538, 198 empresas) salgan sin relación confunde al cliente.
+
+**Cambio:** si el título consultado tiene sinónimos aprobados (rondas 1 y 2 y reglas de palabras de D-070) y alguno
+tiene **más empresas**, la respuesta trae `sinonimo_principal`, con el cargo, su referencia, su rango y sus
+empresas. La cifra del cargo consultado no cambia.
+
+**Medición:** no cambia ninguna banda, así que no hay pinball. Se verifica con tests y con la lista.
