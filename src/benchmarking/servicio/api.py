@@ -272,6 +272,8 @@ def _estado(fila) -> str:
     """
     if str(fila.get("base", "") or "") == "sin cargo":
         return "cargo_vacio"
+    if str(fila.get("base", "") or "") == "no reconocido":
+        return "cargo_no_reconocido"          # D-075: lo escrito no es un cargo; sin cifra
     lect = str(fila.get("lectura_mercado", "") or "")
     if lect == "sueldo ilegible":
         return "sueldo_ilegible"
@@ -283,6 +285,8 @@ def _estado(fila) -> str:
         return "directa_rubro"
     if base == "datos directos":
         return "directa"
+    if base == "por traduccion":
+        return "traduccion"                   # D-067: equivalente en espanol + prima del ingles
     return "analogia"
 
 
@@ -437,6 +441,10 @@ class Motor:
         self.base.tipeo = os.environ.get("TIPEO", "si").lower() != "no"
         # D-069: la confianza tambien depende del ancho de la banda (`CONFIANZA_ANCHO=no` vuelve a la anterior)
         self.base.confianza_ancho = os.environ.get("CONFIANZA_ANCHO", "si").lower() != "no"
+        # D-075: lo que no es un cargo (`ASDFGH`, `ASTRONAUTA`) se responde `no reconocido`, sin cifra. Necesita una
+        # base con el clasificador (v28 o mas nueva). `FILTRO_CARGO=no` lo apaga.
+        self.base.filtro_cargo = (os.environ.get("FILTRO_CARGO", "si").lower() != "no"
+                                  and getattr(self.base, "clf_cargo", None) is not None)
         # D-063: con el tamano del cliente (`segmento`, o el del RUC), el efecto del tamano segun el NIVEL del
         # cargo, para todos los cargos y tambien en la analogia; reemplaza a `ajuste_seg` (D-018). Sin tamano, la
         # referencia no cambia. `TAMANO=no` vuelve a D-018. Necesita una base con `ajuste_tam` (v26 o mas nueva).

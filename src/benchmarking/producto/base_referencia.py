@@ -1273,6 +1273,13 @@ class BaseReferencia:
         return {"equivalentes": len(fam), "con_2_o_mas": sum(len(x) >= 2 for x in fam.values()),
                 "titulos": sum(len(x) for x in fam.values())}
 
+    def _p_no_cargo(self, z):
+        """D-075: P(no es un cargo) del clasificador sobre el embedding normalizado."""
+        W, b, _ = self.clf_cargo
+        z = np.asarray(z, float)
+        z = z / np.linalg.norm(z)
+        return float(1.0 / (1.0 + np.exp(-(z @ np.asarray(W, float) + float(b)))))
+
     def _parece_cargo(self, t):
         """D-073: alguna palabra del titulo encabeza >= `FILTRO_CABEZA` titulos de la base, aparece en >=
         `FILTRO_PALABRA` titulos, o es palabra de rango (espanol o ingles)."""
@@ -1522,6 +1529,10 @@ class BaseReferencia:
             pri_k=np.array([(-1 if k == "global" else int(k)) for k in (getattr(self, "idioma_prima", None) or {})], dtype=np.int64),
             pri_v=np.array([v for v in (getattr(self, "idioma_prima", None) or {}).values()], dtype=float).reshape(-1, 2),
             esc_v=np.array([self.escala_banda[k] for k in sorted(self.escala_banda)], dtype=float),
+            # D-075: el clasificador «es un cargo» (pesos, sesgo, umbral)
+            **({} if getattr(self, "clf_cargo", None) is None else
+               dict(cc_W=np.asarray(self.clf_cargo[0], float), cc_b=np.array(float(self.clf_cargo[1])),
+                    cc_u=np.array(float(self.clf_cargo[2])))),
             # D-063: el tamano por nivel (corrimiento estandarizado por grupo y efecto por nivel x segmento)
             **({} if getattr(self, "ajuste_tam", None) is None else
                dict(tam_aj=np.asarray(self.ajuste_tam, dtype=float), tam_delta=np.asarray(self.delta_tam, dtype=float))),
@@ -1581,6 +1592,8 @@ class BaseReferencia:
             if "sen_k" in z.files and len(z["sen_k"]):
                 base.efecto_sen = {(int(k) if float(k).is_integer() else float(k)): float(v)
                                    for k, v in zip(z["sen_k"], z["sen_v"])}
+            if "cc_W" in z.files:
+                base.clf_cargo = (np.asarray(z["cc_W"], float), float(z["cc_b"]), float(z["cc_u"]))
             if "tam_aj" in z.files:
                 base.ajuste_tam, base.delta_tam = np.asarray(z["tam_aj"], float), np.asarray(z["tam_delta"], float)
             if "pri_k" in z.files and len(z["pri_k"]):
@@ -2306,10 +2319,12 @@ class BaseReferencia:
                                           else np.nan),
                         "similitud": round(mejor, 3),
                         "reconocido": True}
-            if (base == "por analogia" and getattr(self, "filtro_cargo", False)
-                    and not self._parece_cargo(buscados[k]) and mejor < FILTRO_SIMILITUD):
-                # D-073: ni se encontro por ninguna via, ni tiene palabras de cargo, ni se parece lo bastante a la
-                # base: no se reconoce y NO se da cifra (`ASDFGH QWERTY`, `ASTRONAUTA`)
+            clf_c = getattr(self, "clf_cargo", None)
+            if base == "por analogia" and getattr(self, "filtro_cargo", False) and (
+                    (clf_c is not None and self._p_no_cargo(Q[k]) >= clf_c[2])
+                    or (clf_c is None and not self._parece_cargo(buscados[k]) and mejor < FILTRO_SIMILITUD)):
+                # D-075: no se encontro por ninguna via y el clasificador dice que no es un cargo (`ASDFGH QWERTY`,
+                # `ASTRONAUTA`): no se reconoce y NO se da cifra. Sin clasificador, la regla de D-073 (no adoptada)
                 fl = filas[t]
                 for c_ in list(fl):
                     if c_.endswith("_log") or c_ in ("sd", "sd_modelo", "ancho_rel", "incert_centro"):

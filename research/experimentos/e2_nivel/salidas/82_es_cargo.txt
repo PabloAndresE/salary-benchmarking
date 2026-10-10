@@ -1,0 +1,137 @@
+82 · CLASIFICADOR ES-CARGO (D-075)
+positivos (titulos de entrenamiento) 42,947; negativos 6,832 (entrenar 5,465, apartar 1,367)
+umbral u = 0.7745 (percentil 98 de P(no cargo) en votos reales por analogia)
+votos reales por analogia rechazados: 2.00%; de todos los votos: 0.72%
+negativos apartados (20 %) rechazados: 94.1%
+reales rechazados (ejemplos): ['PILOTO HELICOPTERO', 'SPEEDBOAT', 'LIMPIEZA PC', 'LIMPIEZA MALL', 'SAN PATRICIO RIEGOS', 'OVS EMPAQUE', 'OVS LAVADOR BINS/GABETAS', 'OVS CORTE', 'OVS L4', 'OVS SILEX', 'SIEMBRA', 'FUMIGACION', 'DESBOTONE', 'CAFE', 'MALLAS', 'PATRONES', 'LILIES', 'ATALAJE', 'SACA ESPINA', 'SACA GRASA', 'DESCONGELAMIENTO', 'EVACUACION', 'PORCIONES', 'PEON CT. PRODUC', 'CUIDADO Y LIMPIEZA']
+
+CONFIRMACION (una sola vez), umbral u = 0.7745
+TERCERA LISTA (confirmacion): rechazados 36 de 40 (90%)
+   ZXCVBN                     P(no cargo) 0.996 RECHAZADO
+   POIUYT                     P(no cargo) 0.987 RECHAZADO
+   ABCDEF                     P(no cargo) 0.986 RECHAZADO
+   999                        P(no cargo) 0.994 RECHAZADO
+   XYZ 123                    P(no cargo) 0.995 RECHAZADO
+   OTRA COSA                  P(no cargo) 0.968 RECHAZADO
+   NO SE                      P(no cargo) 0.991 RECHAZADO
+   NI IDEA                    P(no cargo) 0.898 RECHAZADO
+   LO QUE SEA                 P(no cargo) 0.989 RECHAZADO
+   NADA                       P(no cargo) 0.974 RECHAZADO
+   PERSONA                    P(no cargo) 0.824 RECHAZADO
+   ALGUIEN                    P(no cargo) 0.963 RECHAZADO
+   JIRAFA                     P(no cargo) 0.969 RECHAZADO
+   LEON MARINO                P(no cargo) 0.990 RECHAZADO
+   PINGUINO                   P(no cargo) 0.986 RECHAZADO
+   MARIPOSA                   P(no cargo) 0.947 RECHAZADO
+   PAPAYA                     P(no cargo) 0.967 RECHAZADO
+   ARROZ CON POLLO            P(no cargo) 0.997 RECHAZADO
+   EMPANADA                   P(no cargo) 0.899 RECHAZADO
+   HELADO DE FRESA            P(no cargo) 0.994 RECHAZADO
+   CAMA                       P(no cargo) 0.908 RECHAZADO
+   ESPEJO                     P(no cargo) 0.939 RECHAZADO
+   TELEVISOR                  P(no cargo) 0.979 RECHAZADO
+   BICICLETA                  P(no cargo) 0.998 RECHAZADO
+   OCEANO                     P(no cargo) 0.941 RECHAZADO
+   VOLCAN                     P(no cargo) 0.989 RECHAZADO
+   ARCOIRIS                   P(no cargo) 0.974 RECHAZADO
+   FANTASMA                   P(no cargo) 0.995 RECHAZADO
+   BRUJA                      P(no cargo) 0.995 RECHAZADO
+   ROBOT ASESINO              P(no cargo) 0.564 
+   ALIEN                      P(no cargo) 0.995 RECHAZADO
+   CABALLERO JEDI             P(no cargo) 0.714 
+   THE CAT IS ON THE TABLE    P(no cargo) 1.000 RECHAZADO
+   MY NAME IS JOHN            P(no cargo) 0.996 RECHAZADO
+   GOOD MORNING               P(no cargo) 1.000 RECHAZADO
+   LOREM DOLOR                P(no cargo) 0.986 RECHAZADO
+   MMMM                       P(no cargo) 0.997 RECHAZADO
+   QQQQ                       P(no cargo) 0.996 RECHAZADO
+   CARGO 1                    P(no cargo) 0.757 
+   TITULO DEL PUESTO          P(no cargo) 0.015 
+lista vieja (vista): rechazados 29 de 30 (97%)
+   ASDFGH QWERTY              P(no cargo) 0.993 RECHAZADO
+   XXXXX                      P(no cargo) 0.992 RECHAZADO
+   AAAA BBBB                  P(no cargo) 0.985 RECHAZADO
+   123456                     P(no cargo) 0.992 RECHAZADO
+   LOREM IPSUM                P(no cargo) 0.993 RECHAZADO
+   TEST                       P(no cargo) 0.989 RECHAZADO
+   PRUEBA PRUEBA              P(no cargo) 0.978 RECHAZADO
+   NINGUNO                    P(no cargo) 0.996 RECHAZADO
+   N/A                        P(no cargo) 0.982 RECHAZADO
+   HOLA MUNDO                 P(no cargo) 0.998 RECHAZADO
+   ASTRONAUTA                 P(no cargo) 0.825 RECHAZADO
+   DOMADOR DE LEONES          P(no cargo) 0.397 
+   MAGO                       P(no cargo) 0.991 RECHAZADO
+   UNICORNIO                  P(no cargo) 0.981 RECHAZADO
+   PIRATA                     P(no cargo) 0.982 RECHAZADO
+   VAMPIRO                    P(no cargo) 0.985 RECHAZADO
+   SUPERHEROE                 P(no cargo) 0.994 RECHAZADO
+   DRAGON                     P(no cargo) 0.999 RECHAZADO
+   ZZZZ                       P(no cargo) 1.000 RECHAZADO
+   QWERTYUIOP                 P(no cargo) 0.995 RECHAZADO
+   MESA                       P(no cargo) 0.947 RECHAZADO
+   SILLA                      P(no cargo) 0.991 RECHAZADO
+   PERRO                      P(no cargo) 0.955 RECHAZADO
+   GATO                       P(no cargo) 0.988 RECHAZADO
+   PIZZA                      P(no cargo) 0.996 RECHAZADO
+   FUTBOL                     P(no cargo) 0.993 RECHAZADO
+   BANANA                     P(no cargo) 0.998 RECHAZADO
+   CIELO AZUL                 P(no cargo) 0.999 RECHAZADO
+   JKLÑ                       P(no cargo) 0.993 RECHAZADO
+   ????                       P(no cargo) 0.995 RECHAZADO
+lista nueva de D-073 (vista): rechazados 40 de 40 (100%)
+   QWERASDF                   P(no cargo) 0.946 RECHAZADO
+   JJJJJ                      P(no cargo) 0.996 RECHAZADO
+   ABC123                     P(no cargo) 0.997 RECHAZADO
+   0000                       P(no cargo) 0.994 RECHAZADO
+   PALABRA                    P(no cargo) 0.984 RECHAZADO
+   COSA                       P(no cargo) 0.846 RECHAZADO
+   NADA QUE VER               P(no cargo) 0.999 RECHAZADO
+   HOLA COMO ESTAS            P(no cargo) 0.998 RECHAZADO
+   BUENOS DIAS                P(no cargo) 0.998 RECHAZADO
+   SIN CARGO                  P(no cargo) 0.989 RECHAZADO
+   NO APLICA                  P(no cargo) 0.988 RECHAZADO
+   XXX YYY                    P(no cargo) 0.994 RECHAZADO
+   ELEFANTE                   P(no cargo) 0.902 RECHAZADO
+   CABALLO                    P(no cargo) 0.989 RECHAZADO
+   TORTUGA                    P(no cargo) 0.988 RECHAZADO
+   MANZANA                    P(no cargo) 0.950 RECHAZADO
+   HAMBURGUESA                P(no cargo) 0.804 RECHAZADO
+   CAFE CON LECHE             P(no cargo) 0.992 RECHAZADO
+   SOFA                       P(no cargo) 0.995 RECHAZADO
+   VENTANA                    P(no cargo) 0.936 RECHAZADO
+   LAPIZ                      P(no cargo) 0.989 RECHAZADO
+   MONTANA                    P(no cargo) 0.988 RECHAZADO
+   PLAYA                      P(no cargo) 0.980 RECHAZADO
+   LUNA                       P(no cargo) 1.000 RECHAZADO
+   ESTRELLA FUGAZ             P(no cargo) 0.976 RECHAZADO
+   ZOMBIE                     P(no cargo) 0.998 RECHAZADO
+   HADA MADRINA               P(no cargo) 0.967 RECHAZADO
+   MAGO DE OZ                 P(no cargo) 0.996 RECHAZADO
+   DINOSAURIO                 P(no cargo) 0.973 RECHAZADO
+   NAVE ESPACIAL              P(no cargo) 0.948 RECHAZADO
+   THE QUICK BROWN FOX        P(no cargo) 0.999 RECHAZADO
+   I LOVE PIZZA               P(no cargo) 0.997 RECHAZADO
+   HELLO WORLD                P(no cargo) 0.999 RECHAZADO
+   BLAH BLAH                  P(no cargo) 1.000 RECHAZADO
+   ASDASD                     P(no cargo) 0.929 RECHAZADO
+   KJHKJH                     P(no cargo) 0.983 RECHAZADO
+   LALALA                     P(no cargo) 0.996 RECHAZADO
+   PRUEBA 123                 P(no cargo) 0.983 RECHAZADO
+   CARGO X                    P(no cargo) 0.966 RECHAZADO
+   NOMBRE APELLIDO            P(no cargo) 0.922 RECHAZADO
+controles reales: rechazados 0 de 14 (0%)
+   CONTADOR GENERAL           P(no cargo) 0.023 
+   PRODUCT DESIGNER UX/UI     P(no cargo) 0.067 
+   AI DEVELOPER               P(no cargo) 0.131 
+   HEAD OF AI                 P(no cargo) 0.126 
+   CX SPECIALIST              P(no cargo) 0.026 
+   ADIESTRADOR CANINO         P(no cargo) 0.070 
+   SOMMELIER                  P(no cargo) 0.297 
+   PILOTO DE DRON             P(no cargo) 0.746 
+   CIENTIFICO DE DATOS        P(no cargo) 0.165 
+   CELADOR                    P(no cargo) 0.358 
+   SALVAVIDAS                 P(no cargo) 0.567 
+   SIFONERO                   P(no cargo) 0.763 
+   SELLER                     P(no cargo) 0.524 
+   FUNCIONARIO 1              P(no cargo) 0.031 
+CRITERIO (>= 80 % de la tercera lista): CUMPLE

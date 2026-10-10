@@ -73,3 +73,12 @@ Mostrar: «Interpretamos **Contador General**».
 
 Medido con empresas apartadas, la referencia de un cargo ALTA está a una mediana de ~16 % de lo que paga cada
 empresa; en MEDIA y BAJA, a ~33 %.
+
+## Cargos no reconocidos (D-075, desde 2026-10-10)
+
+Si lo escrito no es un cargo (`asdfgh`, `astronauta`, `perro`), la respuesta trae `base = "no reconocido"` y **sin
+cifra** (`referencia` y el rango en `null`). En los informes, la fila sale con `estado = "cargo_no_reconocido"`.
+Mostrar: «No reconocemos este cargo. Revisa cómo está escrito» y las sugerencias de `/puestos`.
+
+Estados de una fila del informe: `directa`, `directa_rubro`, `traduccion` (cargo en inglés por su equivalente
+más la prima), `analogia`, `cargo_no_reconocido`, `cargo_vacio`, `sueldo_ilegible`, `sin_referencia`.

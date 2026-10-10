@@ -7313,3 +7313,28 @@ reportan también:
 - las listas vieja y nueva (ya vistas);
 - el 20 % de negativos apartados;
 - los 10 controles reales.
+
+### D-075, resultado: cumple, se adopta (2026-10-10)
+
+**Datos:** negativos generados con Qwen: 6.903 en 41 categorías (6.832 después de quitar los títulos de la base y la
+tercera lista). Positivos: 42.947 títulos de entrenamiento.
+
+**Diseño:** `u = 0,7745` (percentil 98 de los reales por analogía). Rechaza el 2,00 % de los votos reales por
+analogía (0,72 % de todos) y el **94,1 %** de los negativos apartados. Los reales rechazados son sobre todo
+actividades y códigos: `SIEMBRA`, `FUMIGACION`, `OVS L4`, `DESCONGELAMIENTO`.
+
+**Confirmación, una sola vez, con la tercera lista: 36 de 40 (90 %), cumple (≥ 80 %).**
+
+- **Se escapan:** `ROBOT ASESINO`, `CABALLERO JEDI`, `CARGO 1`, `TITULO DEL PUESTO`.
+- **Listas ya vistas:** la vieja, 29 de 30 (97 %); la nueva de D-073, 40 de 40.
+- **Controles reales:** **0 de 14 rechazados** (`CELADOR`, `SALVAVIDAS`, `SIFONERO`, `SELLER`, `ADIESTRADOR CANINO`,
+  `SOMMELIER`, `PILOTO DE DRON`…).
+
+**Se adopta.**
+
+**Producto:**
+
+- `demo/base_v28.npz` = la v27 más el clasificador medido (`cc_W`, `cc_b`, `cc_u`).
+- La API lo usa por defecto (`FILTRO_CARGO=no` lo apaga).
+- Lo que no es cargo sale `no reconocido`, sin cifra; en el informe, con `estado = cargo_no_reconocido`.
+- `PIZZA` sigue respondiendo, porque es un título con datos en la base.
