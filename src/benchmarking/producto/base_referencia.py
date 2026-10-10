@@ -403,6 +403,9 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
 # volver a intentarlo hay que declarar antes cual es la primaria correcta y por que.
 # D-073: filtro de «no reconocido» (fijado con el conjunto de diseno; confirmado con una lista nueva)
 FILTRO_CABEZA, FILTRO_PALABRA, FILTRO_SIMILITUD = 3, 20, 0.85
+# D-074: los conectores no cuentan como palabra de cargo
+CONECTORES_FILTRO = frozenset("""DE DEL LA LAS LOS EL Y E EN PARA CON AL POR A QUE SIN NO O U SU MI TU OF AND THE FOR
+TO WITH IN AT ON BY AN I MY YOUR IS ARE""".split())
 # D-069: cortes del ancho de la banda entregada (p75 / p25) para la confianza
 CONF_ANCHO_ALTA, CONF_ANCHO_BAJA = 2.0, 3.0
 # D-064: las siglas de cargos de direccion del glosario, cuyo nivel se lee despues del glosario en el candado
@@ -1284,7 +1287,7 @@ class BaseReferencia:
                     pal.update(set(ws))
             self._palabras_cargo_ = ({w for w, n in cab.items() if n >= FILTRO_CABEZA}
                                      | {w for w, n in pal.items() if n >= FILTRO_PALABRA}
-                                     | set(RANGOS_RUBRICA) | set(PALABRAS_EN))
+                                     | set(RANGOS_RUBRICA) | set(PALABRAS_EN)) - CONECTORES_FILTRO
         return any(w in self._palabras_cargo_ for w in re.findall(r"[A-Z]+", str(t).upper()))
 
     def _corrector(self):

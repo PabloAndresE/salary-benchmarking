@@ -7269,3 +7269,14 @@ de reales. **Si supera el 2 % por analogía, no se adopta.**
 
 **Criterio:** rechaza ≥ 80 % de la tercera lista **y** ≤ 2 % de los votos reales por analogía en el diseño. Se
 reportan también los controles reales.
+
+### D-074, resultado: no se adopta, falla en el diseño (2026-10-10)
+
+Sin contar los conectores se rechaza el **2,29 %** de los votos reales por analogía (318 votos; 0,83 % de todos).
+Supera el 2 %: **no se adopta.** No se corre la confirmación, y la tercera lista queda **sin usar**.
+
+Entre los rechazados hay cargos reales y raros (`CELADOR`, `SALVAVIDAS`, `SIFONERO`, `SELLER`, `FUNCIONARIO 1`).
+
+**Conclusión de D-068 b, D-073 y D-074:** con estadísticas de palabras y la similitud de Vertex no se puede separar
+la basura de los cargos reales poco frecuentes con ≥ 80 % y ≤ 2 % a la vez. El filtro (`filtro_cargo`) queda en el
+código, **apagado**.
