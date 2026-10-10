@@ -7338,3 +7338,35 @@ actividades y códigos: `SIEMBRA`, `FUMIGACION`, `OVS L4`, `DESCONGELAMIENTO`.
 - La API lo usa por defecto (`FILTRO_CARGO=no` lo apaga).
 - Lo que no es cargo sale `no reconocido`, sin cifra; en el informe, con `estado = cargo_no_reconocido`.
 - `PIZZA` sigue respondiendo, porque es un título con datos en la base.
+
+## D-076 — Gerente general «de empresas con estructura». Registrado antes de medir
+
+**Por qué** (revisión del producto, 2026-10-10). En las 441 empresas que tienen gerente general (GG) y gerentes de
+área, el GG gana **+40 %** sobre la mediana de sus gerentes de área (+70 % en GRANDE) y gana más en el 69 %. Pero la
+banda del GG mezcla 778 empresas, de las cuales 337 no tienen ningún gerente de área: ahí el GG gana 5,1 SBU, frente
+a 8,5 SBU donde sí los hay, y hay más dueños con el mínimo (13 % frente a 5 %). Por eso, con la cifra de mercado, los
+gerentes de área quedan sobre el GG, incluso con el tamaño de la empresa.
+
+**Cambio** (`cima_estructura`), solo en el grupo de `GERENTE GENERAL`:
+
+- **Empresas con estructura:** las que tienen ≥ 1 voto en **otro** grupo de nivel 5 (nivel por grupo).
+- **Banda:** sale de los votos de esas empresas, con los mismos cuantiles ponderados que la banda por rubro.
+- **Centro:** se corre por la diferencia entre la mediana ponderada con estructura y la de todas las empresas, ambas
+  con el mismo estimador.
+- **Respaldo:** `W`, empresas y personas se recalculan.
+- **Con tamaño:** el ajuste de D-063 se aplica encima, igual que hoy.
+
+**Medición:** frente a `prima` (el producto), con todo estimado con el entrenamiento. Placebo: se quita **al azar**
+el mismo número de empresas del GG que quita la regla. **Criterio:** mejora de precisión (protocolo v2).
+
+## D-077 — Regla de orden en la cima (respaldo si D-076 no pasa). Registrado antes de medir
+
+**Cambio** (`cima_orden`): `m_GG := max(m_GG, max_área + e_cima)`, y la banda se corre igual.
+
+- `max_área` es el centro más alto entre los grupos de nivel 5 con ≥ 10 empresas cuyo título empieza con
+  `GERENTE DE`.
+- `e_cima` es la mediana, dentro de la empresa, de `y(GG) − max(y de sus gerentes de área)`, con el entrenamiento
+  (≈ +0,10).
+
+**Medición:** frente a `prima`. Placebo: el mismo corrimiento aplicado a **otro** grupo de nivel 5 al azar.
+**Criterio:** regla de producto (no inferior, protocolo v2). **Solo se adopta si D-076 no se adopta.**
