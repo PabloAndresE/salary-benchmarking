@@ -13,3 +13,8 @@ sinon frente a tam_A (placebo sinon_placebo): union 8,736 votos, 1,178 empresas,
    placebo - producto   +0.00418 [+0.00237, +0.00623] (dos vias)  | media por empresa +0.00310
    variante - placebo   -0.00336 [-0.00556, -0.00170] (dos vias)  | media por empresa -0.00332
    CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+familia frente a prima (placebo familia_placebo): union 4,484 votos, 687 empresas, 4,153 cargos
+   variante - producto  +0.00035 [-0.00057, +0.00150] (dos vias)  | media por empresa +0.00015
+   placebo - producto   +0.01383 [+0.00803, +0.02101] (dos vias)  | media por empresa +0.00671
+   variante - placebo   -0.01348 [-0.02061, -0.00772] (dos vias)  | media por empresa -0.00656
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE

@@ -7179,3 +7179,22 @@ tiene **más empresas**, la respuesta trae `sinonimo_principal`, con el cargo, s
 empresas. La cifra del cargo consultado no cambia.
 
 **Medición:** no cambia ninguna banda, así que no hay pinball. Se verifica con tests y con la lista.
+
+### D-071, resultado: no se adopta (2026-10-10)
+
+Con el entrenamiento: 115 equivalentes con familia en inglés, 34 con ≥ 2 títulos (172 títulos). Unión de 4.484 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto (D-067) | +0,00035 | **[−0,00057, +0,00150]** |
+| Placebo − producto | +0,01383 | |
+| Variante − placebo | −0,01348 | [−0,02061, −0,00772] |
+
+El extremo superior pasa el margen de +0,001: **no se demuestra la no inferioridad, no se adopta.** Es mucho mejor
+que juntar al azar, y el punto está cerca de 0, pero con esta potencia no se puede descartar un costo mayor que el
+margen. `armar_familia_ingles` queda en el código, apagado: la API no lo llama.
+
+### D-072, implementado (2026-10-10)
+
+`/referencia` trae `sinonimo_principal` cuando un sinónimo aprobado tiene más empresas. Los sinónimos de la API
+suman ahora las reglas de palabras de D-070. Tests: `tests/test_servicio.py`.

@@ -153,7 +153,8 @@ def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
 CON_TRAD = ("trad_base", "trad", "trad_placebo", "trad_candado")
 CON_TAM = ("tam_A", "tam_B", "tam_C", "tam_C0", "tam_C_placebo")
 CON_ATIPICOS = ("atipicos", "atipicos_placebo")     # D-065: limpieza de votos atipicos (frente a tam_A)
-CON_V2 = ("prima", "prima_placebo", "tipeo", "tipeo_placebo", "sinon", "sinon_placebo")   # D-067, D-068, D-070
+CON_V2 = ("prima", "prima_placebo", "tipeo", "tipeo_placebo", "sinon", "sinon_placebo",   # D-067, D-068, D-070
+          "familia", "familia_placebo")                                                     # D-071
 PRODUCTO_V25 = CON_TRAD + CON_TAM + CON_ATIPICOS + CON_V2
 
 
@@ -324,7 +325,7 @@ def una_variante(nom, clusters):
         for f in ("64_emb_traducciones.npz", "72_emb_traducciones.npz"):
             et = np.load(SAL / f, allow_pickle=True)
             emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
-    if nom in ("prima", "prima_placebo"):   # D-067: equivalente + prima encogida por nivel (D-055 con n0 = 50)
+    if nom in ("prima", "prima_placebo", "familia", "familia_placebo"):   # D-067: equivalente + prima encogida
         from benchmarking.producto import idioma
         base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
         base.candado_glosario = True
@@ -334,6 +335,8 @@ def una_variante(nom, clusters):
         print("prima: {}".format(base.estimar_prima_idioma(emb, encoger=50)), flush=True)
         base.idioma_sueldo = True
         base.idioma_placebo = nom == "prima_placebo"
+        if nom in ("familia", "familia_placebo"):    # D-071: una banda por familia en ingles
+            print("familia: {}".format(base.armar_familia_ingles(emb, placebo=nom == "familia_placebo")), flush=True)
     if nom in ("tipeo", "tipeo_placebo"):   # D-068 (a)
         base.tipeo = True
         base.tipeo_placebo = nom == "tipeo_placebo"

@@ -767,3 +767,10 @@ def test_la_consulta_suelta_saca_el_tamano_del_RUC_o_avisa_que_no_puede(cliente)
     assert d["segmento_del_ruc"] is None and "padron" in d["aviso_segmento"]
     sin = cliente.get("/referencia", params={"cargo": "CONTADOR"}).json()
     assert "aviso_segmento" not in sin and "segmento_del_ruc" not in sin
+
+
+def test_la_consulta_suelta_no_falla_sin_sinonimos(cliente):
+    # D-072: `sinonimo_principal` solo aparece si hay un sinonimo aprobado con mas empresas; si no, no aparece
+    d = cliente.get("/referencia", params={"cargo": "CONTADOR"}).json()
+    assert d["referencia"] > 0
+    assert "sinonimo_principal" not in d or d["sinonimo_principal"]["empresas"] > d["empresas"]

@@ -1248,6 +1248,26 @@ class BaseReferencia:
             ok = {t: (int(d),) + ok[t][1:] for t, d in zip(ts, dest)}
         return ok
 
+    def armar_familia_ingles(self, X_por_etiqueta, placebo=False, semilla=19):
+        """D-071: equivalente en espanol (grupo) -> titulos en ingles de la base con datos directos que se resuelven
+        en el. `placebo` (solo para medir): las familias se permutan entre equivalentes. Guarda y devuelve un
+        resumen."""
+        from .idioma import es_ingles
+        ing = [c for c in self.celdas if es_ingles(c) and self.emp[self.idx[c]] >= MIN_EMPRESAS
+               and self.personas[self.idx[c]] >= self.min_personas]
+        r = self.resolver_idioma(ing, X_por_etiqueta)
+        fam = {}
+        for t, v in r.items():
+            fam.setdefault(int(self.grupo[v[0]]), []).append(int(self.idx[t]))
+        if placebo and len(fam) > 1:
+            ks = sorted(fam)
+            vals = [fam[k] for k in ks]
+            orden = np.random.default_rng(semilla).permutation(len(ks))
+            fam = {k: vals[i] for k, i in zip(ks, orden)}
+        self.familia_ingles = fam
+        return {"equivalentes": len(fam), "con_2_o_mas": sum(len(x) >= 2 for x in fam.values()),
+                "titulos": sum(len(x) for x in fam.values())}
+
     def _corrector(self):
         """D-068 (a): el corrector de tipeo con el vocabulario de la base (se arma la primera vez)."""
         if getattr(self, "_corrector_", None) is None:
@@ -1935,6 +1955,18 @@ class BaseReferencia:
                         ex is not None and self.emp[ex] >= MIN_EMPRESAS
                         and self.personas[ex] >= self.min_personas):
                     propio, _, p_juez, traduccion = idioma[t]
+            fam_d, fam_emp = 0.0, None
+            fam = getattr(self, "familia_ingles", None)
+            if fam and t in idioma and fam.get(int(self.grupo[idioma[t][0]])):
+                # D-071: los titulos en ingles con el mismo equivalente comparten una banda: centro = media de la
+                # familia ponderada por precision; banda = la del miembro con mas empresas, corrida a ese centro
+                miembros = np.array(fam[int(self.grupo[idioma[t][0]])])
+                mayor = int(miembros[np.argmax(self.emp[miembros])])
+                w = self.W[miembros]
+                fam_d = float((w * self.m[miembros]).sum() / w.sum()) - float(self.m[mayor])
+                _, u = np.unique(self.grupo[miembros], return_index=True)
+                fam_emp = int(self.emp[miembros[u]].sum())
+                propio, prima_t, traduccion = mayor, None, idioma[t][3]
             if propio is not None and self.celdas[propio] != t:
                 cargo_base = self.celdas[propio]
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
@@ -1987,6 +2019,14 @@ class BaseReferencia:
                 if np.isfinite(qp).all():
                     banda_per = dict(zip(CUANTILES, qp))
                 mejor, directo_ok = 1.0, True
+                if fam_d:
+                    mu += fam_d
+                    if banda is not None:
+                        banda = {q: x + fam_d for q, x in banda.items()}
+                    if banda_per is not None:
+                        banda_per = {q: x + fam_d for q, x in banda_per.items()}
+                if fam_emp is not None:
+                    n_emp = fam_emp
                 niv_tam = self.nivel[propio]
                 if (getattr(self, "tamano_estandar", False) and getattr(self, "ajuste_tam", None) is not None
                         and (k_seg is not None or getattr(self, "tamano_sin_segmento", False))):

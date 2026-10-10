@@ -398,7 +398,9 @@ class Motor:
         self.etiqueta = {g: _representante(v, frec) for g, v in porgrupo.items()}
         self.n_grafias = {g: len(v) for g, v in porgrupo.items()}
         # D-046/D-047: los sinonimos aprobados no tocan la base; sirven al buscador de cargos
-        self.sinonimos = sinonimos.por_grupo(self.base, sinonimos.cargar_pares())
+        # D-070/D-072: los pares aprobados (rondas 1 y 2) mas las reglas de palabras del autor
+        self.sinonimos = sinonimos.por_grupo(self.base, sinonimos.cargar_pares() + sinonimos.pares_por_reglas(
+            [str(c) for c in self.base.celdas]))
         self.sinonimos_consulta = sinonimos.de_consulta(self.base, sinonimos.cargar_consulta())
         # Las palabras que aparecen en algun titulo de la base. Ante una palabra desconocida
         # (`DESTISTA`, `ODONTOLGO`) el juez extrapola y da P altas a cualquier cosa: ahi no se le cree.
@@ -1357,6 +1359,32 @@ def _agrupar_grados(out):
     return res
 
 
+def _sinonimo_principal(m, t, fila, anio, segmento, rubro):
+    """D-072: si el cargo tiene un sinonimo aprobado con MAS empresas, su referencia y rango, para mostrarlo al lado
+    (`JEFE DE RRHH` -> `JEFE DE RECURSOS HUMANOS`). No cambia la cifra del cargo consultado."""
+    g0 = sinonimos.grupo_de(m.base, t)
+    if g0 is None:
+        g0 = sinonimos.grupo_de(m.base, sinonimos.canonico(t))
+    if g0 is None or not m.sinonimos.get(g0):
+        return None
+    n0 = int(fila.get("empresas") or 0)
+    mejor = max(m.sinonimos[g0], key=lambda g: _empresas_de_grupo(m, g))
+    if _empresas_de_grupo(m, mejor) <= n0:
+        return None
+    i = int(np.flatnonzero(np.asarray(m.base.grupo) == mejor)[0])
+    cargo = m.etiqueta.get(mejor, str(m.base.celdas[i]))
+    r = m.base.referenciar([cargo], m.emb, anio=anio, segmento=segmento, rubro=rubro).iloc[0]
+    return {"cargo": cargo, "referencia": _py(r["referencia"]), "rango_desde": _py(r["rango_desde"]),
+            "rango_hasta": _py(r["rango_hasta"]), "empresas": _py(r["empresas"]), "confianza": r["confianza"],
+            "aviso": (f"{cargo} es el mismo cargo y tiene mas empresas detras ({_py(r['empresas'])}); "
+                      f"su referencia puede ser mas representativa.")}
+
+
+def _empresas_de_grupo(m, g):
+    i = np.flatnonzero(np.asarray(m.base.grupo) == g)
+    return int(m.base.emp[i[0]]) if len(i) else 0
+
+
 def _personas_de_grupo(m, g):
     i = np.flatnonzero(np.asarray(m.base.grupo) == g)
     return int(m.base.personas[i[0]]) if len(i) else 0
@@ -1405,6 +1433,9 @@ def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
     d["unidades"] = UNIDADES
     d["aviso"] = ("Sin la nomina completa no hay ancla de empresa: falta la lectura de "
                   "equidad interna. Para el informe completo, POST /informes.")
+    principal = _sinonimo_principal(m, t, fila, anio, segmento, rubro)
+    if principal:
+        d["sinonimo_principal"] = principal
     if ruc:
         d["segmento_del_ruc"] = seg_ruc or None
     if aviso_seg:
