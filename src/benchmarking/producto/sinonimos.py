@@ -9,7 +9,7 @@ import csv
 import pathlib
 
 DATOS = pathlib.Path(__file__).resolve().parent / "datos"
-VERSION = "v1"
+VERSION = "v2"   # 2026-10-10: rondas 1 y 2 aprobadas por el autor (D-070: solo buscador)
 
 
 def cargar_pares(version=VERSION, base=DATOS):
@@ -64,3 +64,40 @@ def de_consulta(base, pares):
 def clave(base, texto):
     c0 = getattr(base, "capa0", None)
     return c0.atomo(str(texto)) if c0 is not None else str(texto).strip().upper()
+
+
+# D-070: reglas de palabras del autor (2026-10-10). Se aplican al titulo antes de buscar y generan pares entre
+# titulos de la base que coinciden despues de aplicarlas.
+REGLAS_PALABRAS = (
+    (r"(?<![A-Z])RR\.?\s?HH\.?(?![A-Z])", "RECURSOS HUMANOS"),
+    (r"(?<![A-Z])TALENTO HUMANO(?![A-Z])", "RECURSOS HUMANOS"),
+    (r"(?<![A-Z])TECNOLOGIAS? DE (LA )?INFORMACION(?![A-Z])", "SISTEMAS"),
+    (r"(?<![A-Z])T\.?I\.?(?![A-Z])", "SISTEMAS"),
+    (r"(?<![A-Z])CONDUCTOR(A|ES)?(?![A-Z])", "CHOFER"),
+)
+
+
+def canonico(titulo):
+    """El titulo con las reglas de palabras de D-070 aplicadas (o el mismo)."""
+    import re
+    t = str(titulo).upper()
+    for pat, rep in REGLAS_PALABRAS:
+        t = re.sub(pat, rep, t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def pares_por_reglas(titulos):
+    """Pares (a, b) de titulos de la base que coinciden despues de `canonico`."""
+    por = {}
+    for t in titulos:
+        c = canonico(t)
+        if c != t:
+            por.setdefault(c, []).append(t)
+    tset = set(titulos)
+    out = []
+    for c, ts in por.items():
+        if c in tset:
+            out += [(t, c) for t in ts]
+        else:
+            out += [(ts[0], t) for t in ts[1:]]
+    return out

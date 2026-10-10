@@ -1,0 +1,11 @@
+78 · CONFIANZA (D-069): |voto - referencia| (mediana, en log; exp-1 en %) por clase, IC en dos vias
+votos: 38,450
+regla VIEJA (centro):
+   ALTA   n=14,074 (37%)  error 17.5 % [15.5, 19.6]  | p75/p25 mediano 1.45
+   MEDIA  n= 8,564 (22%)  error 32.3 % [29.8, 34.6]  | p75/p25 mediano 1.66
+   BAJA   n=15,812 (41%)  error 33.1 % [29.8, 36.4]  | p75/p25 mediano 1.67
+regla NUEVA (centro + ancho):
+   ALTA   n=12,919 (34%)  error 15.9 % [14.3, 18.0]  | p75/p25 mediano 1.43
+   MEDIA  n= 9,100 (24%)  error 32.8 % [30.2, 35.1]  | p75/p25 mediano 1.68
+   BAJA   n=16,431 (43%)  error 34.0 % [30.7, 37.4]  | p75/p25 mediano 1.69
+CRITERIO: 1) orden ALTA < MEDIA < BAJA sin solape ALTA/BAJA: si · 2) error ALTA nueva <= vieja: si -> CUMPLE

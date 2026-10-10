@@ -1,0 +1,15 @@
+prima frente a trad_base (placebo prima_placebo): union 4,872 votos, 691 empresas, 4,543 cargos
+   variante - producto  -0.00481 [-0.00768, -0.00208] (dos vias)  | media por empresa -0.00219
+   placebo - producto   +0.00973 [+0.00305, +0.01600] (dos vias)  | media por empresa +0.00378
+   variante - placebo   -0.01454 [-0.02082, -0.00738] (dos vias)  | media por empresa -0.00597
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): CUMPLE
+tipeo frente a tam_A (placebo tipeo_placebo): union 4,342 votos, 693 empresas, 4,129 cargos
+   variante - producto  +0.00019 [-0.00025, +0.00100] (dos vias)  | media por empresa -0.00011
+   placebo - producto   +0.00404 [+0.00092, +0.00762] (dos vias)  | media por empresa +0.00271
+   variante - placebo   -0.00385 [-0.00726, -0.00068] (dos vias)  | media por empresa -0.00282
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+sinon frente a tam_A (placebo sinon_placebo): union 8,736 votos, 1,178 empresas, 6,152 cargos
+   variante - producto  +0.00082 [+0.00001, +0.00155] (dos vias)  | media por empresa -0.00022
+   placebo - producto   +0.00418 [+0.00237, +0.00623] (dos vias)  | media por empresa +0.00310
+   variante - placebo   -0.00336 [-0.00556, -0.00170] (dos vias)  | media por empresa -0.00332
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE

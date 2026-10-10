@@ -45,3 +45,31 @@
   porque se lo ve sobre todo en empresas grandes.
 - **La respuesta trae `segmento_del_ruc`.** Si el RUC no está en el padrón, trae además `aviso_segmento`: ahí hay
   que pedir el tamaño a mano (`segmento`).
+
+## Cargos en inglés: equivalente y prima (D-067, desde 2026-10-10)
+
+Un cargo en inglés sin datos propios toma la banda de su **equivalente** en español, más la **prima** que pagan las
+empresas que titulan en inglés en ese nivel. Mostrar las dos cosas:
+
+> Equivale a **Jefe de Recursos Humanos** ($1.538). Las empresas que titulan este cargo en inglés pagan **+40 %** →
+> referencia **$2.160**.
+
+- **Campos:** `equivalente`, `referencia_equivalente` (sin prima) y `prima_idioma` (fracción: 0,40 = +40 %).
+- **Si `prima_idioma` viene vacío,** la referencia es la del propio cargo en inglés (tiene datos) o una analogía.
+- **La banda de un cargo con prima es más ancha:** suma la incertidumbre de la prima.
+
+## Errores de tipeo (D-068, desde 2026-10-10)
+
+Si el cargo tenía un error de tipeo que se corrigió (`contdor generl` → `CONTADOR GENERAL`), viene en `corregido`.
+Mostrar: «Interpretamos **Contador General**».
+
+## Regla de confianza (D-069, publicada)
+
+| Confianza | Cuándo |
+|---|---|
+| **ALTA** | El centro está bien medido (poca incertidumbre del centro) **y** la banda es angosta: p75 ≤ 2,0 × p25 |
+| **BAJA** | El centro es incierto (pocas empresas o analogía lejana) **o** la banda es muy ancha: p75 > 3,0 × p25 |
+| **MEDIA** | El resto |
+
+Medido con empresas apartadas, la referencia de un cargo ALTA está a una mediana de ~16 % de lo que paga cada
+empresa; en MEDIA y BAJA, a ~33 %.

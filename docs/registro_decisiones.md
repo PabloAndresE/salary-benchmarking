@@ -7077,3 +7077,66 @@ demás corre su centro a `(n·m + 10·m_grande) / (n + 10)`, y su banda se corre
 
 **Medición:** frente a `tam_A`. Placebo: cada grupo chico se acerca a un grupo grande **al azar** del mismo nivel,
 con el mismo peso. **Criterio:** regla de producto (no inferior). Se reporta la variante frente al placebo.
+
+### D-067, resultado: cumple, se adopta (2026-10-10)
+
+`π*` con el entrenamiento: 217 pares; global +0,25; por nivel encogida: 1 +0,33, 2 +0,27, 3 +0,19, 4 +0,23,
+5 +0,20. El +0,79 bruto del nivel 5 de D-066 queda en +0,20 al encogerlo.
+
+Protocolo v2, unión de 4.872 votos (691 empresas, 4.543 cargos):
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto («siempre») | −0,00481 | [−0,00768, −0,00208] |
+| Placebo − producto | +0,00973 | |
+| **Variante − placebo** | **−0,01454** | **[−0,02082, −0,00738]** |
+
+Mejora frente al producto y frente al placebo: **se adopta.** Reemplaza a «siempre». Un título en inglés con datos
+propios usa sus datos; sin datos, el equivalente más `π*` del nivel, mostrada aparte (`referencia_equivalente`,
+`prima_idioma`).
+
+### D-068, resultado: (a) tipeo se adopta; (b) «no reconocido» no se adopta (2026-10-10)
+
+**(a) Tipeo.** Unión de 4.342 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto | +0,00019 | [−0,00025, +0,000999] |
+| Variante − placebo | −0,00385 | [−0,00726, −0,00068] |
+
+El extremo superior, +0,000999, queda justo bajo el margen de +0,001. Cumple no inferioridad y le gana al placebo:
+**se adopta.** Ojo: la corrección actúa sobre solo **57 votos** apartados; la unión la llena el placebo. En la
+validación casi no hay errores de tipeo que lleven a un título de la base. Es una regla para clientes, que el
+pinball apenas puede medir.
+
+**(b) No reconocido.** `τ` = 0,743 (percentil 2). Los 265 títulos reales apartados bajo `τ` (1,9 %) tienen pinball
+0,261, frente a 0,155 del resto: son peores. Pero la lista de basura solo se rechaza en un 57 % (17 de 30). `MESA`,
+`PERRO`, `PIRATA`, `MAGO` y `N/A` quedan sobre 0,80, y `PIZZA` existe como título en la base. **No cumple (≥ 80 %):
+no se adopta.** Vertex encuentra parecidos plausibles para palabras comunes, y la similitud sola no separa la
+basura.
+
+### D-069, resultado: cumple, se adopta (2026-10-10)
+
+Error del centro `|voto − referencia|` (mediana), 38.450 votos de `tam_A`:
+
+| Regla | ALTA | MEDIA | BAJA |
+|---|---|---|---|
+| Vieja (centro) | 17,5 % [15,5, 19,6] (37 %) | 32,3 % | 33,1 % |
+| **Nueva (centro + ancho)** | **15,9 % [14,3, 18,0]** (34 %) | 32,8 % | 34,0 % [30,7, 37,4] |
+
+Se cumple el orden sin solape entre ALTA y BAJA, y el error de ALTA baja: **se adopta.** Nota honesta: MEDIA y BAJA
+casi no se distinguen, ni con la regla vieja ni con la nueva.
+
+### D-070, resultado: no se adopta (2026-10-10)
+
+En 89 familias se movieron 554 grupos chicos (corrimiento mediano 5,5 %). Unión de 8.736 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto | +0,00082 | **[+0,00001, +0,00155]** |
+| Variante − placebo | −0,00336 | [−0,00556, −0,00170] |
+
+El extremo superior pasa el margen de +0,001: **no cumple la no inferioridad, no se adopta.** Es mucho mejor que
+acercar al azar, pero acercar el grupo chico al grande cuesta algo de precisión: los grupos chicos tienen pagos
+propios distintos. Los pares de la ronda 2 aprobados por el autor pasan al **buscador** (`sinonimos_v2`, uso de
+D-047, sin tocar las bandas).

@@ -67,7 +67,7 @@ from ..evaluacion.referencia import (_cuantil_por_grupo, componentes_varianza,
                                      sigma2_por_celda,
                                      tabla_votos, tau2_por_celda)
 from .capa0 import grado_numerico
-from .nivel import (clave_grado, efecto_nivel, mismo_salvo_grado, nivel_lexico,
+from .nivel import (RANGOS_RUBRICA, clave_grado, efecto_nivel, mismo_salvo_grado, nivel_lexico,
                     nivel_rubrica, seniority_lexica, tiene_grado)
 
 VECINOS = 25
@@ -401,6 +401,8 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
 # de `GERENTE GENERAL` es +-95%. El argumento es probablemente cierto y NO se usa, porque
 # cambiar la metrica despues de ver el resultado vacia el pre-registro de sentido. Para
 # volver a intentarlo hay que declarar antes cual es la primaria correcta y por que.
+# D-069: cortes del ancho de la banda entregada (p75 / p25) para la confianza
+CONF_ANCHO_ALTA, CONF_ANCHO_BAJA = 2.0, 3.0
 # D-064: las siglas de cargos de direccion del glosario, cuyo nivel se lee despues del glosario en el candado
 SIGLAS_DIRECCION = frozenset("CEO CFO CTO COO CMO CIO CHRO".split())
 NIVEL_MIN_SEGMENTAR = 4
@@ -1246,6 +1248,13 @@ class BaseReferencia:
             ok = {t: (int(d),) + ok[t][1:] for t, d in zip(ts, dest)}
         return ok
 
+    def _corrector(self):
+        """D-068 (a): el corrector de tipeo con el vocabulario de la base (se arma la primera vez)."""
+        if getattr(self, "_corrector_", None) is None:
+            from .tipeo import Corrector
+            self._corrector_ = Corrector([str(c) for c in self.celdas], self.personas, RANGOS_RUBRICA)
+        return self._corrector_
+
     def _titulo_para_candado(self, t):
         """D-062: el titulo cuyo nivel de rubrica se compara en el candado de idioma. Con `idioma_por_traduccion`,
         si el glosario cambia la CABEZA del titulo (`CHIEF EXECUTIVE OFFICER` -> `GENERAL MANAGER`) se lee el
@@ -1283,7 +1292,7 @@ class BaseReferencia:
             par = dict(zip(ks, np.random.default_rng(6).permutation([par[k] for k in ks])))
         return [par.get(t, t) for t in unicos]
 
-    def estimar_prima_idioma(self, X_por_etiqueta, min_pares=20):
+    def estimar_prima_idioma(self, X_por_etiqueta, min_pares=20, encoger=None):
         """D-055: la prima del titulo en ingles, `m(ingles) - m(su equivalente en espanol)`, sobre los
         titulos en ingles de la base con datos directos cuya traduccion cae en OTRO grupo con datos.
         Mediana por nivel (>= `min_pares`) y global; varianza `(1,4826 MAD)^2`. Guarda y devuelve
@@ -1307,7 +1316,13 @@ class BaseReferencia:
         out = {"global": est(d[:, 1]), "pares": len(d)}
         for lv in range(1, 6):
             x = d[d[:, 0] == lv, 1]
-            if len(x) >= min_pares:
+            if encoger is not None and len(x):
+                # D-067: la prima del nivel encogida hacia la global con `encoger` pares de peso
+                pi_l, var_l = est(x)
+                w = len(x) / (len(x) + float(encoger))
+                out[lv] = (w * pi_l + (1 - w) * out["global"][0],
+                           var_l if len(x) >= min_pares else out["global"][1])
+            elif len(x) >= min_pares:
                 out[lv] = est(x)
         self.idioma_prima = {k: v for k, v in out.items() if k != "pares"}
         return out
@@ -1580,6 +1595,64 @@ class BaseReferencia:
             self.nivel = np.array([nuevo.get(int(g), n) for g, n in zip(self.grupo, self.nivel)], dtype=float)
         return n_des, n_cambia
 
+    def coherencia_sinonimos(self, pares, n0=10.0, placebo=False, semilla=18):
+        """D-070: en cada componente de grupos sinonimos, el de mas empresas no cambia y cada uno de los demas
+        corre su centro a `(n*m + n0*m_grande) / (n + n0)`; su banda se corre igual. `placebo` (solo para medir):
+        cada grupo chico se acerca a un grupo grande AL AZAR del mismo nivel (>= 10 empresas). Devuelve un resumen."""
+        from .sinonimos import grupo_de
+        padre = {}
+
+        def raiz(g):
+            while padre.get(g, g) != g:
+                padre[g] = padre.get(padre[g], padre[g])
+                g = padre[g]
+            return g
+        for a, b in pares:
+            ga, gb = grupo_de(self, a), grupo_de(self, b)
+            if ga is None or gb is None or ga == gb:
+                continue
+            padre.setdefault(ga, ga)
+            padre.setdefault(gb, gb)
+            ra, rb = raiz(ga), raiz(gb)
+            if ra != rb:
+                padre[ra] = rb
+        comps = {}
+        for g in padre:
+            comps.setdefault(raiz(g), []).append(g)
+        rep = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).first()
+        emp_g = lambda g: int(self.emp[rep[g]])
+        celdas_de = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).apply(list)
+        rng = np.random.default_rng(semilla)
+        if placebo:
+            niv = self.nivel[rep.to_numpy()]
+            grandes = {lv: [g for g, n_, e in zip(rep.index, niv, self.emp[rep.to_numpy()]) if n_ == lv and e >= 10]
+                       for lv in range(1, 6)}
+        movidos, dif = 0, []
+        for gs in comps.values():
+            if len(gs) < 2:
+                continue
+            grande = max(gs, key=emp_g)
+            for g in gs:
+                if g == grande:
+                    continue
+                destino = grande
+                if placebo:
+                    lv = self.nivel[rep[g]]
+                    pool = grandes.get(int(lv), []) if np.isfinite(lv) else []
+                    if not pool:
+                        continue
+                    destino = pool[int(rng.integers(len(pool)))]
+                n, m, mg = emp_g(g), float(self.m[rep[g]]), float(self.m[rep[destino]])
+                d = (n * m + n0 * mg) / (n + n0) - m
+                ii = np.array(celdas_de[g])
+                self.m[ii] += d
+                self.bandas[ii] += d
+                self.bandas_per[ii] += d
+                movidos += 1
+                dif.append(d)
+        return {"componentes": sum(len(g) > 1 for g in comps.values()), "grupos_movidos": movidos,
+                "corrimiento_mediano_abs": float(np.median(np.abs(dif))) if dif else 0.0}
+
     def estandarizar_tamano(self, marco, col="cargo_norm", vueltas=3, min_emp=3, min_votos=30, min_grupo=5,
                             placebo=False):
         """D-063: el efecto del tamano de empresa POR NIVEL del cargo, y el centro de cada grupo estandarizado.
@@ -1810,6 +1883,29 @@ class BaseReferencia:
                 # D-037: `AUXILIAR 3 DE CONTABILIDAD` de un cliente es el mismo puesto que
                 # el `AUXILIAR 1 DE CONTABILIDAD` de la base. Misma regla que al construir.
                 propio = self._por_grado(t)
+            corregido = ""
+            if propio is None and getattr(self, "sinonimos_palabras", False):
+                # D-070: reglas de palabras del autor (RRHH, TALENTO HUMANO -> RECURSOS HUMANOS; TI -> SISTEMAS;
+                # CONDUCTOR -> CHOFER) antes de buscar
+                from .sinonimos import canonico
+                tc = canonico(t)
+                if tc != t:
+                    jc = self.idx.get(tc)
+                    if jc is None and self.capa0 is not None:
+                        jc = self._por_capa0(tc)
+                    if jc is not None:
+                        propio, corregido = jc, tc
+            if propio is None and getattr(self, "tipeo", False):
+                # D-068 (a): un error de tipeo (`CONTDOR GENERL`) se corrige contra el vocabulario de la base, y
+                # solo se usa si el titulo corregido es un cargo de la base (tal cual o por la capa 0)
+                tc = (self._corrector().placebo(t) if getattr(self, "tipeo_placebo", False)
+                      else self._corrector().titulo(t))
+                if tc:
+                    jc = self.idx.get(tc)
+                    if jc is None and self.capa0 is not None:
+                        jc = self._por_capa0(tc)
+                    if jc is not None:
+                        propio, corregido = jc, tc
             p_juez = np.nan
             if propio is None and t in asignado:
                 # D-048: ni tal cual ni por la capa 0, pero el juez lo reconoce en un grupo
@@ -2062,9 +2158,11 @@ class BaseReferencia:
             if banda_per is None:
                 sdp = float(np.sqrt(var_per))
                 banda_per = {q: mu + Z_NORMAL[q] * sdp for q in CUANTILES}
+            ref_equiv, prima_aplicada = np.nan, np.nan
             if prima_t is not None:
                 # D-055: se corre por la prima y se ensancha por su incertidumbre
                 pi_, var_pi = prima_t
+                ref_equiv, prima_aplicada = mu, pi_          # D-067: para mostrarla aparte
                 sd_b = (banda[0.75] - banda[0.25]) / (2.0 * 0.6745)
                 sd_bp = (banda_per[0.75] - banda_per[0.25]) / (2.0 * 0.6745)
                 mu += pi_
@@ -2092,6 +2190,14 @@ class BaseReferencia:
 
             sd = float((banda[0.75] - banda[0.25]) / (2.0 * 0.6745))
             conf, incert = _confianza(var_centro)
+            if getattr(self, "confianza_ancho", False):
+                # D-069: la confianza tambien depende del ancho de la banda entregada (p75/p25): ALTA solo con
+                # <= 2,0; BAJA con > 3,0. Medido: el error del centro en ALTA baja de 17,5 % a 15,9 %
+                r_ancho = float(np.exp(banda[0.75] - banda[0.25]))
+                if conf == "BAJA" or r_ancho > CONF_ANCHO_BAJA:
+                    conf = "BAJA"
+                elif not (conf == "ALTA" and r_ancho <= CONF_ANCHO_ALTA):
+                    conf = "MEDIA"
             ancho = float(np.exp(0.6745 * sd) - 1.0)      # el de la banda entregada
             filas[t] = {"referencia_log": mu, "sd": sd,
                         "p10_log": banda[0.10], "p25_log": banda[0.25],
@@ -2107,6 +2213,10 @@ class BaseReferencia:
                         # D-050: la traduccion con que se resolvio un titulo en ingles
                         "traduccion": traduccion,
                         "equivalente": equivalente,
+                        # D-068 (a): el titulo con el error de tipeo corregido, si se corrigio
+                        "corregido": corregido,
+                        # D-067: la referencia del equivalente en espanol (sin prima) y la prima del ingles aplicada
+                        "referencia_equivalente_log": ref_equiv, "prima_idioma_log": prima_aplicada,
                         # D-048: P del juez cuando el grupo lo asigno el juez; vacio si no
                         "p_juez": round(float(p_juez), 3) if np.isfinite(p_juez) else np.nan,
                         "incert_centro": round(incert, 4),
@@ -2132,7 +2242,10 @@ class BaseReferencia:
                                           if (propio is not None and n_emp > 0
                                               and int(self.grupo[propio]) in mis_grupos)
                                           else np.nan),
-                        "similitud": round(mejor, 3)}
+                        "similitud": round(mejor, 3),
+                        # D-068 (b): por analogia y con similitud bajo el umbral, el titulo no se reconoce
+                        "reconocido": not (base == "por analogia" and getattr(self, "umbral_reconocido", None)
+                                           is not None and mejor < self.umbral_reconocido)}
 
         # las filas con el cargo en blanco se abstienen, con las MISMAS claves que las
         # demas para que el DataFrame no invente columnas a medias
@@ -2153,7 +2266,9 @@ class BaseReferencia:
         out.insert(0, "cargo", titulos)
         if anio is not None:
             f = float(self.sbu(int(anio)))
-            for col, nueva in (("referencia_log", "referencia"),
+            if "prima_idioma_log" in out:
+                out["prima_idioma"] = (np.exp(out["prima_idioma_log"]) - 1).round(3)
+            for col, nueva in (("referencia_log", "referencia"), ("referencia_equivalente_log", "referencia_equivalente"),
                                ("p10_log", "p10_emp"), ("p25_log", "p25_emp"),
                                ("p75_log", "p75_emp"), ("p90_log", "p90_emp"),
                                ("p10per_log", "p10_per"), ("p25per_log", "p25_per"),

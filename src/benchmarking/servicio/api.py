@@ -94,6 +94,8 @@ UNIDADES = {
     "p10_per": {"unidad": "usd"}, "p25_per": {"unidad": "usd"},
     "p75_per": {"unidad": "usd"}, "p90_per": {"unidad": "usd"},
     "posicion_mercado": {"unidad": "percentil", "rango": [10, 90]},
+    "referencia_equivalente": {"unidad": "usd", "formato": "$#,##0.00"},
+    "prima_idioma": {"unidad": "fraccion", "formato": "0%"},
     # el rango de mercado que se MUESTRA: p25-p75 de la banda de empresas
     "rango_desde": {"unidad": "usd"}, "rango_hasta": {"unidad": "usd"},
     "vs_mercado": {"unidad": "ratio", "formato": "+0.0%"},
@@ -206,6 +208,8 @@ SALIDA_MODELO = (
     "referencia", "sueldo_actual",
     "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
     "posicion_mercado", "equivalente", "rango_desde", "rango_hasta",
+    # D-067: la referencia del equivalente en espanol y la prima del ingles aplicada; D-068: el tipeo corregido
+    "referencia_equivalente", "prima_idioma", "corregido",
     "p10", "p25", "p75", "p90", "confianza", "incert_centro", "ancho_rel",
     "base", "empresas", "personas", "similitud", "segmento", "rubro",
     # A QUE NIVEL se comparo ese cargo. Sin esto, `rubro: "G47"` obliga al front a
@@ -422,8 +426,15 @@ class Motor:
         # base no se tocan. `IDIOMA_SUELDO=no` lo apaga; `IDIOMA_PRIMA=si` usaria la prima de D-055.
         # Desde la decision siguiente del autor (misma fecha): EL MISMO CARGO, LA MISMA BANDA en ingles y
         # en espanol: se usa el equivalente aunque el titulo en ingles tenga datos propios ("siempre").
-        self.base.idioma_sueldo = ("siempre" if os.environ.get("IDIOMA_SUELDO", "siempre").lower() != "no"
-                                   else False)
+        # D-067 (2026-10-10, reemplaza a "siempre"): un titulo en ingles con datos propios usa sus datos; sin
+        # ellos, la banda de su equivalente en espanol mas la prima del ingles de su nivel (encogida), mostrada
+        # aparte. `IDIOMA_SUELDO=siempre` vuelve a la regla anterior (sin prima); `IDIOMA_SUELDO=no` la apaga.
+        modo = os.environ.get("IDIOMA_SUELDO", "si").lower()
+        self.base.idioma_sueldo = "siempre" if modo == "siempre" else (modo != "no")
+        # D-068 (a): errores de tipeo corregidos contra el vocabulario de la base (`TIPEO=no` lo apaga)
+        self.base.tipeo = os.environ.get("TIPEO", "si").lower() != "no"
+        # D-069: la confianza tambien depende del ancho de la banda (`CONFIANZA_ANCHO=no` vuelve a la anterior)
+        self.base.confianza_ancho = os.environ.get("CONFIANZA_ANCHO", "si").lower() != "no"
         # D-063: con el tamano del cliente (`segmento`, o el del RUC), el efecto del tamano segun el NIVEL del
         # cargo, para todos los cargos y tambien en la analogia; reemplaza a `ajuste_seg` (D-018). Sin tamano, la
         # referencia no cambia. `TAMANO=no` vuelve a D-018. Necesita una base con `ajuste_tam` (v26 o mas nueva).
@@ -432,7 +443,8 @@ class Motor:
         # D-064: en el candado de idioma, `CHIEF EXECUTIVE OFFICER` se lee como `GENERAL MANAGER` (glosario) y no
         # como un ejecutivo de nivel 1: el mismo cargo que `CEO`. `CANDADO_GLOSARIO=no` lo apaga.
         self.base.candado_glosario = os.environ.get("CANDADO_GLOSARIO", "si").lower() != "no"
-        if self.base.traductor is None or os.environ.get("IDIOMA_PRIMA", "no").lower() != "si":
+        if (self.base.traductor is None or self.base.idioma_sueldo == "siempre"
+                or os.environ.get("IDIOMA_PRIMA", "si").lower() == "no"):
             self.base.idioma_prima = None
         print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
                              else "sin traductor: los titulos en ingles se buscan tal cual"), flush=True)
