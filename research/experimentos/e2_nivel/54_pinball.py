@@ -152,7 +152,18 @@ def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
 # D-062 y D-063: variantes sobre el producto vigente (v25: D-060 + D-061, con el k fijo)
 CON_TRAD = ("trad_base", "trad", "trad_placebo", "trad_candado")
 CON_TAM = ("tam_A", "tam_B", "tam_C", "tam_C0", "tam_C_placebo")
-PRODUCTO_V25 = CON_TRAD + CON_TAM
+CON_ATIPICOS = ("atipicos", "atipicos_placebo")     # D-065: limpieza de votos atipicos (frente a tam_A)
+PRODUCTO_V25 = CON_TRAD + CON_TAM + CON_ATIPICOS
+
+
+def atipico_apartado(base, v, v_ref):
+    """D-065: la regla sobre cada voto apartado, con el grupo de la base y la mediana del entrenamiento SIN limpiar."""
+    from benchmarking.producto import atipicos
+    i = v["cargo_norm"].astype(str).map(base.idx)
+    j = i.fillna(0).astype(int).to_numpy()
+    va = pd.DataFrame({"g": np.where(i.notna(), base.grupo[j], -1), "voto": v["voto"].to_numpy(float),
+                       "L": np.where(i.notna(), base.nivel[j], np.nan)})
+    return atipicos.marcar(va, ref=v_ref)
 
 
 def una_variante(nom, clusters):
@@ -263,6 +274,17 @@ def una_variante(nom, clusters):
             base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo") + con_nivel
             base.juez_vecinos_placebo = nom == "juez_vecinos_placebo"
     preparar(base)
+    v_ref = None
+    if nom in CON_ATIPICOS:              # D-065: se marcan con la base armada y se vuelve a armar sin ellos
+        from benchmarking.producto import atipicos
+        v_ref = atipicos.votos(tr, base)
+        regla = atipicos.marcar(v_ref)
+        if nom == "atipicos_placebo":
+            regla = atipicos.placebo(v_ref, regla)
+        print("atipicos: {}".format(pd.Series(regla[regla != ""]).value_counts().to_dict()), flush=True)
+        tr = atipicos.quitar(tr, base, v_ref, regla)
+        base = BaseReferencia.construir(tr, emb, e41._Ajustes.get_sbu, **kw)
+        preparar(base)
     if nom in con_d054:                  # k FIJO, el de `nivel_v3` (anotado en D-053): aisla el cambio
         base.escala_banda = {"analogia": 0.6333673690668041, "directo": 0.9371366258107973}
     if nom.startswith("seniority") or nom in PRODUCTO_V25:      # D-060: el escalon de seniority en la analogia
@@ -349,6 +371,8 @@ def una_variante(nom, clusters):
                   **{c: por_voto(c) for c in ("p10_log", "p25_log", "p75_log", "p90_log") if c in out},
                   "referencia_log": por_voto("referencia_log"), "segmento": seg_v,
                   "nivel": [float(base.nivel[base.idx[c]]) if c in base.idx else np.nan for c in v["cargo_norm"]],
+                  # D-065: si el voto apartado es atipico por la regla (mediana y nivel del grupo de entrenamiento)
+                  **({} if v_ref is None else {"atipico": atipico_apartado(base, v, v_ref)}),
                   "base": out["base"].reindex(v["cargo_norm"]).to_numpy(),
                   "confianza": out["confianza"].reindex(v["cargo_norm"]).to_numpy(),
                   "empresas_ref": out["empresas"].reindex(v["cargo_norm"]).to_numpy()}).to_parquet(

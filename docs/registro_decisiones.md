@@ -6887,3 +6887,24 @@ Se quitan las filas de esos pares y la base se arma sin ellas.
 
 **Criterio** (el de D-058): se adopta si la primaria mejora (IC entero bajo cero) y el placebo no mejora, o si no
 empeora y el placebo sí empeora.
+
+### D-065, resultado: no se adopta (2026-10-10)
+
+En el entrenamiento se quitaron 958 votos «de dueño» y 102 «extremos». Entre los votos apartados, 211 y 37 son
+atípicos por la regla.
+
+| | Primaria (no atípicos), donde actúa | Secundaria (todos), donde actúa |
+|---|---|---|
+| Limpieza | **+0,00098 [+0,00024, +0,00175], empeora** | +0,00274 [+0,00182, +0,00371], empeora |
+| Placebo | +0,00057 [+0,00021, +0,00092], empeora | +0,00043, empeora |
+
+(IC por bootstrap de empresas, media por empresa: el protocolo.) La limpieza empeora más que su placebo. Según su
+criterio, **no se adopta**.
+
+**Diagnóstico** (descriptivo, no cambia la decisión). Contando por voto, la primaria mejora −0,0006, y en los
+niveles 4–5 mejora: −0,0025 a −0,0028 con datos directos y −0,005 por analogía, donde el centro sube ~2,3 %. Pero
+volver a armar la base sin esos votos también mueve todo lo demás: parámetros globales, vecinos de la analogía y
+anchos. El placebo muestra que ese movimiento cuesta por sí solo. Promediado por empresa, gana el costo.
+
+El `GERENTE GENERAL` sube de 6,5 a 7,5 SBU con la limpieza. Si se quiere solo eso, haría falta una regla que corrija
+el centro de los grupos de nivel 4–5 **sin volver a armar la base**, registrada y medida aparte.
