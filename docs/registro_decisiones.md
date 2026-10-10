@@ -6908,3 +6908,33 @@ anchos. El placebo muestra que ese movimiento cuesta por sí solo. Promediado po
 
 El `GERENTE GENERAL` sube de 6,5 a 7,5 SBU con la limpieza. Si se quiere solo eso, haría falta una regla que corrija
 el centro de los grupos de nivel 4–5 **sin volver a armar la base**, registrada y medida aparte.
+
+## D-066 — ¿Cuánto de la prima del título en inglés es tamaño de empresa? Registrado antes de medir
+
+**Por qué** (juez de coherencia, 2026-10-10). `idioma_sueldo="siempre"` le da a un título en inglés la banda de su
+equivalente en español, sin prima. Empeora (+0,033 donde actúa), por el mismo mecanismo con que se rechazó D-062.
+Las salidas coherentes son dos:
+
+- **(i)** el equivalente más la prima (D-055);
+- **(ii)** «siempre» completo (aceptar D-062).
+
+Si la prima es sobre todo tamaño de empresa (las que escriben en inglés son más grandes), D-063 ya la corrige cuando
+se conoce el tamaño, y la (ii) sale casi sin costo.
+
+**Medición** (descriptiva, sin pinball). Pares de D-055: título en inglés de la base con datos directos (≥ 3
+empresas) cuya traducción cae en **otro** grupo con datos. Base v26, juez y nivel por grupo, como la API. Por par:
+
+1. **Prima bruta:** mediana de los votos del título en inglés menos la de los votos del equivalente.
+2. **Prima ajustada por tamaño:** lo mismo con `voto − δ(L, s)` (D-063, base v26), solo con votos de empresas con
+   segmento.
+3. **Composición:** proporción de empresas GRANDE entre las que escriben el título en inglés y entre las del
+   equivalente.
+
+Resumen: mediana entre pares, con IC 95 % por bootstrap de pares (1.000 réplicas). También por nivel.
+
+**Criterio (antes de ver):**
+
+- **La (ii) queda respaldada** si la prima ajustada es ≤ 5 % (exp − 1) y su IC incluye 0.
+- **Va la (i)** si la prima ajustada es ≥ 10 % con IC entero sobre 0, con la prima reestimada después del ajuste por
+  tamaño.
+- **Entre medio:** se reporta y decide el autor.
