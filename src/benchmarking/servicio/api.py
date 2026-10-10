@@ -1352,7 +1352,7 @@ def _personas_de_grupo(m, g):
 
 @app.get("/referencia")
 def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
-               rubro: str | None = None, m: Motor = Depends(motor)):
+               rubro: str | None = None, ruc: str | None = None, m: Motor = Depends(motor)):
     """Un titulo suelto, para explorar. NO es el producto.
 
     Sin la nomina completa no hay ancla de empresa, y sin ancla no hay lectura de equidad
@@ -1366,10 +1366,22 @@ def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
         m.settings.get_sbu(anio, estricto=True)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
-    segmento, rubro = _opt(segmento), _opt(rubro)
+    segmento, rubro, ruc = _opt(segmento), _opt(rubro), _opt(ruc)
     if rubro and rubro.upper() not in m.base.rubros:
         raise HTTPException(400, f"rubro sin datos suficientes: {rubro}. "
                                  f"Con respaldo: {list(m.base.rubros)}")
+    # D-063: el tamano del cliente sale de su RUC (padron de la Superintendencia), como en /informes; el que se
+    # pida a mano manda, y si no coinciden se avisa
+    seg_ruc = (m.base.meta_ruc.get(ruc.strip(), ("", -1, ""))[2] or "") if ruc else ""
+    aviso_seg = None
+    if seg_ruc and not segmento and seg_ruc in SEGMENTOS:
+        segmento = seg_ruc
+    elif seg_ruc and segmento and segmento.upper() != seg_ruc:
+        aviso_seg = f"pediste segmento {segmento.upper()} y el RUC dice {seg_ruc}; se usa el que pediste"
+    elif ruc and not seg_ruc:
+        aviso_seg = "el RUC no esta en el padron de la Superintendencia: sin tamano, la referencia no se ajusta"
+    if segmento and segmento.upper() not in SEGMENTOS:
+        raise HTTPException(400, f"segmento invalido: {segmento}. Validos: {list(SEGMENTOS)}")
     t = cargo.strip().upper()
     if not t:
         raise HTTPException(400, "cargo vacio")
@@ -1381,4 +1393,8 @@ def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
     d["unidades"] = UNIDADES
     d["aviso"] = ("Sin la nomina completa no hay ancla de empresa: falta la lectura de "
                   "equidad interna. Para el informe completo, POST /informes.")
+    if ruc:
+        d["segmento_del_ruc"] = seg_ruc or None
+    if aviso_seg:
+        d["aviso_segmento"] = aviso_seg
     return d

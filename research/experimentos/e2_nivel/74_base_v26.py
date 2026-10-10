@@ -26,6 +26,13 @@ def main():
     r = con_grupo.estandarizar_tamano(marco)
     b = BaseReferencia.cargar(RAIZ / "demo" / "base_v25.npz", e41._Ajustes.get_sbu)
     b.ajuste_tam, b.delta_tam = con_grupo.ajuste_tam, con_grupo.delta_tam
+    # El padron de la Superintendencia (RUC -> CIIU, empleados, segmento) de las 221.754 empresas viajaba hasta la
+    # v15; desde la v16 la base se arma sin `scvs` y solo trae las 6.722 empresas del marco, asi que el RUC de un
+    # cliente que no aporto datos no daba su tamano. Se recupera de la v15 (lo del marco manda donde hay los dos).
+    v15 = BaseReferencia.cargar(RAIZ / "demo" / "base_v15.npz", e41._Ajustes.get_sbu)
+    n_antes = len(b.meta_ruc)
+    b.meta_ruc = {**v15.meta_ruc, **b.meta_ruc}
+    print("padron RUC: {:,} -> {:,} empresas".format(n_antes, len(b.meta_ruc)), flush=True)
     b.guardar(RAIZ / "demo" / "base_v26.npz")
     txt = "74 · BASE v26 = v25 + tamano por nivel (D-063)\n{}\n".format(r)
     (SAL / "74_base_v26.txt").write_text(txt, encoding="utf-8")

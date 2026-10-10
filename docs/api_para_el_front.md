@@ -36,3 +36,12 @@
 
 - `equivalente: true` y `traduccion`: la primera sugerencia para un título en inglés es su equivalente.
 - `sinonimo`, `p_juez`, `seguro`, `grados`, `cargo_sin_grado`, `palabras_desconocidas`: ya existían.
+
+## Tamaño de la empresa del cliente (desde 2026-10-10)
+
+- **Mandar siempre el RUC del cliente,** en `/informes` y en `/referencia` (`ruc=1790...001`). Con el RUC se saca su
+  tamaño del padrón de la Superintendencia (MICROEMPRESA, PEQUENA, MEDIANA o GRANDE), y con el tamaño los cargos
+  altos tienen sentido entre sí. Sin tamaño, un `GERENTE DE TECNOLOGIA` puede salir sobre el `GERENTE GENERAL`,
+  porque se lo ve sobre todo en empresas grandes.
+- **La respuesta trae `segmento_del_ruc`.** Si el RUC no está en el padrón, trae además `aviso_segmento`: ahí hay
+  que pedir el tamaño a mano (`segmento`).

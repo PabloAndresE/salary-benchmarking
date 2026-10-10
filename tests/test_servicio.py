@@ -757,3 +757,13 @@ def test_la_etiqueta_NO_depende_del_limite_de_la_busqueda(cliente_ciiu):
     for f in a:
         assert f["cargo"] in por_cargo, f"{f['cargo']} desaparece al subir el limite"
         assert f["grafias"] == por_cargo[f["cargo"]], "el conteo cambia con el limite"
+
+
+def test_la_consulta_suelta_saca_el_tamano_del_RUC_o_avisa_que_no_puede(cliente):
+    # D-063: el tamano del cliente activa el ajuste por nivel. Un RUC fuera del padron no puede darlo, y la
+    # respuesta tiene que decirlo en vez de devolver la referencia sin ajustar como si nada.
+    d = cliente.get("/referencia", params={"cargo": "CONTADOR", "ruc": "9999999999001"}).json()
+    assert d["referencia"] > 0
+    assert d["segmento_del_ruc"] is None and "padron" in d["aviso_segmento"]
+    sin = cliente.get("/referencia", params={"cargo": "CONTADOR"}).json()
+    assert "aviso_segmento" not in sin and "segmento_del_ruc" not in sin

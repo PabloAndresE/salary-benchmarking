@@ -6849,3 +6849,12 @@ OFFICER`…).
 **Medición:** el candado con todo el glosario movió un único voto de validación, y ninguno de dirección. Con solo
 los términos de dirección, el cambio no toca ningún voto de validación: no hay nada que medir con el pinball. Es una
 regla de coherencia (el mismo cargo da la misma banda), coherente con el glosario aprobado. **Se adopta.**
+
+### Padrón de RUC recuperado y `ruc` en `/referencia` (2026-10-10)
+
+- **Padrón recuperado.** Desde la v16, la base se armaba sin el padrón de la Superintendencia. `meta_ruc` solo
+  traía las 6.722 empresas del marco, así que el RUC de un cliente que no aportó datos no daba su tamaño ni su
+  industria, y D-063 no se activaba. La v26 recupera el padrón de la v15: 222.719 empresas (donde están los dos,
+  manda lo del marco).
+- **`ruc` en `/referencia`.** Da el tamaño igual que en `/informes`: el segmento pedido a mano manda; si no
+  coincide con el del RUC, se avisa; un RUC fuera del padrón también se avisa.
