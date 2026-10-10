@@ -7229,3 +7229,43 @@ Respuesta: sin cifra, `base = "no reconocido"`.
 
 - **Criterio de adopción** (en la confirmación): rechaza ≥ 80 % de la lista nueva, con ≤ 2 % de rechazados entre los
   títulos apartados reales (votos). Ningún título con datos directos se rechaza nunca, por construcción.
+
+### D-073, resultado: no se adopta (2026-10-10)
+
+**Regla elegida en el diseño** (la más simple que cumple incluso la lectura estricta: ≤ 2 % de los títulos reales
+**por analogía**):
+
+- **Rechazo:** ninguna palabra del título encabeza ≥ 3 títulos de la base, ni aparece en ≥ 20, ni es palabra de
+  rango, **y** la similitud es < 0,85.
+- **En el diseño:** rechaza el 83 % de la lista vieja y el 1,94 % de los votos reales por analogía (0,70 % de
+  todos). Los reales rechazados son sobre todo actividades y códigos: `SIEMBRA`, `FUMIGACION`, `OVS L4`.
+
+**Confirmación con la lista nueva:** **30 de 40 (75 %): no cumple (≥ 80 %).** Además, de 10 controles reales se
+rechaza 1: `ADIESTRADOR CANINO`.
+
+**Por qué falla.** Se ve en la lista de confirmación, así que este arreglo es una decisión nueva: los **conectores**
+(`DE`, `CON`, `QUE`, `SIN`, `NO`, `THE`) cuentan como palabra de cargo, porque aparecen en ≥ 20 títulos. Por eso
+pasan `MAGO DE OZ`, `THE QUICK BROWN FOX` y `CAFE CON LECHE`. Las palabras comunes con similitud > 0,85 (`VENTANA`,
+`I LOVE PIZZA`, `CARGO X`) pasan por la similitud.
+
+## D-074 — «No reconocido» sin contar los conectores. Registrado antes de medir
+
+**Cambio sobre D-073:** los conectores en español y en inglés **no cuentan** como palabra de cargo:
+
+> DE, DEL, LA, LAS, LOS, EL, Y, E, EN, PARA, CON, AL, POR, A, QUE, SIN, NO, O, U, SU, MI, TU, OF, AND, THE, FOR, TO,
+> WITH, IN, AT, ON, BY, AN, I, MY, YOUR, IS, ARE
+
+Lo demás igual (cabeza ≥ 3, palabra ≥ 20, rango, similitud < 0,85).
+
+**Diseño:** las listas vieja y nueva de D-073 (ya vistas) y los votos apartados por analogía. Se reporta el rechazo
+de reales. **Si supera el 2 % por analogía, no se adopta.**
+
+**Confirmación, una sola vez, con una TERCERA lista (40), fijada ahora:**
+
+  ZXCVBN · POIUYT · ABCDEF · 999 · XYZ 123 · OTRA COSA · NO SE · NI IDEA · LO QUE SEA · NADA · PERSONA · ALGUIEN ·
+  JIRAFA · LEON MARINO · PINGUINO · MARIPOSA · PAPAYA · ARROZ CON POLLO · EMPANADA · HELADO DE FRESA · CAMA · ESPEJO ·
+  TELEVISOR · BICICLETA · OCEANO · VOLCAN · ARCOIRIS · FANTASMA · BRUJA · ROBOT ASESINO · ALIEN · CABALLERO JEDI ·
+  THE CAT IS ON THE TABLE · MY NAME IS JOHN · GOOD MORNING · LOREM DOLOR · MMMM · QQQQ · CARGO 1 · TITULO DEL PUESTO
+
+**Criterio:** rechaza ≥ 80 % de la tercera lista **y** ≤ 2 % de los votos reales por analogía en el diseño. Se
+reportan también los controles reales.

@@ -401,6 +401,8 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
 # de `GERENTE GENERAL` es +-95%. El argumento es probablemente cierto y NO se usa, porque
 # cambiar la metrica despues de ver el resultado vacia el pre-registro de sentido. Para
 # volver a intentarlo hay que declarar antes cual es la primaria correcta y por que.
+# D-073: filtro de «no reconocido» (fijado con el conjunto de diseno; confirmado con una lista nueva)
+FILTRO_CABEZA, FILTRO_PALABRA, FILTRO_SIMILITUD = 3, 20, 0.85
 # D-069: cortes del ancho de la banda entregada (p75 / p25) para la confianza
 CONF_ANCHO_ALTA, CONF_ANCHO_BAJA = 2.0, 3.0
 # D-064: las siglas de cargos de direccion del glosario, cuyo nivel se lee despues del glosario en el candado
@@ -1267,6 +1269,23 @@ class BaseReferencia:
         self.familia_ingles = fam
         return {"equivalentes": len(fam), "con_2_o_mas": sum(len(x) >= 2 for x in fam.values()),
                 "titulos": sum(len(x) for x in fam.values())}
+
+    def _parece_cargo(self, t):
+        """D-073: alguna palabra del titulo encabeza >= `FILTRO_CABEZA` titulos de la base, aparece en >=
+        `FILTRO_PALABRA` titulos, o es palabra de rango (espanol o ingles)."""
+        if getattr(self, "_palabras_cargo_", None) is None:
+            import collections
+            from .idioma import PALABRAS_EN
+            cab, pal = collections.Counter(), collections.Counter()
+            for c in self.celdas:
+                ws = re.findall(r"[A-Z]+", str(c))
+                if ws:
+                    cab[ws[0]] += 1
+                    pal.update(set(ws))
+            self._palabras_cargo_ = ({w for w, n in cab.items() if n >= FILTRO_CABEZA}
+                                     | {w for w, n in pal.items() if n >= FILTRO_PALABRA}
+                                     | set(RANGOS_RUBRICA) | set(PALABRAS_EN))
+        return any(w in self._palabras_cargo_ for w in re.findall(r"[A-Z]+", str(t).upper()))
 
     def _corrector(self):
         """D-068 (a): el corrector de tipeo con el vocabulario de la base (se arma la primera vez)."""
@@ -2283,9 +2302,17 @@ class BaseReferencia:
                                               and int(self.grupo[propio]) in mis_grupos)
                                           else np.nan),
                         "similitud": round(mejor, 3),
-                        # D-068 (b): por analogia y con similitud bajo el umbral, el titulo no se reconoce
-                        "reconocido": not (base == "por analogia" and getattr(self, "umbral_reconocido", None)
-                                           is not None and mejor < self.umbral_reconocido)}
+                        "reconocido": True}
+            if (base == "por analogia" and getattr(self, "filtro_cargo", False)
+                    and not self._parece_cargo(buscados[k]) and mejor < FILTRO_SIMILITUD):
+                # D-073: ni se encontro por ninguna via, ni tiene palabras de cargo, ni se parece lo bastante a la
+                # base: no se reconoce y NO se da cifra (`ASDFGH QWERTY`, `ASTRONAUTA`)
+                fl = filas[t]
+                for c_ in list(fl):
+                    if c_.endswith("_log") or c_ in ("sd", "sd_modelo", "ancho_rel", "incert_centro"):
+                        fl[c_] = np.nan
+                fl.update({"base": "no reconocido", "confianza": "BAJA", "empresas": 0, "personas": 0,
+                           "reconocido": False})
 
         # las filas con el cargo en blanco se abstienen, con las MISMAS claves que las
         # demas para que el DataFrame no invente columnas a medias

@@ -1,0 +1,85 @@
+81 · CONFIRMACION DE D-073 (una sola vez)
+LISTA NUEVA (confirmacion): rechazados 30 de 40 (75%)
+   QWERASDF                 no reconocido    similitud 0.728
+   JJJJJ                    no reconocido    similitud 0.768
+   ABC123                   no reconocido    similitud 0.645
+   0000                     no reconocido    similitud 0.662
+   PALABRA                  no reconocido    similitud 0.772
+   COSA                     no reconocido    similitud 0.799
+   NADA QUE VER             por analogia     similitud 0.707
+   HOLA COMO ESTAS          por analogia     similitud 0.730
+   BUENOS DIAS              no reconocido    similitud 0.678
+   SIN CARGO                por analogia     similitud 0.765
+   NO APLICA                por analogia     similitud 0.726
+   XXX YYY                  no reconocido    similitud 0.678
+   ELEFANTE                 no reconocido    similitud 0.759
+   CABALLO                  no reconocido    similitud 0.804
+   TORTUGA                  no reconocido    similitud 0.736
+   MANZANA                  no reconocido    similitud 0.732
+   HAMBURGUESA              no reconocido    similitud 0.711
+   CAFE CON LECHE           por analogia     similitud 0.772
+   SOFA                     no reconocido    similitud 0.687
+   VENTANA                  por analogia     similitud 0.871
+   LAPIZ                    no reconocido    similitud 0.732
+   MONTANA                  no reconocido    similitud 0.765
+   PLAYA                    no reconocido    similitud 0.700
+   LUNA                     no reconocido    similitud 0.729
+   ESTRELLA FUGAZ           no reconocido    similitud 0.735
+   ZOMBIE                   no reconocido    similitud 0.604
+   HADA MADRINA             no reconocido    similitud 0.712
+   MAGO DE OZ               por analogia     similitud 0.672
+   DINOSAURIO               no reconocido    similitud 0.729
+   NAVE ESPACIAL            no reconocido    similitud 0.738
+   THE QUICK BROWN FOX      por analogia     similitud 0.599
+   I LOVE PIZZA             por analogia     similitud 0.876
+   HELLO WORLD              no reconocido    similitud 0.626
+   BLAH BLAH                no reconocido    similitud 0.673
+   ASDASD                   no reconocido    similitud 0.778
+   KJHKJH                   no reconocido    similitud 0.715
+   LALALA                   no reconocido    similitud 0.733
+   PRUEBA 123               no reconocido    similitud 0.723
+   CARGO X                  por analogia     similitud 0.871
+   NOMBRE APELLIDO          no reconocido    similitud 0.677
+lista vieja (diseno): rechazados 25 de 30 (83%)
+   ASDFGH QWERTY            no reconocido    similitud 0.635
+   XXXXX                    no reconocido    similitud 0.671
+   AAAA BBBB                no reconocido    similitud 0.725
+   123456                   no reconocido    similitud 0.656
+   LOREM IPSUM              no reconocido    similitud 0.653
+   TEST                     no reconocido    similitud 0.792
+   PRUEBA PRUEBA            no reconocido    similitud 0.759
+   NINGUNO                  no reconocido    similitud 0.705
+   N/A                      por analogia     similitud 0.810
+   HOLA MUNDO               no reconocido    similitud 0.639
+   ASTRONAUTA               no reconocido    similitud 0.695
+   DOMADOR DE LEONES        por analogia     similitud 0.730
+   MAGO                     no reconocido    similitud 0.806
+   UNICORNIO                no reconocido    similitud 0.751
+   PIRATA                   no reconocido    similitud 0.818
+   VAMPIRO                  no reconocido    similitud 0.683
+   SUPERHEROE               no reconocido    similitud 0.750
+   DRAGON                   no reconocido    similitud 0.723
+   ZZZZ                     no reconocido    similitud 0.689
+   QWERTYUIOP               no reconocido    similitud 0.663
+   MESA                     por analogia     similitud 0.871
+   SILLA                    no reconocido    similitud 0.712
+   PERRO                    por analogia     similitud 0.851
+   GATO                     no reconocido    similitud 0.802
+   PIZZA                    datos directos   similitud 1.000
+   FUTBOL                   no reconocido    similitud 0.795
+   BANANA                   no reconocido    similitud 0.693
+   CIELO AZUL               no reconocido    similitud 0.758
+   JKLÑ                     no reconocido    similitud 0.718
+   ????                     no reconocido    similitud 0.720
+controles reales: rechazados 1 de 10 (10%)
+   CONTADOR GENERAL         datos directos   similitud 1.000
+   Product Designer UX/UI   por analogia     similitud 0.895
+   AI Developer             por analogia     similitud 0.869
+   Head of AI               por analogia     similitud 0.791
+   CX Specialist            por analogia     similitud 0.943
+   ADIESTRADOR CANINO       no reconocido    similitud 0.742
+   SOMMELIER                por analogia     similitud 0.794
+   PILOTO DE DRON           por analogia     similitud 0.878
+   CIENTIFICO DE DATOS      datos directos   similitud 1.000
+   contdor generl           datos directos   similitud 1.000
+CRITERIO (>= 80 % de la lista nueva): NO CUMPLE
