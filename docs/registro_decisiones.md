@@ -6858,3 +6858,32 @@ regla de coherencia (el mismo cargo da la misma banda), coherente con el glosari
   manda lo del marco).
 - **`ruc` en `/referencia`.** Da el tamaño igual que en `/informes`: el segmento pedido a mano manda; si no
   coincide con el del RUC, se avisa; un RUC fuera del padrón también se avisa.
+
+## D-065 — Limpieza de votos atípicos. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-10: «¿podemos limpiar la base de outliers?»). Para el gerente general, la referencia de
+una empresa mediana es $2.929. Pero el 10 % de los gerentes generales figura con $470–$600: el SBU o casi. En los
+niveles 4–5, los votos (mediana por cargo y empresa) muestran un pico en el mínimo: el 4,7 % está bajo 1,25 SBU.
+No es un precio de mercado del cargo: lo más probable es un dueño o representante legal que se pone el mínimo en la
+nómina.
+
+Una regla simétrica por MAD **no** sirve: muchos grupos de nivel 1 están pegados al SBU, su MAD es casi 0, y
+cortaría el 6 % de los votos altos, que son reales.
+
+**Cambio** (`atipicos`). Se quitan del entrenamiento los votos (cargo × empresa) que cumplen alguna de dos reglas,
+con el grupo y el nivel de la base (nivel por grupo):
+
+- **(a) Sueldo de dueño:** grupo de nivel 4–5 y voto < 1,25 SBU. Son 1.436 votos con toda la base.
+- **(b) Extremo:** en grupos con ≥ 5 empresas, voto > 6× o < 1/6 de la mediana del grupo. Son 285 votos.
+
+Se quitan las filas de esos pares y la base se arma sin ellas.
+
+**Medición:** pinball, con empresas apartadas, frente al producto vigente sin tamaño (`tam_A`), con el `k` fijo.
+
+- **Primaria:** los votos apartados que **no** son atípicos por la misma regla. Usa la mediana y el nivel del grupo
+  de entrenamiento: el objetivo es el mercado de puestos contratados.
+- **Secundaria:** todos los votos apartados. Se reporta.
+- **Placebo:** se quita el mismo número de votos al azar, del mismo nivel (por nivel, tantos como quita la regla).
+
+**Criterio** (el de D-058): se adopta si la primaria mejora (IC entero bajo cero) y el placebo no mejora, o si no
+empeora y el placebo sí empeora.
