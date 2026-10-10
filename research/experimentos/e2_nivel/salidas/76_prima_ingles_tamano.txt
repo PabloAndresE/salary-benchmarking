@@ -1,0 +1,15 @@
+76 · PRIMA DEL TITULO EN INGLES Y TAMANO DE EMPRESA (D-066)
+pares (ingles con datos -> equivalente en otro grupo con datos): 453
+
+prima bruta (todos los votos):              +28.0 % [+23.0, +35.0] (n=453)
+prima bruta (solo votos con segmento):      +30.3 % [+26.1, +38.6] (n=391)
+prima AJUSTADA por tamano (voto - delta):   +32.1 % [+27.8, +36.6] (n=391)
+
+empresas GRANDE: ingles 75% | equivalente en espanol 73% (mediana entre pares)
+
+por nivel (ajustada):
+   nivel 1: bruta +18.6 % [+11.6, +36.5] (n=71) | ajustada +18.6 % [+11.6, +36.5] (n=71)
+   nivel 2: bruta +32.1 % [+29.2, +43.4] (n=130) | ajustada +32.7 % [+29.5, +44.4] (n=130)
+   nivel 3: bruta +38.9 % [+17.5, +50.4] (n=106) | ajustada +40.1 % [+19.1, +56.1] (n=106)
+   nivel 4: bruta +7.2 % [-0.6, +20.2] (n=44) | ajustada +10.2 % [+6.4, +31.0] (n=44)
+   nivel 5: bruta +86.4 % [+53.2, +108.7] (n=40) | ajustada +79.0 % [+30.8, +98.4] (n=40)

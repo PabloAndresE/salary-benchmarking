@@ -6938,3 +6938,31 @@ Resumen: mediana entre pares, con IC 95 % por bootstrap de pares (1.000 réplica
 - **Va la (i)** si la prima ajustada es ≥ 10 % con IC entero sobre 0, con la prima reestimada después del ajuste por
   tamaño.
 - **Entre medio:** se reporta y decide el autor.
+
+### D-066, resultado: el tamaño no explica la prima del inglés (2026-10-10)
+
+453 pares (391 con votos con segmento). Mediana entre pares e IC por bootstrap de pares:
+
+| | Prima |
+|---|---|
+| Bruta | +28,0 % [+23,0, +35,0] |
+| Bruta, solo votos con segmento | +30,3 % [+26,1, +38,6] |
+| **Ajustada por tamaño (D-063)** | **+32,1 % [+27,8, +36,6]** |
+
+- **Composición:** el 75 % de las empresas que escriben el título en inglés son GRANDE, frente al 73 % de las del
+  equivalente en español. El tamaño no los distingue.
+- **Por nivel (ajustada):**
+
+  | Nivel | 1 | 2 | 3 | 4 | 5 |
+  |---|---|---|---|---|---|
+  | Prima | +19 % | +33 % | +40 % | +10 % | +79 % |
+
+  Los IC son anchos en los niveles 4 y 5 (n = 44 y 40).
+
+**Según el criterio, va la (i)**: el equivalente más la prima, reestimada después del ajuste por tamaño. Confirma lo
+que ya decía la decisión del autor del 2026-10-07 («tamaño y actividad no corrigen esa prima»). Esa decisión
+(«siempre», sin prima) fue de producto, con el costo aceptado. **No se cambia sin que el autor lo confirme.** Queda
+pendiente su decisión entre (i) y mantener «siempre».
+
+La prima no es de tamaño: probablemente es de tipo de empresa (multinacional, sector) y no se puede observar con los
+campos actuales.
