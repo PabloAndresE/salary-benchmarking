@@ -7370,3 +7370,45 @@ el mismo número de empresas del GG que quita la regla. **Criterio:** mejora de 
 
 **Medición:** frente a `prima`. Placebo: el mismo corrimiento aplicado a **otro** grupo de nivel 5 al azar.
 **Criterio:** regla de producto (no inferior, protocolo v2). **Solo se adopta si D-076 no se adopta.**
+
+### D-076, resultado: no se adopta (2026-10-10)
+
+Con el entrenamiento, el GG pasa de 494 a 352 empresas y el centro sube +0,154 (+17 %). Unión de 4.511 votos:
+
+| Comparación | Pinball | IC (dos vías) | Media por empresa |
+|---|---|---|---|
+| Variante − producto | +0,00042 | [−0,00021, +0,00187] | **+0,00436** |
+| Variante − placebo | −0,00322 | [−0,00647, +0,00000] | |
+
+No mejora: **no cumple.** La primera corrida falló por un error de implementación (arreglos de solo lectura), sin
+dar ningún resultado; se relanzó con la corrección.
+
+### D-077, resultado: no se adopta (2026-10-10)
+
+`e_cima` = +0,315 (+37 %; el «≈ +0,10» del registro era una estimación previa). El máximo entre los gerentes de área
+es un valor extremo, así que el corrimiento del GG sale **+0,87 (+139 %)**: la regla está mal diseñada (el máximo de
+muchos grupos es inestable). Resultados:
+
+| Comparación | Pinball | IC (dos vías) | Media por empresa |
+|---|---|---|---|
+| Variante − producto | +0,00520 | [−0,00067, +0,01818] | +0,029 |
+
+**No cumple la no inferioridad.**
+
+## D-078 — Banda del GG según la estructura del CLIENTE. Registrado antes de medir
+
+**Por qué.** D-076 muestra que subir el GG para todos empeora en las empresas sin gerencias. Pero en un informe se
+conoce la estructura del cliente: su nómina trae, o no, otros cargos de nivel 5.
+
+**Cambio** (`cima_cliente`): para un cliente con ≥ 1 cargo de nivel 5 distinto del GG en su nómina, el GG toma la
+banda **con estructura** (la de D-076). Sin eso, la banda de siempre.
+
+**Medición** (con las salidas de `prima` y `cima` ya calculadas, **sin haber mirado este corte**). Votos apartados
+del grupo GG, partidos por si la empresa apartada tiene otro voto de nivel 5. La variante toma, en las empresas con
+estructura, el pinball de `cima`, y en las demás el de `prima`.
+
+- **Placebo:** la misma cantidad de empresas «con estructura», sorteada al azar entre las empresas con voto GG.
+- **IC:** bootstrap de empresas (un voto GG por empresa).
+
+**Criterio:** en las empresas con estructura, mejora (IC bajo cero) **y** la variante es mejor que su placebo (IC
+pareado bajo cero).
