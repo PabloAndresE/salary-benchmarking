@@ -7280,3 +7280,36 @@ Entre los rechazados hay cargos reales y raros (`CELADOR`, `SALVAVIDAS`, `SIFONE
 **Conclusión de D-068 b, D-073 y D-074:** con estadísticas de palabras y la similitud de Vertex no se puede separar
 la basura de los cargos reales poco frecuentes con ≥ 80 % y ≤ 2 % a la vez. El filtro (`filtro_cargo`) queda en el
 código, **apagado**.
+
+## D-075 — Clasificador «¿es un cargo?» sobre el embedding. Registrado antes de medir
+
+**Por qué:** D-068 b, D-073 y D-074 no separan la basura de los cargos raros con palabras y similitud. Autor
+(2026-10-10): «sí», con 2 GPUs.
+
+**Datos:**
+
+- **Positivos:** los títulos de la base que aparecen en empresas de entrenamiento (sin validación ni test), con su
+  embedding de Vertex.
+- **Negativos:**
+  - generados con Qwen3.5-122B local: ~40 categorías que **no** son cargos (animales, comida, objetos, lugares,
+    fantasía, saludos, frases, respuestas vacías de formulario, nombres propios, marcas, deportes, etc.), varias
+    semillas;
+  - textos sin sentido generados por programa (teclazos, números, letras repetidas).
+
+  Se quitan los que coinciden con un título de la base y los de la tercera lista de D-074. Se embeben con Vertex.
+
+**Modelo:** regresión logística sobre el embedding normalizado (como D-049), con pesos balanceados. Negativos
+partidos 80/20, el 20 % solo para reportar.
+
+**Uso:** solo cuando el título va por analogía. Si `P(no es cargo) ≥ u`, la respuesta es `no reconocido` y sin
+cifra.
+
+**Umbral `u`:** el menor que rechaza **≤ 2 %** de los votos reales apartados por analogía (`tam_A`). Se fija
+**antes** de la confirmación.
+
+**Confirmación, una sola vez, con la tercera lista de D-074 (sin usar):** se adopta si rechaza **≥ 80 %**. Se
+reportan también:
+
+- las listas vieja y nueva (ya vistas);
+- el 20 % de negativos apartados;
+- los 10 controles reales.
