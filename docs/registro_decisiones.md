@@ -6966,3 +6966,114 @@ pendiente su decisión entre (i) y mantener «siempre».
 
 La prima no es de tamaño: probablemente es de tipo de empresa (multinacional, sector) y no se puede observar con los
 campos actuales.
+
+## Protocolo v2 (2026-10-10, por la revisión de los tres jueces). Rige desde D-067
+
+Los jueces mostraron que el IC por bootstrap de empresas es demasiado estrecho: todas las empresas con un mismo cargo
+reciben la misma banda, así que sus errores van correlacionados. También mostraron que «donde actúa» compara la
+variante y su placebo sobre conjuntos de votos distintos, y que «salvo que empeore» no tiene margen. Desde D-067:
+
+1. **Votos:** la **unión** de los votos donde actúan la variante o su placebo (la banda cambia > 1e-6 en alguno).
+2. **IC 95 %:** bootstrap en **dos vías**, empresa × cargo (pesos multinomiales en las dos, media por voto),
+   400 réplicas. Se reporta también la media por empresa.
+3. **Contra el placebo:** se compara la variante con su placebo, de forma pareada, sobre los mismos votos.
+4. **Criterios:**
+   - **Mejora de precisión:** se adopta si la variante frente al producto tiene el IC entero bajo cero **y**
+     la variante frente al placebo también.
+   - **Regla de producto** (coherencia, presentación): se adopta si **no es inferior**, es decir, si el extremo
+     superior del IC frente al producto es < **+0,001** (≈ 0,7 % del pinball). Se reporta el placebo.
+5. **Sin cambios después de medir:** el criterio no se aclara ni se modifica después de ver los resultados.
+   Si hace falta otro, es una decisión nueva.
+
+Herramienta: `research/experimentos/e2_nivel/77_comparar_v2.py`. Las decisiones anteriores no se recalculan aquí:
+queda pendiente, igual que el test intocado.
+
+## D-067 — Título en inglés: equivalente más prima encogida por nivel, mostrada aparte. Registrado antes de medir
+
+**Por qué:** D-066 (la prima del inglés no es tamaño: +32 %) y la elección del autor (2026-10-10: «dale», opción (i)).
+
+**Cambio:**
+
+- **Banda.** Se sale de «siempre» y se vuelve a la lógica de D-055:
+  - un título en inglés con datos directos propios usa sus datos;
+  - sin datos propios y con un equivalente con datos, usa la banda del equivalente corrida por `π*(L)`;
+  - sin equivalente, analogía, como hoy.
+- **Prima encogida.** `π*(L) = (n_L·π_L + 50·π_global) / (n_L + 50)`, con `π_L` y `n_L` del estimador de D-055
+  (pares por nivel).
+- **Presentación.** La respuesta trae `referencia_equivalente` (sin prima) y `prima_idioma` (la π aplicada), para
+  que el front muestre «equivale a X ($a); las empresas que titulan en inglés pagan +p % → $b».
+
+**Medición:** frente a `trad_base` (el producto con «siempre»), con π estimada solo con el entrenamiento. Placebo:
+la misma π, con la traducción hacia el grupo de **otro** título resuelto (el de D-055). **Criterio:** mejora de
+precisión (protocolo v2).
+
+## D-068 — Errores de tipeo y «cargo no reconocido». Registrado antes de medir
+
+**(a) Tipeo.** Antes de buscar, cada palabra del título que no está en el vocabulario de la base y tiene ≥ 5 letras
+se reemplaza por la palabra del vocabulario con menor distancia de Damerau-Levenshtein:
+
+- ≤ 1 con 5–7 letras; ≤ 2 con ≥ 8 letras;
+- solo si es **única** a esa distancia, o la más frecuente (por personas) con el doble que la siguiente.
+
+Las palabras de rango (`RANGOS_RUBRICA`) y las siglas de ≤ 4 letras no se tocan.
+
+- **Medición:** frente a `tam_A`. Placebo: la palabra mal escrita se reemplaza por una palabra del vocabulario
+  **al azar** del mismo largo.
+- **Criterio:** regla de producto (no inferior), y además la variante es mejor que el placebo en los votos donde
+  actúa (IC pareado bajo cero).
+
+**(b) No reconocido.** Si el título va por analogía y su `similitud` (coseno máximo con la base) es menor que `τ`,
+la API responde sin cifra: `base = "no reconocido"`, con las sugerencias de `/puestos`.
+
+- `τ` es el **percentil 2** de `similitud` entre los títulos apartados que van por analogía en `tam_A`: se rechaza
+  como mucho el 2 % de títulos reales.
+- **Lista de control de basura, fijada ahora (30):**
+
+  ASDFGH QWERTY · XXXXX · AAAA BBBB · 123456 · LOREM IPSUM · TEST · PRUEBA PRUEBA · NINGUNO · N/A · HOLA MUNDO ·
+  ASTRONAUTA · DOMADOR DE LEONES · MAGO · UNICORNIO · PIRATA · VAMPIRO · SUPERHEROE · DRAGON · ZZZZ · QWERTYUIOP ·
+  MESA · SILLA · PERRO · GATO · PIZZA · FUTBOL · BANANA · CIELO AZUL · JKLÑ · ????
+
+- **Criterio:** se adopta si rechaza ≥ 80 % de la lista. Se reporta, entre los votos apartados que se rechazarían,
+  su pinball frente al resto (¿eran peores?).
+
+## D-069 — La confianza también depende del ancho de la banda. Registrado antes de medir
+
+**Regla nueva**, con `r = p75 / p25` de la banda entregada y `c` la confianza actual (por la incertidumbre del
+centro):
+
+| Confianza | Condición |
+|---|---|
+| **ALTA** | `c = ALTA` y `r ≤ 2,0` |
+| **BAJA** | `c = BAJA` o `r > 3,0` |
+| **MEDIA** | el resto |
+
+**Medición** (con los votos apartados de `tam_A`, sin pinball, porque el pinball crece con el ancho por
+construcción): el error del centro, `|voto − referencia|` (mediana), por clase, con la regla vieja y con la nueva.
+IC en dos vías.
+
+**Criterio:** se adopta si, con la regla nueva:
+
+1. el error crece ALTA < MEDIA < BAJA, con IC de ALTA y BAJA que no se solapan;
+2. el error de ALTA es ≤ al de ALTA con la regla vieja.
+
+Se publica la regla en `docs/api_para_el_front.md`.
+
+## D-070 — Sinónimos: el grupo chico se acerca al grande. Registrado antes de medir
+
+**Por qué:** juez de resultados. `JEFE DE RRHH` da $1.229 (29 empresas) y `JEFE DE RECURSOS HUMANOS` $1.538 (198);
+`GERENTE DE TALENTO HUMANO` está −24 % bajo `GERENTE DE RECURSOS HUMANOS`. Unir los grupos empeora (D-046/D-047).
+
+**Pares:**
+
+- la ronda 1 (`sinonimos_v1`, 441);
+- la ronda 2 aprobada por el autor (`56_sinonimos_para_aprobar_r2.csv`, `aprobar = si`: 571);
+- las **reglas de palabras** del autor (2026-10-10): `RRHH`, `RR.HH.`, `RR HH`, `TALENTO HUMANO` → `RECURSOS HUMANOS`;
+  `TI`, `T.I.`, `TECNOLOGIAS DE LA INFORMACION` → `SISTEMAS`; `CONDUCTOR` → `CHOFER`. Son pares entre títulos de la
+  base que coinciden después de reemplazar esas palabras, y las mismas reglas se aplican al título de la consulta
+  antes de buscar.
+
+**Cambio:** en cada componente conexa de grupos sinónimos, el grupo con más empresas no cambia. Cada uno de los
+demás corre su centro a `(n·m + 10·m_grande) / (n + 10)`, y su banda se corre igual (como D-061).
+
+**Medición:** frente a `tam_A`. Placebo: cada grupo chico se acerca a un grupo grande **al azar** del mismo nivel,
+con el mismo peso. **Criterio:** regla de producto (no inferior). Se reporta la variante frente al placebo.
