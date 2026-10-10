@@ -7198,3 +7198,34 @@ margen. `armar_familia_ingles` queda en el código, apagado: la API no lo llama.
 
 `/referencia` trae `sinonimo_principal` cuando un sinónimo aprobado tiene más empresas. Los sinónimos de la API
 suman ahora las reglas de palabras de D-070. Tests: `tests/test_servicio.py`.
+
+## D-073 — «No reconocido» que rechaza de verdad (sin cifra). Registrado antes de medir
+
+**Por qué** (autor, 2026-10-10: «no me sirve un aviso, necesito que funcione»). D-068 (b) falló porque la similitud
+de Vertex no separa la basura: «PERRO» se parece a «ADIESTRADOR DE PERROS». Hace falta otra señal.
+
+**Familia de reglas a explorar** (en el conjunto de diseño). Un título que no se encuentra por ninguna vía (tal
+cual, capa 0, grado, tipeo, traducción, juez) se rechaza si sus palabras no tienen pinta de cargo. Señales:
+
+1. **Palabra de cabeza:** alguna palabra del título encabeza ≥ k títulos de la base, o es palabra de rango
+   (`RANGOS_RUBRICA`, `PALABRAS_EN`).
+2. **Similitud:** el coseno máximo con la base.
+3. **Juez:** la P máxima del cross-encoder contra los vecinos.
+
+Respuesta: sin cifra, `base = "no reconocido"`.
+
+**Protocolo:**
+
+- **Diseño:** la lista vieja de 30 (D-068 b, ya vista) y los títulos apartados por analogía de `tam_A`, con la base
+  de entrenamiento. Se elige la regla más simple que rechace ≥ 80 % de la basura de diseño con ≤ 2 % de títulos
+  apartados reales rechazados.
+- **Confirmación, una sola vez, con la regla ya fija** y una **lista nueva** (40), fijada ahora:
+
+  QWERASDF · JJJJJ · ABC123 · 0000 · PALABRA · COSA · NADA QUE VER · HOLA COMO ESTAS · BUENOS DIAS · SIN CARGO ·
+  NO APLICA · XXX YYY · ELEFANTE · CABALLO · TORTUGA · MANZANA · HAMBURGUESA · CAFE CON LECHE · SOFA · VENTANA ·
+  LAPIZ · MONTANA · PLAYA · LUNA · ESTRELLA FUGAZ · ZOMBIE · HADA MADRINA · MAGO DE OZ · DINOSAURIO · NAVE ESPACIAL ·
+  THE QUICK BROWN FOX · I LOVE PIZZA · HELLO WORLD · BLAH BLAH · ASDASD · KJHKJH · LALALA · PRUEBA 123 · CARGO X ·
+  NOMBRE APELLIDO
+
+- **Criterio de adopción** (en la confirmación): rechaza ≥ 80 % de la lista nueva, con ≤ 2 % de rechazados entre los
+  títulos apartados reales (votos). Ningún título con datos directos se rechaza nunca, por construcción.
