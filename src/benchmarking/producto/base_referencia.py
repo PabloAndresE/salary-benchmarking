@@ -1650,6 +1650,82 @@ class BaseReferencia:
             self.nivel = np.array([nuevo.get(int(g), n) for g, n in zip(self.grupo, self.nivel)], dtype=float)
         return n_des, n_cambia
 
+    def cima_estructura(self, marco, col="cargo_norm", titulo="GERENTE GENERAL", placebo=False, semilla=20):
+        """D-076: la banda del GG solo con las empresas que tienen OTRO grupo de nivel 5 (estructura gerencial).
+        El centro se corre por (mediana con estructura - mediana de todas), con el mismo estimador; la banda y el
+        respaldo se recalculan. `placebo` (solo para medir): se quita AL AZAR el mismo numero de empresas.
+        Devuelve un resumen."""
+        if titulo not in self.idx:
+            return {}
+        gg = int(self.grupo[self.idx[titulo]])
+        d = marco[[col, "empresa_ruc", "y"]].dropna(subset=["y"]).copy()
+        i = d[col].astype(str).map(self.idx)
+        d = d[i.notna()].copy()
+        j = i[i.notna()].astype(int).to_numpy()
+        d["g"], d["L"] = self.grupo[j], self.nivel[j]
+        con = set(d.loc[(d["g"] != gg) & (d["L"] == 5), "empresa_ruc"])
+        x = d[d["g"] == gg].copy()
+        todas = sorted(set(x["empresa_ruc"]))
+        quedan = [e for e in todas if e in con]
+        if placebo:
+            quedan = list(np.random.default_rng(semilla).choice(todas, len(quedan), replace=False))
+        rep = int(np.flatnonzero(self.grupo == gg)[0])
+        t2 = pd.Series({"k": float(self.tau2_c[rep])})
+        s2 = pd.Series({"k": float(self.sigma2_c[rep])})
+        x["_k"] = "k"
+        q_todas = cuantiles_de_empresa(x, "_k", t2, s2, CUANTILES + (0.50,)).loc["k"]
+        xs = x[x["empresa_ruc"].isin(set(quedan))]
+        q = cuantiles_de_empresa(xs, "_k", t2, s2, CUANTILES + (0.50,)).loc["k"]
+        qp = cuantiles_de_persona(xs, "_k", t2, s2, CUANTILES).loc["k"]
+        d_centro = float(q[0.50] - q_todas[0.50])
+        v = xs.groupby("empresa_ruc").size()
+        den = float(t2["k"]) + float(s2["k"]) / v.to_numpy(float)
+        celdas = np.flatnonzero(self.grupo == gg)
+        for nombre in ("m", "bandas", "bandas_per", "W", "emp", "personas"):
+            setattr(self, nombre, np.array(getattr(self, nombre)))      # las cargadas de un .npz son de solo lectura
+        self.m[celdas] += d_centro
+        self.bandas[celdas] = np.array([q[c] for c in CUANTILES], dtype=float)
+        self.bandas_per[celdas] = np.array([qp[c] for c in CUANTILES], dtype=float)
+        self.W[celdas] = float((1.0 / den).sum())
+        self.emp[celdas] = len(quedan)
+        self.personas[celdas] = len(xs)
+        return {"empresas_antes": len(todas), "empresas_despues": len(quedan),
+                "corrimiento_centro": round(d_centro, 4)}
+
+    def cima_orden(self, marco, col="cargo_norm", titulo="GERENTE GENERAL", placebo=False, semilla=21):
+        """D-077: m_GG := max(m_GG, max_area + e_cima). `max_area` = el centro mas alto de los grupos de nivel 5
+        con >= 10 empresas que empiezan con `GERENTE DE`; `e_cima` = mediana dentro de la empresa de y(GG) - max(y
+        de sus gerentes de area). `placebo`: el mismo corrimiento a OTRO grupo de nivel 5 al azar."""
+        if titulo not in self.idx:
+            return {}
+        gg = int(self.grupo[self.idx[titulo]])
+        d = marco[[col, "empresa_ruc", "y"]].dropna(subset=["y"]).copy()
+        i = d[col].astype(str).map(self.idx)
+        d = d[i.notna()].copy()
+        j = i[i.notna()].astype(int).to_numpy()
+        d["g"], d["L"] = self.grupo[j], self.nivel[j]
+        d["area"] = (d["g"] != gg) & (d["L"] == 5) & d[col].astype(str).str.startswith("GERENTE DE")
+        v = d.groupby(["empresa_ruc", "g"]).agg(y=("y", "median"), area=("area", "first")).reset_index()
+        e_gg = v[v["g"] == gg].set_index("empresa_ruc")["y"]
+        e_ar = v[v["area"]].groupby("empresa_ruc")["y"].max()
+        comun = e_gg.index.intersection(e_ar.index)
+        e_cima = float(np.median(e_gg[comun] - e_ar[comun])) if len(comun) else 0.0
+        rep = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).first()
+        areas = [g for g in v.loc[v["area"], "g"].unique() if self.emp[rep[g]] >= 10]
+        if not areas:
+            return {}
+        max_area = max(float(self.m[rep[g]]) for g in areas)
+        delta = max(0.0, max_area + e_cima - float(self.m[rep[gg]]))
+        destino = gg
+        if placebo:
+            otros = [g for g in rep.index if g != gg and self.nivel[rep[g]] == 5 and self.emp[rep[g]] >= 10]
+            destino = int(np.random.default_rng(semilla).choice(otros))
+        celdas = np.flatnonzero(self.grupo == destino)
+        self.m[celdas] += delta
+        self.bandas[celdas] += delta
+        self.bandas_per[celdas] += delta
+        return {"e_cima": round(e_cima, 4), "corrimiento": round(delta, 4), "grupo": int(destino)}
+
     def coherencia_sinonimos(self, pares, n0=10.0, placebo=False, semilla=18):
         """D-070: en cada componente de grupos sinonimos, el de mas empresas no cambia y cada uno de los demas
         corre su centro a `(n*m + n0*m_grande) / (n + n0)`; su banda se corre igual. `placebo` (solo para medir):

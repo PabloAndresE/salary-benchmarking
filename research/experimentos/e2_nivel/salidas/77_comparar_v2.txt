@@ -18,3 +18,13 @@ familia frente a prima (placebo familia_placebo): union 4,484 votos, 687 empresa
    placebo - producto   +0.01383 [+0.00803, +0.02101] (dos vias)  | media por empresa +0.00671
    variante - placebo   -0.01348 [-0.02061, -0.00772] (dos vias)  | media por empresa -0.00656
    CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+cima frente a prima (placebo cima_placebo): union 4,511 votos, 761 empresas, 4,109 cargos
+   variante - producto  +0.00042 [-0.00021, +0.00187] (dos vias)  | media por empresa +0.00436
+   placebo - producto   +0.00364 [+0.00086, +0.00656] (dos vias)  | media por empresa +0.00104
+   variante - placebo   -0.00322 [-0.00647, +0.00000] (dos vias)  | media por empresa +0.00332
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+orden frente a prima (placebo orden_placebo): union 4,496 votos, 737 empresas, 4,136 cargos
+   variante - producto  +0.00520 [-0.00067, +0.01818] (dos vias)  | media por empresa +0.02912
+   placebo - producto   +0.00388 [+0.00085, +0.00687] (dos vias)  | media por empresa +0.00179
+   variante - placebo   +0.00133 [-0.00670, +0.01557] (dos vias)  | media por empresa +0.02733
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE

@@ -7412,3 +7412,20 @@ estructura, el pinball de `cima`, y en las demás el de `prima`.
 
 **Criterio:** en las empresas con estructura, mejora (IC bajo cero) **y** la variante es mejor que su placebo (IC
 pareado bajo cero).
+
+### D-078, resultado: no se adopta (2026-10-10)
+
+177 empresas apartadas con voto GG; 105 con estructura.
+
+| Corte | Banda con estructura − banda de siempre |
+|---|---|
+| **Con estructura** | −0,0019 [−0,0166, +0,0131] (n = 105): no mejora |
+| Sin estructura | +0,0324 [+0,0163, +0,0485]: empeora |
+
+Variante − placebo: +0,0033 [−0,0049, +0,0121]. **No cumple.**
+
+**Conclusión de D-076 a D-078:** que el GG quede bajo algunos gerentes de área en la cifra de mercado es un hecho de
+composición. El GG está en empresas de todo tipo y los gerentes de área solo en las que tienen estructura. Ninguna
+corrección de la cifra mejora la precisión, ni siquiera solo para clientes con estructura. Dentro de la misma empresa
+el orden se cumple: el GG gana +40 % sobre la mediana de sus gerentes de área. Esa relación es una lectura **interna**
+del informe, no un ajuste de la cifra de mercado.
