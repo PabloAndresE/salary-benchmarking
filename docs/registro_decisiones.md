@@ -7429,3 +7429,22 @@ composición. El GG está en empresas de todo tipo y los gerentes de área solo 
 corrección de la cifra mejora la precisión, ni siquiera solo para clientes con estructura. Dentro de la misma empresa
 el orden se cumple: el GG gana +40 % sobre la mediana de sus gerentes de área. Esa relación es una lectura **interna**
 del informe, no un ajuste de la cifra de mercado.
+
+## D-079 — Efecto del tamaño propio de cada cargo, encogido hacia el del nivel. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-11: «necesitamos arreglarlo, que funcione»; la lectura interna «no va alineada a la
+definición del producto»). D-063 aplica el mismo `δ(L, s)` a todos los cargos del nivel. Pero el GG reacciona al
+tamaño mucho más que un gerente de área: D-018 midió de −56 % en PEQUEÑA a +82 % en GRANDE, y `δ(5, GRANDE)` es
++17 %. Con el tamaño, el GG queda bajo gerentes de área cuyo dato ya viene de empresas grandes.
+
+**Cambio** (`tamano_por_cargo`). Con los votos de D-063 (`voto − m*_g`, empresas con segmento):
+
+- `δ_raw(g, s)` = mediana de `voto − m*_g` entre las empresas del grupo `g` de tamaño `s`; `n(g, s)` = cuántas son.
+- `δ*(g, s) = (n·δ_raw + 20·δ(L, s)) / (n + 20)`: encogido hacia el del nivel, con 20 empresas de peso.
+- Con el tamaño del cliente, se usa `δ*(g, s)` en vez de `δ(L, s)`. La analogía sigue con `δ(L, s)`. Sin tamaño, nada
+  cambia.
+
+**Medición:** frente a `tam_C` (el producto con el segmento de cada empresa apartada), con todo estimado con el
+entrenamiento. Placebo: los `δ_raw(g, ·)` de cada grupo se reemplazan por los de **otro** grupo del mismo nivel. **Criterio:** mejora de precisión (protocolo v2).
+
+**Se reporta además** la coherencia de la cima en la lista: GG frente a los gerentes de área, por tamaño.
