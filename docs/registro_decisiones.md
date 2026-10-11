@@ -7474,3 +7474,42 @@ gana +10 % sobre la mediana de sus gerentes de área (contra +70 % en GRANDE).
 
 `demo/base_v29.npz` se armó para describir esto y **no se usa**: la API sigue con la v28. Ojo: la API toma la base
 más nueva al reiniciarse; se fija `BASE_REFERENCIA` a la v28 o se borra la v29.
+
+## D-080 — Niveles 4–5: el mercado del gerente contratado, sin dueños. Registrado antes de medir
+
+**Decisión de definición del autor** (2026-10-11: «dale con tu plan»). La referencia de jefaturas y gerencias
+(niveles 4–5) mide al **gerente contratado**. Los votos de dueño (voto < 1,25 SBU en un grupo de nivel 4–5, regla (a)
+de D-065) no entran, como en las encuestas de ejecutivos, que excluyen a los dueños-gerentes.
+
+**Cambio** (`sin_duenos`):
+
+- Sin rearmar la base, solo se recalculan los grupos de nivel 4–5 que tienen votos de dueño:
+  - **centro:** se corre por la diferencia de medianas ponderadas (sin dueños − todos), con el mismo estimador;
+  - **banda:** los cuantiles de empresas sin dueños si quedan ≥ `MIN_EMPRESAS_BANDA`; si no, la de antes, corrida;
+  - **respaldo:** `W`, empresas y personas se recalculan.
+- **Tamaño:** encima, el efecto de tamaño propio de cada cargo (D-079), estimado sin los votos de dueño.
+
+**Medición:** frente a `tam_C` (el producto con el segmento de cada empresa apartada), todo con el entrenamiento.
+
+- **Primaria:** los votos apartados que **no** son de dueño. La definición es la misma en el entrenamiento y en la
+  evaluación.
+- **Secundaria:** todos los votos.
+- **Placebo:** se quita el mismo número de votos de nivel 4–5, al azar y por nivel, y también se aplica D-079.
+
+**Criterio:** regla de definición del producto. **No inferior en la primaria** (extremo < +0,001, protocolo v2). Se
+reportan el placebo, la secundaria y la cima por tamaño.
+
+## D-081 — Garantía de orden de la cima por tamaño (sobre D-080). Registrado antes de medir
+
+**Cambio** (`cima_piso`). Para el grupo `GERENTE GENERAL`, con el tamaño `s` del cliente (y también sin tamaño, con
+las cifras globales):
+
+> `ref_GG(s) := max(ref_GG(s), P75_área(s) + e(s))`; la banda se corre igual.
+
+- `P75_área(s)`: el percentil 75 de las referencias, en el tamaño `s`, de los grupos de nivel 5 con ≥ 10 empresas
+  cuyo título empieza con `GERENTE DE`.
+- `e(s)`: la mediana, dentro de la empresa, de `y(GG) − mediana(y de sus gerentes de área)`, por tamaño (D-076 con
+  toda la base: PEQUEÑA +10 %, MEDIANA +21 %, GRANDE +70 %); se reestima con el entrenamiento.
+
+**Medición:** frente a D-080. **Criterio:** regla de producto (no inferior en la primaria de D-080). Se reporta la cima
+por tamaño.
