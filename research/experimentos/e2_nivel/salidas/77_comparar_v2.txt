@@ -28,3 +28,8 @@ orden frente a prima (placebo orden_placebo): union 4,496 votos, 737 empresas, 4
    placebo - producto   +0.00388 [+0.00085, +0.00687] (dos vias)  | media por empresa +0.00179
    variante - placebo   +0.00133 [-0.00670, +0.01557] (dos vias)  | media por empresa +0.02733
    CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+tam_D frente a tam_C (placebo tam_D_placebo): union 11,549 votos, 1,108 empresas, 6,700 cargos
+   variante - producto  -0.00001 [-0.00054, +0.00053] (dos vias)  | media por empresa +0.00012
+   placebo - producto   +0.00158 [+0.00059, +0.00284] (dos vias)  | media por empresa +0.00036
+   variante - placebo   -0.00159 [-0.00308, -0.00038] (dos vias)  | media por empresa -0.00025
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE

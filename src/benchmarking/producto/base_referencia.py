@@ -1536,6 +1536,7 @@ class BaseReferencia:
             # D-063: el tamano por nivel (corrimiento estandarizado por grupo y efecto por nivel x segmento)
             **({} if getattr(self, "ajuste_tam", None) is None else
                dict(tam_aj=np.asarray(self.ajuste_tam, dtype=float), tam_delta=np.asarray(self.delta_tam, dtype=float))),
+            **({} if getattr(self, "delta_tam_g", None) is None else dict(tam_dg=np.asarray(self.delta_tam_g, float))),
             **({} if self.clf_nivel is None else
                dict(clf_W=self.clf_nivel[0], clf_b=self.clf_nivel[1], clf_k=self.clf_nivel[2])))
 
@@ -1594,6 +1595,8 @@ class BaseReferencia:
                                    for k, v in zip(z["sen_k"], z["sen_v"])}
             if "cc_W" in z.files:
                 base.clf_cargo = (np.asarray(z["cc_W"], float), float(z["cc_b"]), float(z["cc_u"]))
+            if "tam_dg" in z.files:
+                base.delta_tam_g = np.asarray(z["tam_dg"], float)
             if "tam_aj" in z.files:
                 base.ajuste_tam, base.delta_tam = np.asarray(z["tam_aj"], float), np.asarray(z["tam_delta"], float)
             if "pri_k" in z.files and len(z["pri_k"]):
@@ -1785,7 +1788,7 @@ class BaseReferencia:
                 "corrimiento_mediano_abs": float(np.median(np.abs(dif))) if dif else 0.0}
 
     def estandarizar_tamano(self, marco, col="cargo_norm", vueltas=3, min_emp=3, min_votos=30, min_grupo=5,
-                            placebo=False):
+                            placebo=False, por_cargo=False, k0=20.0, placebo_cargo=False):
         """D-063: el efecto del tamano de empresa POR NIVEL del cargo, y el centro de cada grupo estandarizado.
 
         Votos = mediana de `y` por (grupo, empresa), solo empresas con segmento. Se alterna
@@ -1829,6 +1832,31 @@ class BaseReferencia:
             rng = np.random.default_rng(16)
             delta = np.vstack([fila[rng.permutation(len(fila))] for fila in delta])
         self.delta_tam = delta
+        if por_cargo:
+            # D-079: el efecto propio de cada grupo, encogido hacia el del nivel con `k0` empresas de peso
+            v["e"] = v["voto"] - v["g"].map(v.groupby("g")["r"].median())
+            raw = v.groupby(["g", "k"])["e"].agg(["median", "size"]).reset_index()
+            if placebo_cargo:
+                # solo para medir: los efectos de cada grupo pasan a OTRO grupo del mismo nivel
+                lv_g = v.groupby("g")["L"].first()
+                raw["L"] = raw["g"].map(lv_g)
+                rng = np.random.default_rng(22)
+                nuevo_g = {}
+                for lv, gs in lv_g.groupby(lv_g):
+                    lista = list(gs.index)
+                    nuevo_g.update(dict(zip(lista, rng.permutation(lista))))
+                raw["g"] = raw["g"].map(nuevo_g)
+            dg = np.full((len(self.celdas), len(SEGMENTOS)), np.nan)
+            lv_cel = self.nivel
+            pos = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).apply(list)
+            for g_, k_, med, n_ in raw[["g", "k", "median", "size"]].itertuples(index=False):
+                ii = pos.get(g_)
+                if ii is None:
+                    continue
+                lv = lv_cel[ii[0]]
+                base_l = delta[int(lv), int(k_)] if np.isfinite(lv) else 0.0
+                dg[ii, int(k_)] = (n_ * med + k0 * base_l) / (n_ + k0)
+            self.delta_tam_g = dg
         return {"votos": len(v), "grupos_corridos": int(len(corr)),
                 "corrimiento_mediano_abs": float(np.median(np.abs(corr))) if len(corr) else 0.0,
                 "delta": {lv: dict(zip(SEGMENTOS, np.round(delta[lv], 3))) for lv in range(1, 6)}}
@@ -2328,6 +2356,10 @@ class BaseReferencia:
                 # D-063: el efecto del tamano del cliente segun el NIVEL del cargo; reemplaza a `ajuste_seg`
                 aj_seg = (float(self.delta_tam[int(niv_tam), k_seg])
                           if niv_tam is not None and np.isfinite(niv_tam) else 0.0)
+                dg = getattr(self, "delta_tam_g", None)
+                if (dg is not None and base != "por analogia" and propio is not None
+                        and np.isfinite(dg[propio, k_seg])):
+                    aj_seg = float(dg[propio, k_seg])     # D-079: el efecto propio del cargo, encogido
                 if aj_seg:
                     mu += aj_seg
                     banda = {q: v + aj_seg for q, v in banda.items()}

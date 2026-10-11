@@ -7448,3 +7448,29 @@ tamaño mucho más que un gerente de área: D-018 midió de −56 % en PEQUEÑA 
 entrenamiento. Placebo: los `δ_raw(g, ·)` de cada grupo se reemplazan por los de **otro** grupo del mismo nivel. **Criterio:** mejora de precisión (protocolo v2).
 
 **Se reporta además** la coherencia de la cima en la lista: GG frente a los gerentes de área, por tamaño.
+
+### D-079, resultado: neutro, no se adopta por su criterio (2026-10-11)
+
+Unión de 11.549 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto | −0,00001 | [−0,00054, +0,00053] |
+| Variante − placebo | −0,00159 | [−0,00308, −0,00038] |
+
+No mejora la precisión: según su criterio, **no se adopta**. Sería no inferior, pero se registró como mejora de
+precisión y el criterio no se cambia.
+
+**Coherencia de la cima** (descriptiva, base v29 con toda la base): gerentes de área de la lista por encima del GG.
+
+| Tamaño | v28 | v29 | GG en v29 |
+|---|---|---|---|
+| GRANDE | 2 | **0** | $5.105 |
+| MEDIANA | 2 | 2 | |
+| PEQUEÑA | 3 | **6** | $1.657 |
+
+En las PEQUEÑAS el efecto propio del GG es muy bajo: dueños con el mínimo. Dentro de la empresa, en PEQUEÑA el GG solo
+gana +10 % sobre la mediana de sus gerentes de área (contra +70 % en GRANDE).
+
+`demo/base_v29.npz` se armó para describir esto y **no se usa**: la API sigue con la v28. Ojo: la API toma la base
+más nueva al reiniciarse; se fija `BASE_REFERENCIA` a la v28 o se borra la v29.

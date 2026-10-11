@@ -151,7 +151,7 @@ def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
 
 # D-062 y D-063: variantes sobre el producto vigente (v25: D-060 + D-061, con el k fijo)
 CON_TRAD = ("trad_base", "trad", "trad_placebo", "trad_candado")
-CON_TAM = ("tam_A", "tam_B", "tam_C", "tam_C0", "tam_C_placebo")
+CON_TAM = ("tam_A", "tam_B", "tam_C", "tam_C0", "tam_C_placebo", "tam_D", "tam_D_placebo")   # D-079: tam_D
 CON_ATIPICOS = ("atipicos", "atipicos_placebo")     # D-065: limpieza de votos atipicos (frente a tam_A)
 CON_V2 = ("prima", "prima_placebo", "tipeo", "tipeo_placebo", "sinon", "sinon_placebo",   # D-067, D-068, D-070
           "familia", "familia_placebo",                                                     # D-071
@@ -352,7 +352,9 @@ def una_variante(nom, clusters):
         print("sinonimos: {}".format(base.coherencia_sinonimos(pares, placebo=nom == "sinon_placebo")), flush=True)
         base.sinonimos_palabras = True
     if nom in CON_TAM and nom not in ("tam_A", "tam_B"):     # D-063: el tamano por nivel
-        print("tamano: {}".format(base.estandarizar_tamano(tr, placebo=nom == "tam_C_placebo")), flush=True)
+        print("tamano: {}".format(base.estandarizar_tamano(
+            tr, placebo=nom == "tam_C_placebo", por_cargo=nom.startswith("tam_D"),
+            placebo_cargo=nom == "tam_D_placebo")), flush=True)
         base.tamano_estandar = True
         base.tamano_sin_segmento = True      # como se midio: (C0) y los votos sin segmento de (C) con el corrimiento
     cargos = sorted(set(v["cargo_norm"]))
@@ -362,7 +364,7 @@ def una_variante(nom, clusters):
         from benchmarking.producto.base_referencia import SEGMENTOS, _norm_segmento
         seg_e = ts.groupby("empresa_ruc")["segmento"].first().map(lambda x: _norm_segmento(x) or "")
         seg_v = v["empresa_ruc"].map(seg_e).fillna("").to_numpy(object)
-        if nom in ("tam_B", "tam_C", "tam_C_placebo"):   # a cada voto, la banda del tamano de SU empresa
+        if nom in ("tam_B", "tam_C", "tam_C_placebo", "tam_D", "tam_D_placebo"):   # banda del tamano de SU empresa
             out = out.copy()
             for sg in SEGMENTOS:
                 if not (seg_v == sg).any():
