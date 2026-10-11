@@ -1537,6 +1537,9 @@ class BaseReferencia:
             **({} if getattr(self, "ajuste_tam", None) is None else
                dict(tam_aj=np.asarray(self.ajuste_tam, dtype=float), tam_delta=np.asarray(self.delta_tam, dtype=float))),
             **({} if getattr(self, "delta_tam_g", None) is None else dict(tam_dg=np.asarray(self.delta_tam_g, float))),
+            **({} if not getattr(self, "cima_piso", None) else
+               dict(piso_k=np.array(list(self.cima_piso), dtype=np.int64),
+                    piso_v=np.array(list(self.cima_piso.values()), dtype=float), piso_g=np.array(int(self.cima_grupo)))),
             **({} if self.clf_nivel is None else
                dict(clf_W=self.clf_nivel[0], clf_b=self.clf_nivel[1], clf_k=self.clf_nivel[2])))
 
@@ -1595,6 +1598,9 @@ class BaseReferencia:
                                    for k, v in zip(z["sen_k"], z["sen_v"])}
             if "cc_W" in z.files:
                 base.clf_cargo = (np.asarray(z["cc_W"], float), float(z["cc_b"]), float(z["cc_u"]))
+            if "piso_k" in z.files:
+                base.cima_piso = {int(k): float(v) for k, v in zip(z["piso_k"], z["piso_v"])}
+                base.cima_grupo = int(z["piso_g"])
             if "tam_dg" in z.files:
                 base.delta_tam_g = np.asarray(z["tam_dg"], float)
             if "tam_aj" in z.files:
@@ -1652,6 +1658,114 @@ class BaseReferencia:
         if nuevo:
             self.nivel = np.array([nuevo.get(int(g), n) for g, n in zip(self.grupo, self.nivel)], dtype=float)
         return n_des, n_cambia
+
+    def sin_duenos(self, marco, col="cargo_norm", piso=1.25, placebo=False, semilla=23):
+        """D-080: los grupos de nivel 4-5 sin los votos de dueno (voto < `piso` SBU). Centro corrido por la
+        diferencia de medianas ponderadas (sin duenos - todos); banda de los cuantiles sin duenos si quedan
+        >= MIN_EMPRESAS_BANDA empresas; respaldo recalculado. `placebo`: el mismo numero de votos de nivel 4-5, al
+        azar y por nivel. Devuelve (resumen, marco sin las filas quitadas)."""
+        d = marco.copy()
+        i = d[col].astype(str).map(self.idx)
+        ok = i.notna().to_numpy()
+        j = i.fillna(0).astype(int).to_numpy()
+        d["g"] = np.where(ok, self.grupo[j], -1)
+        d["L"] = np.where(ok, self.nivel[j], np.nan)
+        v = d[ok & d["y"].notna()].groupby(["g", "empresa_ruc"]).agg(y=("y", "median"), L=("L", "first")).reset_index()
+        malo = v["L"].isin([4.0, 5.0]) & (np.exp(v["y"]) < piso)
+        if placebo:
+            rng = np.random.default_rng(semilla)
+            nuevo = np.zeros(len(v), bool)
+            for lv, k in v.loc[malo, "L"].value_counts().items():
+                pool = np.flatnonzero((v["L"] == lv).to_numpy())
+                nuevo[rng.choice(pool, int(k), replace=False)] = True
+            malo = pd.Series(nuevo, index=v.index)
+        fuera = set(zip(v.loc[malo, "g"], v.loc[malo, "empresa_ruc"]))
+        quitar = np.array([(g, e) in fuera for g, e in zip(d["g"], d["empresa_ruc"])])
+        limpio = marco[~quitar].copy()
+        grupos = sorted({g for g, _ in fuera})
+        for nombre in ("m", "bandas", "bandas_per", "W", "emp", "personas"):
+            setattr(self, nombre, np.array(getattr(self, nombre)))
+        x = d[ok & d["y"].notna() & d["g"].isin(grupos)].copy()
+        x["_k"] = x["g"].astype(str)
+        x["_fuera"] = quitar[(ok & d["y"].notna() & d["g"].isin(grupos)).to_numpy()]
+        rep = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).first()
+        claves = sorted(x["_k"].unique())
+        t2 = pd.Series({k: float(self.tau2_c[rep[int(k)]]) for k in claves})
+        s2 = pd.Series({k: float(self.sigma2_c[rep[int(k)]]) for k in claves})
+        q_all = cuantiles_de_empresa(x, "_k", t2, s2, CUANTILES + (0.50,))
+        xs = x[~x["_fuera"]]
+        q_ok = cuantiles_de_empresa(xs, "_k", t2, s2, CUANTILES + (0.50,))
+        qp_ok = cuantiles_de_persona(xs, "_k", t2, s2, CUANTILES)
+        emp_ok = xs.groupby("_k")["empresa_ruc"].nunique()
+        per_ok = xs.groupby("_k").size()
+        nfil = xs.groupby(["_k", "empresa_ruc"]).size().reset_index(name="n")
+        nfil["w"] = 1.0 / (nfil["_k"].map(t2) + nfil["_k"].map(s2) / nfil["n"])
+        W_ok = nfil.groupby("_k")["w"].sum()
+        movidos, dif = 0, []
+        for k in claves:
+            if k not in q_ok.index or k not in q_all.index or not np.isfinite(q_ok.loc[k, 0.50]):
+                continue
+            cel = np.flatnonzero(self.grupo == int(k))
+            dd = float(q_ok.loc[k, 0.50] - q_all.loc[k, 0.50])
+            self.m[cel] += dd
+            if emp_ok.get(k, 0) >= MIN_EMPRESAS_BANDA:
+                self.bandas[cel] = np.array([q_ok.loc[k, c] for c in CUANTILES], float)
+                if k in qp_ok.index:
+                    self.bandas_per[cel] = np.array([qp_ok.loc[k, c] for c in CUANTILES], float)
+            else:
+                self.bandas[cel] += dd
+                self.bandas_per[cel] += dd
+            self.W[cel] = float(W_ok.get(k, self.W[cel[0]]))
+            self.emp[cel] = int(emp_ok.get(k, 0))
+            self.personas[cel] = int(per_ok.get(k, 0))
+            movidos += 1
+            dif.append(dd)
+        return ({"votos_quitados": int(malo.sum()), "grupos_recalculados": movidos,
+                 "corrimiento_mediano": float(np.median(dif)) if dif else 0.0}, limpio)
+
+    def preparar_cima_piso(self, marco, col="cargo_norm", titulo="GERENTE GENERAL"):
+        """D-081: el piso del GG por tamano (y sin tamano): P75 de las referencias de los gerentes de area (nivel 5,
+        >= 10 empresas, `GERENTE DE ...`) + e(s), la mediana dentro de la empresa de y(GG) - mediana(y de sus
+        gerentes de area) en ese tamano. Guarda `self.cima_piso` {indice de segmento o -1: piso en log}."""
+        if titulo not in self.idx:
+            return {}
+        gg = int(self.grupo[self.idx[titulo]])
+        d = marco[[col, "empresa_ruc", "segmento", "y"]].dropna(subset=["y"]).copy()
+        i = d[col].astype(str).map(self.idx)
+        d = d[i.notna()].copy()
+        j = i[i.notna()].astype(int).to_numpy()
+        d["g"], d["L"] = self.grupo[j], self.nivel[j]
+        d["area"] = (d["g"] != gg) & (d["L"] == 5) & d[col].astype(str).str.startswith("GERENTE DE")
+        d["k"] = d["segmento"].map(lambda v: SEGMENTOS.index(_norm_segmento(v)) if _norm_segmento(v) else -1)
+        v = d.groupby(["empresa_ruc", "g"]).agg(y=("y", "median"), area=("area", "first"), k=("k", "first")).reset_index()
+        e_gg = v[v["g"] == gg].set_index("empresa_ruc")
+        e_ar = v[v["area"]].groupby("empresa_ruc")["y"].median()
+        comun = e_gg.index.intersection(e_ar.index)
+        dif = (e_gg.loc[comun, "y"] - e_ar[comun])
+        kk = e_gg.loc[comun, "k"]
+        rep = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).first()
+        areas = [int(rep[g]) for g in v.loc[v["area"], "g"].unique() if self.emp[rep[g]] >= 10]
+        self.cima_piso = {}
+        for k in [-1] + list(range(len(SEGMENTOS))):
+            e = float(np.median(dif)) if k == -1 else (float(np.median(dif[kk == k])) if (kk == k).sum() >= 10 else None)
+            if e is None or not areas:
+                continue
+            refs = [self._ref_log_directo(c, None if k == -1 else k) for c in areas]
+            self.cima_piso[k] = float(np.percentile(refs, 75)) + e
+        self.cima_grupo = gg
+        return {k: round(v_, 3) for k, v_ in self.cima_piso.items()}
+
+    def _ref_log_directo(self, i, k_seg):
+        """Centro en log de una celda directa, con el ajuste de tamano del producto (D-063/D-079)."""
+        mu = float(self.m[i])
+        if k_seg is not None and getattr(self, "tamano_estandar", False) and getattr(self, "delta_tam", None) is not None:
+            if getattr(self, "ajuste_tam", None) is not None:
+                mu += float(self.ajuste_tam[i])
+            dg = getattr(self, "delta_tam_g", None)
+            lv = self.nivel[i]
+            mu += (float(dg[i, k_seg]) if dg is not None and np.isfinite(dg[i, k_seg])
+                   else (float(self.delta_tam[int(lv), k_seg]) if np.isfinite(lv) else 0.0))
+        return mu
 
     def cima_estructura(self, marco, col="cargo_norm", titulo="GERENTE GENERAL", placebo=False, semilla=20):
         """D-076: la banda del GG solo con las empresas que tienen OTRO grupo de nivel 5 (estructura gerencial).
@@ -2371,6 +2485,15 @@ class BaseReferencia:
                     banda = {q: v + aj_seg for q, v in banda.items()}
                     banda_per = {q: v + aj_seg for q, v in banda_per.items()}
 
+            piso = getattr(self, "cima_piso", None)
+            if (piso and propio is not None and int(self.grupo[propio]) == getattr(self, "cima_grupo", -2)
+                    and (k_seg if k_seg is not None else -1) in piso):
+                # D-081: el GG no queda bajo sus gerentes de area en el mismo tamano
+                sube = piso[k_seg if k_seg is not None else -1] - mu
+                if sube > 0:
+                    mu += sube
+                    banda = {q: v + sube for q, v in banda.items()}
+                    banda_per = {q: v + sube for q, v in banda_per.items()}
             sd = float((banda[0.75] - banda[0.25]) / (2.0 * 0.6745))
             conf, incert = _confianza(var_centro)
             if getattr(self, "confianza_ancho", False):

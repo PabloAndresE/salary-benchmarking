@@ -7513,3 +7513,38 @@ las cifras globales):
 
 **Medición:** frente a D-080. **Criterio:** regla de producto (no inferior en la primaria de D-080). Se reporta la cima
 por tamaño.
+
+### D-080, resultado: cumple, se adopta (2026-10-11)
+
+Con el entrenamiento se quitaron 958 votos de dueño y se recalcularon 272 grupos de nivel 4–5 (centro: mediana
++0,098).
+
+| Comparación | Pinball | IC (dos vías) | Media por empresa |
+|---|---|---|---|
+| **Primaria** (sin votos de dueño, 15.788 votos): variante − producto | **−0,00112** | **[−0,00193, −0,00041]** | +0,00019 |
+| Primaria: variante − placebo | −0,00221 | [−0,00324, −0,00106] | |
+| Secundaria (todos los votos) | −0,00032 | [−0,00101, +0,00037] | +0,00281 |
+
+No es inferior; de hecho **mejora**, y le gana al placebo: **se adopta.**
+
+**Producto:** `demo/base_v30.npz` = la v28 más D-080 con toda la base (1.436 votos de dueño quitados, 386 grupos
+recalculados) más el efecto de tamaño propio de cada cargo (D-079), estimado sin dueños.
+
+**La cima** (gerentes de área de la lista por encima del GG):
+
+| Tamaño | v28 | v30 |
+|---|---|---|
+| GRANDE | 2 | **0** |
+| MEDIANA | 2 | **1** |
+| PEQUEÑA | 3 | **6** |
+| Sin tamaño | 4 | 4 |
+
+PEQUEÑA y sin tamaño siguen abiertos.
+
+### D-081, resultado: no se adopta (2026-10-11)
+
+Piso con el entrenamiento (en log): global 2,619; MEDIANA 2,211; GRANDE 2,686. PEQUEÑA no llega a 10 empresas con
+GG y gerentes de área.
+
+Actúa sobre 74 votos de GG (sin dueños): **+0,064 [+0,035, +0,093], empeora: no se adopta.** Subir al GG por
+encima del piso lo aleja de lo que pagan las empresas.

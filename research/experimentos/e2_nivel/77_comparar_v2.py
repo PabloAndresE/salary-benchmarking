@@ -37,14 +37,20 @@ def dos_vias(d, col, n=400, semilla=11):
     return float(x.mean()), float(np.percentile(b, 2.5)), float(np.percentile(b, 97.5))
 
 
-def main(ref, var, pla, producto):
+def main(ref, var, pla, producto, sin_duenos=False):
     d = leer(ref).merge(leer(var), on=["empresa", "cargo"], suffixes=("", "_v")).merge(
         leer(pla).rename(columns={"pinball": "pinball_p"}), on=["empresa", "cargo"])
+    if sin_duenos:
+        # D-080: la primaria, sin los votos apartados de dueno (nivel 4-5 y voto < 1,25 SBU)
+        r = pd.read_parquet(SAL / ("54_" + ref + SUF))[["empresa", "cargo", "voto", "nivel"]]
+        d = d.merge(r, on=["empresa", "cargo"])
+        d = d[~(d["nivel"].isin([4.0, 5.0]) & (np.exp(d["voto"]) < 1.25))]
     d["dv"], d["dp"] = d["pinball_v"] - d["pinball"], d["pinball_p"] - d["pinball"]
     d["vp"] = d["pinball_v"] - d["pinball_p"]
     u = d[(d["dv"].abs() > 1e-6) | (d["dp"].abs() > 1e-6)]
-    out = ["{} frente a {} (placebo {}): union {:,} votos, {:,} empresas, {:,} cargos".format(
-        var, ref, pla, len(u), u["empresa"].nunique(), u["cargo"].nunique())]
+    out = ["{} frente a {} (placebo {}){}: union {:,} votos, {:,} empresas, {:,} cargos".format(
+        var, ref, pla, " [sin votos de dueno]" if sin_duenos else "", len(u), u["empresa"].nunique(),
+        u["cargo"].nunique())]
     if len(u) == 0:
         out.append("   no actua")
     else:
@@ -67,4 +73,4 @@ def main(ref, var, pla, producto):
 
 if __name__ == "__main__":
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
-    main(a[0], a[1], a[2], "--producto" in sys.argv)
+    main(a[0], a[1], a[2], "--producto" in sys.argv, "--sin-duenos" in sys.argv)
