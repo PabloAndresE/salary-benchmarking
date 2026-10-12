@@ -7643,3 +7643,15 @@ v2, primaria sin dueños).
 **Decisión del autor sobre D-083 (2026-10-12):** dejarlo como está. Cada título en inglés con datos propios usa sus
 datos; sin ellos, el equivalente más la prima (D-067). Se acepta que `CEO` y `MANAGING DIRECTOR` den cifras
 distintas.
+
+### D-084, resultado: cumple, se adopta (2026-10-12)
+
+Primaria (sin dueños), unión de 4.372 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − D-082 | +0,00016 | [−0,00037, +0,00091] |
+| Variante − placebo | −0,00354 | [−0,00669, −0,00043] |
+
+No inferior: **se adopta.** Nota honesta: actúa de por sí sobre solo 41 votos, donde da +0,017 [−0,042, +0,069], muy
+incierto. La API lo activa con `TECHO_TODOS` (por defecto sí), sin cambiar la base v31.

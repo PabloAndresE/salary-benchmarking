@@ -68,3 +68,13 @@ siempre_prima frente a prima (placebo siempre_prima_placebo): union 4,934 votos,
    placebo - producto   +0.02012 [+0.01252, +0.02779] (dos vias)  | media por empresa +0.01186
    variante - placebo   -0.01932 [-0.02742, -0.01194] (dos vias)  | media por empresa -0.01057
    CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+techo_todos frente a techo (placebo techo_placebo) [sin votos de dueno]: union 4,372 votos, 696 empresas, 4,111 cargos
+   variante - producto  +0.00016 [-0.00037, +0.00091] (dos vias)  | media por empresa +0.00020
+   placebo - producto   +0.00370 [+0.00084, +0.00680] (dos vias)  | media por empresa +0.00139
+   variante - placebo   -0.00354 [-0.00669, -0.00043] (dos vias)  | media por empresa -0.00119
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+techo_todos frente a techo (placebo techo_todos) [sin votos de dueno]: union 41 votos, 23 empresas, 39 cargos
+   variante - producto  +0.01744 [-0.04181, +0.06946] (dos vias)  | media por empresa +0.00583
+   placebo - producto   +0.01744 [-0.04181, +0.06946] (dos vias)  | media por empresa +0.00583
+   variante - placebo   +0.00000 [+0.00000, +0.00000] (dos vias)  | media por empresa +0.00000
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE

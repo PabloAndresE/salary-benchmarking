@@ -441,6 +441,9 @@ class Motor:
         self.base.tipeo = os.environ.get("TIPEO", "si").lower() != "no"
         # D-069: la confianza tambien depende del ancho de la banda (`CONFIANZA_ANCHO=no` vuelve a la anterior)
         self.base.confianza_ancho = os.environ.get("CONFIANZA_ANCHO", "si").lower() != "no"
+        # D-084: en MICRO y PEQUENA ningun cargo, de ningun nivel, queda sobre el GG (`TECHO_TODOS=no` lo limita
+        # al nivel 5, como D-082)
+        self.base.techo_todos_niveles = os.environ.get("TECHO_TODOS", "si").lower() != "no"
         # D-075: lo que no es un cargo (`ASDFGH`, `ASTRONAUTA`) se responde `no reconocido`, sin cifra. Necesita una
         # base con el clasificador (v28 o mas nueva). `FILTRO_CARGO=no` lo apaga.
         self.base.filtro_cargo = (os.environ.get("FILTRO_CARGO", "si").lower() != "no"
