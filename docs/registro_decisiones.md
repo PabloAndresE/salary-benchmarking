@@ -7574,3 +7574,17 @@ la de D-080: votos sin dueños.
 - **Placebo:** el techo se calcula con **otro** grupo de nivel 5 al azar (≥ 10 empresas) en vez del GG.
 - **Criterio:** regla de producto, no inferior (extremo < +0,001, protocolo v2). Se reportan el placebo y la cima por
   tamaño.
+
+## D-083 — Títulos en inglés: siempre el equivalente más la prima, aunque tengan datos propios. Registrado antes de medir
+
+**Por qué** (lista del autor: «arreglar que funcione»). Con D-067, un título en inglés con datos propios usa sus datos
+y uno sin datos usa el equivalente más la prima: `CEO` da $4.366 y `MANAGING DIRECTOR` $9.073, aunque son el mismo
+cargo. D-071 (una banda por familia) no pasó.
+
+**Cambio** (`idioma_sueldo = "siempre_prima"`): todo título en inglés que se resuelve en un equivalente con datos usa
+la banda del equivalente más la prima encogida de su nivel (D-067), **tenga o no datos propios**. Los títulos en
+inglés con el mismo equivalente dan la misma cifra por construcción. Los que no se resuelven siguen por analogía.
+
+**Medición:** frente a `prima` (el producto de D-067). Placebo: la misma prima, con la traducción hacia el grupo de
+**otro** título resuelto. **Criterio:** regla de producto, no inferior (extremo < +0,001, protocolo v2). Se reporta
+el placebo.
