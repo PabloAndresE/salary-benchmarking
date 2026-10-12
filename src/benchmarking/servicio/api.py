@@ -483,6 +483,19 @@ class Motor:
             # EN VOZ ALTA. Una base a la que le falta algo contesta igual que una
             # completa, solo que peor, y eso no se nota mirando una respuesta.
             print(f"[base] SIN {n}: {porque}", flush=True)
+        # D-092: los cargos de direccion en ingles (CEO, CFO, MANAGING DIRECTOR, COUNTRY MANAGER...) toman la banda de
+        # su equivalente en espanol por la prima del mercado que titula en ingles, estimada con los pares de direccion
+        # de la base. `PRIMA_DIRECCION=no` la apaga (vuelve a todo a espanol sin excepcion).
+        if (os.environ.get("PRIMA_DIRECCION", "si").lower() != "no" and self.base.traductor is not None
+                and self.base.idioma_sueldo == "siempre"):
+            try:
+                dirs = [c for c in self.base.celdas if idioma_mod.es_direccion(c)
+                        and self.base.emp[self.base.idx[c]] >= 3]
+                self.asegurar(dirs)
+                print(f"[direccion] prima {self.base.estimar_prima_direccion(self.emb)}", flush=True)
+            except Exception as e:                           # noqa: BLE001 - se informa y se sigue
+                self.base.prima_direccion = None
+                print(f"[direccion] sin prima ({e!r})", flush=True)
         # CALENTAMIENTO (2026-10-12, medido): la primera consulta con un titulo nuevo tardaba 29,6 s —cliente de
         # Vertex, juez, traductor, corrector y clasificador se cargan al primer uso— y despues ~0,6 s. Se paga al
         # arrancar y no el primer cliente. `CALENTAR=no` lo salta; si falla (sin red), el servicio sigue.

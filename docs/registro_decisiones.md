@@ -7868,3 +7868,32 @@ que D-088 quitó.
 - **Criterio:** mejora de precisión (protocolo v2), frente al producto y frente al placebo.
 
 Se reportan la calibración de esos votos y la tabla de CEO, COO, CTO y Managing Director.
+
+### D-092, resultado: cumple, se adopta (2026-10-12)
+
+Con el entrenamiento, `π_dir` = +1,03 (7 pares). Unión de 4.293 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto | −0,00103 | [−0,00295, −0,00007] |
+| Variante − placebo | −0,00521 | [−0,00877, −0,00149] |
+
+Mejora frente al producto y al placebo: **se adopta.**
+
+**Calibración de los 35 votos de dirección en inglés (22 empresas):**
+
+| | Dentro de p25–p75 | Sobre p90 | Pago ÷ referencia |
+|---|---|---|---|
+| Antes | 14 % | 54 % | ×2,56 |
+| Con D-092 | 31 % | 31 % | ×1,78 |
+
+Mejora, pero sigue baja.
+
+**Correcciones al pasar a producción** (verificadas en la API):
+
+- `COUNTRY MANAGER` se traducía `JEFE DE CAMPO`. En el glosario pasa a `GENERAL MANAGER`.
+- La inversión de D-091 ya no toca los cargos de dirección.
+
+**Producto:** con toda la base, 14 pares: `π_dir` = **+0,629 (×1,88)**, varianza 0,224. La API la estima al arrancar
+(`PRIMA_DIRECCION`). CEO, Managing Director y Country Manager en MEDIANA: **$5.977** (p25–p75 $3.167–$11.280), frente
+a $3.187 del Gerente General local. La confianza baja a BAJA por la varianza de la prima. **v1.3.**

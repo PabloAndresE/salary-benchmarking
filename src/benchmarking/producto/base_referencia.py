@@ -1352,6 +1352,21 @@ class BaseReferencia:
             par = dict(zip(ks, np.random.default_rng(6).permutation([par[k] for k in ks])))
         return [par.get(t, t) for t in unicos]
 
+    def estimar_prima_direccion(self, X_por_etiqueta):
+        """D-092: la prima de los cargos de direccion en ingles, (mediana, (1,4826 MAD)^2) de m(ingles) -
+        m(equivalente) en los pares de direccion de la base con datos directos. Guarda `self.prima_direccion`."""
+        from .idioma import es_direccion
+        ing = [c for c in self.celdas if es_direccion(c) and self.emp[self.idx[c]] >= MIN_EMPRESAS]
+        r = self.resolver_idioma(ing, X_por_etiqueta)
+        d = np.array([float(self.m[self.idx[t]] - self.m[v[0]]) for t, v in r.items()
+                      if self.grupo[self.idx[t]] != self.grupo[v[0]] and self.emp[v[0]] >= MIN_EMPRESAS])
+        if not len(d):
+            self.prima_direccion = None
+            return {}
+        med = float(np.median(d))
+        self.prima_direccion = (med, float((1.4826 * np.median(np.abs(d - med))) ** 2))
+        return {"pares": len(d), "prima": round(med, 3), "var": round(self.prima_direccion[1], 3)}
+
     def estimar_prima_idioma(self, X_por_etiqueta, min_pares=20, encoger=None, neta=False):
         """D-055: la prima del titulo en ingles, `m(ingles) - m(su equivalente en espanol)`, sobre los
         titulos en ingles de la base con datos directos cuya traduccion cae en OTRO grupo con datos.
@@ -2226,6 +2241,16 @@ class BaseReferencia:
             warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
                           f"todo el informe cae al mercado entero")
 
+        dir_ingles = set()
+        if getattr(self, "prima_direccion", None):
+            # D-092: los cargos de direccion en ingles; `prima_direccion_placebo` (solo para medir): el mismo numero
+            # de titulos en ingles al azar que NO son de direccion
+            from .idioma import es_direccion, es_ingles
+            dir_ingles = {t for t in unicos if es_direccion(t)}
+            if getattr(self, "prima_direccion_placebo", False):
+                otros = sorted(t for t in unicos if es_ingles(t) and t not in dir_ingles)
+                dir_ingles = (set(np.random.default_rng(27).choice(otros, min(len(dir_ingles), len(otros)),
+                                                                   replace=False)) if otros else set())
         filas = {}
         for k, t in enumerate(unicos):
             propio = self.idx.get(t)
@@ -2292,6 +2317,9 @@ class BaseReferencia:
                         ex is not None and self.emp[ex] >= MIN_EMPRESAS
                         and self.personas[ex] >= self.min_personas):
                     propio, _, p_juez, traduccion = idioma[t]
+                    if (getattr(self, "prima_direccion", None) and t in dir_ingles
+                            and self.emp[propio] >= MIN_EMPRESAS and self.personas[propio] >= self.min_personas):
+                        prima_t = self.prima_direccion          # D-092: direccion en ingles, mercado en ingles
             fam_d, fam_emp = 0.0, None
             fam = getattr(self, "familia_ingles", None)
             if fam and t in idioma and fam.get(int(self.grupo[idioma[t][0]])):

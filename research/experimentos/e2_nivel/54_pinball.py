@@ -159,7 +159,8 @@ CON_V2 = ("prima", "prima_placebo", "tipeo", "tipeo_placebo", "sinon", "sinon_pl
           "cima", "cima_placebo", "orden", "orden_placebo",                                 # D-076, D-077
           "siempre_prima", "siempre_prima_placebo",                                         # D-083
           "prima_ref", "prima_neta", "prima_neta_placebo",                                  # D-085, D-086
-          "head_jefe", "head_jefe_placebo", "espanol", "seguridad", "seguridad_placebo")    # D-087..D-089
+          "head_jefe", "head_jefe_placebo", "espanol", "seguridad", "seguridad_placebo",    # D-087..D-089
+          "direccion", "direccion_placebo")                                                 # D-092
 PRODUCTO_V25 = CON_TRAD + CON_TAM + CON_ATIPICOS + CON_V2
 
 
@@ -333,7 +334,7 @@ def una_variante(nom, clusters):
     if nom in ("prima", "prima_placebo", "familia", "familia_placebo", "cima", "cima_placebo", "orden",
                "orden_placebo", "siempre_prima", "siempre_prima_placebo", "prima_ref", "prima_neta",
                "prima_neta_placebo", "head_jefe", "head_jefe_placebo", "espanol", "seguridad",
-               "seguridad_placebo"):   # D-067: + prima encogida
+               "seguridad_placebo", "direccion", "direccion_placebo"):   # D-067: + prima encogida
         from benchmarking.producto import idioma
         base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
         base.candado_glosario = True
@@ -354,10 +355,11 @@ def una_variante(nom, clusters):
         base.candado_seguridad = (True if nom == "seguridad" else
                                   str(np.random.default_rng(26).choice(["VENTAS", "BODEGA", "PRODUCCION", "CALIDAD"])))
         print("candado: {}".format(base.candado_seguridad), flush=True)
-    if nom in ("espanol", "seguridad", "seguridad_placebo"):   # D-088: todo a espanol, sin prima, por la traduccion
+    if nom in ("espanol", "seguridad", "seguridad_placebo", "direccion", "direccion_placebo"):   # D-088
         base.idioma_sueldo, base.idioma_prima = "siempre", None
         base.idioma_por_traduccion = base.quitar_sufijo = True
-    if nom in ("head_jefe", "head_jefe_placebo", "espanol", "seguridad", "seguridad_placebo"):   # D-087: sin sufijo
+    if nom in ("head_jefe", "head_jefe_placebo", "espanol", "seguridad", "seguridad_placebo", "direccion",
+               "direccion_placebo"):   # D-087: sin sufijo
         from benchmarking.config.settings import cargar_settings
         from benchmarking.evaluacion import embeddings as emb_mod
         from benchmarking.producto import idioma as idioma_mod
@@ -371,6 +373,9 @@ def una_variante(nom, clusters):
             cli = emb_mod.cliente_vertex(st.vertex_embedding_model, st.bq_project, st.vertex_location)
             emb.update(dict(zip(nuevos, emb_mod.embeber(nuevos, cli, st.vertex_embedding_model))))
         print("head: {} titulos nuevos embebidos (sin sufijo y sus traducciones)".format(len(nuevos)), flush=True)
+    if nom in ("direccion", "direccion_placebo"):   # D-092: direccion en ingles con la prima del mercado en ingles
+        print("prima direccion: {}".format(base.estimar_prima_direccion(emb)), flush=True)
+        base.prima_direccion_placebo = nom == "direccion_placebo"
     if nom in ("tipeo", "tipeo_placebo"):   # D-068 (a)
         base.tipeo = True
         base.tipeo_placebo = nom == "tipeo_placebo"

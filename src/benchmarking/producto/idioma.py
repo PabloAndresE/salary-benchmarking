@@ -87,8 +87,8 @@ def invertir_rangos(t):
     `MANAGING ...` no se tocan (siguen siendo Gerente General); los cargos de direccion del glosario (CEO, CFO...) se
     resuelven despues, con el glosario."""
     t = sin_sufijo(str(t).upper().strip())
-    if not es_ingles(t) or re.search(r"GENERAL MANAGER|MANAGING", t):
-        return t
+    if not es_ingles(t) or re.search(r"GENERAL MANAGER|MANAGING", t) or es_direccion(t):
+        return t                         # la direccion (CEO, COUNTRY MANAGER...) la resuelve el glosario
     t = re.sub(r"(?<![A-Z])MANAGERS?(?![A-Z])", "CHIEF", t)
     m = re.match(r"HEAD OF (.+)$", t)
     return (m.group(1) + " MANAGER") if m else t
@@ -146,3 +146,14 @@ def sin_sufijo(t):
         return t
     base = re.split(r"\s+[-|]\s+", t)[0].strip()
     return base if base != t and len(base.split()) >= 2 else t
+
+
+_DIRECCION = re.compile(r"^(CEO|CFO|COO|CTO|CIO|CMO|CHRO|CHIEF\b.*\bOFFICER|MANAGING DIRECTOR|COUNTRY MANAGER|"
+                        r"GENERAL MANAGER|PRESIDENT|VICE PRESIDENT|VP)(?![A-Z])")
+
+
+def es_direccion(t):
+    """D-092: un cargo de direccion en ingles (CEO, CFO, CHIEF ... OFFICER, MANAGING DIRECTOR...), sin asistentes."""
+    t = str(t).upper().strip()
+    return (es_ingles(t) and bool(_DIRECCION.match(t))
+            and not re.search(r"(?<![A-Z])(ASSISTANT|ASST|SECRETARY)(?![A-Z])", t))
