@@ -7689,3 +7689,29 @@ por clase, IC en dos vías.
 
 **Criterio:** se adopta si el error crece ALTA < MEDIA < BAJA **sin solaparse** ningún par de clases vecinas
 (MEDIA/BAJA incluido).
+
+### D-085, resultado: no se adopta (2026-10-12)
+
+`var_π` global pasa de 0,192 a 0,157. Unión de 4.635 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto | +0,00005 | [−0,00003, +0,00016] |
+| Variante − placebo | −0,01559 | |
+
+Neutra: no mejora, así que **no se adopta**. Además, en los 340 votos traducidos, el p25–p75 ya cubre solo el 44,7 %
+(se espera 50 %), y con la variante baja a 42,9 % (ancho ×2,24 → ×2,14). Las bandas traducidas **no** están
+sobreanchas.
+
+### D-086, resultado: cumple, se adopta (2026-10-12)
+
+Terciles de `incert_centro`: **0,043 / 0,360**. Error del centro por clase, con la regla del ancho encima:
+
+| Clase | Error | IC (dos vías) | Votos |
+|---|---|---|---|
+| ALTA | 15,6 % | [14,1, 17,6] | 32 % |
+| MEDIA | 29,7 % | [27,6, 31,7] | 33 % |
+| BAJA | 36,2 % | [32,4, 39,7] | 35 % |
+
+Antes eran 17,5 % / 32,3 % / 33,1 %. **Cumple** (orden sin solape de vecinos): `CORTE_ALTA = 0,043`,
+`CORTE_MEDIA = 0,360`.

@@ -71,8 +71,9 @@ Mostrar: «Interpretamos **Contador General**».
 | **BAJA** | El centro es incierto (pocas empresas o analogía lejana) **o** la banda es muy ancha: p75 > 3,0 × p25 |
 | **MEDIA** | El resto |
 
-Medido con empresas apartadas, la referencia de un cargo ALTA está a una mediana de ~16 % de lo que paga cada
-empresa; en MEDIA y BAJA, a ~33 %.
+Medido con empresas apartadas (cortes recalibrados en D-086, 2026-10-12: el centro se conoce a mejor que ±4,3 % para
+ALTA y que ±36 % para MEDIA), la referencia está a una mediana de **~16 %** de lo que paga cada empresa en ALTA, **~30 %**
+en MEDIA y **~36 %** en BAJA. Cada clase es aproximadamente un tercio de las consultas.
 
 ## Cargos no reconocidos (D-075, desde 2026-10-10)
 

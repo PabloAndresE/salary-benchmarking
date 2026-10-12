@@ -296,8 +296,11 @@ _RUBRO_NULO = {"", "NAN", "NONE", "NA", "NULL"}
 # 0,96 en el primer decil a 1,42 en el ultimo). Ordena bien pero es optimista. La causa
 # probable es que el modelo supone la celda homogenea y `CONTADOR` mezcla empresas grandes
 # y pequenas. No se corrige con un factor porque ese factor no esta medido.
-CORTE_ALTA = 0.05       # el centro se conoce a mejor que +/-5%
-CORTE_MEDIA = 0.15
+# D-086 (2026-10-12): cortes recalibrados con el error real (terciles de `incert_centro` en los votos apartados).
+# Antes 0,05 / 0,15, a mano: MEDIA y BAJA tenian el mismo error (32 % y 33 %). Ahora ALTA 15,6 %, MEDIA 29,7 %,
+# BAJA 36,2 %, sin solaparse.
+CORTE_ALTA = 0.043      # el centro se conoce a mejor que +/-4,3 %
+CORTE_MEDIA = 0.360
 
 
 def ruta_base_mas_nueva(carpeta="demo", defecto="demo/base_referencia.npz") -> str:
@@ -1341,7 +1344,7 @@ class BaseReferencia:
             par = dict(zip(ks, np.random.default_rng(6).permutation([par[k] for k in ks])))
         return [par.get(t, t) for t in unicos]
 
-    def estimar_prima_idioma(self, X_por_etiqueta, min_pares=20, encoger=None):
+    def estimar_prima_idioma(self, X_por_etiqueta, min_pares=20, encoger=None, neta=False):
         """D-055: la prima del titulo en ingles, `m(ingles) - m(su equivalente en espanol)`, sobre los
         titulos en ingles de la base con datos directos cuya traduccion cae en OTRO grupo con datos.
         Mediana por nivel (>= `min_pares`) y global; varianza `(1,4826 MAD)^2`. Guarda y devuelve
@@ -1353,26 +1356,31 @@ class BaseReferencia:
         for t, v in r.items():
             i, j = self.idx[t], v[0]
             if self.grupo[i] != self.grupo[j] and self.emp[j] >= MIN_EMPRESAS:
-                filas.append((self.nivel[i], float(self.m[i] - self.m[j])))
+                filas.append((self.nivel[i], float(self.m[i] - self.m[j]),
+                              float(1.0 / self.W[i] + 1.0 / self.W[j])))      # D-085: ruido de medicion del par
         if not filas:
             self.idioma_prima = None
             return {}
         d = np.array(filas, dtype=float)
 
-        def est(x):
+        def est(x, ruido=None):
             med = float(np.median(x))
-            return med, float((1.4826 * np.median(np.abs(x - med))) ** 2)
-        out = {"global": est(d[:, 1]), "pares": len(d)}
+            var = float((1.4826 * np.median(np.abs(x - med))) ** 2)
+            if neta and ruido is not None and len(ruido):
+                # D-085: sin el ruido de medir los dos grupos, que no es incertidumbre de la prima
+                var = max(0.0, var - float(np.median(ruido)))
+            return med, var
+        out = {"global": est(d[:, 1], d[:, 2]), "pares": len(d)}
         for lv in range(1, 6):
             x = d[d[:, 0] == lv, 1]
             if encoger is not None and len(x):
                 # D-067: la prima del nivel encogida hacia la global con `encoger` pares de peso
-                pi_l, var_l = est(x)
+                pi_l, var_l = est(x, d[d[:, 0] == lv, 2])
                 w = len(x) / (len(x) + float(encoger))
                 out[lv] = (w * pi_l + (1 - w) * out["global"][0],
                            var_l if len(x) >= min_pares else out["global"][1])
             elif len(x) >= min_pares:
-                out[lv] = est(x)
+                out[lv] = est(x, d[d[:, 0] == lv, 2])
         self.idioma_prima = {k: v for k, v in out.items() if k != "pares"}
         return out
 

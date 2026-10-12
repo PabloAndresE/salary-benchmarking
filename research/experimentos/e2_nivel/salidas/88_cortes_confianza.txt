@@ -1,0 +1,20 @@
+88 · CORTES DE CONFIANZA (D-086), prima_ref: terciles de incert_centro = 0.043 / 0.360
+regla vieja:
+   ALTA   n=14,070 (37%)  error 17.5 % [15.5, 20.0]  p75/p25 mediano 1.45
+   MEDIA  n= 8,542 (22%)  error 32.3 % [29.8, 34.8]  p75/p25 mediano 1.66
+   BAJA   n=15,838 (41%)  error 33.1 % [30.5, 36.2]  p75/p25 mediano 1.68
+regla nueva:
+   ALTA   n=12,131 (32%)  error 15.6 % [14.1, 17.6]  p75/p25 mediano 1.43
+   MEDIA  n=12,788 (33%)  error 29.7 % [27.6, 31.7]  p75/p25 mediano 1.60
+   BAJA   n=13,531 (35%)  error 36.2 % [32.4, 39.7]  p75/p25 mediano 1.73
+CRITERIO (orden sin solape de vecinos): CUMPLE
+88 · CORTES DE CONFIANZA (D-086), prima_neta: terciles de incert_centro = 0.043 / 0.359
+regla vieja:
+   ALTA   n=14,070 (37%)  error 17.5 % [15.5, 20.0]  p75/p25 mediano 1.45
+   MEDIA  n= 8,542 (22%)  error 32.3 % [29.8, 34.8]  p75/p25 mediano 1.66
+   BAJA   n=15,838 (41%)  error 33.1 % [30.5, 36.2]  p75/p25 mediano 1.67
+regla nueva:
+   ALTA   n=12,131 (32%)  error 15.6 % [14.1, 17.6]  p75/p25 mediano 1.43
+   MEDIA  n=12,789 (33%)  error 29.7 % [27.9, 32.0]  p75/p25 mediano 1.60
+   BAJA   n=13,530 (35%)  error 36.2 % [32.8, 39.9]  p75/p25 mediano 1.73
+CRITERIO (orden sin solape de vecinos): CUMPLE

@@ -78,3 +78,8 @@ techo_todos frente a techo (placebo techo_todos) [sin votos de dueno]: union 41 
    placebo - producto   +0.01744 [-0.04181, +0.06946] (dos vias)  | media por empresa +0.00583
    variante - placebo   +0.00000 [+0.00000, +0.00000] (dos vias)  | media por empresa +0.00000
    CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+prima_neta frente a prima_ref (placebo prima_neta_placebo): union 4,635 votos, 677 empresas, 4,387 cargos
+   variante - producto  +0.00005 [-0.00003, +0.00016] (dos vias)  | media por empresa +0.00001
+   placebo - producto   +0.01564 [+0.00947, +0.02197] (dos vias)  | media por empresa +0.00815
+   variante - placebo   -0.01559 [-0.02205, -0.00939] (dos vias)  | media por empresa -0.00814
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
