@@ -7796,3 +7796,18 @@ Unión de 4.307 votos:
 | Variante − placebo | −0,00412 | [−0,00735, −0,00122] |
 
 El placebo usó `CALIDAD`. **Se adopta**: la API lo activa con `CANDADO_SEGURIDAD`.
+
+## D-090 — COO = Director de Operaciones (decisión del autor, v1.1)
+
+**Por qué** (autor, 2026-10-12: «al menos el COO me gustaría corregir»). El glosario llevaba `COO`, `CHIEF OPERATING
+OFFICER` y `CHIEF OPERATIONAL OFFICER` a `OPERATIONS MANAGER` → `GERENTE DE OPERACIONES` (359 empresas, $2.535 en
+MEDIANA). Ese grupo mezcla gerencia operativa de planta y logística; un COO es la segunda persona de la empresa.
+
+**Cambio:** los tres términos pasan a `OPERATIONS DIRECTOR` → `DIRECTOR DE OPERACIONES` (105 empresas, $3.051 en
+MEDIANA, por debajo del GG con $3.187).
+
+- **Alternativa descartada:** `SUBGERENTE GENERAL` (35 empresas, $3.556), que queda sobre el GG en MEDIANA.
+- **Medición:** es una corrección de glosario del autor, con pocos votos afectados. No se mide con pinball; se
+  verifica en la API.
+
+Producto **v1.1**.
