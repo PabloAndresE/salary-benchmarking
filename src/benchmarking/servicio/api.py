@@ -435,8 +435,14 @@ class Motor:
         # D-067 (2026-10-10, reemplaza a "siempre"): un titulo en ingles con datos propios usa sus datos; sin
         # ellos, la banda de su equivalente en espanol mas la prima del ingles de su nivel (encogida), mostrada
         # aparte. `IDIOMA_SUELDO=siempre` vuelve a la regla anterior (sin prima); `IDIOMA_SUELDO=no` la apaga.
-        modo = os.environ.get("IDIOMA_SUELDO", "si").lower()
+        # D-088 (2026-10-12, decision de producto del autor, reemplaza a D-067): TODO a espanol. El titulo en ingles
+        # toma la banda de su equivalente en espanol, sin prima, y si no se resuelve se busca por su traduccion
+        # tambien en la analogia (D-062); sin el sufijo de unidad (`- CONSULTING`). `IDIOMA_SUELDO=si` vuelve a
+        # D-067 (equivalente + prima solo sin datos propios); `IDIOMA_SUELDO=no` apaga la capa.
+        modo = os.environ.get("IDIOMA_SUELDO", "siempre").lower()
         self.base.idioma_sueldo = "siempre" if modo == "siempre" else (modo != "no")
+        self.base.idioma_por_traduccion = modo == "siempre"
+        self.base.quitar_sufijo = modo == "siempre"
         # D-068 (a): errores de tipeo corregidos contra el vocabulario de la base (`TIPEO=no` lo apaga)
         self.base.tipeo = os.environ.get("TIPEO", "si").lower() != "no"
         # D-069: la confianza tambien depende del ancho de la banda (`CONFIANZA_ANCHO=no` vuelve a la anterior)
@@ -499,6 +505,10 @@ class Motor:
         una API sincrona esto serian 100-300 ms de latencia impredecible por peticion.
         """
         # D-050: tambien las traducciones de los titulos en ingles, que se buscan por ellas
+        # D-087: tambien el titulo en ingles sin su sufijo de unidad (`HEAD OF X - CONSULTING` -> `HEAD OF X`)
+        sufijos = ([idioma_mod.sin_sufijo(t) for t in titulos if t]
+                   if getattr(self.base, "quitar_sufijo", False) or getattr(self.base, "head_jefe", False) else [])
+        titulos = list(titulos) + [x for x in sufijos if x not in titulos]
         titulos = list(titulos) + self.base.traducciones_a_embeber([t for t in titulos if t])
         faltan = sorted({t for t in titulos if t and t not in self.emb})
         if not faltan:

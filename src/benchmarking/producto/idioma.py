@@ -121,3 +121,13 @@ def cargar(ruta):
     except Exception as e:                                   # noqa: BLE001 - se informa y se sigue
         print("[idioma] no se pudo cargar {}: {!r}".format(ruta, e), flush=True)
         return None
+
+
+def sin_sufijo(t):
+    """D-087: un titulo en ingles sin el sufijo de unidad (`HEAD OF INSURANCE - CONSULTING` -> `HEAD OF INSURANCE`,
+    `CFO | ECUADOR` -> `CFO`): lo que sigue a ` - ` o ` | `, si lo que queda tiene >= 2 palabras. Si no, el mismo."""
+    t = str(t).upper().strip()
+    if not es_ingles(t):
+        return t
+    base = re.split(r"\s+[-|]\s+", t)[0].strip()
+    return base if base != t and len(base.split()) >= 2 else t

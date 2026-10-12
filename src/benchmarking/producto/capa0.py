@@ -126,6 +126,13 @@ def compatibles(a, b):
     return not (ga and gb and ga != gb)
 
 
+def sin_falso_amigo(a, b, palabra="SEGURIDAD"):
+    """D-089: False si exactamente uno de los dos titulos contiene `palabra` (o su plural). `SEGURO` (seguros) no es
+    `SEGURIDAD`, y `SALUD` no es `SALUD Y SEGURIDAD` (seguridad ocupacional)."""
+    pat = re.compile(r"(?<![A-Z])" + palabra + r"(ES|S)?(?![A-Z])")
+    return bool(pat.search(str(a).upper())) == bool(pat.search(str(b).upper()))
+
+
 def quitar_grado_final(titulo):
     """`AUXILIAR DE COCINA 2` -> `AUXILIAR DE COCINA`. Sobre palabras separadas por espacios
     y ANTES de quitar la puntuacion: `COORDINADOR M & R` conserva su sigla."""

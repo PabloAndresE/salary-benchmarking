@@ -7734,3 +7734,45 @@ varianza 0,38), no la de jefatura (nivel 4: +0,15; varianza 0,14).
 **Medición:** frente a `prima_ref` (el producto sin tamaño). Placebo: el mismo tratamiento (quitar el sufijo y fijar el
 nivel 4) aplicado a títulos en inglés al azar, en igual número, que **no** empiezan con `HEAD`. **Criterio:** regla de
 producto, no inferior (protocolo v2). Se reportan la banda y la confianza de los `HEAD OF` de la lista.
+
+### D-087: se detiene sin resultado (2026-10-12)
+
+Lo reemplaza la decisión siguiente del autor: todo a español, sin prima. Las corridas se detuvieron antes de terminar.
+No se vio ningún resultado.
+
+## D-088 — Todo cargo en inglés se resuelve a español (decisión de producto del autor)
+
+**Decisión del autor** (2026-10-12): «me gusta la idea de resolver todo a español. Los cargos en inglés, el cluster en
+inglés, no se toca; todo va a español. Al final es un mercado ecuatoriano».
+
+**Cambio** (reemplaza a D-067):
+
+- Todo título en inglés que se resuelve en un equivalente en español toma **la banda de ese equivalente, sin prima**,
+  tenga o no datos propios («siempre», 2026-10-07).
+- Si no se resuelve, se busca **por su traducción** también en la analogía: vecinos, nivel, juez y seniority (el código
+  de D-062). Así `HEAD OF AI` se calcula como `JEFE DE IA` y «Head es Jefe» sale solo.
+- El sufijo de unidad de un título en inglés (` - CONSULTING`) se quita antes de buscar (parte 1 de D-087).
+- Los grupos de la base con títulos en inglés **no se tocan**.
+
+**Costo ya medido:**
+
+| Pieza | Pinball donde actúa |
+|---|---|
+| «Siempre» frente a datos propios | +0,033 |
+| D-062 (analogía por traducción) | +0,048 |
+
+Subestima a las multinacionales: la prima del inglés es ~+30 %, y D-066 mostró que no es tamaño. Se vuelve a medir la
+combinación final **solo para reportar el costo**: es decisión de producto y no está sujeta a criterio.
+
+## D-089 — Candado de «seguridad» en el juez. Registrado antes de medir
+
+**Por qué** (lista del autor con D-088). El juez (cross-encoder v3) empareja `JEFE DE SEGURO` (traducción de `HEAD OF
+INSURANCE`) con `JEFE DE SEGURIDADES` (P = 0,969), y `JEFE DE SALUD` con `JEFE DE SALUD Y SEGURIDAD` (seguridad
+ocupacional, P = 0,99). Son falsos amigos: SEGURO (seguros) ≠ SEGURIDAD.
+
+**Cambio** (`candado_seguridad`): dos títulos **no** son compatibles para el juez, ni en la consulta ni en la
+resolución de idioma, si exactamente uno de los dos contiene `SEGURIDAD` o `SEGURIDADES`.
+
+**Medición:** frente a `espanol` (el producto con D-088). Placebo: el mismo candado con otra palabra frecuente de área
+elegida al azar (`VENTAS`, `BODEGA`, `PRODUCCION` o `CALIDAD`, semilla fija). **Criterio:** regla de producto, no
+inferior (protocolo v2).

@@ -158,7 +158,8 @@ CON_V2 = ("prima", "prima_placebo", "tipeo", "tipeo_placebo", "sinon", "sinon_pl
           "familia", "familia_placebo",                                                     # D-071
           "cima", "cima_placebo", "orden", "orden_placebo",                                 # D-076, D-077
           "siempre_prima", "siempre_prima_placebo",                                         # D-083
-          "prima_ref", "prima_neta", "prima_neta_placebo")                                  # D-085, D-086
+          "prima_ref", "prima_neta", "prima_neta_placebo",                                  # D-085, D-086
+          "head_jefe", "head_jefe_placebo", "espanol", "seguridad", "seguridad_placebo")    # D-087..D-089
 PRODUCTO_V25 = CON_TRAD + CON_TAM + CON_ATIPICOS + CON_V2
 
 
@@ -331,7 +332,8 @@ def una_variante(nom, clusters):
             emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
     if nom in ("prima", "prima_placebo", "familia", "familia_placebo", "cima", "cima_placebo", "orden",
                "orden_placebo", "siempre_prima", "siempre_prima_placebo", "prima_ref", "prima_neta",
-               "prima_neta_placebo"):   # D-067: equivalente + prima encogida
+               "prima_neta_placebo", "head_jefe", "head_jefe_placebo", "espanol", "seguridad",
+               "seguridad_placebo"):   # D-067: + prima encogida
         from benchmarking.producto import idioma
         base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
         base.candado_glosario = True
@@ -348,6 +350,27 @@ def una_variante(nom, clusters):
         print("cima: {}".format(base.cima_estructura(tr, placebo=nom == "cima_placebo")), flush=True)
     if nom in ("orden", "orden_placebo"):   # D-077: regla de orden en la cima
         print("orden: {}".format(base.cima_orden(tr, placebo=nom == "orden_placebo")), flush=True)
+    if nom in ("seguridad", "seguridad_placebo"):   # D-089: candado de falsos amigos (sobre D-088)
+        base.candado_seguridad = (True if nom == "seguridad" else
+                                  str(np.random.default_rng(26).choice(["VENTAS", "BODEGA", "PRODUCCION", "CALIDAD"])))
+        print("candado: {}".format(base.candado_seguridad), flush=True)
+    if nom in ("espanol", "seguridad", "seguridad_placebo"):   # D-088: todo a espanol, sin prima, por la traduccion
+        base.idioma_sueldo, base.idioma_prima = "siempre", None
+        base.idioma_por_traduccion = base.quitar_sufijo = True
+    if nom in ("head_jefe", "head_jefe_placebo", "espanol", "seguridad", "seguridad_placebo"):   # D-087: sin sufijo
+        from benchmarking.config.settings import cargar_settings
+        from benchmarking.evaluacion import embeddings as emb_mod
+        from benchmarking.producto import idioma as idioma_mod
+        base.head_jefe = nom.startswith("head_jefe")
+        base.head_jefe_placebo = nom == "head_jefe_placebo"
+        cs = sorted(set(v["cargo_norm"]))
+        nuevos = sorted({idioma_mod.sin_sufijo(c) for c in cs} - set(emb))
+        nuevos += [x for x in base.traducciones_a_embeber(nuevos) if x not in emb]
+        if nuevos:
+            st = cargar_settings()
+            cli = emb_mod.cliente_vertex(st.vertex_embedding_model, st.bq_project, st.vertex_location)
+            emb.update(dict(zip(nuevos, emb_mod.embeber(nuevos, cli, st.vertex_embedding_model))))
+        print("head: {} titulos nuevos embebidos (sin sufijo y sus traducciones)".format(len(nuevos)), flush=True)
     if nom in ("tipeo", "tipeo_placebo"):   # D-068 (a)
         base.tipeo = True
         base.tipeo_placebo = nom == "tipeo_placebo"

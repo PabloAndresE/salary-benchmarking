@@ -1177,6 +1177,8 @@ class BaseReferencia:
                     continue
                 vistos.add(g)
                 c = str(self.celdas[j])
+                if getattr(self, "candado_seguridad", None) and not _sin_falso(self, unicos[k], c):
+                    continue                                # D-089: SEGURO no es SEGURIDAD
                 if getattr(self, "candado_nivel", False) and niv_consulta is not None:
                     # D-052: el nivel del clasificador para el titulo y el del grupo (Qwen)
                     na = niv_consulta[k]
@@ -1246,8 +1248,11 @@ class BaseReferencia:
         for t, v in out.items():
             c = str(self.celdas[v[0]])
             na, nb = nivel_rubrica(self._titulo_para_candado(t)), nivel_rubrica(c)
+            if na is None and getattr(self, "head_jefe", False) and str(t).upper().startswith("HEAD "):
+                na = 4                                      # D-087: HEAD es jefatura
             if ((na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c)
-                    or not compatibles(t, c)):
+                    or not compatibles(t, c)
+                    or (getattr(self, "candado_seguridad", None) and not _sin_falso(self, v[3], c))):
                 continue
             ok[t] = v
         if getattr(self, "idioma_placebo", False) and len(ok) > 1:
@@ -2136,6 +2141,21 @@ class BaseReferencia:
         La alternativa —guardar el numero de personas por empresa y celda— no compraba
         nada.
         """
+        if ((getattr(self, "head_jefe", False) or getattr(self, "quitar_sufijo", False))
+                and not getattr(self, "_sin_sufijo_hecho", False)):
+            # D-087: el titulo en ingles se busca sin el sufijo de unidad (`- CONSULTING`), si esta embebido
+            from .idioma import sin_sufijo
+            alias = {t: sin_sufijo(t) for t in set(titulos) if t}
+            alias = {t: a for t, a in alias.items() if a != t and a in X_por_etiqueta}
+            if alias:
+                self._sin_sufijo_hecho = True
+                try:
+                    out = self.referenciar([alias.get(t, t) for t in titulos], X_por_etiqueta, anio=anio,
+                                           segmento=segmento, rubro=rubro, ruc=ruc, ciiu=ciiu)
+                finally:
+                    self._sin_sufijo_hecho = False
+                out["cargo"] = list(titulos)
+                return out
         titulos = [str(t) for t in titulos]
         # UN CARGO VACIO ES DATO, NO UN ERROR DE PROGRAMACION. Una nomina real trae filas
         # con la celda del cargo en blanco, y hasta aqui eso tumbaba el informe ENTERO con
@@ -2166,10 +2186,25 @@ class BaseReferencia:
             out.insert(0, "cargo", titulos)
             return out
         buscados = self._buscados(unicos, X_por_etiqueta)
+        # D-087: los `HEAD ...` son jefatura (nivel 4), decision del autor; `head_jefe_placebo` (solo para medir)
+        # fija el nivel 4 en el mismo numero de titulos en ingles al azar que NO empiezan con HEAD
+        nivel_fijo = {}
+        if getattr(self, "head_jefe", False):
+            from .idioma import es_ingles
+            heads = [t for t in unicos if str(t).upper().startswith("HEAD ")]
+            if getattr(self, "head_jefe_placebo", False):
+                otros = sorted(t for t in unicos if es_ingles(t) and not str(t).upper().startswith("HEAD "))
+                elegidos = (list(np.random.default_rng(25).choice(otros, min(len(heads), len(otros)), replace=False))
+                            if otros else [])
+                nivel_fijo = {t: 4 for t in elegidos}
+            else:
+                nivel_fijo = {t: 4 for t in heads}
         Q = np.vstack([X_por_etiqueta[b] for b in buscados]).astype(float)
         Q /= np.linalg.norm(Q, axis=1, keepdims=True)
         vec, sim = _vecinos(Q, self.Z, self.k_busqueda, excluir_propio=False)
         niv_consulta = self._nivel_consulta(buscados, Q)
+        if nivel_fijo:
+            niv_consulta = [nivel_fijo.get(t, n) for t, n in zip(unicos, niv_consulta)]
         asignado = (self._asignar_con_juez(buscados, vec, sim, niv_consulta)
                     if getattr(self, "juez", None) is not None else {})
         # `_asignar_con_juez` devuelve por texto buscado; se vuelve al titulo preguntado
@@ -3341,6 +3376,14 @@ def _padron(marco, colg, celdas, grupo, scvs=None):
     indptr = np.append(ini, len(valores)).astype(np.int64)
     return (indptr, valores.astype(np.int32), tam, ciiu, list(claves_unicas),
             meta_ruc, pos_ruc)
+
+
+def _sin_falso(base, a, b):
+    """D-089: el candado de falsos amigos con la palabra configurada (`candado_seguridad`: True -> SEGURIDAD; o la
+    palabra del placebo)."""
+    from .capa0 import sin_falso_amigo
+    w = base.candado_seguridad
+    return sin_falso_amigo(a, b, "SEGURIDAD" if w is True else str(w))
 
 
 def _vecinos(Q, B, k, excluir_propio):
