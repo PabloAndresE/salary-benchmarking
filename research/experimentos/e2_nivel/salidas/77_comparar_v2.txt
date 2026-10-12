@@ -83,3 +83,13 @@ prima_neta frente a prima_ref (placebo prima_neta_placebo): union 4,635 votos, 6
    placebo - producto   +0.01564 [+0.00947, +0.02197] (dos vias)  | media por empresa +0.00815
    variante - placebo   -0.01559 [-0.02205, -0.00939] (dos vias)  | media por empresa -0.00814
    CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+espanol frente a prima_ref (placebo espanol): union 1,311 votos, 207 empresas, 1,165 cargos
+   variante - producto  +0.06397 [+0.04484, +0.08172] (dos vias)  | media por empresa +0.03879
+   placebo - producto   +0.06397 [+0.04484, +0.08172] (dos vias)  | media por empresa +0.03879
+   variante - placebo   +0.00000 [+0.00000, +0.00000] (dos vias)  | media por empresa +0.00000
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+seguridad frente a espanol (placebo seguridad_placebo): union 4,307 votos, 691 empresas, 4,084 cargos
+   variante - producto  -0.00013 [-0.00057, +0.00028] (dos vias)  | media por empresa -0.00004
+   placebo - producto   +0.00399 [+0.00106, +0.00709] (dos vias)  | media por empresa +0.00216
+   variante - placebo   -0.00412 [-0.00735, -0.00122] (dos vias)  | media por empresa -0.00220
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE

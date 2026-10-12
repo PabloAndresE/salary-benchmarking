@@ -450,6 +450,8 @@ class Motor:
         # D-084: en MICRO y PEQUENA ningun cargo, de ningun nivel, queda sobre el GG (`TECHO_TODOS=no` lo limita
         # al nivel 5, como D-082)
         self.base.techo_todos_niveles = os.environ.get("TECHO_TODOS", "si").lower() != "no"
+        # D-089: el juez no empareja SEGURO con SEGURIDAD (`CANDADO_SEGURIDAD=no` lo apaga)
+        self.base.candado_seguridad = os.environ.get("CANDADO_SEGURIDAD", "si").lower() != "no"
         # D-075: lo que no es un cargo (`ASDFGH`, `ASTRONAUTA`) se responde `no reconocido`, sin cifra. Necesita una
         # base con el clasificador (v28 o mas nueva). `FILTRO_CARGO=no` lo apaga.
         self.base.filtro_cargo = (os.environ.get("FILTRO_CARGO", "si").lower() != "no"

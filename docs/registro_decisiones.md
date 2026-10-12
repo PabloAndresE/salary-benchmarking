@@ -7776,3 +7776,23 @@ resolución de idioma, si exactamente uno de los dos contiene `SEGURIDAD` o `SEG
 **Medición:** frente a `espanol` (el producto con D-088). Placebo: el mismo candado con otra palabra frecuente de área
 elegida al azar (`VENTAS`, `BODEGA`, `PRODUCCION` o `CALIDAD`, semilla fija). **Criterio:** regla de producto, no
 inferior (protocolo v2).
+
+### D-088, costo medido (2026-10-12)
+
+Frente a `prima_ref` (D-067), donde actúa (1.311 votos, 3,4 %; 207 empresas): **+0,06397 [+0,04484, +0,08172]**. En el
+total es ≈ +0,002. Es el costo de subestimar a quienes titulan en inglés, aceptado por el autor como decisión de
+producto («es un mercado ecuatoriano»).
+
+Con esta configuración, los cortes de D-086 dan ALTA 15,7 %, MEDIA 30,7 % y BAJA 36,1 %. MEDIA y BAJA se tocan
+(IC 28,6–33,3 % frente a 32,6–40,2 %): siguen ordenando, con poco margen.
+
+### D-089, resultado: cumple, se adopta (2026-10-12)
+
+Unión de 4.307 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto | −0,00013 | [−0,00057, +0,00028] |
+| Variante − placebo | −0,00412 | [−0,00735, −0,00122] |
+
+El placebo usó `CALIDAD`. **Se adopta**: la API lo activa con `CANDADO_SEGURIDAD`.
