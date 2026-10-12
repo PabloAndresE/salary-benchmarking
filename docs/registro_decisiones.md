@@ -7588,3 +7588,54 @@ inglés con el mismo equivalente dan la misma cifra por construcción. Los que n
 **Medición:** frente a `prima` (el producto de D-067). Placebo: la misma prima, con la traducción hacia el grupo de
 **otro** título resuelto. **Criterio:** regla de producto, no inferior (extremo < +0,001, protocolo v2). Se reporta
 el placebo.
+
+### D-082, resultado: cumple, se adopta (2026-10-12)
+
+Con el entrenamiento: `e_peq` = +0,122, sobre 22 empresas MICRO o PEQUEÑA con GG y gerentes de área.
+
+Primaria (sin dueños), unión de 4.339 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto | +0,00009 | [−0,00070, +0,00091] |
+| Variante − placebo | −0,00373 | [−0,00689, −0,00083] |
+
+No inferior y le gana al placebo: **se adopta.**
+
+`demo/base_v31.npz` = la v30 más el techo estimado con toda la base, sin los votos de dueño. Con 44 empresas, `e_peq`
+**sale 0,0** (mediana): el techo deja a los gerentes de área como máximo **al nivel** del GG.
+
+**La cima en la v31** (cargos de la lista sobre el GG):
+
+| Tamaño | Cargos sobre el GG |
+|---|---|
+| MICRO | 1 |
+| PEQUEÑA | 1 |
+| MEDIANA | 1 (Tecnología) |
+| GRANDE | 0 |
+
+En MICRO y PEQUEÑA el que queda es `GERENTE DE SISTEMAS`, porque el clasificador lo pone en nivel 4 y la regla es de
+nivel 5.
+
+### D-083, resultado: no se adopta (2026-10-12)
+
+Unión de 4.934 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Variante − producto (D-067) | +0,00080 | [−0,00019, **+0,00221**] |
+| Variante − placebo | −0,01932 | [−0,02742, −0,01194] |
+
+El extremo superior pasa el margen: **no se adopta**. Sigue la diferencia entre `CEO` (equivalente más prima) y
+`MANAGING DIRECTOR` (datos propios).
+
+## D-084 — Techo de la cima en MICRO y PEQUEÑA para todos los niveles. Registrado antes de medir
+
+**Por qué:** D-082 deja pasar a `GERENTE DE SISTEMAS` (nivel 4 según el clasificador). En una empresa pequeña ningún
+cargo debería quedar sobre el GG.
+
+**Cambio:** el techo de D-082 se aplica a todo resultado que no sea del grupo GG, **de cualquier nivel**, con el
+tamaño MICRO o PEQUEÑA.
+
+**Medición:** frente a `techo` (D-082). Placebo: el de D-082. **Criterio:** regla de producto, no inferior (protocolo
+v2, primaria sin dueños).

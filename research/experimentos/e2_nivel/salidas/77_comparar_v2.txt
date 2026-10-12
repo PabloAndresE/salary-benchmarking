@@ -58,3 +58,13 @@ piso frente a contratado (placebo piso) [sin votos de dueno]: union 74 votos, 74
    placebo - producto   +0.06400 [+0.03527, +0.09263] (dos vias)  | media por empresa +0.06400
    variante - placebo   +0.00000 [+0.00000, +0.00000] (dos vias)  | media por empresa +0.00000
    CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+techo frente a contratado (placebo techo_placebo) [sin votos de dueno]: union 4,339 votos, 694 empresas, 4,080 cargos
+   variante - producto  +0.00009 [-0.00070, +0.00091] (dos vias)  | media por empresa -0.00005
+   placebo - producto   +0.00382 [+0.00095, +0.00705] (dos vias)  | media por empresa +0.00095
+   variante - placebo   -0.00373 [-0.00689, -0.00083] (dos vias)  | media por empresa -0.00100
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+siempre_prima frente a prima (placebo siempre_prima_placebo): union 4,934 votos, 692 empresas, 4,578 cargos
+   variante - producto  +0.00080 [-0.00019, +0.00221] (dos vias)  | media por empresa +0.00129
+   placebo - producto   +0.02012 [+0.01252, +0.02779] (dos vias)  | media por empresa +0.01186
+   variante - placebo   -0.01932 [-0.02742, -0.01194] (dos vias)  | media por empresa -0.01057
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE

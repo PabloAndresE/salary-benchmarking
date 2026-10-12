@@ -152,11 +152,12 @@ def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
 # D-062 y D-063: variantes sobre el producto vigente (v25: D-060 + D-061, con el k fijo)
 CON_TRAD = ("trad_base", "trad", "trad_placebo", "trad_candado")
 CON_TAM = ("tam_A", "tam_B", "tam_C", "tam_C0", "tam_C_placebo", "tam_D", "tam_D_placebo",   # D-079: tam_D
-           "contratado", "contratado_placebo", "piso")                                   # D-080, D-081
+           "contratado", "contratado_placebo", "piso", "techo", "techo_placebo", "techo_todos")   # D-080..D-084
 CON_ATIPICOS = ("atipicos", "atipicos_placebo")     # D-065: limpieza de votos atipicos (frente a tam_A)
 CON_V2 = ("prima", "prima_placebo", "tipeo", "tipeo_placebo", "sinon", "sinon_placebo",   # D-067, D-068, D-070
           "familia", "familia_placebo",                                                     # D-071
-          "cima", "cima_placebo", "orden", "orden_placebo")                                 # D-076, D-077
+          "cima", "cima_placebo", "orden", "orden_placebo",                                 # D-076, D-077
+          "siempre_prima", "siempre_prima_placebo")                                         # D-083
 PRODUCTO_V25 = CON_TRAD + CON_TAM + CON_ATIPICOS + CON_V2
 
 
@@ -328,7 +329,7 @@ def una_variante(nom, clusters):
             et = np.load(SAL / f, allow_pickle=True)
             emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
     if nom in ("prima", "prima_placebo", "familia", "familia_placebo", "cima", "cima_placebo", "orden",
-               "orden_placebo"):   # D-067: equivalente + prima encogida (el producto de referencia)
+               "orden_placebo", "siempre_prima", "siempre_prima_placebo"):   # D-067: equivalente + prima encogida
         from benchmarking.producto import idioma
         base.traductor = idioma.cargar(RAIZ / "modelos" / "opus-mt-en-es")
         base.candado_glosario = True
@@ -336,8 +337,8 @@ def una_variante(nom, clusters):
             et = np.load(SAL / f, allow_pickle=True)
             emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
         print("prima: {}".format(base.estimar_prima_idioma(emb, encoger=50)), flush=True)
-        base.idioma_sueldo = True
-        base.idioma_placebo = nom == "prima_placebo"
+        base.idioma_sueldo = "siempre_prima" if nom.startswith("siempre_prima") else True     # D-083
+        base.idioma_placebo = nom in ("prima_placebo", "siempre_prima_placebo")
         if nom in ("familia", "familia_placebo"):    # D-071: una banda por familia en ingles
             print("familia: {}".format(base.armar_familia_ingles(emb, placebo=nom == "familia_placebo")), flush=True)
     if nom in ("cima", "cima_placebo"):     # D-076: GG de empresas con estructura
@@ -354,13 +355,19 @@ def una_variante(nom, clusters):
         base.sinonimos_palabras = True
     if nom in CON_TAM and nom not in ("tam_A", "tam_B"):     # D-063: el tamano por nivel
         tr_tam = tr
-        if nom in ("contratado", "contratado_placebo", "piso"):     # D-080: sin los votos de dueno en nivel 4-5
+        if nom in ("contratado", "contratado_placebo", "piso", "techo", "techo_placebo", "techo_todos"):   # D-080
             res, tr_tam = base.sin_duenos(tr, placebo=nom == "contratado_placebo")
             print("sin duenos: {}".format(res), flush=True)
         print("tamano: {}".format(base.estandarizar_tamano(
             tr_tam, placebo=nom == "tam_C_placebo",
-            por_cargo=nom.startswith("tam_D") or nom in ("contratado", "contratado_placebo", "piso"),
+            por_cargo=nom.startswith("tam_D") or nom in ("contratado", "contratado_placebo", "piso", "techo",
+                                                         "techo_placebo", "techo_todos"),
             placebo_cargo=nom == "tam_D_placebo")), flush=True)
+        if nom in ("techo", "techo_placebo", "techo_todos"):        # D-082: techo de la cima en MICRO y PEQUENA
+            base.tamano_estandar = True
+            base.techo_todos_niveles = nom == "techo_todos"         # D-084: todos los niveles
+            print("techo de la cima: {}".format(base.preparar_techo_cima(tr_tam, placebo=nom == "techo_placebo")),
+                  flush=True)
         if nom == "piso":                                           # D-081: garantia de orden de la cima
             base.tamano_estandar = True
             print("piso de la cima: {}".format(base.preparar_cima_piso(tr_tam)), flush=True)
@@ -374,7 +381,7 @@ def una_variante(nom, clusters):
         seg_e = ts.groupby("empresa_ruc")["segmento"].first().map(lambda x: _norm_segmento(x) or "")
         seg_v = v["empresa_ruc"].map(seg_e).fillna("").to_numpy(object)
         if nom in ("tam_B", "tam_C", "tam_C_placebo", "tam_D", "tam_D_placebo", "contratado", "contratado_placebo",
-                   "piso"):   # a cada voto, la banda del tamano de SU empresa
+                   "piso", "techo", "techo_placebo", "techo_todos"):   # banda del tamano de SU empresa
             out = out.copy()
             for sg in SEGMENTOS:
                 if not (seg_v == sg).any():

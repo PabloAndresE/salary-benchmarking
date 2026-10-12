@@ -1537,6 +1537,10 @@ class BaseReferencia:
             **({} if getattr(self, "ajuste_tam", None) is None else
                dict(tam_aj=np.asarray(self.ajuste_tam, dtype=float), tam_delta=np.asarray(self.delta_tam, dtype=float))),
             **({} if getattr(self, "delta_tam_g", None) is None else dict(tam_dg=np.asarray(self.delta_tam_g, float))),
+            **({} if not getattr(self, "techo_cima", None) else
+               dict(techo_k=np.array(list(self.techo_cima), dtype=np.int64),
+                    techo_v=np.array(list(self.techo_cima.values()), dtype=float),
+                    techo_g=np.array(int(self.cima_grupo)))),
             **({} if not getattr(self, "cima_piso", None) else
                dict(piso_k=np.array(list(self.cima_piso), dtype=np.int64),
                     piso_v=np.array(list(self.cima_piso.values()), dtype=float), piso_g=np.array(int(self.cima_grupo)))),
@@ -1598,6 +1602,9 @@ class BaseReferencia:
                                    for k, v in zip(z["sen_k"], z["sen_v"])}
             if "cc_W" in z.files:
                 base.clf_cargo = (np.asarray(z["cc_W"], float), float(z["cc_b"]), float(z["cc_u"]))
+            if "techo_k" in z.files:
+                base.techo_cima = {int(k): float(v) for k, v in zip(z["techo_k"], z["techo_v"])}
+                base.cima_grupo = int(z["techo_g"])
             if "piso_k" in z.files:
                 base.cima_piso = {int(k): float(v) for k, v in zip(z["piso_k"], z["piso_v"])}
                 base.cima_grupo = int(z["piso_g"])
@@ -1754,6 +1761,36 @@ class BaseReferencia:
             self.cima_piso[k] = float(np.percentile(refs, 75)) + e
         self.cima_grupo = gg
         return {k: round(v_, 3) for k, v_ in self.cima_piso.items()}
+
+    def preparar_techo_cima(self, marco, col="cargo_norm", titulo="GERENTE GENERAL", placebo=False, semilla=24):
+        """D-082: en MICRO y PEQUENA, el techo de los cargos de nivel 5 (que no son el GG): ref_GG(s) - e_peq, con
+        e_peq = mediana dentro de la empresa (MICRO y PEQUENA) de y(GG) - mediana(y de sus gerentes de area).
+        `placebo`: el techo sale de OTRO grupo de nivel 5 al azar (>= 10 empresas). Guarda `self.techo_cima`."""
+        if titulo not in self.idx:
+            return {}
+        gg = int(self.grupo[self.idx[titulo]])
+        d = marco[[col, "empresa_ruc", "segmento", "y"]].dropna(subset=["y"]).copy()
+        i = d[col].astype(str).map(self.idx)
+        d = d[i.notna()].copy()
+        j = i[i.notna()].astype(int).to_numpy()
+        d["g"], d["L"] = self.grupo[j], self.nivel[j]
+        d["seg"] = d["segmento"].map(lambda v: _norm_segmento(v) or "")
+        chicas = d["seg"].isin(["MICROEMPRESA", "PEQUENA"])
+        v = d[chicas].groupby(["empresa_ruc", "g"]).agg(y=("y", "median"), L=("L", "first")).reset_index()
+        e_gg = v[v["g"] == gg].set_index("empresa_ruc")["y"]
+        e_ar = v[(v["g"] != gg) & (v["L"] == 5)].groupby("empresa_ruc")["y"].median()
+        comun = e_gg.index.intersection(e_ar.index)
+        e_peq = float(np.median(e_gg[comun] - e_ar[comun])) if len(comun) >= 10 else 0.0
+        rep = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).first()
+        fuente = int(rep[gg])
+        if placebo:
+            otros = [int(rep[g]) for g in rep.index if g != gg and self.nivel[rep[g]] == 5 and self.emp[rep[g]] >= 10]
+            fuente = int(np.random.default_rng(semilla).choice(otros))
+        self.techo_cima = {SEGMENTOS.index(s_): self._ref_log_directo(fuente, SEGMENTOS.index(s_)) - e_peq
+                           for s_ in ("MICROEMPRESA", "PEQUENA")}
+        self.cima_grupo = gg
+        return {"e_peq": round(e_peq, 4), "empresas_con_ambos": int(len(comun)),
+                "techo": {SEGMENTOS[k]: round(float(np.exp(v_)), 2) for k, v_ in self.techo_cima.items()}}
 
     def _ref_log_directo(self, i, k_seg):
         """Centro en log de una celda directa, con el ajuste de tamano del producto (D-063/D-079)."""
@@ -2192,8 +2229,9 @@ class BaseReferencia:
                 # D-055: sin datos directos propios, la banda del equivalente en espanol mas la prima
                 ex = self.idx.get(t)
                 jt = idioma[t][0]
-                if (not (ex is not None and self.emp[ex] >= MIN_EMPRESAS
-                         and self.personas[ex] >= self.min_personas)
+                siempre_prima = getattr(self, "idioma_sueldo", False) == "siempre_prima"     # D-083
+                if ((siempre_prima or not (ex is not None and self.emp[ex] >= MIN_EMPRESAS
+                                           and self.personas[ex] >= self.min_personas))
                         and self.emp[jt] >= MIN_EMPRESAS and self.personas[jt] >= self.min_personas):
                     propio, traduccion = jt, idioma[t][3]
                     lv = niv_consulta[k] or (self.nivel[jt] if np.isfinite(self.nivel[jt]) else None)
@@ -2204,7 +2242,7 @@ class BaseReferencia:
                 ex = self.idx.get(t)
                 # `idioma_sueldo == "siempre"` (2026-10-07, decision de producto del autor): el mismo
                 # cargo da la misma banda en ingles y en espanol, aunque el titulo en ingles tenga datos
-                if getattr(self, "idioma_sueldo", False) == "siempre" or not (
+                if getattr(self, "idioma_sueldo", False) in ("siempre", "siempre_prima") or not (
                         ex is not None and self.emp[ex] >= MIN_EMPRESAS
                         and self.personas[ex] >= self.min_personas):
                     propio, _, p_juez, traduccion = idioma[t]
@@ -2485,6 +2523,19 @@ class BaseReferencia:
                     banda = {q: v + aj_seg for q, v in banda.items()}
                     banda_per = {q: v + aj_seg for q, v in banda_per.items()}
 
+            techo = getattr(self, "techo_cima", None)
+            niv_res = (self.nivel[propio] if (propio is not None and base != "por analogia") else niv_tam)
+            todos_niveles = getattr(self, "techo_todos_niveles", False)          # D-084
+            if (techo and k_seg in techo
+                    and (todos_niveles or (niv_res is not None and np.isfinite(niv_res) and int(niv_res) == 5))
+                    and not (propio is not None and base != "por analogia"
+                             and int(self.grupo[propio]) == getattr(self, "cima_grupo", -2))
+                    and mu > techo[k_seg]):
+                # D-082: en MICRO y PEQUENA, ningun cargo de nivel 5 queda sobre el GG de ese tamano
+                baja = techo[k_seg] - mu
+                mu += baja
+                banda = {q: v + baja for q, v in banda.items()}
+                banda_per = {q: v + baja for q, v in banda_per.items()}
             piso = getattr(self, "cima_piso", None)
             if (piso and propio is not None and int(self.grupo[propio]) == getattr(self, "cima_grupo", -2)
                     and (k_seg if k_seg is not None else -1) in piso):
