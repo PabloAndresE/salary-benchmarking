@@ -469,6 +469,18 @@ class Motor:
             # EN VOZ ALTA. Una base a la que le falta algo contesta igual que una
             # completa, solo que peor, y eso no se nota mirando una respuesta.
             print(f"[base] SIN {n}: {porque}", flush=True)
+        # CALENTAMIENTO (2026-10-12, medido): la primera consulta con un titulo nuevo tardaba 29,6 s —cliente de
+        # Vertex, juez, traductor, corrector y clasificador se cargan al primer uso— y despues ~0,6 s. Se paga al
+        # arrancar y no el primer cliente. `CALENTAR=no` lo salta; si falla (sin red), el servicio sigue.
+        if os.environ.get("CALENTAR", "si").lower() != "no":
+            t0 = time.time()
+            try:
+                prueba = ["ANALISTA DE PRUEBA DE ARRANQUE", "SALES TEST COORDINATOR", "CONTDOR GENERL"]
+                self.asegurar(prueba)
+                self.base.referenciar(prueba, self.emb)
+                print(f"[calentamiento] {time.time() - t0:.1f}s", flush=True)
+            except Exception as e:                           # noqa: BLE001 - se informa y se sigue
+                print(f"[calentamiento] no se pudo ({e!r}); la primera consulta sera lenta", flush=True)
 
     def _vertex(self):
         if self._cli is None:

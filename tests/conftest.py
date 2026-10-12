@@ -1,6 +1,11 @@
 import io
+import os
+
 import openpyxl
 import pytest
+
+# los tests no llaman a Vertex al arrancar el servicio (calentamiento de la API)
+os.environ.setdefault("CALENTAR", "no")
 
 
 @pytest.fixture

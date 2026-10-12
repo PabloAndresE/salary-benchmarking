@@ -82,3 +82,19 @@ Mostrar: «No reconocemos este cargo. Revisa cómo está escrito» y las sugeren
 
 Estados de una fila del informe: `directa`, `directa_rubro`, `traduccion` (cargo en inglés por su equivalente
 más la prima), `analogia`, `cargo_no_reconocido`, `cargo_vacio`, `sueldo_ilegible`, `sin_referencia`.
+
+## Velocidad (medida 2026-10-12, base v31, con otro proceso usando la CPU al mismo tiempo)
+
+| Nómina | Tiempo hasta el informe listo |
+|---|---|
+| 50 filas | ~3 s |
+| 200 filas | ~7–10 s |
+| 500 filas | ~11 s |
+| 1.000 filas | ~23 s |
+| Títulos ya vistos | ~1 s por 500 filas |
+
+- El tiempo lo pone sobre todo **embeber los títulos nuevos** (Vertex), unos 2–2,5 s por cada 100 cargos distintos.
+- Un cargo suelto (`/referencia`) tarda ~0,03 s si ya existe y ~0,5–2 s si es nuevo.
+- La API **se precalienta al arrancar** (~30 s), así que la primera consulta ya no es lenta.
+- `POST /informes` responde de inmediato con un `id`: el front consulta `GET /informes/{id}` cada 1 s hasta
+  `estado = listo`.
