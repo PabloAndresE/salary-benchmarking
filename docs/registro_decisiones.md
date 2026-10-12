@@ -7548,3 +7548,29 @@ GG y gerentes de área.
 
 Actúa sobre 74 votos de GG (sin dueños): **+0,064 [+0,035, +0,093], empeora: no se adopta.** Subir al GG por
 encima del piso lo aleja de lo que pagan las empresas.
+
+## D-082 — Techo de la cima en empresas PEQUEÑAS y MICRO. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-12: «sí, dale con la regla para PEQUEÑA y MICRO»). Con la v30, en PEQUEÑA hay 6 gerentes de
+área sobre el GG ($2.110):
+
+- **Tres los pone el modelo:** RR. HH., Tecnología y Sistemas tienen 1 a 3 empresas pequeñas, y sus datos reales
+  quedan **bajo** el GG.
+- **Tres están en los datos:** Financiero, con 27 empresas y $3.056; Operaciones, con 26 y $2.434; Comercial, con 43 y
+  $2.137. Pero **dentro** de la misma empresa pequeña el GG gana +10 % sobre sus gerentes de área: es composición.
+
+**Cambio** (`techo_cima`). Con el tamaño del cliente `s` ∈ {MICRO, PEQUEÑA}, todo resultado de nivel 5 (directo o
+por analogía) que no sea del grupo GG cumple:
+
+> `ref ≤ ref_GG(s) − e_peq`; si lo supera, se baja y la banda se corre igual.
+
+- `ref_GG(s)`: la referencia del GG en ese tamaño, con los ajustes del producto (D-063, D-079, D-080).
+- `e_peq`: la mediana, dentro de la empresa, de `y(GG) − mediana(y de sus gerentes de área)` en las empresas MICRO y
+  PEQUEÑA, con el entrenamiento.
+
+**Medición:** frente a `contratado` (el producto de D-080, con el segmento de cada empresa apartada). La primaria es
+la de D-080: votos sin dueños.
+
+- **Placebo:** el techo se calcula con **otro** grupo de nivel 5 al azar (≥ 10 empresas) en vez del GG.
+- **Criterio:** regla de producto, no inferior (extremo < +0,001, protocolo v2). Se reportan el placebo y la cima por
+  tamaño.
