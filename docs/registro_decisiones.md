@@ -7838,3 +7838,33 @@ Jefe» (D-088).
 
 Es decisión de producto y no se mide con pinball. **Límite conocido:** «Finance Manager» o «HR Manager» que en una
 empresa sean gerencias de verdad salen como jefaturas.
+
+## D-092 — Cargos de dirección en inglés: banda del mercado que titula en inglés. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-12: los rangos de CEO, COO, CTO y Managing Director le parecen «ridículamente bajos»).
+Calibración con empresas apartadas, con D-088 (todo a español):
+
+| Grupo | Votos | Dentro de p25–p75 | Sobre p90 | Pago ÷ referencia |
+|---|---|---|---|---|
+| Nivel 5 con título en español | 1.703 | 48 % | 11 % | ×1,05 (bien calibrado) |
+| Dirección en inglés | 49 (27 empresas) | **12 %** | **57 %** | **×2,6** |
+
+Mostrar p25–p90 no lo corrige, porque falla el centro. Es la prima del inglés de D-066 (+79 % bruta en nivel 5),
+que D-088 quitó.
+
+**Cambio** (`prima_direccion`), una excepción a D-088 solo para dirección.
+
+- **Cargo de dirección en inglés:** un título en inglés que **empieza** con `CEO`, `CFO`, `COO`, `CTO`, `CIO`, `CMO`,
+  `CHRO`, `CHIEF … OFFICER`, `MANAGING DIRECTOR`, `COUNTRY MANAGER`, `GENERAL MANAGER`, `PRESIDENT`, `VICE PRESIDENT`
+  o `VP`, y **no** contiene `ASSISTANT`, `ASST` ni `SECRETARY`.
+- **Banda:** la de su equivalente en español (como en D-088), corrida por `π_dir` y ensanchada por su varianza
+  (como en D-055).
+- **`π_dir`:** la mediana de `m(título en inglés) − m(equivalente)` en los pares de dirección de la base con datos
+  directos (estimador de D-055, solo con esos pares), con el entrenamiento.
+
+**Medición:** frente a `espanol` (D-088).
+
+- **Placebo:** la misma `π_dir`, aplicada al mismo número de títulos en inglés al azar que **no** son de dirección.
+- **Criterio:** mejora de precisión (protocolo v2), frente al producto y frente al placebo.
+
+Se reportan la calibración de esos votos y la tabla de CEO, COO, CTO y Managing Director.
