@@ -1318,6 +1318,9 @@ class BaseReferencia:
         nivel despues del glosario: si no, `EXECUTIVE` contaba como ejecutivo (nivel 1). Un complemento
         (`EXECUTIVE ASSISTANT TO THE CEO`) no cambia la cabeza y el titulo queda tal cual."""
         tr = getattr(self, "traductor", None)
+        if tr is not None and getattr(tr, "invertir", False):
+            from .idioma import invertir_rangos
+            t = invertir_rangos(t)                    # D-091: el candado lee el titulo con los rangos invertidos
         activo = getattr(self, "idioma_por_traduccion", False) or getattr(self, "candado_glosario", False)
         if not activo or tr is None or not getattr(tr, "glosario", None):
             return t

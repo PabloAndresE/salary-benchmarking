@@ -81,6 +81,19 @@ def aplicar_glosario(t, glosario):
     return t
 
 
+def invertir_rangos(t):
+    """D-091 (decision del autor, 2026-10-12): en un titulo en ingles, `MANAGER` es jefatura y `HEAD OF` es gerencia.
+    `X MANAGER` -> `X CHIEF` (-> JEFE DE X) y `HEAD OF X` -> `X MANAGER` (-> GERENTE DE X). `GENERAL MANAGER` y
+    `MANAGING ...` no se tocan (siguen siendo Gerente General); los cargos de direccion del glosario (CEO, CFO...) se
+    resuelven despues, con el glosario."""
+    t = sin_sufijo(str(t).upper().strip())
+    if not es_ingles(t) or re.search(r"GENERAL MANAGER|MANAGING", t):
+        return t
+    t = re.sub(r"(?<![A-Z])MANAGERS?(?![A-Z])", "CHIEF", t)
+    m = re.match(r"HEAD OF (.+)$", t)
+    return (m.group(1) + " MANAGER") if m else t
+
+
 class Traductor:
     PLANTILLA = "He works as a {}."
 
@@ -93,6 +106,7 @@ class Traductor:
         self.lote = lote
         self.cache = {}
         self.glosario = cargar_glosario() if glosario is None else glosario
+        self.invertir = False            # D-091: MANAGER = jefe, HEAD = gerente (la API lo activa)
 
     def _limpiar(self, s):
         s = re.sub(r"^\s*(trabaja|trabajo|el trabaja|ella trabaja)\s+(como|de)\s+(un |una )?", "", s, flags=re.I)
@@ -103,7 +117,8 @@ class Traductor:
         falta = [t for t in dict.fromkeys(titulos) if t not in self.cache]
         for i in range(0, len(falta), self.lote):
             parte = falta[i:i + self.lote]
-            frases = [self.PLANTILLA.format(aplicar_glosario(t, self.glosario).lower().strip()) for t in parte]
+            frases = [self.PLANTILLA.format(aplicar_glosario(invertir_rangos(t) if self.invertir else t,
+                                                             self.glosario).lower().strip()) for t in parte]
             with self.torch.no_grad():
                 x = self.tok(frases, return_tensors="pt", padding=True, truncation=True, max_length=64)
                 o = self.m.generate(**x, num_beams=4, max_new_tokens=48)

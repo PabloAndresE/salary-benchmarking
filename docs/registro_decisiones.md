@@ -7811,3 +7811,30 @@ MEDIANA, por debajo del GG con $3.187).
   verifica en la API.
 
 Producto **v1.1**.
+
+## D-091 — En inglés, MANAGER = jefatura y HEAD = gerencia (decisión de producto del autor, v1.2)
+
+**Decisión del autor** (2026-10-12): «corrígelos para que sean al revés, Manager = Jefe y Head = Gerente»; después
+de ver la lista de 35: «quiero adoptar para el producto el cambio de nivel de head y manager». Reemplaza a «Head es
+Jefe» (D-088).
+
+**Cambio** (`invertir_rangos`, en el traductor, antes del glosario):
+
+- `X MANAGER` → `X CHIEF` → `JEFE DE X`;
+- `HEAD OF X` → `X MANAGER` → `GERENTE DE X`;
+- **no cambian** `GENERAL MANAGER` y `MANAGING …` (siguen siendo Gerente General), ni los cargos de dirección del
+  glosario (CEO, CFO, COO…), que se resuelven después;
+- el candado de nivel del idioma lee el título ya invertido.
+
+**Efecto descriptivo en la lista del autor** (sin tamaño):
+
+| Cargo | Antes | Ahora |
+|---|---|---|
+| Head of HR | $1.555 | $4.396 |
+| Head of Data Governance | $2.418 | $6.151 |
+| Sales Manager | $2.670 | $1.549 |
+| Product Manager | $2.910 | $1.699 |
+| Project Manager | $3.035 | $2.146 |
+
+Es decisión de producto y no se mide con pinball. **Límite conocido:** «Finance Manager» o «HR Manager» que en una
+empresa sean gerencias de verdad salen como jefaturas.

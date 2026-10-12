@@ -426,6 +426,9 @@ class Motor:
         # de los titulos en ingles); `IDIOMA_SUELDO=si` lo haria, solo para medir. `TRADUCTOR=no` lo apaga.
         ruta_tr = os.environ.get("TRADUCTOR", "modelos/opus-mt-en-es")
         self.base.traductor = None if ruta_tr.lower() == "no" else idioma_mod.cargar(ruta_tr)
+        if self.base.traductor is not None:
+            # D-091 (decision del autor): MANAGER = jefe y HEAD = gerente (`INVERTIR_RANGOS=no` vuelve a lo literal)
+            self.base.traductor.invertir = os.environ.get("INVERTIR_RANGOS", "si").lower() != "no"
         # 2026-10-07, decision de producto del autor: un titulo en ingles SIN datos directos propios (un
         # cargo nuevo) toma la banda de su equivalente en espanol, tal cual y sin prima. Medido en D-050
         # (`idioma_consulta`): +0,019 donde actua, subestima (prima del ingles ~30-40 %). Los clusters de la

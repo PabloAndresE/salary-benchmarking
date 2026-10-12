@@ -28,3 +28,13 @@ def test_las_reglas_de_palabras_del_autor():
 
 def test_cortes_de_confianza_por_ancho_publicados():
     assert (CONF_ANCHO_ALTA, CONF_ANCHO_BAJA) == (2.0, 3.0)
+
+
+def test_d091_manager_es_jefe_y_head_es_gerente():
+    from benchmarking.producto.idioma import invertir_rangos
+    assert invertir_rangos("SALES MANAGER") == "SALES CHIEF"                 # -> JEFE DE VENTAS
+    assert invertir_rangos("HEAD OF HR") == "HR MANAGER"                     # -> GERENTE DE RECURSOS HUMANOS
+    assert invertir_rangos("HEAD OF INSURANCE - CONSULTING") == "INSURANCE MANAGER"
+    assert invertir_rangos("GENERAL MANAGER") == "GENERAL MANAGER"           # sigue siendo Gerente General
+    assert invertir_rangos("MANAGING DIRECTOR") == "MANAGING DIRECTOR"
+    assert invertir_rangos("JEFE DE VENTAS") == "JEFE DE VENTAS"             # en espanol no se toca
