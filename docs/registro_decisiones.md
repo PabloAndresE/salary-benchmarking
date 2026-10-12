@@ -7639,3 +7639,7 @@ tamaño MICRO o PEQUEÑA.
 
 **Medición:** frente a `techo` (D-082). Placebo: el de D-082. **Criterio:** regla de producto, no inferior (protocolo
 v2, primaria sin dueños).
+
+**Decisión del autor sobre D-083 (2026-10-12):** dejarlo como está. Cada título en inglés con datos propios usa sus
+datos; sin ellos, el equivalente más la prima (D-067). Se acepta que `CEO` y `MANAGING DIRECTOR` den cifras
+distintas.
