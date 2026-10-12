@@ -7715,3 +7715,22 @@ Terciles de `incert_centro`: **0,043 / 0,360**. Error del centro por clase, con 
 
 Antes eran 17,5 % / 32,3 % / 33,1 %. **Cumple** (orden sin solape de vecinos): `CORTE_ALTA = 0,043`,
 `CORTE_MEDIA = 0,360`.
+
+## D-087 — «Head of»: sin el sufijo de unidad y como jefatura. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-12: «¿no hay otra solución para head?»; decisión anterior del autor: «head es jefe»).
+Los `HEAD OF … - CONSULTING` van por analogía con similitud 0,76–0,79: incertidumbre del centro ±240–260 %, banda
+×3,3–3,5. Sin el sufijo, `HEAD OF INSURANCE` se traduce y su incertidumbre baja de 2,48 a 0,85. Además, el clasificador
+pone los `HEAD OF` en nivel 5 (gerencia): los vecinos se ajustan hacia arriba y se usa la prima del nivel 5 (+0,34;
+varianza 0,38), no la de jefatura (nivel 4: +0,15; varianza 0,14).
+
+**Cambio** (`head_jefe`):
+
+1. **Sufijo de unidad:** en un título en inglés, lo que sigue a « - » o « | » se quita antes de buscar, si lo que queda
+   tiene ≥ 2 palabras.
+2. **«HEAD» como jefatura:** `HEAD` cuenta como nivel 4 en la rúbrica, y el nivel de la consulta de un título que
+   empieza con `HEAD` es 4.
+
+**Medición:** frente a `prima_ref` (el producto sin tamaño). Placebo: el mismo tratamiento (quitar el sufijo y fijar el
+nivel 4) aplicado a títulos en inglés al azar, en igual número, que **no** empiezan con `HEAD`. **Criterio:** regla de
+producto, no inferior (protocolo v2). Se reportan la banda y la confianza de los `HEAD OF` de la lista.
