@@ -7655,3 +7655,37 @@ Primaria (sin dueños), unión de 4.372 votos:
 
 No inferior: **se adopta.** Nota honesta: actúa de por sí sobre solo 41 votos, donde da +0,017 [−0,042, +0,069], muy
 incierto. La API lo activa con `TECHO_TODOS` (por defecto sí), sin cambiar la base v31.
+
+## D-085 — La incertidumbre de la prima del inglés, sin el ruido de medición. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-12: «casi todo sale BAJA, necesitamos que sean menos anchas»). En el informe de la lista de
+35, 31 salen BAJA, y todos ya eran BAJA por la incertidumbre del **centro**. En los 12 traducidos, el centro suma
+`var_π`: la dispersión (`(1,4826·MAD)²`) de `d = m(inglés) − m(equivalente)` entre pares. Pero cada `d` trae el ruido
+de medir los dos grupos (`1/W_en + 1/W_es`), que no es incertidumbre de la prima, y la banda del equivalente ya incluye
+el suyo.
+
+**Cambio** (`prima_neta`): `var_π_neta = max(0, var_π − mediana(1/W_en + 1/W_es))` por nivel y global; con el
+encogimiento de D-067 igual. Se usa en la banda y en el centro de los títulos traducidos.
+
+**Medición:** frente a `prima` (D-067), con la π del entrenamiento. Placebo: el de D-067 (traducción hacia otro
+grupo) con la varianza neta. **Criterio:** mejora de precisión (protocolo v2). Se reportan el ancho p75/p25 y la
+cobertura de p25–p75 de los votos traducidos.
+
+## D-086 — Cortes de confianza recalibrados con el error real. Registrado antes de medir
+
+**Por qué:** los cortes (`incert_centro` ≤ 5 % → ALTA, ≤ 15 % → MEDIA) se fijaron a mano. En D-069, MEDIA y BAJA tenían
+el mismo error real (32,8 % frente a 34,0 %): esa frontera no informa.
+
+**Cambio:** las clases se definen por el **error esperado del centro**, con cortes fijados en la validación:
+
+- **ALTA:** `incert_centro` en el tercil más bajo de los votos apartados;
+- **MEDIA:** el tercil del medio;
+- **BAJA:** el tercil más alto.
+
+La regla del ancho (D-069) se mantiene encima.
+
+**Medición** (votos apartados, con la configuración del producto). Error del centro `|voto − referencia|` (mediana)
+por clase, IC en dos vías.
+
+**Criterio:** se adopta si el error crece ALTA < MEDIA < BAJA **sin solaparse** ningún par de clases vecinas
+(MEDIA/BAJA incluido).
