@@ -8164,3 +8164,39 @@ vecinos de otro nivel.
 - **Se reporta además** frente a T-005 (el efecto del filtro solo) y frente a T-006.
 - **Criterio:** adoptar en la tesis si es no inferior frente a Vertex (extremo < +0,001) y mejor que el placebo;
   «mejora» si el IC frente a Vertex queda entero bajo cero.
+
+## T-008 — Clustering semántico: UMAP + HDBSCAN sobre Qwen. Registrado antes de medir
+
+**Por qué** (tutor, vía el autor: «bajamos dimensiones con UMAP y sobre eso clusterizaciones semánticas»). T-001 a T-007
+mostraron que Qwen con descripción **reconoce** mejor el cargo, pero casi no mejora la banda. Agrupar por significado es
+una tarea de reconocimiento. Es además la base del open set (T-009): un cargo nuevo cae en una familia o queda como
+«desconocido» (el ruido de HDBSCAN).
+
+**Qué se agrupa:** los 65.181 títulos de `base_v31`.
+
+- **Qwen:** los vectores Q-d (título + descripción, 4.096 dimensiones; `t01_emb_qwen_desc.npy`).
+- **Línea base:** Vertex (`Z` de la base, 768 dimensiones), con la misma tubería.
+- **Tubería:** UMAP (métrica coseno, `min_dist` 0, 10 componentes, semilla fija) → HDBSCAN. Librerías en `.libs_tesis`
+  (umap-learn 0.5.12, hdbscan 0.8.44), aparte del entorno del producto.
+
+**Oro humano** (`research/tesis/oro_pares.py`): 2.418 pares «mismo cargo» con los dos títulos en la base, sin repetir.
+Son los lotes juzgados a mano (`13e`, `20`, `30`, `45`, `52`: 1.100 sí y 321 no) y los 997 sinónimos aprobados (sí). Se
+parten al azar, estratificados por sí/no, en **calibra** (50 %) y **prueba** (50 %), semilla 20261013.
+
+**Medida principal: exactitud balanceada por pares** en prueba = promedio de
+
+- **recall de los «sí»:** el par queda en el mismo cluster (ninguno de los dos es ruido), y
+- **especificidad de los «no»:** el par queda separado.
+
+Se reportan también el % de títulos como ruido, el número de clusters, el tamaño del mayor y la dispersión del sueldo
+dentro de los clusters (desviación típica ponderada de la media log de cada título).
+
+**Hiperparámetros, elegidos en calibra para cada embedding** (nunca mirando prueba): `n_neighbors` de UMAP ∈ {15, 50};
+`min_cluster_size` ∈ {2, 3, 5, 10}; `min_samples` ∈ {1, igual a `min_cluster_size`}; selección ∈ {eom, leaf}. Se elige
+la mayor exactitud balanceada en calibra.
+
+**Criterio:** diferencia Qwen − Vertex en prueba, con IC 95 % por bootstrap de pares (2.000 réplicas).
+
+- **«Qwen agrupa mejor»** si el IC queda entero sobre cero.
+- **Referencia, sin criterio:** los grupos del producto (correlation clustering con el cross-encoder, D-046). El
+  cross-encoder se calibró con parte de `13e` y `20`, así que esa comparación no es limpia.
