@@ -1,0 +1,8 @@
+T-003 · DIAGNOSTICO DEL NIVEL (titulos con nivel 64,615; prueba por grupos 12,801)
+   clasificador de nivel, Vertex (titulo)                        exactitud 88.1%
+   clasificador de nivel, Qwen consulta (titulo + instruccion)   exactitud 91.1%
+   clasificador de nivel, Qwen titulo                            exactitud 90.2%
+   clasificador de nivel, Qwen titulo + descripcion              exactitud 91.6%
+   vecinos top-10 con el mismo nivel, Vertex titulo -> titulo              72.3%
+   vecinos top-10 con el mismo nivel, Qwen consulta -> titulo+desc (T-002) 68.5%
+   vecinos top-10 con el mismo nivel, Qwen consulta -> titulo              67.2%

@@ -7923,3 +7923,35 @@ distinto nivel y sueldo. Para la analogía, Vertex sobre el título conserva mej
 - **(a)** Qwen solo con el título, para aislar el efecto de la descripción;
 - **(b)** un sistema híbrido: Qwen + descripción para **reconocer** el equivalente (juez, sinónimos, RAG) y el título para
   los **vecinos** de la analogía.
+
+## T-003 — El nivel jerárquico dentro del texto que se embebe. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-13: «¿podemos pasarle a Qwen el nivel en la descripción?»). Diagnóstico sin pinball
+(`t03_diagnostico_nivel.txt`):
+
+| Medida | Vertex | Qwen consulta → título + descripción |
+|---|---|---|
+| Exactitud del clasificador de nivel | 88,1 % | 91,1 % (Qwen acierta más) |
+| Vecinos top-10 con el mismo nivel | **72,3 %** | **68,5 %** |
+
+Qwen agrupa por área y función y mezcla niveles. El ajuste por escalón de la analogía compensa la media pero agrega
+ruido. Por eso empeora T-002.
+
+**Cambio** (`qwen_nivel`). Los niveles se nombran 1 operativo/asistente, 2 técnico/analista, 3 supervisión/coordinación,
+4 jefatura, 5 gerencia/dirección.
+
+- **Documento:** `Cargo: {título}. Nivel: {nombre del nivel}. Descripción: {descripción}`. El nivel es el de Qwen v3 por
+  grupo, como en el producto; sin descripción, se omite esa parte.
+- **Consulta:** `Instruct: …\nQuery:{título} (nivel estimado: {nombre})`. El nivel es el que **predice el clasificador**
+  sobre el vector Q-instr del título, con predicción cruzada por grupos (5 particiones): un título nuevo no trae nivel.
+  Sin predicción segura, se omite.
+
+**Etapa 1** (indicadores, sin pinball): pasa si cumple las dos.
+
+1. Vecinos top-10 con el mismo nivel **> 72,3 %** (Vertex).
+2. Recall@10 del oro de T-001 **≥ 21,2 %** (no más de 1 punto bajo el 22,2 % de Q-d).
+
+**Etapa 2** (solo si pasa la 1): el pinball de T-002 frente a `nivel_v3`, con el placebo de T-002.
+
+- **Adoptar en la tesis** si es no inferior y mejor que el placebo.
+- **«Mejora»** si el IC queda entero bajo cero.
