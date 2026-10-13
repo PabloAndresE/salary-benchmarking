@@ -190,7 +190,8 @@ def una_variante(nom, clusters):
     b15 = np.load(RAIZ / "demo" / "base_v15.npz", allow_pickle=True)
     emb = {str(c): z for c, z in zip(b15["celdas"], b15["Z"])}
     emb_consulta = None
-    if nom in ("qwen", "qwen_placebo"):   # T-002: indice = Qwen "titulo: descripcion"; consulta = titulo con instruccion
+    emb_analogia = emb_analogia_consulta = None
+    if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):   # T-002 / T-004
         b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
         tes = RAIZ / "research" / "tesis" / "salidas"
         Qd = np.load(tes / "t01_emb_qwen_desc.npy").astype(np.float32)          # 4.096 dimensiones, completas
@@ -202,6 +203,14 @@ def una_variante(nom, clusters):
             Qd, Qc = Qd[perm], Qc[perm]
         emb = {str(c): z for c, z in zip(b31["celdas"], Qd)}
         emb_consulta = {str(c): z for c, z in zip(b31["celdas"], Qc)}
+        if nom.startswith("qwen_hibrido"):              # T-004: la analogia con los vectores con nivel (T-003)
+            Ad = np.load(tes / "t03_emb_doc.npy").astype(np.float32)
+            Ac = np.load(tes / "t03_emb_consulta.npy").astype(np.float32)
+            if nom == "qwen_hibrido_placebo":           # solo la analogia, permutada entre titulos
+                perm = np.random.default_rng(14).permutation(len(Ad))
+                Ad, Ac = Ad[perm], Ac[perm]
+            emb_analogia = {str(c): z for c, z in zip(b31["celdas"], Ad)}
+            emb_analogia_consulta = {str(c): z for c, z in zip(b31["celdas"], Ac)}
     if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):   # D-057: los vectores de e5 (de todos los titulos)
         b22 = np.load(RAIZ / "demo" / "base_v22.npz", allow_pickle=True)
         E = np.load(SAL / ("e5_sin_ajustar_base_v22.npy" if nom == "e5_sin_ajustar" else "e5B_base_v22.npy"))
@@ -216,7 +225,9 @@ def una_variante(nom, clusters):
                 "grados", "grados_placebo", "limpieza", "limpieza_placebo", "limpieza_siglas",
                 "limpieza_siglas_placebo", "coherencia", "coherencia_placebo", "seniority",
                 "seniority_placebo", "coherencia_intra", "coherencia_intra_placebo") + PRODUCTO_V25
-    con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo")    # T-002: qwen
+    con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
+                                           "qwen_hibrido_placebo", "qwen_hibrido",
+              "qwen_hibrido_placebo")    # T-002: qwen; T-004: hibrido
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
@@ -226,6 +237,8 @@ def una_variante(nom, clusters):
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
     if emb_consulta is not None:            # T-002: el espacio de la consulta para el clasificador de nivel y lambda
         kw["X_consulta"] = emb_consulta
+    if emb_analogia is not None:            # T-004: el espacio de la analogia
+        kw["X_analogia"], kw["X_analogia_consulta"] = emb_analogia, emb_analogia_consulta
     if nom in con_nivel:                 # D-049: el nivel de Qwen (y su placebo: permutado entre titulos)
         q = pd.read_parquet(SAL / ("60_niveles_qwen.parquet" if ("v1" in nom or (nom in con_idioma and NIVEL_IDIOMA == "v1"))
                                    else "60_niveles_qwen_v3.parquet" if nom in con_v3
@@ -276,7 +289,7 @@ def una_variante(nom, clusters):
     def preparar(base):
         if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):
             base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
-        if nom in ("qwen", "qwen_placebo"):
+        if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):
             base.cos_juez = 0.7041                  # T-002: el equivalente del 0,90 de Vertex (t02_umbral.json)
         if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
             base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")
@@ -511,7 +524,8 @@ if __name__ == "__main__":
                                            "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
                                            "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
-                                           "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo",
+                                           "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
+                                           "qwen_hibrido_placebo",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",
                                            "seniority", "seniority_placebo", "coherencia_intra",

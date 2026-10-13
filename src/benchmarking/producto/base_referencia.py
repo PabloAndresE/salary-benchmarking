@@ -846,7 +846,8 @@ class BaseReferencia:
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
                   genero=True, mapa_genero=None, grado=False, mapa_grado=None, capa0=None,
-                  scvs=None, grupos=None, niveles=None, X_consulta=None):
+                  scvs=None, grupos=None, niveles=None, X_consulta=None, X_analogia=None,
+                  X_analogia_consulta=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         T-002 (tesis): `X_consulta` (dict etiqueta -> vector) son los vectores con que se CONSULTA, cuando el modelo es
@@ -923,6 +924,13 @@ class BaseReferencia:
             Zq /= np.linalg.norm(Zq, axis=1, keepdims=True)
         else:
             Zq = Z
+        Za = Zqa = None
+        if X_analogia is not None:                      # T-004: el espacio de la ANALOGIA (indice y consulta)
+            Za = np.vstack([X_analogia[c] for c in celdas]).astype(float)
+            Za /= np.linalg.norm(Za, axis=1, keepdims=True)
+            Zqa = np.vstack([X_analogia_consulta[c] for c in celdas]).astype(float)
+            Zqa /= np.linalg.norm(Zqa, axis=1, keepdims=True)
+        Zl, Zlq = (Za, Zqa) if Za is not None else (Z, Zq)  # con que se estima lambda
         niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan
                         for c in celdas], dtype=float)
         # D-049: `niveles` (etiqueta -> nivel 1-5 de Qwen; 0 = no es un cargo) reemplaza al lexico
@@ -965,13 +973,13 @@ class BaseReferencia:
         WW = np.where(ix0 >= 0, W0[np.maximum(ix0, 0)], 0.0)
         rng = np.random.default_rng(20260805)
         muestra = (rng.choice(n, 3000, replace=False) if n > 3000 else np.arange(n))
-        vec_s, sim_s = _vecinos(Zq[muestra], Z, min(VECINOS, n - 1) if n > 1 else 1,
+        vec_s, sim_s = _vecinos(Zlq[muestra], Zl, min(VECINOS, n - 1) if n > 1 else 1,
                                 excluir_propio=False)
         lam = _lambda_semantica(mm[muestra], WW[muestra], vec_s, sim_s,
                                 m_todos=mm, W_todos=WW)
         # ...y por escalon, que es donde de verdad cambia. Sobre TODAS las celdas: la
         # muestra de 3.000 basta para un escalar pero no para cinco.
-        vec_n, sim_n = _vecinos(Zq, Z, min(VECINOS, n - 1) if n > 1 else 1,
+        vec_n, sim_n = _vecinos(Zlq, Zl, min(VECINOS, n - 1) if n > 1 else 1,
                                 excluir_propio=True)
         lam_nivel = _lambda_por_nivel(mm, WW, vec_n, sim_n, niv, lam)
 
@@ -1127,6 +1135,9 @@ class BaseReferencia:
         base.capa0 = capa0
         base.grado_consulta = bool(grado)      # D-037: la consulta por grado, si se encendio
         base.clf_nivel = clf_nivel
+        if Za is not None:                              # T-004: el indice de la analogia y sus consultas
+            base.Z_analogia = Za
+            base.X_analogia_consulta = X_analogia_consulta
         return base
 
     def empresas_de(self, i_celda: int) -> np.ndarray:
@@ -2218,6 +2229,12 @@ class BaseReferencia:
                     if getattr(self, "juez", None) is not None else {})
         # `_asignar_con_juez` devuelve por texto buscado; se vuelve al titulo preguntado
         asignado = {t: asignado[b] for t, b in zip(unicos, buscados) if b in asignado}
+        vec_a, sim_a = vec, sim
+        if getattr(self, "Z_analogia", None) is not None:
+            # T-004: los vecinos de la ANALOGIA salen de otro indice (el que lleva el nivel en el texto)
+            Qa = np.vstack([self.X_analogia_consulta[b] for b in buscados]).astype(float)
+            Qa /= np.linalg.norm(Qa, axis=1, keepdims=True)
+            vec_a, sim_a = _vecinos(Qa, self.Z_analogia, self.k_busqueda, excluir_propio=False)
         idioma = self.resolver_idioma(unicos, X_por_etiqueta)
         seg = _norm_segmento(segmento)
         k_seg = SEGMENTOS.index(seg) if seg else None
@@ -2382,7 +2399,7 @@ class BaseReferencia:
                     if banda_per is not None:
                         banda_per = {q: x + a_t for q, x in banda_per.items()}
             else:
-                j, s = vec[k], sim[k]
+                j, s = vec_a[k], sim_a[k]
                 # Se descarta el GRUPO propio entero, no solo la etiqueta exacta. Si la
                 # celda no llega a MIN_EMPRESAS, sus hermanos de grafia comparten sus
                 # estadisticos: dejarlos entrar como "vecinos" a distancia cero colaria
