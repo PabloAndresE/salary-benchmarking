@@ -8225,3 +8225,22 @@ se calibró con parte de este oro).
 
 **Lectura:** UMAP + HDBSCAN no reemplaza al cross-encoder para el **mismo cargo**. Si sirve, es para un nivel más grueso,
 el de **familias** de cargos (área y función), que este oro no mide.
+
+### T-007, resultado: no se adopta; filtrar los vecinos de Qwen por nivel no cambia nada (2026-10-13)
+
+Umbral del cross-encoder elegido por la partición interna: «sin juez» (`t07_umbral.json`; pinball interno 0,12626
+frente a 0,12645 de T-005). Unión de 19.196 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| T-007 − Vertex | +0,00092 | [−0,00140, **+0,00357**] → no cumple |
+| T-007 − placebo (filtro con nivel al azar) | −0,02351 | [−0,02738, −0,02042] |
+| T-007 − T-005 (el filtro solo) | +0,00067 | [−0,00112, +0,00246] → no se distingue |
+| T-007 − T-006 | **+0,00289** | **[+0,00048, +0,00531]** → peor que T-006 |
+
+Rutas frente a Vertex: analogía → analogía **+28,0**; directo → analogía −10,3.
+
+**Lectura:** el filtro no mejora a T-005. Que el placebo empeore tanto solo muestra que filtrar con un nivel **al azar**
+daña: el filtro con el nivel predicho es, a lo sumo, neutro. Aunque se quede solo con vecinos del mismo nivel, Qwen
+sigue trayendo cargos de la misma **función** cuyo sueldo cambia con el área y el sector; los vecinos de Vertex sobre el
+título siguen siendo mejores (T-006).
