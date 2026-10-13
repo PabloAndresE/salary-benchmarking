@@ -8078,3 +8078,31 @@ mitad; aquí se prueba el extremo: los vecinos de la analogía de Vertex, como e
   - **«mejora»** si el IC frente a Vertex queda entero bajo cero.
 
 Si la partición interna elige «sin juez», Qwen solo actúa en el nivel y el idioma; se mide igual y se reporta así.
+
+### T-005, resultado: queda a la par de Vertex, pero sin cumplir el margen; mejora a T-004 con significancia (2026-10-13)
+
+**Umbral elegido por la partición interna: «sin juez»** (`t05_umbral.json`). El pinball interno baja de forma monótona
+al subir el umbral: 0,12716 (0,70; 3.536 votos por el juez), 0,12681 (0,74), 0,12657 (0,78), 0,12647 (0,82; 42 votos),
+**0,12645 (sin juez)**. Con candidatos de Qwen, el juez (el cross-encoder de D-048, validado con candidatos de Vertex)
+empeora la banda en cualquier umbral.
+
+Unión de 19.196 votos (1.117 empresas):
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| T-005 − Vertex | +0,00034 | [−0,00215, **+0,00300**] |
+| T-005 − placebo | −0,04099 | [−0,04761, −0,03530] |
+| T-005 − T-004 | **−0,00160** | **[−0,00233, −0,00083]** |
+
+El extremo frente a Vertex pasa el margen: **no se adopta**. Frente a T-004, quitar el juez **mejora con significancia**.
+
+**Rutas frente a Vertex** (aporte al pinball):
+
+| Cambio de ruta | T-004 | T-005 |
+|---|---|---|
+| analogía → analogía | +25,1 | +20,5 |
+| analogía → directo | +18,2 | **0** (ya no hay juez) |
+| directo → analogía | −10,3 | **−13,9** (gana: las asignaciones del juez de Vertex que reemplaza la analogía) |
+
+**Lectura:** la pérdida de reconocimiento desaparece. Lo que queda es la analogía con vecinos de Qwen (+20,5), que
+compensa casi del todo lo que se gana al no usar el juez. T-006 (vecinos de Vertex) prueba si esa parte se recupera.
