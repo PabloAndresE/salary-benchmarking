@@ -7892,3 +7892,34 @@ Se reportan el ancho y la cobertura de p25–p75 de la analogía, y el costo.
   de 22,1 % frente a 22,3 %; MRR 0,100 en los dos), pero se midió que el costo de las 4.096 es despreciable (~0,3 min por
   pasada de vecinos). Así se respeta la idea del tutor: construir con todas las dimensiones y reducir con UMAP recién en el
   clustering (paso 3).
+
+### T-002, resultado: no se adopta; Qwen + descripción empeora las bandas (2026-10-13)
+
+Escala `k` con Qwen: analogía 0,627 y directo 0,947 (con Vertex, 0,633 y 0,937). Unión de 19.196 votos (1.117 empresas):
+
+| Comparación | Pinball | IC (dos vías) | Media por empresa |
+|---|---|---|---|
+| Qwen − Vertex | **+0,00323** | **[+0,00074, +0,00600]** | +0,00478 |
+| Qwen − placebo | −0,06280 | [−0,07097, −0,05596] | |
+
+Peor que Vertex con significancia: **no se adopta.** El embedding sí trae información (placebo +0,066).
+
+**Dónde pierde** (18.493 votos que cambian):
+
+| Cambio de ruta (Vertex → Qwen) | Votos | Diferencia media | Aporte |
+|---|---|---|---|
+| analogía → analogía | 12.878 | +0,0037 | **+48,1** (la pérdida principal) |
+| analogía → directo | 1.009 | +0,0180 | **+18,2** |
+| directo → analogía | 1.373 | −0,0060 | −8,3 (aquí gana) |
+
+- **analogía → analogía:** el error del centro sube de 0,294 a 0,300 y el ancho de ×1,69 a ×1,74.
+- **analogía → directo:** con Qwen, el juez asigna a un grupo títulos que con Vertex iban mejor por analogía.
+- **directo → analogía:** Qwen deja de hacer asignaciones de Vertex que eran malas.
+
+**Lectura:** encontrar el **sinónimo** (T-001) no es lo mismo que encontrar **vecinos de sueldo parecido**. La
+descripción describe la **función** («gestiona la cartera de clientes…») y acerca cargos de igual función pero de
+distinto nivel y sueldo. Para la analogía, Vertex sobre el título conserva mejor el nivel. Hipótesis a medir (T-003):
+
+- **(a)** Qwen solo con el título, para aislar el efecto de la descripción;
+- **(b)** un sistema híbrido: Qwen + descripción para **reconocer** el equivalente (juez, sinónimos, RAG) y el título para
+  los **vecinos** de la analogía.
