@@ -71,6 +71,7 @@ from .nivel import (RANGOS_RUBRICA, clave_grado, efecto_nivel, mismo_salvo_grado
                     nivel_rubrica, seniority_lexica, tiene_grado)
 
 VECINOS = 25
+MIN_FILTRO_NIVEL = 5     # T-007 (tesis): vecinos del mismo nivel minimos para filtrar
 MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
 
 # EL SUELO DE EMPRESAS NO DICE NADA DE PERSONAS, y hace falta que lo diga.
@@ -2425,6 +2426,18 @@ class BaseReferencia:
                         cab = np.arange(min(len(j), VECINOS + n_dup))
                         prim = np.sort(rng_g.choice(cab, len(cab) - n_dup, replace=False)) if n_dup > 0 else cab
                     j, s = j[prim], s[prim]
+                if getattr(self, "filtro_nivel_vecinos", False):
+                    # T-007 (tesis): solo los vecinos del MISMO nivel que el cargo buscado (si quedan
+                    # al menos `MIN_FILTRO_NIVEL`); el placebo usa un nivel al azar
+                    L = self.nivel[propio] if propio is not None else niv_consulta[k]
+                    if getattr(self, "filtro_nivel_placebo", False):
+                        import zlib
+                        nb = self.nivel[np.isfinite(self.nivel)]
+                        L = float(np.random.default_rng(zlib.crc32(str(t).encode())).choice(nb))
+                    if L is not None and np.isfinite(L):
+                        mismo = self.nivel[j] == L
+                        if mismo.sum() >= MIN_FILTRO_NIVEL:
+                            j, s = j[mismo], s[mismo]
                 j, s = j[:VECINOS], s[:VECINOS]
                 if getattr(self, "juez_vecinos", False) and getattr(self, "juez", None) is not None:
                     pv = self.juez.P([(buscados[k], str(self.celdas[x])) for x in j])

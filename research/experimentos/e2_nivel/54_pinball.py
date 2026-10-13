@@ -232,7 +232,8 @@ def una_variante(nom, clusters):
     emb_vertex = dict(emb)
     emb_analogia = emb_analogia_consulta = None
     if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo", "qwen_umbral",
-               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo"):   # T-002 / T-004 / T-005 / T-006
+               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo",
+               "qwen_filtro", "qwen_filtro_placebo"):   # T-002 / T-004 / T-005 / T-006 / T-007
         b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
         tes = RAIZ / "research" / "tesis" / "salidas"
         Qd = np.load(tes / "t01_emb_qwen_desc.npy").astype(np.float32)          # 4.096 dimensiones, completas
@@ -271,7 +272,8 @@ def una_variante(nom, clusters):
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_hibrido",
               "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
-              "qwen_inverso", "qwen_inverso_placebo")    # T-002; T-004; T-005; T-006
+              "qwen_inverso", "qwen_inverso_placebo",
+              "qwen_filtro", "qwen_filtro_placebo")    # T-002; T-004; T-005; T-006; T-007
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
@@ -335,8 +337,12 @@ def una_variante(nom, clusters):
             base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
         if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):
             base.cos_juez = 0.7041                  # T-002: el equivalente del 0,90 de Vertex (t02_umbral.json)
-        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo"):
-            base.cos_juez = UMBRAL_T005[0]          # T-005: el elegido por la particion interna
+        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo",
+                   "qwen_filtro", "qwen_filtro_placebo"):
+            base.cos_juez = UMBRAL_T005[0]
+        if nom in ("qwen_filtro", "qwen_filtro_placebo"):   # T-007: vecinos del mismo nivel
+            base.filtro_nivel_vecinos = True
+            base.filtro_nivel_placebo = nom == "qwen_filtro_placebo"          # T-005: el elegido por la particion interna
         if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
             base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")
             if nom.startswith("nivel_v3_sueldo"):        # D-053: el sueldo desempata los inseguros
@@ -394,14 +400,15 @@ def una_variante(nom, clusters):
         base.idioma_placebo = nom == "idioma_prima_placebo"     # despues de estimar: misma prima
     elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
         f_u = RAIZ / "research" / "tesis" / "salidas" / (
-            "t06_umbral.json" if nom.startswith("qwen_inverso") else "t05_umbral.json")
-        if nom in ("qwen_umbral", "qwen_inverso"):                             # T-005: primero el umbral del juez
+            "t06_umbral.json" if nom.startswith("qwen_inverso") else
+            "t07_umbral.json" if nom.startswith("qwen_filtro") else "t05_umbral.json")
+        if nom in ("qwen_umbral", "qwen_inverso", "qwen_filtro"):                             # T-005: primero el umbral del juez
             rej = [0.70, 0.72, 0.74, 0.76, 0.78, 0.80, 0.82, 1.01]
             u, res = elegir_umbral_juez(tr, emb, kw, e41._Ajustes.get_sbu, preparar, emb_consulta, rej)
             f_u.write_text(json.dumps({"umbral": u, "pinball_interno": res}, indent=1))
             UMBRAL_T005[0] = base.cos_juez = u
             print("umbral del juez elegido (particion interna): {} {}".format(u, res), flush=True)
-        elif nom in ("qwen_umbral_placebo", "qwen_inverso_placebo"):                   # el placebo usa el umbral elegido por la variante
+        elif nom in ("qwen_umbral_placebo", "qwen_inverso_placebo", "qwen_filtro_placebo"):                   # el placebo usa el umbral elegido por la variante
             UMBRAL_T005[0] = base.cos_juez = json.loads(f_u.read_text())["umbral"]
         k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar, emb_consulta=emb_consulta)
         print("escala de banda (particion interna): " + str(k), flush=True)
@@ -583,6 +590,7 @@ if __name__ == "__main__":
                                            "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
                                            "qwen_inverso", "qwen_inverso_placebo",
+                                           "qwen_filtro", "qwen_filtro_placebo",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",
                                            "seniority", "seniority_placebo", "coherencia_intra",

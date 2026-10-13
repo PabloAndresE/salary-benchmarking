@@ -93,3 +93,43 @@ seguridad frente a espanol (placebo seguridad_placebo): union 4,307 votos, 691 e
    placebo - producto   +0.00399 [+0.00106, +0.00709] (dos vias)  | media por empresa +0.00216
    variante - placebo   -0.00412 [-0.00735, -0.00122] (dos vias)  | media por empresa -0.00220
    CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+qwen frente a nivel_v3 (placebo qwen_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  +0.00323 [+0.00074, +0.00600] (dos vias)  | media por empresa +0.00478
+   placebo - producto   +0.06603 [+0.05957, +0.07398] (dos vias)  | media por empresa +0.03864
+   variante - placebo   -0.06280 [-0.07097, -0.05596] (dos vias)  | media por empresa -0.03386
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_hibrido frente a nivel_v3 (placebo qwen_hibrido_placebo): union 18,493 votos, 1,106 empresas, 16,780 cargos
+   variante - producto  +0.00200 [-0.00035, +0.00445] (dos vias)  | media por empresa +0.00635
+   placebo - producto   +0.03779 [+0.03249, +0.04334] (dos vias)  | media por empresa +0.02385
+   variante - placebo   -0.03579 [-0.04095, -0.03045] (dos vias)  | media por empresa -0.01749
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_hibrido frente a qwen (placebo qwen_hibrido): union 14,251 votos, 993 empresas, 13,508 cargos
+   variante - producto  -0.00176 [-0.00375, +0.00051] (dos vias)  | media por empresa +0.00185
+   placebo - producto   -0.00176 [-0.00375, +0.00051] (dos vias)  | media por empresa +0.00185
+   variante - placebo   +0.00000 [+0.00000, +0.00000] (dos vias)  | media por empresa +0.00000
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_umbral frente a nivel_v3 (placebo qwen_umbral_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  +0.00034 [-0.00215, +0.00300] (dos vias)  | media por empresa +0.00600
+   placebo - producto   +0.04132 [+0.03588, +0.04781] (dos vias)  | media por empresa +0.02650
+   variante - placebo   -0.04099 [-0.04761, -0.03530] (dos vias)  | media por empresa -0.02050
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+qwen_umbral frente a qwen_hibrido (placebo qwen_umbral_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  -0.00160 [-0.00233, -0.00083] (dos vias)  | media por empresa -0.00013
+   placebo - producto   +0.03939 [+0.03382, +0.04575] (dos vias)  | media por empresa +0.02037
+   variante - placebo   -0.04099 [-0.04761, -0.03530] (dos vias)  | media por empresa -0.02050
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): CUMPLE
+qwen_inverso frente a nivel_v3 (placebo qwen_inverso_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  -0.00196 [-0.00316, -0.00077] (dos vias)  | media por empresa -0.00041
+   placebo - producto   +0.00084 [-0.00040, +0.00206] (dos vias)  | media por empresa +0.00069
+   variante - placebo   -0.00280 [-0.00418, -0.00158] (dos vias)  | media por empresa -0.00110
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+qwen_inverso frente a nivel_v3 (placebo qwen_inverso_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  -0.00196 [-0.00316, -0.00077] (dos vias)  | media por empresa -0.00041
+   placebo - producto   +0.00084 [-0.00040, +0.00206] (dos vias)  | media por empresa +0.00069
+   variante - placebo   -0.00280 [-0.00418, -0.00158] (dos vias)  | media por empresa -0.00110
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): CUMPLE
+qwen_inverso frente a qwen_umbral (placebo qwen_inverso_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  -0.00230 [-0.00456, +0.00000] (dos vias)  | media por empresa -0.00641
+   placebo - producto   +0.00050 [-0.00211, +0.00303] (dos vias)  | media por empresa -0.00531
+   variante - placebo   -0.00280 [-0.00418, -0.00158] (dos vias)  | media por empresa -0.00110
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE

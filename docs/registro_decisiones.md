@@ -8138,3 +8138,29 @@ solo de apagar el juez, sino de la **información de Qwen** (nivel y reconocimie
 **Lectura:** cada embedding en la tarea que hace bien. Qwen con descripción **reconoce** (nivel del título 91 % frente a
 88 %; recall@10 22,2 % frente a 16,7 %) y Vertex sobre el título elige **vecinos de sueldo parecido**. La mejora es
 pequeña en tamaño (−0,002 por voto; −0,0004 en la media por empresa), pero significativa.
+
+## T-007 — Vecinos de Qwen filtrados por nivel. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-13: «¿por qué no usamos el Qwen que reconoce sinónimos y luego a esos grupos les aplicamos
+el clasificador de jerarquía para discriminar?»). Qwen con descripción reconoce mejor (T-001) y adivina mejor el nivel
+del título nuevo (91 % frente a 88 %), pero sus vecinos mezclan niveles (68,5 % del mismo nivel frente a 72,3 % de
+Vertex). Hasta ahora el nivel solo **ajustaba** la banda de cada vecino (el escalón); aquí además **descarta** los
+vecinos de otro nivel.
+
+**Cambio** (`qwen_filtro`): T-005 (todo con Qwen: índice Q-d, consulta Q-instr, sin el índice con nivel de T-004) más:
+
+- En la analogía, de la lista de vecinos de Qwen (25 + el tamaño del grupo mayor, antes de cortar en 25) se quedan solo
+  los del **mismo nivel** que el cargo buscado. El nivel del cargo buscado es el de su grupo si está en la base o, si es
+  nuevo, el que predice el clasificador de nivel sobre su vector Q-instr.
+- Si quedan **menos de 5** vecinos del mismo nivel, o el nivel no se conoce, se usan todos (como en T-005).
+- El ajuste por escalón y `lambda` siguen igual.
+- **Umbral de tu cross-encoder** (con candidatos que propone Qwen): por la partición interna, con la rejilla de T-005.
+  `k` se reestima como siempre.
+
+**Medición:** protocolo v2, frente a `nivel_v3` (Vertex).
+
+- **Placebo:** el filtro con un nivel **al azar** para cada cargo buscado (según la frecuencia de niveles de la base):
+  descarta la misma clase de cantidad de vecinos, pero sin información.
+- **Se reporta además** frente a T-005 (el efecto del filtro solo) y frente a T-006.
+- **Criterio:** adoptar en la tesis si es no inferior frente a Vertex (extremo < +0,001) y mejor que el placebo;
+  «mejora» si el IC frente a Vertex queda entero bajo cero.
