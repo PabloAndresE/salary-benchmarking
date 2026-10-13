@@ -7955,3 +7955,20 @@ ruido. Por eso empeora T-002.
 
 - **Adoptar en la tesis** si es no inferior y mejor que el placebo.
 - **«Mejora»** si el IC queda entero bajo cero.
+
+### T-003, resultado: la etapa 1 no pasa (2026-10-13)
+
+El nivel predicho para la consulta es seguro en el 95,3 % de los títulos, y acierta el 93,2 %.
+
+| Indicador | Resultado | Umbral | |
+|---|---|---|---|
+| 1. Vecinos top-10 con el mismo nivel | **86,5 %** | > 72,3 % (Vertex; T-002 daba 68,5 %) | **pasa** |
+| 2. Recall@10 del oro de T-001 | **16,7 %** | ≥ 21,2 % (Q-d daba 22,2 %) | **no pasa** |
+
+**No pasa la etapa 1: no se corre el pinball.**
+
+**Lectura:** escribir el nivel en el texto ordena muy bien los vecinos por nivel, pero el nivel pesa tanto en el vector
+que empeora el **reconocimiento del equivalente**. Los sinónimos aprobados (`CHOFER` / `CONDUCTOR`) dejan de quedar
+arriba, por encima de otros cargos del mismo nivel. T-002 mostró lo contrario: Q-d reconoce mejor pero mezcla niveles. Son
+dos tareas que piden representaciones distintas. Hipótesis siguiente (T-004): un sistema **híbrido**, con Q-d para
+reconocer el equivalente y el vector con nivel para elegir los vecinos de la analogía.

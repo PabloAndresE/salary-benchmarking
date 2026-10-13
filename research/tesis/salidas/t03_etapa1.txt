@@ -1,0 +1,5 @@
+T-003 ETAPA 1 · nivel en el texto embebido
+nivel predicho para la consulta: 95.3% de los titulos con prediccion segura; acierta 93.2%
+indicador 1, vecinos top-10 con el mismo nivel: 86.5% (Vertex 72,3 %; T-002 68,5 %) -> pasa
+indicador 2, recall@10 del oro de T-001: 16.7% (minimo 21,2 %; Q-d 22,2 %) -> NO pasa
+ETAPA 1: NO PASA
