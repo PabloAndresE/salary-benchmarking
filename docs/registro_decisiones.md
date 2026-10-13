@@ -8244,3 +8244,43 @@ Rutas frente a Vertex: analogía → analogía **+28,0**; directo → analogía 
 daña: el filtro con el nivel predicho es, a lo sumo, neutro. Aunque se quede solo con vecinos del mismo nivel, Qwen
 sigue trayendo cargos de la misma **función** cuyo sueldo cambia con el área y el sector; los vecinos de Vertex sobre el
 título siguen siendo mejores (T-006).
+
+## T-009 — Cross-encoder reentrenado con candidatos de Qwen (etiquetas de GLM). Registrado antes de medir
+
+**Por qué** (autor, 2026-10-13: «entrenando el cross con los embeddings de Qwen»; eligió la opción A). En T-005 a T-007,
+con candidatos que propone Qwen, el cross-encoder v3 empeora la banda en cualquier umbral: la v3 se entrenó solo con
+pares de coseno de Vertex ≥ 0,90, y los candidatos de Qwen son otra población (en T-004, los votos que solo asigna con
+candidatos de Qwen tienen +0,013 de pinball). Es el problema de D-047. Allí no se entrenó la v4 porque GLM no pasó la
+validación limpia (71 % de acuerdo con el autor; entre dos humanos, 66 %). **Decisión del autor para la tesis:** usar
+GLM igual, con la regla de D-047 (solo etiquetas coherentes en los dos órdenes), y juzgar el resultado por lo que mide
+el producto (pinball), no por el acuerdo.
+
+**Datos de entrenamiento** (`research/tesis/t09_*.py`; títulos de clientes fuera del repo):
+
+1. La plata de la v3 tal cual (`21_paquete_v6/plata.csv`: 10.400 pares de Gemini, rúbrica v6, más los juicios humanos).
+2. Los 10.000 pares lejanos de `53` etiquetados por GLM (rúbrica v7), solo los coherentes.
+3. **Nuevos: ~5.000 candidatos de Qwen**: para cada título de la base, sus primeros 3 vecinos de otro grupo con
+   coseno de Qwen (consulta Q-instr → documento Q-d) ≥ 0,70, en tres tramos iguales (0,70–0,74; 0,74–0,78; ≥ 0,78).
+   Mismas exclusiones que `53`: no-cargos, pares con candado, pares ya juzgados, los 100 de `52`, los de `53` y cualquier
+   título de `prueba` o `prueba 2`. Partición por grupo (85 % entrena, 15 % valida). GLM en los dos órdenes (rúbrica
+   v7, 8 peticiones a la vez); solo los coherentes.
+
+**Entrenamiento:** `22_entrenar_cross.py --grilla v2` (la receta de la v3: mDeBERTa-xnli, direccional, cabeza de
+motivo, `w_humano` ∈ {1, 3}, 3 semillas, época y configuración elegidas en `calibra`, calibración por temperatura),
+sobre un paquete nuevo (`t09_paquete`) con la misma `calibra` (187 pares) y la misma comprobación de que no trae
+`prueba`. Salida aparte (`t09_modelos`): la v3 del producto no se toca.
+
+**Etapa 1, reconocer** (sin criterio de adopción; se reporta con IC por bootstrap de pares):
+
+- AUC en los **100 pares lejanos de `52`** (juicio ciego del autor), v9 frente a v3.
+- AUC en **`prueba` y `prueba 2`** (cercanos, juicio humano), v9 frente a v3: que no empeore lo que ya funcionaba.
+
+**Etapa 2, banda:** T-006 con el cross-encoder v9 sobre los candidatos de Qwen (`qwen_juez9`), con el umbral elegido
+por la partición interna (rejilla de T-005), frente a **T-006**. Protocolo v2.
+
+- **Placebo:** el mismo, pero el cross-encoder elige un candidato **al azar** cuando el mejor llega a P (el
+  `juez_placebo` de D-048).
+- **Criterio:** adoptar en la tesis si es no inferior frente a T-006 (extremo < +0,001) y mejor que el placebo;
+  «mejora» si el IC frente a T-006 queda entero bajo cero. Se reporta además frente a Vertex.
+- Si la partición interna vuelve a elegir «sin juez», se reporta así: el cross-encoder reentrenado no aporta a la
+  banda, y la etapa 2 queda igual a T-006.
