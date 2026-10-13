@@ -7972,3 +7972,25 @@ que empeora el **reconocimiento del equivalente**. Los sinónimos aprobados (`CH
 arriba, por encima de otros cargos del mismo nivel. T-002 mostró lo contrario: Q-d reconoce mejor pero mezcla niveles. Son
 dos tareas que piden representaciones distintas. Hipótesis siguiente (T-004): un sistema **híbrido**, con Q-d para
 reconocer el equivalente y el vector con nivel para elegir los vecinos de la analogía.
+
+## T-004 — Sistema híbrido: una representación para reconocer y otra para la analogía. Registrado antes de medir
+
+**Por qué:** T-002 y T-003. Q-d reconoce mejor el equivalente (recall@10 22,2 %) pero mezcla niveles (68,5 % de los
+vecinos del mismo nivel). El vector con el nivel en el texto ordena los vecinos por nivel (86,5 %) pero reconoce peor
+(16,7 %).
+
+**Cambio** (`qwen_hibrido`):
+
+- **Reconocer:** el índice Q-d («título: descripción») con la consulta Q-instr, como en T-002. Lo usan la zona
+  candidata del juez (umbral 0,7041), la resolución de idioma y el clasificador de nivel.
+- **Analogía:** el índice con el nivel en el texto (T-003, `t03_emb_doc`) con la consulta que lleva el nivel predicho
+  (`t03_emb_consulta`). Con él se eligen los vecinos y su similitud, y se estiman `lambda` y `lambda` por nivel.
+- La escala `k` de D-051 se reestima por la partición interna, como en T-002.
+
+**Medición:** frente a `nivel_v3` (Vertex), protocolo v2.
+
+- **Placebo:** solo los vectores de **analogía** se permutan entre títulos (el reconocimiento queda igual).
+- **Se reporta además** frente a `qwen` (T-002).
+- **Criterio:**
+  - **adoptar en la tesis** si es no inferior frente a Vertex y mejor que el placebo;
+  - **«mejora»** si el IC frente a Vertex queda entero bajo cero.
