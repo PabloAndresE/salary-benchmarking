@@ -123,7 +123,7 @@ def unir_grados(grupos, placebo=False, semilla=12):
     return n_fam, unidos
 
 
-def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
+def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1, emb_consulta=None):
     """D-051: k = mediana(|voto - mu| / sd_modelo) / 0,6745 por tipo de banda del modelo, con una
     particion interna: la base se construye con el 75 % de las empresas de `marco` y se consultan
     los cargos del otro 25 %."""
@@ -136,7 +136,7 @@ def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1):
             .median().reset_index().rename(columns={"y": "voto"}))
     base = BaseReferencia.construir(a, emb, sbu, **kw)
     preparar(base)
-    o = base.referenciar(sorted(set(vb["cargo_norm"])), emb).set_index("cargo").reindex(vb["cargo_norm"])
+    o = base.referenciar(sorted(set(vb["cargo_norm"])), emb_consulta or emb).set_index("cargo").reindex(vb["cargo_norm"])
     d = pd.DataFrame({"voto": vb["voto"].to_numpy(float), "mu": o["referencia_log"].to_numpy(float),
                       "sd": o["sd_modelo"].to_numpy(float), "de": o["banda_de"].to_numpy(),
                       "base": o["base"].to_numpy()})
@@ -189,6 +189,19 @@ def una_variante(nom, clusters):
            .median().reset_index().rename(columns={"y": "voto"}))
     b15 = np.load(RAIZ / "demo" / "base_v15.npz", allow_pickle=True)
     emb = {str(c): z for c, z in zip(b15["celdas"], b15["Z"])}
+    emb_consulta = None
+    if nom in ("qwen", "qwen_placebo"):   # T-002: indice = Qwen "titulo: descripcion"; consulta = titulo con instruccion
+        b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
+        tes = RAIZ / "research" / "tesis" / "salidas"
+        Qd = np.load(tes / "t01_emb_qwen_desc.npy").astype(np.float32)[:, :1024]
+        Qc = np.load(tes / "t02_emb_qwen_consulta.npy").astype(np.float32)[:, :1024]
+        Qd /= np.linalg.norm(Qd, axis=1, keepdims=True)
+        Qc /= np.linalg.norm(Qc, axis=1, keepdims=True)
+        if nom == "qwen_placebo":                       # los dos vectores de un titulo, juntos, a otro titulo
+            perm = np.random.default_rng(13).permutation(len(Qd))
+            Qd, Qc = Qd[perm], Qc[perm]
+        emb = {str(c): z for c, z in zip(b31["celdas"], Qd)}
+        emb_consulta = {str(c): z for c, z in zip(b31["celdas"], Qc)}
     if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):   # D-057: los vectores de e5 (de todos los titulos)
         b22 = np.load(RAIZ / "demo" / "base_v22.npz", allow_pickle=True)
         E = np.load(SAL / ("e5_sin_ajustar_base_v22.npy" if nom == "e5_sin_ajustar" else "e5B_base_v22.npy"))
@@ -203,7 +216,7 @@ def una_variante(nom, clusters):
                 "grados", "grados_placebo", "limpieza", "limpieza_placebo", "limpieza_siglas",
                 "limpieza_siglas_placebo", "coherencia", "coherencia_placebo", "seniority",
                 "seniority_placebo", "coherencia_intra", "coherencia_intra_placebo") + PRODUCTO_V25
-    con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar")
+    con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo")    # T-002: qwen
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
@@ -211,6 +224,8 @@ def una_variante(nom, clusters):
     con_juez = ("juez", "juez_placebo", "juez_tabla", "juez_vecinos", "juez_vecinos_placebo") + con_nivel
     if nom in ("clusters", "placebo") + con_juez:
         kw["grupos"] = grupos_de_clusters(clusters, placebo=(nom == "placebo"))
+    if emb_consulta is not None:            # T-002: el espacio de la consulta para el clasificador de nivel y lambda
+        kw["X_consulta"] = emb_consulta
     if nom in con_nivel:                 # D-049: el nivel de Qwen (y su placebo: permutado entre titulos)
         q = pd.read_parquet(SAL / ("60_niveles_qwen.parquet" if ("v1" in nom or (nom in con_idioma and NIVEL_IDIOMA == "v1"))
                                    else "60_niveles_qwen_v3.parquet" if nom in con_v3
@@ -261,6 +276,8 @@ def una_variante(nom, clusters):
     def preparar(base):
         if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):
             base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
+        if nom in ("qwen", "qwen_placebo"):
+            base.cos_juez = 0.7041                  # T-002: el equivalente del 0,90 de Vertex (t02_umbral.json)
         if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
             base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")
             if nom.startswith("nivel_v3_sueldo"):        # D-053: el sueldo desempata los inseguros
@@ -317,7 +334,7 @@ def una_variante(nom, clusters):
         print("prima: {}".format(base.estimar_prima_idioma(emb)), flush=True)
         base.idioma_placebo = nom == "idioma_prima_placebo"     # despues de estimar: misma prima
     elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
-        k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar)
+        k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar, emb_consulta=emb_consulta)
         print("escala de banda (particion interna): " + str(k), flush=True)
         base.escala_banda = k if nom != "calibra_inversa" else {t: 1.0 / x for t, x in k.items()}
     if nom in CON_TRAD:                  # D-062: el mismo cargo = la misma banda; buscar por la traduccion
@@ -400,7 +417,7 @@ def una_variante(nom, clusters):
         base.tamano_estandar = True
         base.tamano_sin_segmento = True      # como se midio: (C0) y los votos sin segmento de (C) con el corrimiento
     cargos = sorted(set(v["cargo_norm"]))
-    out = base.referenciar(cargos, emb).set_index("cargo")
+    out = base.referenciar(cargos, emb_consulta or emb).set_index("cargo")
     seg_v = np.array([""] * len(v), dtype=object)
     if nom in CON_TAM:                   # el segmento (y el nivel) de cada voto, para el sesgo por segmento
         from benchmarking.producto.base_referencia import SEGMENTOS, _norm_segmento
@@ -494,7 +511,7 @@ if __name__ == "__main__":
                                            "candado_nivel_placebo", "nivel_v3", "nivel_v3_placebo",
                                            "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
-                                           "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar",
+                                           "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",
                                            "seniority", "seniority_placebo", "coherencia_intra",

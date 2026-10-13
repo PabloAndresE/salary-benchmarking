@@ -846,8 +846,12 @@ class BaseReferencia:
     def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
                   umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
                   genero=True, mapa_genero=None, grado=False, mapa_grado=None, capa0=None,
-                  scvs=None, grupos=None, niveles=None):
+                  scvs=None, grupos=None, niveles=None, X_consulta=None):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
+
+        T-002 (tesis): `X_consulta` (dict etiqueta -> vector) son los vectores con que se CONSULTA, cuando el modelo es
+        asimetrico (Qwen: indice = titulo + descripcion, consulta = titulo con instruccion). Si se da, el clasificador
+        de nivel se entrena con ellos y `lambda` se estima con distancias consulta -> indice.
 
         `grupos` (D-046) es un dict etiqueta -> id de grupo que REEMPLAZA la agrupacion final,
         despues de todas las pasadas: lo usa el correlation clustering con el juez, que se
@@ -914,6 +918,11 @@ class BaseReferencia:
         celdas = sorted(set(marco[col].astype(str)))
         Z = np.vstack([X_por_etiqueta[c] for c in celdas]).astype(float)
         Z /= np.linalg.norm(Z, axis=1, keepdims=True)
+        if X_consulta is not None:                      # T-002: el espacio de la consulta (modelo asimetrico)
+            Zq = np.vstack([X_consulta[c] for c in celdas]).astype(float)
+            Zq /= np.linalg.norm(Zq, axis=1, keepdims=True)
+        else:
+            Zq = Z
         niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan
                         for c in celdas], dtype=float)
         # D-049: `niveles` (etiqueta -> nivel 1-5 de Qwen; 0 = no es un cargo) reemplaza al lexico
@@ -924,7 +933,7 @@ class BaseReferencia:
             niv = np.array([float(niveles[c]) if niveles.get(c, 0) >= 1 else
                             (np.nan if c in niveles else n_)
                             for c, n_ in zip(celdas, niv)], dtype=float)
-            clf_nivel = _entrenar_clf_nivel(Z, niv)
+            clf_nivel = _entrenar_clf_nivel(Zq, niv)
         n = len(celdas)
         # D-040: con capa 0, el CANDADO de las fusiones usa el nivel de la rubrica (criterio
         # C). `niv` sigue siendo el lexico de siempre para lambda, el vecindario y el efecto
@@ -956,13 +965,13 @@ class BaseReferencia:
         WW = np.where(ix0 >= 0, W0[np.maximum(ix0, 0)], 0.0)
         rng = np.random.default_rng(20260805)
         muestra = (rng.choice(n, 3000, replace=False) if n > 3000 else np.arange(n))
-        vec_s, sim_s = _vecinos(Z[muestra], Z, min(VECINOS, n - 1) if n > 1 else 1,
+        vec_s, sim_s = _vecinos(Zq[muestra], Z, min(VECINOS, n - 1) if n > 1 else 1,
                                 excluir_propio=False)
         lam = _lambda_semantica(mm[muestra], WW[muestra], vec_s, sim_s,
                                 m_todos=mm, W_todos=WW)
         # ...y por escalon, que es donde de verdad cambia. Sobre TODAS las celdas: la
         # muestra de 3.000 basta para un escalar pero no para cinco.
-        vec_n, sim_n = _vecinos(Z, Z, min(VECINOS, n - 1) if n > 1 else 1,
+        vec_n, sim_n = _vecinos(Zq, Z, min(VECINOS, n - 1) if n > 1 else 1,
                                 excluir_propio=True)
         lam_nivel = _lambda_por_nivel(mm, WW, vec_n, sim_n, niv, lam)
 
