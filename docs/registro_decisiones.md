@@ -8311,3 +8311,19 @@ coherentes la diferencia no es significativa). Qwen además corre en local sin r
 depende del servidor compartido. **Decisión:** se etiquetan con Qwen **los dos lotes** (los 10.000 de `53` y los 3.735
 candidatos), para tener un solo etiquetador; solo cuentan los coherentes. El etiquetado de GLM con razonamiento
 (`t09_glm.parquet`, control de régimen 92,4 %) queda como alternativa y se reporta.
+
+### T-009, etapa 1: el cross-encoder v9 reconoce mucho mejor lejos, sin perder cerca (2026-10-13)
+
+**Entrenamiento** (`t09_modelos`, receta de la v3 con `--grilla v2`): paquete de 19.705 pares (plata de la v3 + 6.308
+pares de `53` y 2.997 candidatos de Qwen, etiquetados por Qwen3.5-122B, coherentes). Elegida la configuración simple
+(`w_humano` 1); AUC en `calibra` 0,9831 (v3: 0,9839); temperatura 1,98.
+
+**Etapa 1** (`t09_etapa1.txt`; AUC de P(mismo), IC por bootstrap estratificado):
+
+| Conjunto | n (sí) | AUC v3 | AUC v9 | v9 − v3 | Acierto con P ≥ 0,5: v3 → v9 |
+|---|---|---|---|---|---|
+| **Lejos** (`52`, autor ciego) | 100 (33) | 0,572 | **0,732** | **+0,160 [+0,052, +0,262]** | 46 % → **73 %** |
+| Cerca (`prueba` + `prueba 2`) | 991 (790) | 0,929 | 0,938 | +0,008 [−0,005, +0,023] | 91,0 % → 91,1 % |
+
+Lejos, la v3 estaba casi al azar (0,57) y la v9 mejora con significancia; cerca no empeora. Ninguno de esos 1.091
+pares entró al entrenamiento. Sigue la etapa 2 (pinball).

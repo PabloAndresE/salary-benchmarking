@@ -1,0 +1,3 @@
+T-009 etapa 1 · AUC de P(mismo), cross-encoder v9 (reentrenado) frente a v3 (producto)
+  lejos (52, autor ciego)    n= 100 (si  33)  AUC v3 0.5721  v9 0.7322  v9-v3 +0.1601 [+0.0516, +0.2623]  acierto con P>=0,5: v3 46.0%  v9 73.0%
+  cerca (prueba + prueba 2)  n= 991 (si 790)  AUC v3 0.9292  v9 0.9376  v9-v3 +0.0084 [-0.0047, +0.0232]  acierto con P>=0,5: v3 91.0%  v9 91.1%
