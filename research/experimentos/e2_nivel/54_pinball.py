@@ -149,6 +149,42 @@ def estimar_escala(marco, emb, kw, sbu, preparar, semilla=SEM + 1, emb_consulta=
     return k
 
 
+def elegir_umbral_juez(marco, emb, kw, sbu, preparar, emb_consulta, rejilla, semilla=SEM + 1):
+    """T-005: el umbral del juez por la particion interna de D-051 (75 % construye, 25 % consulta).
+    Para cada umbral se reestima k en esa particion y se mide el pinball medio de los votos internos."""
+    rng = np.random.default_rng(semilla)
+    emp = np.array(sorted(marco["empresa_ruc"].unique()))
+    aparte = set(rng.choice(emp, len(emp) // 4, replace=False))
+    a = marco[~marco["empresa_ruc"].isin(aparte)]
+    b = marco[marco["empresa_ruc"].isin(aparte)]
+    vb = (b.dropna(subset=["y"]).groupby(["cargo_norm", "empresa_ruc"], sort=False)["y"]
+            .median().reset_index().rename(columns={"y": "voto"}))
+    base = BaseReferencia.construir(a, emb, sbu, **kw)
+    preparar(base)
+    cs = sorted(set(vb["cargo_norm"]))
+    y = vb["voto"].to_numpy(float)
+    res = {}
+    for u in rejilla:
+        base.cos_juez, base.escala_banda = u, {}
+        o = base.referenciar(cs, emb_consulta).set_index("cargo").reindex(vb["cargo_norm"])
+        d = pd.DataFrame({"voto": y, "mu": o["referencia_log"].to_numpy(float), "sd": o["sd_modelo"].to_numpy(float),
+                          "de": o["banda_de"].to_numpy(), "base": o["base"].to_numpy()})
+        d = d[(d["de"] == "modelo") & np.isfinite(d["voto"]) & (d["sd"] > 0)]
+        k = {}
+        for tipo, m in (("analogia", d["base"] == "por analogia"), ("directo", d["base"] != "por analogia")):
+            z = np.abs(d.loc[m, "voto"] - d.loc[m, "mu"]) / d.loc[m, "sd"]
+            if len(z) >= 100:
+                k[tipo] = float(np.median(z) / 0.6745)
+        base.escala_banda = k
+        o = base.referenciar(cs, emb_consulta).set_index("cargo").reindex(vb["cargo_norm"])
+        pb = pinball(y, o["p25_log"].to_numpy(float), o["p75_log"].to_numpy(float))
+        n_juez = int(np.isfinite(o["p_juez"].to_numpy(float)).sum()) if "p_juez" in o else 0
+        res[u] = float(np.nanmean(pb))
+        print("umbral {:.2f}: pinball interno {:.5f}  votos por el juez {:,}  k {}".format(u, res[u], n_juez, k),
+              flush=True)
+    return min(res, key=res.get), res
+
+
 # D-062 y D-063: variantes sobre el producto vigente (v25: D-060 + D-061, con el k fijo)
 CON_TRAD = ("trad_base", "trad", "trad_placebo", "trad_candado")
 CON_TAM = ("tam_A", "tam_B", "tam_C", "tam_C0", "tam_C_placebo", "tam_D", "tam_D_placebo",   # D-079: tam_D
@@ -173,6 +209,9 @@ def atipico_apartado(base, v, v_ref):
     return atipicos.marcar(va, ref=v_ref)
 
 
+UMBRAL_T005 = [0.7041]
+
+
 def una_variante(nom, clusters):
     e41 = cargar("e41", "41_base_v16.py")
     mk = e41.cargar_marco()
@@ -191,7 +230,8 @@ def una_variante(nom, clusters):
     emb = {str(c): z for c, z in zip(b15["celdas"], b15["Z"])}
     emb_consulta = None
     emb_analogia = emb_analogia_consulta = None
-    if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):   # T-002 / T-004
+    if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo", "qwen_umbral",
+               "qwen_umbral_placebo"):   # T-002 / T-004 / T-005
         b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
         tes = RAIZ / "research" / "tesis" / "salidas"
         Qd = np.load(tes / "t01_emb_qwen_desc.npy").astype(np.float32)          # 4.096 dimensiones, completas
@@ -203,10 +243,10 @@ def una_variante(nom, clusters):
             Qd, Qc = Qd[perm], Qc[perm]
         emb = {str(c): z for c, z in zip(b31["celdas"], Qd)}
         emb_consulta = {str(c): z for c, z in zip(b31["celdas"], Qc)}
-        if nom.startswith("qwen_hibrido"):              # T-004: la analogia con los vectores con nivel (T-003)
+        if nom.startswith(("qwen_hibrido", "qwen_umbral")):   # T-004 / T-005: la analogia con los vectores con nivel (T-003)
             Ad = np.load(tes / "t03_emb_doc.npy").astype(np.float32)
             Ac = np.load(tes / "t03_emb_consulta.npy").astype(np.float32)
-            if nom == "qwen_hibrido_placebo":           # solo la analogia, permutada entre titulos
+            if nom in ("qwen_hibrido_placebo", "qwen_umbral_placebo"):   # solo la analogia, permutada entre titulos
                 perm = np.random.default_rng(14).permutation(len(Ad))
                 Ad, Ac = Ad[perm], Ac[perm]
             emb_analogia = {str(c): z for c, z in zip(b31["celdas"], Ad)}
@@ -227,7 +267,7 @@ def una_variante(nom, clusters):
                 "seniority_placebo", "coherencia_intra", "coherencia_intra_placebo") + PRODUCTO_V25
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_hibrido",
-              "qwen_hibrido_placebo")    # T-002: qwen; T-004: hibrido
+              "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo")    # T-002; T-004; T-005
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
     con_calibra = ("calibra", "calibra_inversa") + con_d052
@@ -291,6 +331,8 @@ def una_variante(nom, clusters):
             base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
         if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):
             base.cos_juez = 0.7041                  # T-002: el equivalente del 0,90 de Vertex (t02_umbral.json)
+        if nom in ("qwen_umbral", "qwen_umbral_placebo"):
+            base.cos_juez = UMBRAL_T005[0]          # T-005: el elegido por la particion interna
         if nom in con_d052:              # D-052 (sobre el producto vigente: nivel v2 + D-051)
             base.nivel_por_grupo(placebo=nom == "nivel_grupo_placebo")
             if nom.startswith("nivel_v3_sueldo"):        # D-053: el sueldo desempata los inseguros
@@ -347,6 +389,15 @@ def una_variante(nom, clusters):
         print("prima: {}".format(base.estimar_prima_idioma(emb)), flush=True)
         base.idioma_placebo = nom == "idioma_prima_placebo"     # despues de estimar: misma prima
     elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
+        f_u = RAIZ / "research" / "tesis" / "salidas" / "t05_umbral.json"
+        if nom == "qwen_umbral":                             # T-005: primero el umbral del juez
+            rej = [0.70, 0.72, 0.74, 0.76, 0.78, 0.80, 0.82, 1.01]
+            u, res = elegir_umbral_juez(tr, emb, kw, e41._Ajustes.get_sbu, preparar, emb_consulta, rej)
+            f_u.write_text(json.dumps({"umbral": u, "pinball_interno": res}, indent=1))
+            UMBRAL_T005[0] = base.cos_juez = u
+            print("umbral del juez elegido (particion interna): {} {}".format(u, res), flush=True)
+        elif nom == "qwen_umbral_placebo":                   # el placebo usa el umbral elegido por la variante
+            UMBRAL_T005[0] = base.cos_juez = json.loads(f_u.read_text())["umbral"]
         k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar, emb_consulta=emb_consulta)
         print("escala de banda (particion interna): " + str(k), flush=True)
         base.escala_banda = k if nom != "calibra_inversa" else {t: 1.0 / x for t, x in k.items()}
@@ -525,7 +576,7 @@ if __name__ == "__main__":
                                            "nivel_v3_sueldo", "nivel_v3_sueldo_placebo", "vecinos_grupo",
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                                            "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
-                                           "qwen_hibrido_placebo",
+                                           "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",
                                            "seniority", "seniority_placebo", "coherencia_intra",
