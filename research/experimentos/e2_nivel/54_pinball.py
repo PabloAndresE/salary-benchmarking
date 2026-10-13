@@ -232,7 +232,7 @@ def una_variante(nom, clusters):
     emb_vertex = dict(emb)
     emb_analogia = emb_analogia_consulta = None
     if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo", "qwen_umbral",
-               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo",
+               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
                "qwen_filtro", "qwen_filtro_placebo"):   # T-002 / T-004 / T-005 / T-006 / T-007
         b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
         tes = RAIZ / "research" / "tesis" / "salidas"
@@ -253,7 +253,7 @@ def una_variante(nom, clusters):
                 Ad, Ac = Ad[perm], Ac[perm]
             emb_analogia = {str(c): z for c, z in zip(b31["celdas"], Ad)}
             emb_analogia_consulta = {str(c): z for c, z in zip(b31["celdas"], Ac)}
-        if nom.startswith("qwen_inverso"):              # T-006: la analogia con Vertex (el producto)
+        if nom.startswith(("qwen_inverso", "qwen_juez9")):   # T-006 / T-009: la analogia con Vertex (el producto)
             emb_analogia = emb_analogia_consulta = {c: emb_v for c, emb_v in emb_vertex.items()}
     if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):   # D-057: los vectores de e5 (de todos los titulos)
         b22 = np.load(RAIZ / "demo" / "base_v22.npz", allow_pickle=True)
@@ -272,7 +272,7 @@ def una_variante(nom, clusters):
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_hibrido",
               "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
-              "qwen_inverso", "qwen_inverso_placebo",
+              "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
               "qwen_filtro", "qwen_filtro_placebo")    # T-002; T-004; T-005; T-006; T-007
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
@@ -337,7 +337,7 @@ def una_variante(nom, clusters):
             base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
         if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):
             base.cos_juez = 0.7041                  # T-002: el equivalente del 0,90 de Vertex (t02_umbral.json)
-        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo",
+        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
                    "qwen_filtro", "qwen_filtro_placebo"):
             base.cos_juez = UMBRAL_T005[0]
         if nom in ("qwen_filtro", "qwen_filtro_placebo"):   # T-007: vecinos del mismo nivel
@@ -362,6 +362,10 @@ def una_variante(nom, clusters):
             # producto con la tabla de niveles en ingles; los de abajo, ademas, con el filtro.
             base.juez_vecinos = nom in ("juez_vecinos", "juez_vecinos_placebo") + con_nivel
             base.juez_vecinos_placebo = nom == "juez_vecinos_placebo"
+            if nom.startswith("qwen_juez9"):          # T-009: el cross-encoder reentrenado con candidatos de Qwen
+                base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/t09_modelos/elegido")
+                assert base.juez is not None, "no se pudo cargar el cross-encoder de T-009"
+                base.juez_placebo = nom == "qwen_juez9_placebo"
     preparar(base)
     v_ref = None
     if nom in CON_ATIPICOS:              # D-065: se marcan con la base armada y se vuelve a armar sin ellos
@@ -401,14 +405,15 @@ def una_variante(nom, clusters):
     elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
         f_u = RAIZ / "research" / "tesis" / "salidas" / (
             "t06_umbral.json" if nom.startswith("qwen_inverso") else
+            "t09_umbral.json" if nom.startswith("qwen_juez9") else
             "t07_umbral.json" if nom.startswith("qwen_filtro") else "t05_umbral.json")
-        if nom in ("qwen_umbral", "qwen_inverso", "qwen_filtro"):                             # T-005: primero el umbral del juez
+        if nom in ("qwen_umbral", "qwen_inverso", "qwen_filtro", "qwen_juez9"):                             # T-005: primero el umbral del juez
             rej = [0.70, 0.72, 0.74, 0.76, 0.78, 0.80, 0.82, 1.01]
             u, res = elegir_umbral_juez(tr, emb, kw, e41._Ajustes.get_sbu, preparar, emb_consulta, rej)
             f_u.write_text(json.dumps({"umbral": u, "pinball_interno": res}, indent=1))
             UMBRAL_T005[0] = base.cos_juez = u
             print("umbral del juez elegido (particion interna): {} {}".format(u, res), flush=True)
-        elif nom in ("qwen_umbral_placebo", "qwen_inverso_placebo", "qwen_filtro_placebo"):                   # el placebo usa el umbral elegido por la variante
+        elif nom in ("qwen_umbral_placebo", "qwen_inverso_placebo", "qwen_filtro_placebo", "qwen_juez9_placebo"):                   # el placebo usa el umbral elegido por la variante
             UMBRAL_T005[0] = base.cos_juez = json.loads(f_u.read_text())["umbral"]
         k = estimar_escala(tr, emb, kw, e41._Ajustes.get_sbu, preparar, emb_consulta=emb_consulta)
         print("escala de banda (particion interna): " + str(k), flush=True)
@@ -589,7 +594,7 @@ if __name__ == "__main__":
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                                            "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
-                                           "qwen_inverso", "qwen_inverso_placebo",
+                                           "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
                                            "qwen_filtro", "qwen_filtro_placebo",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",

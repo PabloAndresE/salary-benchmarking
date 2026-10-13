@@ -108,7 +108,8 @@ AUC_BASE = 0.7346                # `19`, NLI congelado, media de las dos direcci
                                  # 0,7346 con `calibra` rejuzgada con la v5, D-038)
 # D-041: con `21_paquete_v6` (etiquetas v6, exclusion con la capa 0 v1; 187 pares) la vara es
 # otra, medida en `40_vara_calibra_v6.py` con estas mismas funciones.
-AUC_BASE_POR_PAQUETE = {"21_paquete": AUC_BASE, "21_paquete_v6": 0.7416}
+AUC_BASE_POR_PAQUETE = {"21_paquete": AUC_BASE, "21_paquete_v6": 0.7416,
+                        "t09_paquete": 0.7416}    # T-009 (tesis): la misma `calibra` de la v6
 TOL_BASE = 0.005
 
 MOTIVOS = ["ninguno", "p1", "p2", "p3", "p4", "p5"]
