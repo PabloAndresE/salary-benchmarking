@@ -54,16 +54,16 @@ def main():
             "mismo_ab": d["glm_ab"].to_numpy(), "mismo_ba": d["glm_ba"].to_numpy(), "paso_ab": "", "paso_ba": "",
             "etiqueta": d["etiqueta"].astype(float).to_numpy(), "origen": origen, "motivo": ""})
 
-    g53 = pd.read_parquet(E2 / "salidas" / "53_glm_v4.parquet")
+    g53 = pd.read_parquet(AQUI / "salidas" / "t09_qwen_53.parquet")   # segunda enmienda: Qwen3.5-122B
     val = lambda t: grupo.get(t) is not None and zlib.crc32(str(grupo[t]).encode()) % 100 < 15  # noqa: E731
     pa = np.array(["valida" if val(t) else "entrena" for t in g53["a"]])
     pb = np.array(["valida" if val(t) else "entrena" for t in g53["b"]])
     g53 = g53[pa == pb].copy()
     g53["particion"] = pa[pa == pb]
-    n53 = a_plata(g53, "glm_53", "glm53:" + g53.loc[g53["coherente"], "estrato"].to_numpy().astype(object),
+    n53 = a_plata(g53, "qwen122_53", "q53:" + g53.loc[g53["coherente"], "estrato"].to_numpy().astype(object),
                   g53["cos"])
-    gq = pd.read_parquet(AQUI / "salidas" / "t09_glm.parquet")
-    nq = a_plata(gq, "glm_qwen", "qwen:" + gq.loc[gq["coherente"], "tramo"].to_numpy().astype(object),
+    gq = pd.read_parquet(AQUI / "salidas" / "t09_qwen_candidatos.parquet")
+    nq = a_plata(gq, "qwen122_cand", "cand:" + gq.loc[gq["coherente"], "tramo"].to_numpy().astype(object),
                  gq["cos_vertex"])
     nueva = pd.concat([plata, n53[cols], nq[cols]], ignore_index=True)
     clave = [frozenset((x, y)) for x, y in zip(nueva["comun"], nueva["raro"])]
@@ -78,7 +78,7 @@ def main():
             d = d[d["particion"].isin(["prueba", "prueba2"])]
         prueba_t |= set(d[a]) | set(d[c])
         prueba_p |= {frozenset((x, y)) for x, y in zip(d[a], d[c])}
-    nuevas = nueva[nueva["origen"].str.startswith("glm")]
+    nuevas = nueva[nueva["origen"].str.startswith("qwen122")]
     toca = sum(1 for x, y in zip(nuevas["comun"], nuevas["raro"])
                if x in prueba_t or y in prueba_t or frozenset((x, y)) in prueba_p)
     if toca:
@@ -87,14 +87,14 @@ def main():
     nueva.to_csv(OUT / "plata.csv", index=False)
     shutil.copy(V6 / "calibra.csv", OUT / "calibra.csv")
     man = json.loads((V6 / "manifiesto.json").read_text(encoding="utf-8"))
-    man["decision"] = "T-009 (tesis): plata de 21_paquete_v6 + GLM coherente de 53 y de los candidatos de Qwen"
-    man["t09"] = {"plata_v6": len(plata), "glm_53_coherentes": len(n53), "glm_qwen_coherentes": len(nq),
+    man["decision"] = "T-009 (tesis): plata de 21_paquete_v6 + Qwen3.5-122B coherente en 53 y en los candidatos de Qwen"
+    man["t09"] = {"plata_v6": len(plata), "qwen122_53_coherentes": len(n53), "qwen122_cand_coherentes": len(nq),
                   "total_sin_repetir": len(nueva), "por_particion": nueva["particion"].value_counts().to_dict(),
                   "por_origen": nueva["origen"].value_counts().to_dict(),
-                  "si_glm_53": float(n53["etiqueta"].mean()), "si_glm_qwen": float(nq["etiqueta"].mean()),
+                  "si_53": float(n53["etiqueta"].mean()), "si_cand": float(nq["etiqueta"].mean()),
                   "pares_nuevos_que_tocan_prueba": toca,
-                  "fuentes_sha256_12": {"53_glm_v4.parquet": sha12(E2 / "salidas" / "53_glm_v4.parquet"),
-                                        "t09_glm.parquet": sha12(AQUI / "salidas" / "t09_glm.parquet"),
+                  "fuentes_sha256_12": {"t09_qwen_53.parquet": sha12(AQUI / "salidas" / "t09_qwen_53.parquet"),
+                                        "t09_qwen_candidatos.parquet": sha12(AQUI / "salidas" / "t09_qwen_candidatos.parquet"),
                                         "21_paquete_v6/plata.csv": sha12(V6 / "plata.csv")}}
     (OUT / "manifiesto.json").write_text(json.dumps(man, indent=2, ensure_ascii=False), encoding="utf-8")
     print(json.dumps(man["t09"], indent=1, ensure_ascii=False))
