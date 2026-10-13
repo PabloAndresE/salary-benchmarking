@@ -7994,3 +7994,38 @@ vecinos del mismo nivel). El vector con el nivel en el texto ordena los vecinos 
 - **Criterio:**
   - **adoptar en la tesis** si es no inferior frente a Vertex y mejor que el placebo;
   - **«mejora»** si el IC frente a Vertex queda entero bajo cero.
+
+### T-004, resultado: no se adopta, pero acorta la distancia a la mitad (2026-10-13)
+
+Unión de 18.493 votos:
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| Híbrido − Vertex | +0,00200 | [−0,00035, **+0,00445**] |
+| Híbrido − placebo | −0,03579 | [−0,04095, −0,03045] |
+| Híbrido − T-002 | −0,00176 | [−0,00375, +0,00051] |
+
+El extremo frente a Vertex pasa el margen: **no se adopta**. Frente a T-002 (Qwen solo) mejora, sin significancia.
+
+**Analogía** (error del centro / cobertura p25–p75 / ancho):
+
+| Sistema | Error del centro | Cobertura | Ancho |
+|---|---|---|---|
+| Vertex | 0,288 | 45,8 % | ×1,68 |
+| Qwen (T-002) | 0,296 | 46,7 % | ×1,73 |
+| Híbrido | 0,293 | 46,2 % | ×1,77 |
+
+`k` analogía = 0,680.
+
+**Dónde pierde todavía frente a Vertex** (aporte al pinball):
+
+| Cambio de ruta (Vertex → híbrido) | Aporte |
+|---|---|
+| analogía → analogía | +25,1 (T-002: +48,1; la analogía con nivel **corta la pérdida a la mitad**) |
+| analogía → directo | **+18,2** (igual que T-002) |
+| directo → analogía | −10,3 (gana) |
+
+Lo que queda viene sobre todo del **reconocimiento**: con Qwen, el juez asigna a un grupo, con umbral 0,7041, títulos que
+con Vertex iban mejor por analogía. El umbral equivalente por proporción (método de D-057) parece demasiado permisivo
+en un espacio asimétrico. Siguiente hipótesis: el umbral del juez para Qwen, elegido por la partición interna y no por
+proporción.
