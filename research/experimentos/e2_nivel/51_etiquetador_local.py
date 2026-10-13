@@ -120,6 +120,11 @@ def correr(modelo, tp):
         t0 = time.time()
         textos = correr_api(modelo, filas, sis)
         return guardar(modelo, filas, textos, sha, time.time() - t0)
+    import os
+    os.environ.setdefault("VLLM_USE_DEEP_GEMM", "0")
+    os.environ.setdefault("VLLM_ALLREDUCE_USE_FLASHINFER", "0")
+    os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+    os.environ["PATH"] = str(pathlib.Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]  # ninja
     from vllm import LLM, SamplingParams
     try:
         from vllm.sampling_params import StructuredOutputsParams
@@ -131,7 +136,10 @@ def correr(modelo, tp):
     sis, sha = sistema()
     filas = [(r.id, o, a, b) for r in d.itertuples() for o, a, b in (("ab", r.a, r.b), ("ba", r.b, r.a))]
     llm = LLM(model=str(RAIZ / "modelos" / modelo), tensor_parallel_size=tp, max_model_len=8192,
-              gpu_memory_utilization=0.85, seed=20261005)
+              gpu_memory_utilization=0.85, seed=20261005,
+              # T-009: como en `60`, el nvcc del servidor (12.5) no compila los kernels JIT de FlashInfer
+              compilation_config={"pass_config": {"fuse_allreduce_rms": False}},
+              gdn_prefill_backend="triton")
     sp = SamplingParams(temperature=0.0, max_tokens=300, seed=20261005, **guia)
     mensajes = [[{"role": "system", "content": sis},
                  {"role": "user", "content": "A: {}\nB: {}".format(a, b)}] for _, _, a, b in filas]

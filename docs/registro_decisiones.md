@@ -8295,3 +8295,19 @@ queda sin espacio para responder (`finish_reason: length`). No es un juicio de G
   fija). Si el acuerdo con las etiquetas de `53` (sin razonamiento) es **≥ 85 %** en los coherentes de los dos
   regímenes, se mezclan como estaba previsto. Si no, se entrena **sin** los pares de `53` (plata de la v3 + candidatos de
   Qwen) y se reporta así.
+
+**Segunda enmienda a T-009, antes de entrenar (2026-10-13): el etiquetador pasa a ser Qwen3.5-122B local.** A pedido
+del autor («¿por qué no con Qwen?») se validó Qwen3.5-122B-A10B (fp8, local, vLLM, sin razonamiento, temperatura 0,
+rúbrica v7, JSON guiado), que en D-047 había quedado «sin correr»:
+
+| Etiquetador | `51` lejos (130) | `51` cerca, kappa | **`52` limpia (100, autor ciego): coherente / acuerdo** |
+|---|---|---|---|
+| GLM-5.3-Flash | 80,8 % | 0,90 | 80 % / 71,2 % |
+| Qwen3.5-122B | 70,0 % | 0,84 | 79 % / **78,5 %** |
+
+`51` favorece a GLM por construcción: la rúbrica v7 se escribió mirando esos 130 pares y las respuestas de GLM (D-047).
+En la validación **limpia**, la que D-047 fijó como prueba, Qwen coincide más con el autor (+7 puntos; con ~80 pares
+coherentes la diferencia no es significativa). Qwen además corre en local sin razonamiento (el régimen de `53`) y no
+depende del servidor compartido. **Decisión:** se etiquetan con Qwen **los dos lotes** (los 10.000 de `53` y los 3.735
+candidatos), para tener un solo etiquetador; solo cuentan los coherentes. El etiquetado de GLM con razonamiento
+(`t09_glm.parquet`, control de régimen 92,4 %) queda como alternativa y se reporta.

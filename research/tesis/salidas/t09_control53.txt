@@ -1,0 +1,1 @@
+T-009 control de regimen: 400 pares de `53`; coherentes con razonamiento 79.0%; acuerdo con `53` en los coherentes 92.4% -> SE MEZCLAN

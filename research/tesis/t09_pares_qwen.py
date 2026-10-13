@@ -149,6 +149,51 @@ def control53(n=400):
     print(linea)
 
 
+def etiquetar_local():
+    """Segunda enmienda de T-009: Qwen3.5-122B local (vLLM, sin razonamiento) etiqueta `53` y los candidatos.
+    CUDA_VISIBLE_DEVICES=0,3 /root/salary-benchmarking/.venv-llm/bin/python t09_pares_qwen.py etiquetar_local"""
+    import os
+    sys.modules.pop("vllm", None)
+    os.environ.setdefault("VLLM_USE_DEEP_GEMM", "0")
+    os.environ.setdefault("VLLM_ALLREDUCE_USE_FLASHINFER", "0")
+    os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+    os.environ["PATH"] = str(pathlib.Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]
+    e51 = cargar("e51", "51_etiquetador_local.py")
+    from vllm import LLM, SamplingParams
+    from vllm.sampling_params import StructuredOutputsParams
+    sis, sha = e51.sistema()
+    llm = LLM(model=str(RAIZ / "modelos" / "qwen35-122b-a10b-fp8"), tensor_parallel_size=2, max_model_len=8192,
+              gpu_memory_utilization=0.85, seed=20261005,
+              compilation_config={"pass_config": {"fuse_allreduce_rms": False}}, gdn_prefill_backend="triton")
+    sp = SamplingParams(temperature=0.0, max_tokens=300, seed=20261005,
+                        structured_outputs=StructuredOutputsParams(json=e51.ESQUEMA))
+    for nombre, t in (("t09_qwen_candidatos", pd.read_parquet(SAL / "t09_pares_qwen.parquet")),
+                      ("t09_qwen_53", pd.read_parquet(E2 / "salidas" / "53_pares_v4.parquet"))):
+        t = t.reset_index(drop=True)
+        filas = [(k, o, a, b) for k, (x, y) in enumerate(zip(t["a"], t["b"]))
+                 for o, a, b in (("ab", x, y), ("ba", y, x))]
+        t0 = time.time()
+        sal = llm.chat([[{"role": "system", "content": sis}, {"role": "user", "content": "A: {}\nB: {}".format(a, b)}]
+                        for _, _, a, b in filas], sp, chat_template_kwargs={"enable_thinking": False})
+        m = {}
+        for (k, o, a, b), s_ in zip(filas, sal):
+            try:
+                m[(k, o)] = json.loads(s_.outputs[0].text)["mismo"]
+            except (ValueError, KeyError, TypeError):
+                m[(k, o)] = ""
+        t["glm_ab"] = [m[(k, "ab")] for k in range(len(t))]     # mismo nombre de columna que GLM (lo lee el paquete)
+        t["glm_ba"] = [m[(k, "ba")] for k in range(len(t))]
+        t["coherente"] = (t["glm_ab"] == t["glm_ba"]) & t["glm_ab"].isin(["si", "no"])
+        t["etiqueta"] = np.where(t["coherente"], (t["glm_ab"] == "si").astype(float), np.nan)
+        t["rubrica_sha"], t["modelo"] = sha, "Qwen3.5-122B-A10B-FP8 (local)"
+        t.to_parquet(SAL / (nombre + ".parquet"), index=False)
+        linea = "{}: {:,} pares en {:.0f} s; coherentes {:.1%}; `si` {:.0%}".format(
+            nombre, len(t), time.time() - t0, t["coherente"].mean(), t.loc[t["coherente"], "etiqueta"].mean())
+        with open(SAL / "t09_qwen_etiquetas.txt", "a", encoding="utf-8") as f:
+            f.write(linea + "\n")
+        print(linea, flush=True)
+
+
 def etiquetar():
     sys.modules["vllm"] = None
     e51 = cargar("e51", "51_etiquetador_local.py")
@@ -186,4 +231,4 @@ def etiquetar():
 
 
 if __name__ == "__main__":
-    {"etiquetar": etiquetar, "control53": control53}.get((sys.argv[1:] or [""])[0], armar)()
+    {"etiquetar": etiquetar, "control53": control53, "etiquetar_local": etiquetar_local}.get((sys.argv[1:] or [""])[0], armar)()
