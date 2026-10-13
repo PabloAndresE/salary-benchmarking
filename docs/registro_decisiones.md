@@ -7858,3 +7858,28 @@ GPU. Es local y sin llamadas a Vertex.
 
 **Siguiente (paso 2):** base de tesis con los vectores Q-d (`demo/tesis_*.npz`), umbrales del juez recalibrados y pinball
 con placebo frente a la v1.
+
+## T-002 — La base busca con Qwen3-Embedding (título + descripción). Registrado antes de medir
+
+**Por qué:** T-001. Q-d recupera mejor que Vertex (+5,6 puntos de recall@10). Falta saber si eso mejora las **bandas**.
+
+**Cambio** (`qwen`), sobre la configuración de D-057 (`nivel_v3` con la escala `k` reestimada):
+
+- **Índice:** cada título de la base se embebe como «título: descripción» (Q-d).
+- **Consulta:** el título con la instrucción (Q-instr). El cliente no trae descripción, y la evaluación también consulta
+  sin ella.
+- **En el espacio de la consulta** se reestiman:
+  - el clasificador de nivel, entrenado con los vectores Q-instr;
+  - `lambda` y `lambda` por nivel, con distancias de Q-instr → Q-d;
+  - la escala `k` de D-051, por la partición interna.
+- **Umbral del juez:** el valor de coseno Q-instr → Q-d que deja la misma proporción de títulos (61,5 %) con un vecino de
+  otro grupo por encima (método de D-057).
+- Los grupos de la base no cambian.
+
+**Medición:** frente a `nivel_v3` (Vertex), protocolo v2. Placebo: los vectores de Qwen (Q-d y Q-instr del mismo
+título, juntos) permutados entre títulos. **Criterio:**
+
+- **adoptar en la tesis** si es **no inferior** (extremo < +0,001) y mejor que el placebo;
+- **«mejora»** si además el IC frente a Vertex queda entero bajo cero.
+
+Se reportan el ancho y la cobertura de p25–p75 de la analogía, y el costo.
