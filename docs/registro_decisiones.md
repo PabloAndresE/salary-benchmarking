@@ -8200,3 +8200,28 @@ la mayor exactitud balanceada en calibra.
 - **«Qwen agrupa mejor»** si el IC queda entero sobre cero.
 - **Referencia, sin criterio:** los grupos del producto (correlation clustering con el cross-encoder, D-046). El
   cross-encoder se calibró con parte de `13e` y `20`, así que esa comparación no es limpia.
+
+### T-008, resultado: Qwen agrupa mejor que Vertex, pero ninguno distingue «mismo cargo» (2026-10-13)
+
+`t08_clustering.txt`. Elegidos en calibra: Qwen `n_neighbors` 15, `min_cluster_size` 10, `min_samples` 10, leaf (0,5115);
+Vertex 15, 2, 1, leaf (0,4883). En prueba (1.210 pares: 1.049 sí, 161 no):
+
+| Agrupamiento | Exactitud balanceada | «Sí» juntos | «No» separados | Ruido | Clusters | Mayor |
+|---|---|---|---|---|---|---|
+| Qwen (UMAP + HDBSCAN) | **0,522** | 26,2 % | 78,3 % | 39,1 % | 1.303 | 208 |
+| Vertex (UMAP + HDBSCAN) | 0,456 | 9,2 % | 82,0 % | 30,4 % | 15.732 | 25 |
+| Producto (correlation clustering + cross-encoder; referencia) | 0,566 | 18,7 % | 94,4 % | 0 % | 58.051 | 135 |
+
+**Qwen − Vertex: +0,067 [+0,024, +0,108] → cumple el criterio («Qwen agrupa mejor»).**
+
+**Pero en la práctica ninguno sirve para decidir «mismo cargo»:** la exactitud balanceada de Qwen (0,52) apenas pasa el
+azar (0,50) y la de Vertex queda por debajo. En toda la rejilla, ninguna combinación se separa del azar: si los grupos son
+chicos, se separan los «sí»; si son grandes, se juntan también los «no». El oro es de pares **finos** (coseno 0,90–0,96,
+p. ej. «Asesor de Repuestos» / «Asesor de Servicios y Repuestos»), y UMAP a 10 dimensiones pierde esos matices. El
+correlation clustering con el cross-encoder, que mira cada par, sigue siendo mejor para eso (0,566, con la salvedad de que
+se calibró con parte de este oro).
+
+(La dispersión del sueldo del producto, 0,000, no es comparable: `m` es del grupo, compartida por sus títulos.)
+
+**Lectura:** UMAP + HDBSCAN no reemplaza al cross-encoder para el **mismo cargo**. Si sirve, es para un nivel más grueso,
+el de **familias** de cargos (área y función), que este oro no mide.

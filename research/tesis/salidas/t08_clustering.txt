@@ -1,0 +1,75 @@
+T-008 · UMAP + HDBSCAN, oro humano de pares
+pares: 2,418 (calibra 1,208, prueba 1,210); si 2,097, no 321
+  qwen   nn=15 mcs=2  ms=1  eom   calibra 0.4755  (si 0.057, no 0.894)  ruido 25.9%  clusters 14,316  mayor 54
+  qwen   nn=15 mcs=2  ms=1  leaf  calibra 0.4842  (si 0.037, no 0.931)  ruido 30.5%  clusters 15,863  mayor 15
+  qwen   nn=15 mcs=2  ms=2  eom   calibra 0.4909  (si 0.188, no 0.794)  ruido 27.6%  clusters 5,703  mayor 184
+  qwen   nn=15 mcs=2  ms=2  leaf  calibra 0.4913  (si 0.064, no 0.919)  ruido 44.2%  clusters 7,840  mayor 37
+  qwen   nn=15 mcs=3  ms=1  eom   calibra 0.4768  (si 0.154, no 0.800)  ruido 25.3%  clusters 6,730  mayor 157
+  qwen   nn=15 mcs=3  ms=1  leaf  calibra 0.4853  (si 0.071, no 0.900)  ruido 35.9%  clusters 8,283  mayor 30
+  qwen   nn=15 mcs=3  ms=3  eom   calibra 0.4918  (si 0.246, no 0.738)  ruido 27.4%  clusters 3,249  mayor 277
+  qwen   nn=15 mcs=3  ms=3  leaf  calibra 0.4813  (si 0.100, no 0.863)  ruido 45.3%  clusters 4,307  mayor 64
+  qwen   nn=15 mcs=5  ms=1  eom   calibra 0.4902  (si 0.224, no 0.756)  ruido 23.5%  clusters 3,364  mayor 203
+  qwen   nn=15 mcs=5  ms=1  leaf  calibra 0.4810  (si 0.118, no 0.844)  ruido 36.0%  clusters 4,186  mayor 62
+  qwen   nn=15 mcs=5  ms=5  eom   calibra 0.4926  (si 0.298, no 0.688)  ruido 27.4%  clusters 1,953  mayor 867
+  qwen   nn=15 mcs=5  ms=5  leaf  calibra 0.4907  (si 0.169, no 0.812)  ruido 42.3%  clusters 2,399  mayor 120
+  qwen   nn=15 mcs=10 ms=1  eom   calibra 0.4973  (si 0.320, no 0.675)  ruido 22.2%  clusters 1,697  mayor 387
+  qwen   nn=15 mcs=10 ms=1  leaf  calibra 0.4811  (si 0.219, no 0.744)  ruido 32.1%  clusters 1,975  mayor 121
+  qwen   nn=15 mcs=10 ms=10 eom   calibra 0.5036  (si 0.364, no 0.644)  ruido 26.4%  clusters 1,106  mayor 867
+  qwen   nn=15 mcs=10 ms=10 leaf  calibra 0.5115  (si 0.260, no 0.762)  ruido 39.1%  clusters 1,303  mayor 208
+  qwen   nn=50 mcs=2  ms=1  eom   calibra 0.4931  (si 0.049, no 0.938)  ruido 29.0%  clusters 13,843  mayor 83
+  qwen   nn=50 mcs=2  ms=1  leaf  calibra 0.4907  (si 0.031, no 0.950)  ruido 33.6%  clusters 15,426  mayor 14
+  qwen   nn=50 mcs=2  ms=2  eom   calibra 0.5055  (si 0.198, no 0.812)  ruido 32.4%  clusters 4,917  mayor 228
+  qwen   nn=50 mcs=2  ms=2  leaf  calibra 0.4823  (si 0.033, no 0.931)  ruido 51.9%  clusters 7,299  mayor 30
+  qwen   nn=50 mcs=3  ms=1  eom   calibra 0.5056  (si 0.161, no 0.850)  ruido 29.5%  clusters 6,039  mayor 164
+  qwen   nn=50 mcs=3  ms=1  leaf  calibra 0.4818  (si 0.045, no 0.919)  ruido 41.7%  clusters 7,774  mayor 30
+  qwen   nn=50 mcs=3  ms=3  eom   calibra 0.4975  (si 0.270, no 0.725)  ruido 31.4%  clusters 2,420  mayor 862
+  qwen   nn=50 mcs=3  ms=3  leaf  calibra 0.4834  (si 0.067, no 0.900)  ruido 55.1%  clusters 3,617  mayor 78
+  qwen   nn=50 mcs=5  ms=1  eom   calibra 0.5035  (si 0.276, no 0.731)  ruido 28.2%  clusters 2,703  mayor 487
+  qwen   nn=50 mcs=5  ms=1  leaf  calibra 0.4821  (si 0.083, no 0.881)  ruido 44.9%  clusters 3,696  mayor 63
+  qwen   nn=50 mcs=5  ms=5  eom   calibra 0.4903  (si 0.324, no 0.656)  ruido 31.1%  clusters 1,363  mayor 902
+  qwen   nn=50 mcs=5  ms=5  leaf  calibra 0.5035  (si 0.151, no 0.856)  ruido 51.4%  clusters 1,824  mayor 168
+  qwen   nn=50 mcs=10 ms=1  eom   calibra 0.4900  (si 0.343, no 0.637)  ruido 26.0%  clusters 1,258  mayor 860
+  qwen   nn=50 mcs=10 ms=1  leaf  calibra 0.4902  (si 0.180, no 0.800)  ruido 40.7%  clusters 1,602  mayor 165
+  qwen   nn=50 mcs=10 ms=10 eom   calibra 0.4941  (si 0.401, no 0.588)  ruido 29.2%  clusters 741  mayor 946
+  qwen   nn=50 mcs=10 ms=10 leaf  calibra 0.5091  (si 0.256, no 0.762)  ruido 45.4%  clusters 923  mayor 236
+ELEGIDO qwen: nn=15 mcs=10 ms=10 leaf (calibra 0.5115)
+  vertex nn=15 mcs=2  ms=1  eom   calibra 0.4862  (si 0.141, no 0.831)  ruido 24.7%  clusters 13,982  mayor 59
+  vertex nn=15 mcs=2  ms=1  leaf  calibra 0.4883  (si 0.095, no 0.881)  ruido 30.4%  clusters 15,732  mayor 25
+  vertex nn=15 mcs=2  ms=2  eom   calibra 0.4570  (si 0.233, no 0.681)  ruido 26.6%  clusters 6,014  mayor 132
+  vertex nn=15 mcs=2  ms=2  leaf  calibra 0.4760  (si 0.115, no 0.838)  ruido 42.1%  clusters 7,892  mayor 46
+  vertex nn=15 mcs=3  ms=1  eom   calibra 0.4535  (si 0.219, no 0.688)  ruido 23.7%  clusters 6,846  mayor 105
+  vertex nn=15 mcs=3  ms=1  leaf  calibra 0.4637  (si 0.134, no 0.794)  ruido 34.5%  clusters 8,369  mayor 45
+  vertex nn=15 mcs=3  ms=3  eom   calibra 0.4487  (si 0.279, no 0.619)  ruido 27.2%  clusters 3,581  mayor 169
+  vertex nn=15 mcs=3  ms=3  leaf  calibra 0.4614  (si 0.173, no 0.750)  ruido 42.1%  clusters 4,397  mayor 70
+  vertex nn=15 mcs=5  ms=1  eom   calibra 0.4391  (si 0.272, no 0.606)  ruido 23.0%  clusters 3,521  mayor 154
+  vertex nn=15 mcs=5  ms=1  leaf  calibra 0.4589  (si 0.193, no 0.725)  ruido 34.2%  clusters 4,200  mayor 76
+  vertex nn=15 mcs=5  ms=5  eom   calibra 0.4385  (si 0.308, no 0.569)  ruido 27.4%  clusters 2,152  mayor 432
+  vertex nn=15 mcs=5  ms=5  leaf  calibra 0.4412  (si 0.214, no 0.669)  ruido 39.3%  clusters 2,532  mayor 107
+  vertex nn=15 mcs=10 ms=1  eom   calibra 0.4485  (si 0.328, no 0.569)  ruido 22.9%  clusters 1,803  mayor 286
+  vertex nn=15 mcs=10 ms=1  leaf  calibra 0.4437  (si 0.262, no 0.625)  ruido 30.9%  clusters 2,023  mayor 131
+  vertex nn=15 mcs=10 ms=10 eom   calibra 0.4547  (si 0.341, no 0.569)  ruido 27.6%  clusters 1,216  mayor 432
+  vertex nn=15 mcs=10 ms=10 leaf  calibra 0.4490  (si 0.273, no 0.625)  ruido 37.5%  clusters 1,387  mayor 239
+  vertex nn=50 mcs=2  ms=1  eom   calibra 0.4604  (si 0.115, no 0.806)  ruido 28.6%  clusters 13,151  mayor 79
+  vertex nn=50 mcs=2  ms=1  leaf  calibra 0.4560  (si 0.062, no 0.850)  ruido 34.7%  clusters 15,077  mayor 18
+  vertex nn=50 mcs=2  ms=2  eom   calibra 0.4433  (si 0.237, no 0.650)  ruido 30.5%  clusters 4,720  mayor 398
+  vertex nn=50 mcs=2  ms=2  leaf  calibra 0.4567  (si 0.082, no 0.831)  ruido 52.3%  clusters 7,053  mayor 36
+  vertex nn=50 mcs=3  ms=1  eom   calibra 0.4511  (si 0.215, no 0.688)  ruido 28.3%  clusters 5,670  mayor 289
+  vertex nn=50 mcs=3  ms=1  leaf  calibra 0.4571  (si 0.095, no 0.819)  ruido 42.8%  clusters 7,559  mayor 31
+  vertex nn=50 mcs=3  ms=3  eom   calibra 0.4496  (si 0.281, no 0.619)  ruido 31.5%  clusters 2,518  mayor 469
+  vertex nn=50 mcs=3  ms=3  leaf  calibra 0.4704  (si 0.122, no 0.819)  ruido 53.8%  clusters 3,535  mayor 106
+  vertex nn=50 mcs=5  ms=1  eom   calibra 0.4484  (si 0.284, no 0.613)  ruido 27.7%  clusters 2,671  mayor 469
+  vertex nn=50 mcs=5  ms=1  leaf  calibra 0.4487  (si 0.141, no 0.756)  ruido 45.3%  clusters 3,555  mayor 69
+  vertex nn=50 mcs=5  ms=5  eom   calibra 0.4394  (si 0.310, no 0.569)  ruido 31.3%  clusters 1,418  mayor 439
+  vertex nn=50 mcs=5  ms=5  leaf  calibra 0.4517  (si 0.191, no 0.713)  ruido 49.8%  clusters 1,833  mayor 180
+  vertex nn=50 mcs=10 ms=1  eom   calibra 0.4455  (si 0.347, no 0.544)  ruido 27.1%  clusters 1,287  mayor 469
+  vertex nn=50 mcs=10 ms=1  leaf  calibra 0.4500  (si 0.238, no 0.662)  ruido 40.0%  clusters 1,548  mayor 180
+  vertex nn=50 mcs=10 ms=10 eom   calibra 0.4319  (si 0.326, no 0.537)  ruido 32.5%  clusters 808  mayor 448
+  vertex nn=50 mcs=10 ms=10 leaf  calibra 0.4589  (si 0.249, no 0.669)  ruido 44.7%  clusters 959  mayor 259
+ELEGIDO vertex: nn=15 mcs=2 ms=1 leaf (calibra 0.4883)
+
+PRUEBA (1,210 pares: si 1,049, no 161)
+  qwen      exactitud balanceada 0.5224  (si juntos 0.262, no separados 0.783)  ruido 39.1%  clusters 1,303  mayor 208  dispersion del sueldo 0.162
+  vertex    exactitud balanceada 0.4557  (si juntos 0.092, no separados 0.820)  ruido 30.4%  clusters 15,732  mayor 25  dispersion del sueldo 0.089
+  producto  exactitud balanceada 0.5655  (si juntos 0.187, no separados 0.944)  ruido 0.0%  clusters 58,051  mayor 135  dispersion del sueldo 0.000
+
+Qwen - Vertex (prueba): +0.0667 [+0.0239, +0.1083]  -> QWEN AGRUPA MEJOR
