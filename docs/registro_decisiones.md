@@ -8052,3 +8052,29 @@ entrenamiento y se consultan los cargos del otro 25 %. Las empresas apartadas de
 - **Criterio:**
   - **adoptar en la tesis** si es no inferior frente a Vertex (extremo < +0,001) y mejor que el placebo;
   - **«mejora»** si el IC frente a Vertex queda entero bajo cero.
+
+## T-006 — Híbrido inverso: Qwen reconoce el equivalente, Vertex elige los vecinos. Registrado antes de medir
+
+**Por qué** (autor, 2026-10-13: «probamos usarlo para el cargo equivalente pero que los vecinos se escojan con otra
+cosa»). T-001: Qwen con descripción reconoce mejor el equivalente (recall@10 22,2 % frente a 16,7 %). T-002 a T-004: los
+vecinos de Qwen mezclan niveles y empeoran la banda. En T-004 la analogía con el nivel en el texto cortó esa pérdida a la
+mitad; aquí se prueba el extremo: los vecinos de la analogía de Vertex, como en el producto.
+
+**Cambio** (`qwen_inverso`):
+
+- **Reconocer:** Qwen (índice Q-d, consulta Q-instr), como en T-002. Lo usan la zona candidata del juez (el cross-encoder
+  de D-048), la resolución de idioma y el clasificador de nivel.
+- **Analogía:** el índice y la consulta de **Vertex** (`base_v15`). Con él se eligen los vecinos, su similitud y `lambda`.
+- **Umbral del juez:** elegido por la partición interna con la rejilla de T-005 (0,70 a 0,82 y «sin juez»).
+- La escala `k` se reestima por la partición interna, como siempre.
+
+**Medición:** protocolo v2, frente a `nivel_v3` (Vertex).
+
+- **Placebo:** los vectores de **reconocimiento** de Qwen (Q-d y Q-instr, juntos) permutados entre títulos; la analogía
+  de Vertex queda igual. Usa el umbral elegido por la variante.
+- **Se reporta además** frente a T-004 y T-005, y la ruta analogía → directo.
+- **Criterio:**
+  - **adoptar en la tesis** si es no inferior frente a Vertex (extremo < +0,001) y mejor que el placebo;
+  - **«mejora»** si el IC frente a Vertex queda entero bajo cero.
+
+Si la partición interna elige «sin juez», Qwen solo actúa en el nivel y el idioma; se mide igual y se reporta así.
