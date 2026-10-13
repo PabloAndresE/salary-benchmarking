@@ -7888,6 +7888,7 @@ Se reportan el ancho y la cobertura de p25–p75 de la analogía, y el costo.
 
 - **Umbral del juez:** con Vertex, el 61,2 % de los títulos tiene un vecino de otro grupo ≥ 0,90. El equivalente en Qwen
   (Q-instr → Q-d) es **0,7041** (`t02_umbral.json`).
-- **Dimensiones:** los vectores de Qwen se recortan a **1.024** (Matryoshka) y se renormalizan. La búsqueda de T-001 se
-  mantiene: recall@10 de 22,1 % frente a 22,3 % con 4.096; MRR 0,100 en los dos. Construir la base en CPU con 4.096
-  dimensiones sería ~5× más lento.
+- **Dimensiones: las 4.096 completas.** Con un recorte Matryoshka a 1.024 la búsqueda de T-001 casi no cambiaba (recall@10
+  de 22,1 % frente a 22,3 %; MRR 0,100 en los dos), pero se midió que el costo de las 4.096 es despreciable (~0,3 min por
+  pasada de vecinos). Así se respeta la idea del tutor: construir con todas las dimensiones y reducir con UMAP recién en el
+  clustering (paso 3).

@@ -193,8 +193,8 @@ def una_variante(nom, clusters):
     if nom in ("qwen", "qwen_placebo"):   # T-002: indice = Qwen "titulo: descripcion"; consulta = titulo con instruccion
         b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
         tes = RAIZ / "research" / "tesis" / "salidas"
-        Qd = np.load(tes / "t01_emb_qwen_desc.npy").astype(np.float32)[:, :1024]
-        Qc = np.load(tes / "t02_emb_qwen_consulta.npy").astype(np.float32)[:, :1024]
+        Qd = np.load(tes / "t01_emb_qwen_desc.npy").astype(np.float32)          # 4.096 dimensiones, completas
+        Qc = np.load(tes / "t02_emb_qwen_consulta.npy").astype(np.float32)
         Qd /= np.linalg.norm(Qd, axis=1, keepdims=True)
         Qc /= np.linalg.norm(Qc, axis=1, keepdims=True)
         if nom == "qwen_placebo":                       # los dos vectores de un titulo, juntos, a otro titulo
