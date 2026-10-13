@@ -8284,3 +8284,14 @@ por la partición interna (rejilla de T-005), frente a **T-006**. Protocolo v2.
   «mejora» si el IC frente a T-006 queda entero bajo cero. Se reporta además frente a Vertex.
 - Si la partición interna vuelve a elegir «sin juez», se reporta así: el cross-encoder reentrenado no aporta a la
   banda, y la etapa 2 queda igual a T-006.
+
+**Enmienda a T-009, antes de entrenar (2026-10-13).** El primer etiquetado salió con solo 3,3 % de pares coherentes: el
+servidor de GLM de la Universidad **ahora razona siempre**, aunque se pida `enable_thinking: false` (también se probaron
+`thinking: disabled`, `reasoning_effort: none` e `include_reasoning: false`), y con el tope de 300 tokens de `53` se
+queda sin espacio para responder (`finish_reason: length`). No es un juicio de GLM; se descarta ese etiquetado.
+
+- **Se reetiqueta** con el modo «con razonamiento» de `51` (`pensar=True`, tope 4.000 tokens), la misma rúbrica v7.
+- **Control de régimen:** con ese mismo modo se reetiquetan **400 pares de `53`** (al azar entre los coherentes, semilla
+  fija). Si el acuerdo con las etiquetas de `53` (sin razonamiento) es **≥ 85 %** en los coherentes de los dos
+  regímenes, se mezclan como estaba previsto. Si no, se entrena **sin** los pares de `53` (plata de la v3 + candidatos de
+  Qwen) y se reporta así.

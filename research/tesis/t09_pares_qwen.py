@@ -114,6 +114,41 @@ def armar():
                                                                      (t["cos_vertex"] < 0.90).mean()))
 
 
+def correr(e51, filas, sis):
+    """Enmienda de T-009: el servidor razona siempre; se usa el modo con razonamiento de `51` (tope 4.000 tokens)."""
+    from concurrent.futures import ThreadPoolExecutor
+    url, nombre, _ = e51.API["glm-5.3-flash"]
+    with ThreadPoolExecutor(e51.CONCURRENCIA) as ex:
+        return list(ex.map(lambda f: e51.pedir_api(url, nombre, sis, f[2], f[3], pensar=True), filas))
+
+
+def control53(n=400):
+    """Enmienda de T-009: 400 pares coherentes de `53`, reetiquetados con razonamiento; acuerdo con `53`."""
+    sys.modules["vllm"] = None
+    e51 = cargar("e51", "51_etiquetador_local.py")
+    t = pd.read_parquet(E2 / "salidas" / "53_glm_v4.parquet")
+    t = t[t["coherente"]].sample(n, random_state=SEM).reset_index(drop=True)
+    sis, sha = e51.sistema()
+    filas = [(k, o, a, b) for k, (x, y) in enumerate(zip(t["a"], t["b"]))
+             for o, a, b in (("ab", x, y), ("ba", y, x))]
+    textos = correr(e51, filas, sis)
+    m = {}
+    for (k, o, a, b), s in zip(filas, textos):
+        try:
+            m[(k, o)] = json.loads(s)["mismo"]
+        except (ValueError, KeyError, TypeError):
+            m[(k, o)] = ""
+    t["nuevo_ab"] = [m[(k, "ab")] for k in range(len(t))]
+    t["nuevo_ba"] = [m[(k, "ba")] for k in range(len(t))]
+    coh = (t["nuevo_ab"] == t["nuevo_ba"]) & t["nuevo_ab"].isin(["si", "no"])
+    acuerdo = ((t.loc[coh, "nuevo_ab"] == "si").astype(float) == t.loc[coh, "etiqueta"]).mean()
+    t.to_parquet(SAL / "t09_control53.parquet", index=False)
+    linea = ("T-009 control de regimen: {} pares de `53`; coherentes con razonamiento {:.1%}; acuerdo con `53` en los "
+             "coherentes {:.1%} -> {}".format(n, coh.mean(), acuerdo, "SE MEZCLAN" if acuerdo >= 0.85 else "SIN `53`"))
+    (SAL / "t09_control53.txt").write_text(linea + "\n", encoding="utf-8")
+    print(linea)
+
+
 def etiquetar():
     sys.modules["vllm"] = None
     e51 = cargar("e51", "51_etiquetador_local.py")
@@ -122,7 +157,7 @@ def etiquetar():
     filas = [(k, o, a, b) for k, (x, y) in enumerate(zip(t["a"], t["b"]))
              for o, a, b in (("ab", x, y), ("ba", y, x))]
     t0 = time.time()
-    textos = e51.correr_api("glm-5.3-flash", filas, sis)
+    textos = correr(e51, filas, sis)
     out = []
     for (k, o, a, b), s in zip(filas, textos):
         try:
@@ -151,4 +186,4 @@ def etiquetar():
 
 
 if __name__ == "__main__":
-    etiquetar() if sys.argv[1:] == ["etiquetar"] else armar()
+    {"etiquetar": etiquetar, "control53": control53}.get((sys.argv[1:] or [""])[0], armar)()
