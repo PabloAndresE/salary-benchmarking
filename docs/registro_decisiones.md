@@ -7796,3 +7796,37 @@ Unión de 4.307 votos:
 | Variante − placebo | −0,00412 | [−0,00735, −0,00122] |
 
 El placebo usó `CALIDAD`. **Se adopta**: la API lo activa con `CANDADO_SEGURIDAD`.
+
+---
+
+# TESIS (rama `tesis`). Numeración T-, aparte de las decisiones del producto (D-)
+
+## T-001 — Búsqueda semántica: Qwen3-Embedding frente a Vertex. Registrado antes de medir
+
+**Por qué** (autor y tutor, 2026-10-13): pedido del tutor de usar embeddings de Qwen, con la descripción del cargo
+como contexto. Es el paso 1 del plan de tesis (búsqueda → RAG → UMAP + clustering → open set).
+
+**Pregunta:** ¿Qwen3-Embedding-8B trae más arriba el cargo equivalente correcto que Vertex (el embedding del producto)?
+
+**Conjunto de oro:**
+
+- **(a)** los pares de sinónimos aprobados por el autor (rondas 1 y 2, `sinonimos_v2`) cuyos dos títulos están en
+  grupos **distintos** de la base;
+- **(b)** los pares `si` de la validación a mano (`52_validacion_para_juzgar.csv`).
+
+Para cada par se hacen las dos direcciones: la consulta es un título y el acierto es cualquier título del grupo del
+otro. El grupo de la propia consulta se excluye de la búsqueda.
+
+**Sistemas:**
+
+| | Consulta | Documento |
+|---|---|---|
+| **V** | Vertex (los vectores de la base, como hoy) | título |
+| **Q-t** | Qwen3-Embedding-8B, título con instrucción | título |
+| **Q-d** | Qwen3-Embedding-8B, título con instrucción | **«título: descripción»** (descripciones de Gemini, `46_descripciones.csv`; sin descripción, solo el título) |
+
+**Medidas:** recall@1, recall@5, recall@10 y MRR. IC 95 % por bootstrap de pares (1.000 réplicas). Costo: tiempo
+para embeber la base, tiempo por consulta y memoria de GPU.
+
+**Criterio para pasar al paso 2** (base nueva y pinball): el mejor sistema Qwen supera a V en recall@10 por **≥ 5 puntos**,
+con el IC de la diferencia entero sobre cero. Si no, Qwen no reemplaza a Vertex en la búsqueda, y se reporta igual.
