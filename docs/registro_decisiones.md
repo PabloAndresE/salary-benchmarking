@@ -8106,3 +8106,35 @@ El extremo frente a Vertex pasa el margen: **no se adopta**. Frente a T-004, qui
 
 **Lectura:** la pérdida de reconocimiento desaparece. Lo que queda es la analogía con vecinos de Qwen (+20,5), que
 compensa casi del todo lo que se gana al no usar el juez. T-006 (vecinos de Vertex) prueba si esa parte se recupera.
+
+### T-006, resultado: **mejora** frente a Vertex; se adopta en la tesis (2026-10-13)
+
+**Umbral elegido por la partición interna: 0,82** (`t06_umbral.json`). Con él, el juez asigna 42 votos internos; el
+pinball interno es igual al de «sin juez» (0,12533). Como en T-005, el juez no aporta con candidatos de Qwen.
+
+Unión de 19.196 votos (1.117 empresas):
+
+| Comparación | Pinball | IC (dos vías) | Media por empresa |
+|---|---|---|---|
+| **T-006 − Vertex** | **−0,00196** | **[−0,00316, −0,00077]** | −0,00041 |
+| T-006 − placebo | −0,00280 | [−0,00418, −0,00158] | −0,00110 |
+| Placebo − Vertex | +0,00084 | [−0,00040, +0,00206] | |
+| T-006 − T-005 | −0,00230 | [−0,00456, +0,00000] | |
+
+**Cumple los dos criterios:** no inferior y **«mejora»** (IC entero bajo cero frente a Vertex y frente al placebo).
+**Se adopta en la tesis.** El producto v1 no cambia salvo decisión del autor.
+
+El placebo (Qwen permutado, con el mismo umbral y los vecinos de Vertex) queda a la par de Vertex: la ganancia no viene
+solo de apagar el juez, sino de la **información de Qwen** (nivel y reconocimiento).
+
+**Rutas frente a Vertex** (aporte al pinball):
+
+| Cambio de ruta | T-005 | T-006 |
+|---|---|---|
+| analogía → analogía | +20,5 | **−25,0** |
+| directo → analogía | −13,9 | −13,1 |
+| directo → directo | −0,1 | +0,4 |
+
+**Lectura:** cada embedding en la tarea que hace bien. Qwen con descripción **reconoce** (nivel del título 91 % frente a
+88 %; recall@10 22,2 % frente a 16,7 %) y Vertex sobre el título elige **vecinos de sueldo parecido**. La mejora es
+pequeña en tamaño (−0,002 por voto; −0,0004 en la media por empresa), pero significativa.
