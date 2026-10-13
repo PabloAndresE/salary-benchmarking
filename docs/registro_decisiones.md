@@ -8029,3 +8029,26 @@ Lo que queda viene sobre todo del **reconocimiento**: con Qwen, el juez asigna a
 con Vertex iban mejor por analogía. El umbral equivalente por proporción (método de D-057) parece demasiado permisivo
 en un espacio asimétrico. Siguiente hipótesis: el umbral del juez para Qwen, elegido por la partición interna y no por
 proporción.
+
+## T-005 — El umbral del juez para Qwen, elegido por la partición interna. Registrado antes de medir
+
+**Por qué:** T-004. Frente a Vertex, el híbrido pierde todavía +18,2 en la ruta **analogía → directo**: con Qwen, el juez
+asigna a un grupo títulos que con Vertex iban mejor por analogía. El umbral 0,7041 se trasladó desde Vertex por
+**proporción** (el mismo 61,2 % de títulos con un vecino sobre el umbral). En un espacio asimétrico (consulta con
+instrucción → documento con descripción), esa proporción no garantiza la misma calidad de los candidatos.
+
+**Cambio** (`qwen_umbral`): el híbrido de T-004, con el umbral del juez (`cos_juez`) elegido **por la partición interna
+del entrenamiento**, la misma de la escala `k` (D-051): la base se construye con el 75 % de las empresas de
+entrenamiento y se consultan los cargos del otro 25 %. Las empresas apartadas de la medición no se miran.
+
+- **Rejilla:** 0,70; 0,72; 0,74; 0,76; 0,78; 0,80; 0,82; y «sin juez» (umbral 1,01).
+- Para cada umbral se reestima `k` en esa partición y se calcula el pinball medio de los votos internos.
+- **Se elige el de menor pinball interno.** Con ese umbral se reestima `k` como siempre y se mide.
+
+**Medición:** protocolo v2, frente a `nivel_v3` (Vertex).
+
+- **Placebo:** el de T-004 (solo los vectores de la analogía, permutados entre títulos), con el umbral elegido.
+- **Se reporta además** frente a T-004 (el efecto del umbral solo) y la ruta analogía → directo.
+- **Criterio:**
+  - **adoptar en la tesis** si es no inferior frente a Vertex (extremo < +0,001) y mejor que el placebo;
+  - **«mejora»** si el IC frente a Vertex queda entero bajo cero.
