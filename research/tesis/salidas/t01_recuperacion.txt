@@ -1,0 +1,10 @@
+T-001 · BUSQUEDA: Qwen3-Embedding-8B frente a Vertex
+consultas 2,090 (1045 pares; {'sinonimos': 2024, 'validacion': 66}); titulos en el indice 65,181; con descripcion 56,702
+   V    r@1 3.3%  r@5 10.7%  r@10 16.7%  MRR 0.079
+   Q-t  r@1 3.0%  r@5 10.9%  r@10 18.5%  MRR 0.081
+   Q-d  r@1 4.1%  r@5 13.3%  r@10 22.2%  MRR 0.101
+   Q-t - V, recall@10: +1.8 pts [+0.4, +3.2]
+   Q-d - V, recall@10: +5.6 pts [+4.0, +7.0]
+   por fuente sinonimos  V r@10 17.1%  Q-t r@10 18.8%  Q-d r@10 22.7%
+   por fuente validacion V r@10 4.5%  Q-t r@10 10.6%  Q-d r@10 7.6%
+costo: embeber la base Q-t 62 s, Q-d 125 s; por consulta 1.8 ms; memoria GPU pico 22.0 GB; total 203 s

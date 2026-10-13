@@ -7830,3 +7830,31 @@ para embeber la base, tiempo por consulta y memoria de GPU.
 
 **Criterio para pasar al paso 2** (base nueva y pinball): el mejor sistema Qwen supera a V en recall@10 por **≥ 5 puntos**,
 con el IC de la diferencia entero sobre cero. Si no, Qwen no reemplaza a Vertex en la búsqueda, y se reporta igual.
+
+### T-001, resultado: cumple, se pasa al paso 2 (2026-10-13)
+
+2.090 consultas (1.045 pares: 1.012 de sinónimos y 33 de la validación a mano); índice de 65.181 títulos, 56.702 con
+descripción.
+
+| Sistema | r@1 | r@5 | r@10 | MRR |
+|---|---|---|---|---|
+| V (Vertex, título) | 3,3 % | 10,7 % | 16,7 % | 0,079 |
+| Q-t (Qwen, título) | 3,0 % | 10,9 % | 18,5 % | 0,081 |
+| **Q-d (Qwen, título + descripción)** | **4,1 %** | **13,3 %** | **22,2 %** | **0,101** |
+
+Diferencias en recall@10:
+
+- **Q-d − V = +5,6 puntos [+4,0, +7,0]: cumple** (≥ 5 puntos, IC entero sobre cero).
+- Q-t − V = +1,8 [+0,4, +3,2]: el modelo solo aporta poco; **la ganancia está en la descripción**.
+
+En la validación a mano (66 consultas), Q-t da 10,6 % y Q-d 7,6 %: es una muestra chica.
+
+**Nivel absoluto bajo, a propósito del oro:** los pares de sinónimos se aprobaron justamente porque la búsqueda no los
+encontraba (`CHOFER` / `CONDUCTOR` estaba en el puesto 1.312 de Vertex). Es el conjunto más difícil posible. La medida
+sirve para comparar sistemas, no como tasa de acierto del producto.
+
+**Costo:** embeber la base, 62 s (título) y 125 s (título + descripción) en 1 GPU H200; 1,8 ms por consulta; 22 GB de
+GPU. Es local y sin llamadas a Vertex.
+
+**Siguiente (paso 2):** base de tesis con los vectores Q-d (`demo/tesis_*.npz`), umbrales del juez recalibrados y pinball
+con placebo frente a la v1.
