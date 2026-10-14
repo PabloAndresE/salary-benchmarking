@@ -8327,3 +8327,21 @@ pares de `53` y 2.997 candidatos de Qwen, etiquetados por Qwen3.5-122B, coherent
 
 Lejos, la v3 estaba casi al azar (0,57) y la v9 mejora con significancia; cerca no empeora. Ninguno de esos 1.091
 pares entró al entrenamiento. Sigue la etapa 2 (pinball).
+
+### T-009, etapa 2: no se adopta para la banda; la v9 reconoce mejor, pero la banda no lo aprovecha (2026-10-14)
+
+**Umbral elegido por la partición interna: 0,82** (`t09_umbral.json`; pinball interno 0,12577, «sin juez» 0,12578). Con
+él, el cross-encoder asigna solo **81 votos** en las empresas apartadas (los mismos 81 que en T-006).
+
+| Comparación | Pinball | IC (dos vías) |
+|---|---|---|
+| v9 − T-006 (unión 16.713 votos) | +0,00077 | [−0,00062, **+0,00216**] → no cumple |
+| v9 − placebo | +0,00000 | [+0,00000, +0,00001] (la asignación casi no actúa) |
+| v9 − Vertex (unión 19.184) | −0,00130 | [−0,00263, +0,00015] → no inferior, sin «mejora» |
+
+Toda la diferencia con T-006 está en **analogía → analogía** (+12,8 en 16.711 votos): el cross-encoder también **filtra
+los vecinos de la analogía** (`juez_vecinos`), y con la v9 ese filtro es otro. No es significativa.
+
+**Lectura:** la v9 reconoce mucho mejor el «mismo cargo» lejano (etapa 1: AUC 0,57 → 0,73), pero eso **no mejora la
+banda**: con el nivel de Qwen (T-006), la analogía ya rinde al menos tanto como asignar el título a un grupo, y la
+partición interna elige casi no asignar. El valor de la v9 está en **reconocer** (sinónimos, open set), no en el sueldo.
