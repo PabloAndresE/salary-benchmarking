@@ -8349,3 +8349,42 @@ partición interna elige casi no asignar. El valor de la v9 está en **reconocer
 (Nota: el reetiquetado de los candidatos con GLM con razonamiento se detuvo a las 2 h 12 min sin terminar, por la carga
 del servidor compartido; ya no hacía falta tras la segunda enmienda. No hay etiquetas de GLM de los candidatos para
 reportar; queda el control de régimen, `t09_control53.txt`.)
+
+## T-010 — Open set: reconocer un cargo nuevo o decir «desconocido». Registrado antes de medir
+
+**Por qué** (autor: «open set ML: cuando viene un cargo que no exista, yo pueda meterlo»). Hoy, un título que no está en
+la base siempre recibe una banda (por el cross-encoder o por analogía), sin decir si se **reconoció** un cargo
+equivalente o si es un cargo **nuevo**. T-009 dejó un cross-encoder que reconoce bien lejos (AUC 0,57 → 0,73 en `52`).
+
+**Sistema propuesto (A):** para un título nuevo, Qwen (consulta Q-instr → documento Q-d) propone los 10 grupos más
+cercanos; se descartan los que bloquea un candado (nivel, seniority, compatibilidad: `43.bloqueado`); **tu cross-encoder
+reentrenado (T-009)** puntúa cada par; si el mejor llega a un umbral de P → **«reconocido»** (ese grupo), si no →
+**«desconocido»**.
+
+**Comparados (misma simulación):**
+
+- **B:** candidatos de Qwen + **tu cross-encoder del producto** (aísla el reentrenamiento).
+- **C:** candidatos de **Vertex** + tu cross-encoder del producto, con el umbral elegido igual que A.
+- **C fijo (el producto hoy):** Vertex con coseno ≥ 0,90 y P ≥ 0,5, sin ajustar nada.
+- **D:** solo el coseno de Qwen, sin cross-encoder (umbral de coseno).
+
+**Simulación** (`research/tesis/t10_open_set.py`). Oro de pares «mismo cargo» entre grupos distintos de `base_v31`
+que **ningún** cross-encoder vio al entrenarse: los sinónimos aprobados, los «sí» de `prueba` / `prueba 2` y los «sí» de
+`52`; se quitan los que aparezcan en la plata de la v3 o de T-009. Cada par (q, e) da dos consultas (q → e y e → q).
+
+- **Brazo «conocido»:** se saca de la base el grupo de la consulta. Acierto = «reconocido» **en el grupo de e**.
+- **Brazo «nuevo»:** se saca además el grupo de e y el de **todo** equivalente de q en el oro. Acierto = «desconocido».
+
+**Medida principal:** exactitud balanceada = promedio del acierto en los dos brazos. Las consultas se parten por par
+(semilla 20261014) en **calibra** (50 %, se elige el umbral de cada sistema: P ∈ {0,3; 0,5; 0,7; 0,8; 0,9; 0,95; 0,98},
+coseno de D en pasos de 0,02) y **prueba** (50 %, se compara). Se reportan también «reconocido en otro grupo» en el brazo
+conocido.
+
+**Criterio:** A − C fijo y A − B en prueba, con IC 95 % por bootstrap de pares (2.000 réplicas).
+
+- **«El open set mejora al producto»** si el IC de A − C fijo queda entero sobre cero.
+- **«El reentrenamiento ayuda a reconocer»** si además el IC de A − B queda entero sobre cero.
+
+**Límite declarado:** el oro está incompleto. En el brazo «nuevo», un cargo puede tener un equivalente real que el oro
+no registra, y «reconocerlo» cuenta como error. Por eso se audita una muestra de 200 «reconocidos» del brazo nuevo de A
+con Qwen3.5-122B (el etiquetador de T-009) y se reporta qué fracción era realmente el mismo cargo.
