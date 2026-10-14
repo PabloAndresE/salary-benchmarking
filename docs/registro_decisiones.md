@@ -8345,3 +8345,7 @@ los vecinos de la analogía** (`juez_vecinos`), y con la v9 ese filtro es otro. 
 **Lectura:** la v9 reconoce mucho mejor el «mismo cargo» lejano (etapa 1: AUC 0,57 → 0,73), pero eso **no mejora la
 banda**: con el nivel de Qwen (T-006), la analogía ya rinde al menos tanto como asignar el título a un grupo, y la
 partición interna elige casi no asignar. El valor de la v9 está en **reconocer** (sinónimos, open set), no en el sueldo.
+
+(Nota: el reetiquetado de los candidatos con GLM con razonamiento se detuvo a las 2 h 12 min sin terminar, por la carga
+del servidor compartido; ya no hacía falta tras la segunda enmienda. No hay etiquetas de GLM de los candidatos para
+reportar; queda el control de régimen, `t09_control53.txt`.)
