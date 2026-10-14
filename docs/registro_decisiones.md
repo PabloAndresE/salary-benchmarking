@@ -8388,3 +8388,20 @@ conocido.
 **Límite declarado:** el oro está incompleto. En el brazo «nuevo», un cargo puede tener un equivalente real que el oro
 no registra, y «reconocerlo» cuenta como error. Por eso se audita una muestra de 200 «reconocidos» del brazo nuevo de A
 con Qwen3.5-122B (el etiquetador de T-009) y se reporta qué fracción era realmente el mismo cargo.
+
+### T-010, resultado: la simulación registrada no es válida (2026-10-14)
+
+`t10_open_set.txt`: A y D eligen en calibra un umbral que **nunca** reconoce (exactitud balanceada 0,500 = «todo
+desconocido»); B, C y C fijo quedan en 0,14–0,17 porque «reconocen en otro grupo» el 70–74 % del brazo conocido. Las
+diferencias «A mejor» (+0,33) **no significan nada**. Dos fallas de diseño, vistas al revisar ejemplos:
+
+1. **El acierto por grupo exacto es demasiado estricto.** La base tiene 39.143 grupos para 65.181 títulos (1,67 por
+   grupo): hay muchos casi duplicados en grupos distintos. Lo que contaba como «otro grupo» casi siempre era un
+   equivalente correcto: `CONSERJE` → `CONSERJE SERV. GENERALES`; `AUXILIAR DE MOSTRADOR` → `AUX. MOSTRADOR`;
+   `AUXILIAR DE PLANTA` → `AYUDANTE PLANTA`.
+2. **El brazo «nuevo» no es nuevo:** al sacar el grupo del equivalente quedan sus casi duplicados en otros grupos.
+
+Además, la P de los cross-encoders se satura cerca de 0,98 (la del reentrenado no pasa de ~0,978), así que la rejilla
+de umbrales era gruesa justo donde importa.
+
+**No se saca conclusión de T-010.** Hace falta otro diseño, en que la verdad no dependa de la identidad de grupo (T-010b).

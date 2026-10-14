@@ -1,0 +1,20 @@
+T-010 · OPEN SET (reconocido / desconocido)
+pares de oro: 1,396 (calibra 698, prueba 698); consultas por brazo: 2,792
+
+Umbral elegido en calibra:
+  A: 0.98  (calibra 0.5000)
+  B: 0.98  (calibra 0.1590)
+  C: 0.98  (calibra 0.1565)
+  D: 0.86  (calibra 0.5000)
+
+PRUEBA (1,396 consultas por brazo)
+  A      exactitud balanceada 0.5000   conocido: reconocido bien 0.0%, en otro grupo 0.0%, desconocido 100.0%   nuevo: desconocido 100.0%
+  B      exactitud balanceada 0.1544   conocido: reconocido bien 6.7%, en otro grupo 70.9%, desconocido 22.4%   nuevo: desconocido 24.2%
+  C      exactitud balanceada 0.1415   conocido: reconocido bien 7.3%, en otro grupo 74.0%, desconocido 18.7%   nuevo: desconocido 21.0%
+  Cfijo  exactitud balanceada 0.1716   conocido: reconocido bien 11.5%, en otro grupo 69.8%, desconocido 18.6%   nuevo: desconocido 22.8%
+  D      exactitud balanceada 0.5000   conocido: reconocido bien 0.0%, en otro grupo 0.0%, desconocido 100.0%   nuevo: desconocido 100.0%
+
+A - Cfijo: +0.3284 [+0.3127, +0.3442]  -> A MEJOR
+A - B: +0.3456 [+0.3309, +0.3596]  -> A MEJOR
+A - C: +0.3585 [+0.3453, +0.3718]  -> A MEJOR
+A - D: +0.0000 [+0.0000, +0.0000]  -> no se distingue
