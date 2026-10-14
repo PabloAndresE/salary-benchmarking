@@ -94,30 +94,52 @@ def armar():
 
 
 def etiquetar():
+    """GLM sobre el pool. Guarda cada respuesta al llegar (`t10b_glm_cache.jsonl`) y retoma desde ahi; las fallas de
+    conexion no se guardan, para reintentarlas en la proxima corrida."""
     sys.modules["vllm"] = None
     e51 = cargar("e51", E2 / "51_etiquetador_local.py")
     p = pd.read_parquet(SAL / "t10b_pool.parquet")
     sis, sha = e51.sistema()
     url, nombre, _ = e51.API["glm-5.3-flash"]
-    filas = [(k, o, a, b) for k, (x, y) in enumerate(zip(p["q"], p["e"])) for o, a, b in (("ab", x, y), ("ba", y, x))]
+    cache_f = SAL / "t10b_glm_cache.jsonl"
+    hecho = {}
+    if cache_f.exists():
+        for linea in cache_f.read_text(encoding="utf-8").splitlines():
+            r = json.loads(linea)
+            hecho[(r["a"], r["b"])] = r["mismo"]
+    filas = [(a, b) for x, y in zip(p["q"], p["e"]) for a, b in ((x, y), (y, x)) if (a, b) not in hecho]
+    print("pendientes {:,} de {:,}".format(len(filas), 2 * len(p)), flush=True)
+    import threading
     from concurrent.futures import ThreadPoolExecutor
-    t0 = time.time()
-    with ThreadPoolExecutor(e51.CONCURRENCIA) as ex:          # el servidor razona siempre (enmienda de T-009)
-        textos = list(ex.map(lambda f: e51.pedir_api(url, nombre, sis, f[2], f[3], pensar=True), filas))
-    m = {}
-    for (k, o, a, b), s in zip(filas, textos):
+    candado, n, t0 = threading.Lock(), [0], time.time()
+
+    def uno(f):
+        s = e51.pedir_api(url, nombre, sis, f[0], f[1], pensar=True)   # el servidor razona siempre (T-009)
+        if str(s).startswith("ERROR"):
+            return
         try:
-            m[(k, o)] = json.loads(s)["mismo"]
+            mismo = json.loads(s)["mismo"]
         except (ValueError, KeyError, TypeError):
-            m[(k, o)] = ""
-    p["ab"] = [m[(k, "ab")] for k in range(len(p))]
-    p["ba"] = [m[(k, "ba")] for k in range(len(p))]
+            mismo = ""
+        with candado:
+            with open(cache_f, "a", encoding="utf-8") as fh:
+                fh.write(json.dumps({"a": f[0], "b": f[1], "mismo": mismo}, ensure_ascii=False) + "\n")
+            hecho[f] = mismo
+            n[0] += 1
+            if n[0] % 500 == 0:
+                print("{:,} en {:.0f} min".format(n[0], (time.time() - t0) / 60), flush=True)
+    with ThreadPoolExecutor(e51.CONCURRENCIA) as ex:
+        list(ex.map(uno, filas))
+    falta = sum(1 for x, y in zip(p["q"], p["e"]) for k in ((x, y), (y, x)) if k not in hecho)
+    if falta:
+        raise SystemExit("faltan {:,} respuestas (servidor caido?): volver a correr para retomar".format(falta))
+    p["ab"] = [hecho[(x, y)] for x, y in zip(p["q"], p["e"])]
+    p["ba"] = [hecho[(y, x)] for x, y in zip(p["q"], p["e"])]
     p["coherente"] = (p["ab"] == p["ba"]) & p["ab"].isin(["si", "no"])
     p["si"] = np.where(p["coherente"], (p["ab"] == "si").astype(float), np.nan)
     p["rubrica_sha"] = sha
     p.to_parquet(SAL / "t10b_glm.parquet", index=False)
-    print("{:,} pares en {:.0f} min; coherentes {:.1%}; si {:.0%}".format(
-        len(p), (time.time() - t0) / 60, p["coherente"].mean(), p["si"].mean()))
+    print("{:,} pares; coherentes {:.1%}; si {:.0%}".format(len(p), p["coherente"].mean(), p["si"].mean()))
 
 
 def medir():
