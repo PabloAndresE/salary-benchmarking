@@ -8405,3 +8405,34 @@ Además, la P de los cross-encoders se satura cerca de 0,98 (la del reentrenado 
 de umbrales era gruesa justo donde importa.
 
 **No se saca conclusión de T-010.** Hace falta otro diseño, en que la verdad no dependa de la identidad de grupo (T-010b).
+
+## T-010b — Open set con la verdad juzgada par a par por GLM. Registrado antes de medir
+
+**Por qué:** T-010 no fue válido (la verdad dependía del grupo exacto). **Decisión del autor:** la verdad la pone GLM
+(rúbrica v7, modo con razonamiento por el cambio del servidor; coherente en los dos órdenes). GLM no participó en el
+entrenamiento de ningún cross-encoder (el del producto: Gemini; el reentrenado: Qwen3.5-122B), así que no favorece a
+ninguno. Acuerdo de GLM con el autor en `52`: 71 %.
+
+**Consultas:** 1.000 títulos de `base_v31` al azar (semilla 20261014) que son cargos (tienen descripción), que no
+aparecen en ningún par de entrenamiento (plata de la v3 ni de T-009) ni en `prueba` / `prueba 2`. Para cada uno se saca
+de la base **su propio grupo** (el título llega como nuevo).
+
+**Sistemas** (los de T-010): A (Qwen + cross-encoder reentrenado), B (Qwen + cross-encoder del producto), C (Vertex +
+cross-encoder del producto), C fijo (el producto hoy: Vertex coseno ≥ 0,90 y P ≥ 0,5) y D (solo coseno de Qwen). Cada
+uno elige su mejor candidato (10 grupos, sin los bloqueados por candado) y su puntaje.
+
+**Verdad (pool, como en TREC):** GLM juzga, para cada consulta, el candidato elegido por cada sistema y los 3 primeros
+de Qwen y de Vertex (sin repetir).
+
+- Consulta **«con equivalente»** si algún par del pool es «sí» coherente; **«nueva»** si todos son «no» coherentes; si
+  no, queda fuera.
+- **Acierto:** con equivalente → reconoce **y** su elegido es «sí»; nueva → «desconocido». Si el elegido de un sistema
+  quedó incoherente, esa consulta sale de ese sistema (se reporta cuántas).
+
+**Medida:** exactitud balanceada (promedio de los dos tipos). Umbral de cada sistema elegido en **calibra** (50 % de las
+consultas) con rejillas finas (P ∈ {0,5; 0,8; 0,9; 0,93; 0,95; 0,96; 0,97; 0,975; 0,98; 0,985; 0,99}; coseno de 0,60 a
+0,94 en pasos de 0,02); comparación en **prueba**, IC por bootstrap de consultas (2.000).
+
+**Criterio:** el de T-010 (A − C fijo para «mejora al producto»; A − B para «el reentrenamiento ayuda»).
+
+**Límite declarado:** el «con equivalente» sale del pool: un equivalente que ningún sistema propone no se ve.
