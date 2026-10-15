@@ -1,0 +1,21 @@
+T-010b · OPEN SET con la verdad de GLM (pool)
+consultas: 81 con clase ({'con equivalente': 81}); calibra 44, prueba 37
+pool: 579 pares; GLM coherente 77.4%
+
+Umbral elegido en calibra:
+  A: 0.5  (calibra nan)
+  B: 0.5  (calibra nan)
+  C: 0.5  (calibra nan)
+  D: 0.6  (calibra nan)
+
+PRUEBA (37 con equivalente, 0 nuevas)
+  A      exactitud balanceada nan   con equivalente: reconoce bien 97.3%, reconoce mal 0.0%, desconocido 2.7%   nuevas: desconocido nan%   (fuera por incoherente 0)
+  B      exactitud balanceada nan   con equivalente: reconoce bien 94.1%, reconoce mal 5.4%, desconocido 0.0%   nuevas: desconocido nan%   (fuera por incoherente 3)
+  C      exactitud balanceada nan   con equivalente: reconoce bien 93.8%, reconoce mal 5.4%, desconocido 0.0%   nuevas: desconocido nan%   (fuera por incoherente 5)
+  Cfijo  exactitud balanceada nan   con equivalente: reconoce bien 51.5%, reconoce mal 2.7%, desconocido 40.5%   nuevas: desconocido nan%   (fuera por incoherente 4)
+  D      exactitud balanceada nan   con equivalente: reconoce bien 83.3%, reconoce mal 10.8%, desconocido 2.7%   nuevas: desconocido nan%   (fuera por incoherente 7)
+
+A - Cfijo: +nan [+nan, +nan]  -> no se distingue
+A - B: +nan [+nan, +nan]  -> no se distingue
+A - C: +nan [+nan, +nan]  -> no se distingue
+A - D: +nan [+nan, +nan]  -> no se distingue

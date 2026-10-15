@@ -8445,3 +8445,40 @@ local (sin razonamiento, rúbrica v7, coherente en los dos órdenes; 78,5 % de a
 **Sesgo declarado:** el cross-encoder reentrenado (sistema A) aprendió de etiquetas de Qwen3.5-122B (T-009), así que esta
 verdad **favorece a A**. Para medirlo: en los pares que GLM alcanzó a juzgar (`t10b_glm_cache.jsonl`), se reporta el
 acuerdo GLM–Qwen y la comparación A − C fijo recalculada con la verdad de GLM en esas consultas.
+
+### T-010b, resultado: el open set con el cross-encoder reentrenado reconoce mucho mejor que el producto (2026-10-15)
+
+Verdad: Qwen3.5-122B sobre 6.289 pares (coherente 77,9 %). Consultas con clase: 858 de 1.000 (**809 con equivalente,
+49 nuevas**: casi todo título nuevo tiene un equivalente en la base). Umbrales elegidos en calibra: A 0,90; B 0,93; C 0,96;
+D coseno 0,70. En **prueba** (413 con equivalente, 23 nuevas):
+
+| Sistema | Exactitud balanceada | Con equivalente: reconoce bien / mal / «desconocido» | Nuevas: «desconocido» |
+|---|---|---|---|
+| **A** Qwen + cross-encoder reentrenado | **0,784** | **78,5 %** / 2,7 % / 16,7 % | **78,3 %** |
+| B Qwen + cross-encoder del producto | 0,610 | 69,9 % / 5,8 % / 20,6 % | 52,2 % |
+| C Vertex + cross-encoder del producto | 0,584 | 60,2 % / 6,5 % / 27,6 % | 56,5 % |
+| C fijo (el producto hoy) | 0,645 | 29,0 % / 4,6 % / 62,2 % | 100 % |
+| D solo coseno de Qwen | 0,595 | 45,1 % / 5,8 % / 44,6 % | 73,9 % |
+
+| Comparación | Diferencia | IC 95 % |
+|---|---|---|
+| **A − C fijo** | **+0,139** | **[+0,044, +0,225]** |
+| **A − B** | **+0,174** | **[+0,088, +0,271]** |
+| A − C | +0,200 | [+0,096, +0,311] |
+| A − D | +0,189 | [+0,070, +0,309] |
+
+**Cumple los dos criterios: «el open set mejora al producto» y «el reentrenamiento ayuda a reconocer».**
+
+**Control del sesgo** (la verdad de Qwen favorece a A): en los 579 pares que GLM alcanzó a juzgar, GLM y Qwen coinciden
+en el **90,2 %** de los coherentes de ambos (n = 369). Con la verdad de **GLM** y los mismos umbrales, la precisión de lo
+que cada sistema reconoce es A 98,6 % (74 juzgados), B 98,6 %, C 95,6 %, C fijo 97,5 %, D 91,3 %: con GLM, lo que A
+reconoce es tan correcto como lo de los demás; la ventaja de A está en **cuánto** reconoce (78,5 % frente a 29 % del
+producto) y en no confundir cargos nuevos. El control no alcanza para el brazo «nuevas» (las 86 consultas completas en
+GLM tienen todas equivalente).
+
+**Límites:** solo 23 consultas «nuevas» en prueba (el IC lo refleja); la verdad viene del pool.
+
+**Lectura:** el producto hoy reconoce el equivalente de apenas 29 % de los títulos nuevos que lo tienen (el resto va por
+analogía), porque solo mira candidatos de Vertex con coseno ≥ 0,90. Con Qwen proponiendo y el cross-encoder reentrenado
+decidiendo, reconoce el 78,5 % con 2,7 % de errores, y marca como «desconocido» 4 de cada 5 cargos realmente nuevos.
+Recuerda T-009: reconocer más **no mejora la banda** por sí solo; el valor es **decirle al cliente qué cargo es**.

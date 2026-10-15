@@ -204,10 +204,10 @@ def medir(fuente="t10b_qwen.parquet", solo_consultas=None, sufijo=""):
         return 0.5 * (np.nanmean(ok[con]) + np.nanmean(ok[~con]))
 
     tc, tp = t[t["parte"] == "calibra"].reset_index(drop=True), t[t["parte"] == "prueba"].reset_index(drop=True)
-    out = ["T-010b · OPEN SET con la verdad de GLM (pool)",
+    out = ["T-010b · OPEN SET con la verdad par a par (pool; fuente: " + (fuente if isinstance(fuente, str) else "GLM, control") + ")",
            "consultas: {:,} con clase ({}); calibra {:,}, prueba {:,}".format(
                len(t), t["clase"].value_counts().to_dict(), len(tc), len(tp)),
-           "pool: {:,} pares; GLM coherente {:.1%}".format(len(g), g["coherente"].mean()), "",
+           "pool: {:,} pares; juez coherente {:.1%}".format(len(g), g["coherente"].mean()), "",
            "Umbral elegido en calibra:"]
     umb = {"Cfijo": 0.5}
     for s, grilla in (("A", UMBRALES_P), ("B", UMBRALES_P), ("C", UMBRALES_P), ("D", UMBRALES_COS)):

@@ -1,0 +1,21 @@
+T-010b · OPEN SET con la verdad par a par (pool; fuente: t10b_qwen.parquet)
+consultas: 858 con clase ({'con equivalente': 809, 'nueva': 49}); calibra 422, prueba 436
+pool: 6,289 pares; juez coherente 77.9%
+
+Umbral elegido en calibra:
+  A: 0.9  (calibra 0.8312)
+  B: 0.93  (calibra 0.7658)
+  C: 0.96  (calibra 0.6768)
+  D: 0.7  (calibra 0.5964)
+
+PRUEBA (413 con equivalente, 23 nuevas)
+  A      exactitud balanceada 0.7838   con equivalente: reconoce bien 78.5%, reconoce mal 2.7%, desconocido 16.7%   nuevas: desconocido 78.3%   (fuera por incoherente 41)
+  B      exactitud balanceada 0.6103   con equivalente: reconoce bien 69.9%, reconoce mal 5.8%, desconocido 20.6%   nuevas: desconocido 52.2%   (fuera por incoherente 51)
+  C      exactitud balanceada 0.5835   con equivalente: reconoce bien 60.2%, reconoce mal 6.5%, desconocido 27.6%   nuevas: desconocido 56.5%   (fuera por incoherente 59)
+  Cfijo  exactitud balanceada 0.6452   con equivalente: reconoce bien 29.0%, reconoce mal 4.6%, desconocido 62.2%   nuevas: desconocido 100.0%   (fuera por incoherente 24)
+  D      exactitud balanceada 0.5952   con equivalente: reconoce bien 45.1%, reconoce mal 5.8%, desconocido 44.6%   nuevas: desconocido 73.9%   (fuera por incoherente 34)
+
+A - Cfijo: +0.1385 [+0.0444, +0.2250]  -> A MEJOR
+A - B: +0.1735 [+0.0883, +0.2705]  -> A MEJOR
+A - C: +0.2003 [+0.0963, +0.3109]  -> A MEJOR
+A - D: +0.1886 [+0.0696, +0.3090]  -> A MEJOR
