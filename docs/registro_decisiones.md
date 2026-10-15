@@ -8492,3 +8492,8 @@ a 2. Desde aquí se pide `reasoning_effort: low` y se guarda en cada respuesta s
 **Control de régimen** (criterio fijado antes): 150 pares con los dos órdenes ya respondidos en `max` se reetiquetan en
 `low`. Si el acuerdo en los coherentes de ambos regímenes es **≥ 90 %**, se mezclan. Si no, las respuestas en `max` se
 reetiquetan en `low` para tener un solo régimen.
+
+**Cierre del control con GLM de T-010b (2026-10-15, decisión del autor):** se detuvo el etiquetado con GLM (2.807 de
+12.578 respuestas, en `max`; el control `low` no llegó a terminar). **T-010b queda con la verdad de Qwen3.5-122B**, y como
+control del sesgo, lo ya reportado: acuerdo GLM–Qwen 90,2 % (n = 369) y precisión de lo reconocido con la verdad de GLM
+(A 98,6 %, igual que B).
