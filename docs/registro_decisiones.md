@@ -8436,3 +8436,12 @@ consultas) con rejillas finas (P ∈ {0,5; 0,8; 0,9; 0,93; 0,95; 0,96; 0,97; 0,9
 **Criterio:** el de T-010 (A − C fijo para «mejora al producto»; A − B para «el reentrenamiento ayuda»).
 
 **Límite declarado:** el «con equivalente» sale del pool: un equivalente que ningún sistema propone no se ve.
+
+**Enmienda a T-010b, antes de medir (2026-10-15): la verdad la pone Qwen3.5-122B (decisión del autor).** El servidor GLM
+estuvo caído ~18 h y al volver (reiniciado el 15/10, con `enable_thinking: true` por defecto) genera ~170 tokens/s en
+total: 1.039 de 12.578 respuestas en 3 h 10 min (~40 h para terminar). Se detiene. La verdad pasa a **Qwen3.5-122B**
+local (sin razonamiento, rúbrica v7, coherente en los dos órdenes; 78,5 % de acuerdo con el autor en `52`).
+
+**Sesgo declarado:** el cross-encoder reentrenado (sistema A) aprendió de etiquetas de Qwen3.5-122B (T-009), así que esta
+verdad **favorece a A**. Para medirlo: en los pares que GLM alcanzó a juzgar (`t10b_glm_cache.jsonl`), se reporta el
+acuerdo GLM–Qwen y la comparación A − C fijo recalculada con la verdad de GLM en esas consultas.

@@ -142,9 +142,46 @@ def etiquetar():
     print("{:,} pares; coherentes {:.1%}; si {:.0%}".format(len(p), p["coherente"].mean(), p["si"].mean()))
 
 
-def medir():
+def etiquetar_qwen():
+    """Enmienda de T-010b: la verdad con Qwen3.5-122B local (vLLM, sin razonamiento, rubrica v7).
+    CUDA_VISIBLE_DEVICES=1,3 /root/salary-benchmarking/.venv-llm/bin/python t10b_open_set.py etiquetar_qwen"""
+    import os
+    os.environ.setdefault("VLLM_USE_DEEP_GEMM", "0")
+    os.environ.setdefault("VLLM_ALLREDUCE_USE_FLASHINFER", "0")
+    os.environ.setdefault("VLLM_USE_FLASHINFER_SAMPLER", "0")
+    os.environ["PATH"] = str(pathlib.Path(sys.executable).parent) + os.pathsep + os.environ["PATH"]
+    e51 = cargar("e51", E2 / "51_etiquetador_local.py")
+    from vllm import LLM, SamplingParams
+    from vllm.sampling_params import StructuredOutputsParams
+    p = pd.read_parquet(SAL / "t10b_pool.parquet")
+    sis, sha = e51.sistema()
+    llm = LLM(model=str(RAIZ / "modelos" / "qwen35-122b-a10b-fp8"), tensor_parallel_size=2, max_model_len=8192,
+              gpu_memory_utilization=0.85, seed=20261005,
+              compilation_config={"pass_config": {"fuse_allreduce_rms": False}}, gdn_prefill_backend="triton")
+    sp = SamplingParams(temperature=0.0, max_tokens=300, seed=20261005,
+                        structured_outputs=StructuredOutputsParams(json=e51.ESQUEMA))
+    filas = [(a, b) for x, y in zip(p["q"], p["e"]) for a, b in ((x, y), (y, x))]
+    sal = llm.chat([[{"role": "system", "content": sis}, {"role": "user", "content": "A: {}\nB: {}".format(a, b)}]
+                    for a, b in filas], sp, chat_template_kwargs={"enable_thinking": False})
+    r = []
+    for s_ in sal:
+        try:
+            r.append(json.loads(s_.outputs[0].text)["mismo"])
+        except (ValueError, KeyError, TypeError):
+            r.append("")
+    p["ab"], p["ba"] = r[0::2], r[1::2]
+    p["coherente"] = (p["ab"] == p["ba"]) & p["ab"].isin(["si", "no"])
+    p["si"] = np.where(p["coherente"], (p["ab"] == "si").astype(float), np.nan)
+    p["rubrica_sha"], p["juez"] = sha, "Qwen3.5-122B"
+    p.to_parquet(SAL / "t10b_qwen.parquet", index=False)
+    print("{:,} pares; coherentes {:.1%}; si {:.0%}".format(len(p), p["coherente"].mean(), p["si"].mean()))
+
+
+def medir(fuente="t10b_qwen.parquet", solo_consultas=None, sufijo=""):
     t = pd.read_parquet(SAL / "t10b_decisiones.parquet")
-    g = pd.read_parquet(SAL / "t10b_glm.parquet")
+    if solo_consultas is not None:
+        t = t[t["q"].isin(solo_consultas)]
+    g = pd.read_parquet(SAL / fuente) if isinstance(fuente, str) else fuente
     juicio = {(a, b): s for a, b, s in zip(g["q"], g["e"], g["si"])}
     pool = g.groupby("q").agg(alguno=("si", lambda s: bool((s == 1).any())),
                               todos_no=("si", lambda s: bool((s == 0).all())))
@@ -200,9 +237,33 @@ def medir():
         lo, hi = np.nanpercentile(bs, [2.5, 97.5])
         out.append("{} - {}: {:+.4f} [{:+.4f}, {:+.4f}]  -> {}".format(
             x, y, d0, lo, hi, "A MEJOR" if lo > 0 else ("A PEOR" if hi < 0 else "no se distingue")))
-    (SAL / "t10b_open_set.txt").write_text("\n".join(out) + "\n", encoding="utf-8")
+    (SAL / "t10b_open_set{}.txt".format(sufijo)).write_text("\n".join(out) + "\n", encoding="utf-8")
     print("\n".join(out))
 
 
+def control_glm():
+    """Sesgo de la verdad de Qwen: acuerdo con GLM en los pares que GLM alcanzo a juzgar, y la comparacion con la verdad
+    de GLM solo en las consultas cuyo pool GLM juzgo completo."""
+    q = pd.read_parquet(SAL / "t10b_qwen.parquet")
+    h = {}
+    for linea in (SAL / "t10b_glm_cache.jsonl").read_text(encoding="utf-8").splitlines():
+        r = json.loads(linea)
+        h[(r["a"], r["b"])] = r["mismo"]
+    q["g_ab"] = [h.get((x, y)) for x, y in zip(q["q"], q["e"])]
+    q["g_ba"] = [h.get((y, x)) for x, y in zip(q["q"], q["e"])]
+    ambos = q["g_ab"].notna() & q["g_ba"].notna()
+    g = q[ambos].copy()
+    g["coherente"] = (g["g_ab"] == g["g_ba"]) & g["g_ab"].isin(["si", "no"])
+    g["si_glm"] = np.where(g["coherente"], (g["g_ab"] == "si").astype(float), np.nan)
+    m = g["coherente"] & q.loc[ambos, "coherente"]
+    acu = (g.loc[m, "si_glm"] == g.loc[m, "si"]).mean()
+    completas = set(q.groupby("q").filter(lambda d: ambos[d.index].all())["q"])
+    print("pares con GLM en los dos ordenes: {:,}; acuerdo GLM-Qwen en los coherentes de ambos: {:.1%} (n={:,}); "
+          "consultas con el pool completo en GLM: {:,}".format(int(ambos.sum()), acu, int(m.sum()), len(completas)))
+    v = g.assign(si=g["si_glm"], coherente=g["coherente"])[["q", "e", "si", "coherente"]]
+    medir(v, completas, "_control_glm")
+
+
 if __name__ == "__main__":
-    {"armar": armar, "etiquetar": etiquetar, "medir": medir}[sys.argv[1]]()
+    {"armar": armar, "etiquetar": etiquetar, "etiquetar_qwen": etiquetar_qwen, "medir": medir,
+     "control_glm": control_glm}[sys.argv[1]]()
