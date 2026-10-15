@@ -21,6 +21,7 @@ E2 = RAIZ / "research/experimentos/e2_nivel"
 SAL = AQUI / "salidas"
 SEM = 20261014
 N_CONSULTAS = 1000
+CONCURRENCIA_GLM = 4    # autor, 2026-10-15: 4 peticiones a la vez para no acaparar el servidor compartido
 SISTEMAS = ("A", "B", "C", "Cfijo", "D")
 UMBRALES_P = (0.5, 0.8, 0.9, 0.93, 0.95, 0.96, 0.97, 0.975, 0.98, 0.985, 0.99)
 UMBRALES_COS = tuple(np.round(np.arange(0.60, 0.95, 0.02), 2))
@@ -128,7 +129,7 @@ def etiquetar():
             n[0] += 1
             if n[0] % 500 == 0:
                 print("{:,} en {:.0f} min".format(n[0], (time.time() - t0) / 60), flush=True)
-    with ThreadPoolExecutor(e51.CONCURRENCIA) as ex:
+    with ThreadPoolExecutor(CONCURRENCIA_GLM) as ex:
         list(ex.map(uno, filas))
     falta = sum(1 for x, y in zip(p["q"], p["e"]) for k in ((x, y), (y, x)) if k not in hecho)
     if falta:
