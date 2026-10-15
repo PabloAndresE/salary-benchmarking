@@ -8482,3 +8482,13 @@ GLM tienen todas equivalente).
 analogía), porque solo mira candidatos de Vertex con coseno ≥ 0,90. Con Qwen proponiendo y el cross-encoder reentrenado
 decidiendo, reconoce el 78,5 % con 2,7 % de errores, y marca como «desconocido» 4 de cada 5 cargos realmente nuevos.
 Recuerda T-009: reconocer más **no mejora la banda** por sí solo; el valor es **decirle al cliente qué cargo es**.
+
+**Segunda enmienda al etiquetado de control con GLM de T-010b (2026-10-15): `reasoning_effort: low` (decisión del
+autor).** La plantilla de GLM-5.3-Flash no permite apagar el razonamiento (ninguna de las 5 versiones en caché tiene
+`enable_thinking`; todas abren `<think>`), y por defecto razona en `max`: ~2.000 tokens generados por respuesta, frente a
+~60 del 7 de octubre (`53`). Ya hay 2.807 respuestas en `max`. A pedido del autor, la concurrencia bajó de 8 a 4 y luego
+a 2. Desde aquí se pide `reasoning_effort: low` y se guarda en cada respuesta su régimen y sus tokens.
+
+**Control de régimen** (criterio fijado antes): 150 pares con los dos órdenes ya respondidos en `max` se reetiquetan en
+`low`. Si el acuerdo en los coherentes de ambos regímenes es **≥ 90 %**, se mezclan. Si no, las respuestas en `max` se
+reetiquetan en `low` para tener un solo régimen.

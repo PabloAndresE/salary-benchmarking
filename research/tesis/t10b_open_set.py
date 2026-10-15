@@ -21,6 +21,7 @@ E2 = RAIZ / "research/experimentos/e2_nivel"
 SAL = AQUI / "salidas"
 SEM = 20261014
 N_CONSULTAS = 1000
+ESFUERZO_GLM = "low"    # autor, 2026-10-15 (segunda enmienda del control con GLM)
 CONCURRENCIA_GLM = 2    # autor, 2026-10-15: 2 peticiones a la vez para no acaparar el servidor compartido
 SISTEMAS = ("A", "B", "C", "Cfijo", "D")
 UMBRALES_P = (0.5, 0.8, 0.9, 0.93, 0.95, 0.96, 0.97, 0.975, 0.98, 0.985, 0.99)
@@ -94,6 +95,65 @@ def armar():
     print("consultas {:,}; pares en el pool {:,}".format(len(out), len(pool)))
 
 
+def pedir_glm(e51, sis, a, b, esfuerzo=ESFUERZO_GLM, intentos=5):
+    """Una consulta a GLM con `reasoning_effort` (la plantilla no permite apagar el razonamiento). Devuelve
+    (texto, tokens de entrada, tokens generados, tokens de razonamiento) o None si falla la conexion."""
+    import urllib.request
+    url, nombre, _ = e51.API["glm-5.3-flash"]
+    cuerpo = {"model": nombre, "temperature": 0, "max_tokens": 4000, "seed": 20261005,
+              "messages": [{"role": "system", "content": sis}, {"role": "user", "content": "A: {}\nB: {}".format(a, b)}],
+              "response_format": {"type": "json_schema", "json_schema": {"name": "veredicto", "schema": e51.ESQUEMA}},
+              "chat_template_kwargs": {"reasoning_effort": esfuerzo}}
+    for k in range(intentos):
+        try:
+            r = json.load(urllib.request.urlopen(urllib.request.Request(
+                url, data=json.dumps(cuerpo).encode(), headers={"Content-Type": "application/json"}), timeout=600))
+            u = r.get("usage") or {}
+            return (r["choices"][0]["message"]["content"], u.get("prompt_tokens"), u.get("completion_tokens"),
+                    (u.get("completion_tokens_details") or {}).get("reasoning_tokens"))
+        except Exception:                                   # noqa: BLE001 - se reintenta
+            time.sleep(2 * (k + 1))
+    return None
+
+
+def control_low(n=150):
+    """Segunda enmienda: 150 pares ya respondidos en `max` (los dos ordenes), reetiquetados en `low`."""
+    sys.modules["vllm"] = None
+    e51 = cargar("e51", E2 / "51_etiquetador_local.py")
+    sis, _ = e51.sistema()
+    h = {}
+    for linea in (SAL / "t10b_glm_cache.jsonl").read_text(encoding="utf-8").splitlines():
+        r = json.loads(linea)
+        if r.get("regimen", "max") == "max":
+            h[(r["a"], r["b"])] = r["mismo"]
+    p = pd.read_parquet(SAL / "t10b_pool.parquet")
+    p = p[[(x, y) in h and (y, x) in h for x, y in zip(p["q"], p["e"])]].sample(n, random_state=SEM)
+    filas = [(a, b) for x, y in zip(p["q"], p["e"]) for a, b in ((x, y), (y, x))]
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(CONCURRENCIA_GLM) as ex:
+        res = list(ex.map(lambda f: pedir_glm(e51, sis, f[0], f[1]), filas))
+    low = {}
+    tok = []
+    for f, r in zip(filas, res):
+        if r is None:
+            continue
+        try:
+            low[f] = json.loads(r[0])["mismo"]
+        except (ValueError, KeyError, TypeError):
+            low[f] = ""
+        tok.append(r[1:])
+    coh = lambda d, x, y: d.get((x, y)) == d.get((y, x)) and d.get((x, y)) in ("si", "no")  # noqa: E731
+    ambos = [(x, y) for x, y in zip(p["q"], p["e"]) if coh(h, x, y) and coh(low, x, y)]
+    acu = np.mean([h[k] == low[k] for k in ambos]) if ambos else float("nan")
+    t = np.array([x for x in tok if None not in x], dtype=float)
+    linea = ("T-010b control low vs max: {} pares; coherentes en low {:.0%}; acuerdo en los coherentes de ambos {:.1%} "
+             "(n={}) -> {}. Tokens por respuesta en low: entrada {:.0f}, generados {:.0f} (razonamiento {:.0f})").format(
+        n, np.mean([coh(low, x, y) for x, y in zip(p["q"], p["e"])]), acu, len(ambos),
+        "SE MEZCLAN" if acu >= 0.90 else "REETIQUETAR LOS DE MAX", *t.mean(axis=0))
+    (SAL / "t10b_control_low.txt").write_text(linea + "\n", encoding="utf-8")
+    print(linea, flush=True)
+
+
 def etiquetar():
     """GLM sobre el pool. Guarda cada respuesta al llegar (`t10b_glm_cache.jsonl`) y retoma desde ahi; las fallas de
     conexion no se guardan, para reintentarlas en la proxima corrida."""
@@ -115,16 +175,18 @@ def etiquetar():
     candado, n, t0 = threading.Lock(), [0], time.time()
 
     def uno(f):
-        s = e51.pedir_api(url, nombre, sis, f[0], f[1], pensar=True)   # el servidor razona siempre (T-009)
-        if str(s).startswith("ERROR"):
+        r = pedir_glm(e51, sis, f[0], f[1])            # segunda enmienda: reasoning_effort low
+        if r is None:
             return
         try:
-            mismo = json.loads(s)["mismo"]
+            mismo = json.loads(r[0])["mismo"]
         except (ValueError, KeyError, TypeError):
             mismo = ""
         with candado:
             with open(cache_f, "a", encoding="utf-8") as fh:
-                fh.write(json.dumps({"a": f[0], "b": f[1], "mismo": mismo}, ensure_ascii=False) + "\n")
+                fh.write(json.dumps({"a": f[0], "b": f[1], "mismo": mismo, "regimen": ESFUERZO_GLM,
+                                     "tok_entrada": r[1], "tok_generados": r[2], "tok_razonamiento": r[3]},
+                                    ensure_ascii=False) + "\n")
             hecho[f] = mismo
             n[0] += 1
             if n[0] % 500 == 0:
@@ -267,4 +329,4 @@ def control_glm():
 
 if __name__ == "__main__":
     {"armar": armar, "etiquetar": etiquetar, "etiquetar_qwen": etiquetar_qwen, "medir": medir,
-     "control_glm": control_glm}[sys.argv[1]]()
+     "control_glm": control_glm, "control_low": control_low}[sys.argv[1]]()
