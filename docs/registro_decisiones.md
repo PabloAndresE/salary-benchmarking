@@ -8517,3 +8517,31 @@ Ejemplos (`/referencia`): `AUX DE MOSTRADOR Y CAJA` → reconocido `AUXILIAR DE 
 INTELIGENCIA ARTIFICIAL` → desconocido (mejor: `INGENIERO DE INTELIGENCIA ARTIFICIAL`, 0,864);
 `TECNICO EN MANTENIMIENTO DE DRONES AGRICOLAS` → desconocido (0,438). En una nómina de 200 títulos de la base con
 « ZONA NORTE» agregado: 128 reconocidos y 72 desconocidos (la acotación geográfica baja la P, p. ej. `MECANICO JUNIOR`).
+
+## T-012 — Laya (modelo de decisión abierto) para el open set como UNA pregunta de opción múltiple. Registrado antes de medir
+
+**Por qué** (tutor, vía el autor: «modelos de decisión como Jev de TypeSafe AI y Laya»). Son modelos *System One*: no
+generan texto; responden una pregunta acotada (elegir una opción, un puntaje) con una probabilidad calibrada. Jev es
+cerrado (API en EE. UU., lista de espera) y mandar títulos de nóminas afuera choca con la regla de datos de clientes:
+**queda fuera**. Laya es abierto (Apache 2.0), corre aquí y tiene un checkpoint **multilingüe** (mmBERT-base, 322M).
+Sus autores advierten que **sin ajuste fino está cerca del azar**.
+
+**Planteo:** en vez de juzgar 10 pares por separado (cross-encoder) y aplicar un umbral, una sola pregunta:
+estado = el título nuevo; `choice` = «¿cuál de estos cargos es el mismo puesto de trabajo?», con los 10 candidatos de
+Qwen (sin candado, los mismos del sistema propuesto de T-010b) **más la opción «NINGUNO»**. Reconocido = la opción
+elegida no es «NINGUNO» (y su probabilidad pasa un umbral elegido en calibra); desconocido = si no.
+
+**Etapa 0 (sin ajuste, ya):** `laya-multilingual` tal cual, en CPU, sobre las consultas de **prueba** de T-010b, con
+la misma verdad (Qwen3.5-122B; los elegidos fuera del pool juzgado se reportan como «sin verdad»). Solo descriptivo.
+
+**Etapa 1 (con ajuste, cuando haya GPU):**
+
+- **Datos:** 2.000 títulos de la base que no están entre las 1.000 consultas de T-010b ni en `prueba` / `prueba 2`; a
+  cada uno se le saca su grupo y se toman sus 10 candidatos de Qwen. Qwen3.5-122B (rúbrica v7, sin razonamiento) juzga
+  cada par en los dos órdenes. Objetivo: probabilidad repartida entre los candidatos «sí» coherentes; «NINGUNO» si
+  todos son «no» coherentes; fuera si no.
+- **Ajuste:** pérdida = la regla de puntuación propia de Laya (log + esférica, `proper_reward`), 3 épocas, el orden de
+  las opciones barajado; partición 85/15; temperatura en la parte de validación.
+- **Medida:** la de T-010b, en sus consultas de **prueba**, frente al sistema propuesto (Qwen + cross-encoder
+  reentrenado): exactitud balanceada con IC por bootstrap. **«Laya mejora el open set»** si el IC de Laya − propuesto
+  queda entero sobre cero; se reporta además el tiempo por consulta.
