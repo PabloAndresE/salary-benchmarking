@@ -133,3 +133,48 @@ qwen_inverso frente a qwen_umbral (placebo qwen_inverso_placebo): union 19,196 v
    placebo - producto   +0.00050 [-0.00211, +0.00303] (dos vias)  | media por empresa -0.00531
    variante - placebo   -0.00280 [-0.00418, -0.00158] (dos vias)  | media por empresa -0.00110
    CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_filtro frente a nivel_v3 (placebo qwen_filtro_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  +0.00092 [-0.00140, +0.00357] (dos vias)  | media por empresa +0.00423
+   placebo - producto   +0.02443 [+0.02090, +0.02841] (dos vias)  | media por empresa +0.01416
+   variante - placebo   -0.02351 [-0.02738, -0.02042] (dos vias)  | media por empresa -0.00993
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+qwen_filtro frente a qwen_umbral (placebo qwen_filtro_placebo): union 16,741 votos, 1,040 empresas, 15,917 cargos
+   variante - producto  +0.00067 [-0.00112, +0.00246] (dos vias)  | media por empresa -0.00259
+   placebo - producto   +0.02763 [+0.02330, +0.03193] (dos vias)  | media por empresa +0.01107
+   variante - placebo   -0.02696 [-0.03120, -0.02308] (dos vias)  | media por empresa -0.01365
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_filtro frente a qwen_inverso (placebo qwen_filtro_placebo): union 19,196 votos, 1,117 empresas, 17,455 cargos
+   variante - producto  +0.00289 [+0.00048, +0.00531] (dos vias)  | media por empresa +0.00465
+   placebo - producto   +0.02639 [+0.02252, +0.03082] (dos vias)  | media por empresa +0.01457
+   variante - placebo   -0.02351 [-0.02738, -0.02042] (dos vias)  | media por empresa -0.00993
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_juez9 frente a qwen_inverso (placebo qwen_juez9_placebo): union 16,713 votos, 1,040 empresas, 15,890 cargos
+   variante - producto  +0.00077 [-0.00062, +0.00216] (dos vias)  | media por empresa +0.00168
+   placebo - producto   +0.00077 [-0.00062, +0.00216] (dos vias)  | media por empresa +0.00168
+   variante - placebo   +0.00000 [+0.00000, +0.00001] (dos vias)  | media por empresa +0.00000
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): NO CUMPLE
+qwen_juez9 frente a qwen_inverso (placebo qwen_juez9_placebo): union 16,713 votos, 1,040 empresas, 15,890 cargos
+   variante - producto  +0.00077 [-0.00062, +0.00216] (dos vias)  | media por empresa +0.00168
+   placebo - producto   +0.00077 [-0.00062, +0.00216] (dos vias)  | media por empresa +0.00168
+   variante - placebo   +0.00000 [+0.00000, +0.00001] (dos vias)  | media por empresa +0.00000
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_juez9 frente a nivel_v3 (placebo qwen_juez9_placebo): union 19,184 votos, 1,117 empresas, 17,443 cargos
+   variante - producto  -0.00130 [-0.00263, +0.00015] (dos vias)  | media por empresa +0.00074
+   placebo - producto   -0.00130 [-0.00263, +0.00015] (dos vias)  | media por empresa +0.00074
+   variante - placebo   +0.00000 [+0.00000, +0.00001] (dos vias)  | media por empresa +0.00000
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+qwen_laya frente a qwen_inverso (placebo qwen_laya_placebo): union 12,223 votos, 1,060 empresas, 10,833 cargos
+   variante - producto  -0.00096 [-0.00224, +0.00016] (dos vias)  | media por empresa -0.00002
+   placebo - producto   +0.04413 [+0.03935, +0.04915] (dos vias)  | media por empresa +0.02203
+   variante - placebo   -0.04510 [-0.05026, -0.04004] (dos vias)  | media por empresa -0.02205
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+qwen_laya frente a qwen_inverso (placebo qwen_laya_placebo): union 12,223 votos, 1,060 empresas, 10,833 cargos
+   variante - producto  -0.00096 [-0.00224, +0.00016] (dos vias)  | media por empresa -0.00002
+   placebo - producto   +0.04413 [+0.03935, +0.04915] (dos vias)  | media por empresa +0.02203
+   variante - placebo   -0.04510 [-0.05026, -0.04004] (dos vias)  | media por empresa -0.02205
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
+qwen_laya frente a nivel_v3 (placebo qwen_laya_placebo): union 20,534 votos, 1,196 empresas, 17,639 cargos
+   variante - producto  -0.00241 [-0.00362, -0.00117] (dos vias)  | media por empresa -0.00025
+   placebo - producto   +0.02444 [+0.02128, +0.02740] (dos vias)  | media por empresa +0.01120
+   variante - placebo   -0.02684 [-0.03009, -0.02359] (dos vias)  | media por empresa -0.01145
+   CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE

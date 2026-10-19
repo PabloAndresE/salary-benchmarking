@@ -8665,3 +8665,25 @@ Para aislar el nivel, lo demás se fija en lo que eligió T-006: umbral del cros
 - **Placebo:** los niveles de Laya permutados entre los títulos preguntados.
 - **Criterio (reemplazo):** **no inferior** frente a T-006 (extremo superior < +0,001) y mejor que el placebo → Laya
   puede reemplazar a Qwen en el nivel. **«Mejora»** si el IC frente a T-006 queda entero bajo cero.
+
+### T-014, resultado: Laya puede reemplazar a Qwen en el nivel sin perder banda (2026-10-19)
+
+Laya entrenado dentro de la medición con las 38.407 celdas de la base de entrenamiento (ajuste completo, mejor época 1
+de 2, 13 min en ~6 GB de GPU; validación 90,7 %, T 1,25), aplicado a los 20.479 títulos preguntados.
+
+| Comparación | Votos (unión) | Pinball | IC (dos vías) |
+|---|---|---|---|
+| **Laya − T-006** (nivel de Qwen) | 12.223 | **−0,00096** | **[−0,00224, +0,00016]** |
+| Placebo − T-006 | 12.223 | +0,04413 | [+0,03935, +0,04915] |
+| Laya − placebo | 12.223 | −0,04510 | [−0,05026, −0,04004] |
+| Laya − Vertex (`nivel_v3`) | 20.534 | −0,00241 | [−0,00362, −0,00117] |
+
+- **Cumple el criterio de reemplazo:** no inferior frente a T-006 (extremo +0,00016 < +0,001) y mucho mejor que el
+  placebo. **No cumple «mejora»** (el IC toca el cero por poco).
+- El placebo (niveles de Laya al azar) empeora +0,044: **el nivel pesa mucho en la banda**, y Laya lo da tan bien como
+  Qwen-8B.
+- Frente al producto (Vertex), el sistema con el nivel de Laya **mejora** (−0,0024, IC entero bajo cero).
+
+**Lectura:** en el diseño final, el nivel puede salir de Laya (322M parámetros, ~1 ms por título) en vez de la regresión
+sobre Qwen-8B, sin perder banda y quizás con una ganancia pequeña. Qwen-8B sigue haciendo falta para **buscar**
+candidatos en el open set; sacarlo del todo requiere un buscador más chico (pendiente).
