@@ -128,7 +128,7 @@ def entrenar_cabeza(m, tok, cfg, ent, y_ent, dispositivo, lr=6e-4, epocas=6, lot
         print("  cabeza epoca {}: perdida de validacion {:.4f} ({:.0f} s)".format(ep + 1, v, time.time() - t0), flush=True)
         if v < mejor:
             mejor, mejor_ep = v, ep + 1
-            estado = copy.deepcopy({k: x for k, x in m.state_dict().items() if not k.startswith("encoder.")})
+            estado = {k: x.detach().cpu().clone() for k, x in m.state_dict().items() if not k.startswith("encoder.")}
     m.load_state_dict(estado, strict=False)
     return "cabeza 6e-4, mejor epoca {} de {}, {:.0f} min".format(mejor_ep, epocas, (time.time() - t0) / 60)
 
@@ -164,7 +164,7 @@ def entrenar_completo(m, tok, cfg, ent, y_ent, dispositivo, lr=3e-5, epocas=2, l
         print("  completo epoca {}: perdida de validacion {:.4f} ({:.0f} s)".format(ep + 1, v, time.time() - t0), flush=True)
         if v < mejor:
             mejor, mejor_ep = v, ep + 1
-            estado = copy.deepcopy(m.state_dict())
+            estado = {k: v.detach().cpu().clone() for k, v in m.state_dict().items()}   # en RAM, no en la GPU
     m.load_state_dict(estado)
     return "completo 3e-5, mejor epoca {} de {}, {:.0f} min".format(mejor_ep, epocas, (time.time() - t0) / 60)
 
