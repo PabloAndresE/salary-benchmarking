@@ -1,0 +1,10 @@
+T-012 etapa 0 · laya-multilingual SIN ajuste (CPU), consultas de T-010b
+consultas con clase: 858 (calibra 422, prueba 436); 0.15 s por consulta
+elige NINGUNO: 0.7% (con equivalente 0.5%, nuevas 4.3%)
+umbral elegido en calibra: 0.5
+elegidos sin verdad (fuera del pool juzgado): 176
+
+PRUEBA (413 con equivalente, 23 nuevas)
+  Laya sin ajuste   exactitud balanceada 0.4298  con equivalente: reconoce bien 59.9%  nuevas: desconocido 26.1%
+  Qwen + cross-encoder reentrenado (T-010b)  0.7838  con equivalente: 78.5%  nuevas: 78.3%
+  Laya: cuando reconoce, su elegido es «sí» en 85.9% de los juzgados

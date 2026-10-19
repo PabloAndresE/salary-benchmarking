@@ -8545,3 +8545,12 @@ la misma verdad (Qwen3.5-122B; los elegidos fuera del pool juzgado se reportan c
 - **Medida:** la de T-010b, en sus consultas de **prueba**, frente al sistema propuesto (Qwen + cross-encoder
   reentrenado): exactitud balanceada con IC por bootstrap. **«Laya mejora el open set»** si el IC de Laya − propuesto
   queda entero sobre cero; se reporta además el tiempo por consulta.
+
+### T-012, etapa 0: Laya sin ajuste queda bajo el azar, pero es rápido (2026-10-19)
+
+`t12_etapa0.txt` (laya-multilingual tal cual, CPU, las 858 consultas con clase de T-010b): casi nunca elige «NINGUNO»
+(0,7 %). En prueba, exactitud balanceada **0,430** (con equivalente: reconoce bien 59,9 %; nuevas: «desconocido»
+26,1 %), frente a **0,784** del sistema propuesto de T-010b. Cuando reconoce, su elegido es «sí» en 85,9 % de los
+juzgados, pero **176 de 436** elegidos caen fuera del pool juzgado en T-010b (sin verdad). **Velocidad: 0,15 s por
+consulta en CPU** (el sistema propuesto, ~2 s con Qwen en CPU). Confirma lo que dicen sus autores: sin ajuste no sirve;
+la etapa 1 decide.
