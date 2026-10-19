@@ -183,10 +183,13 @@ def main():
     libre = 0
     if torch.cuda.is_available():
         libre = torch.cuda.mem_get_info()[0] / 2 ** 30
-    dispositivo = "cuda" if libre >= 12 else "cpu"
-    variantes = [("cabeza", entrenar_cabeza)] + ([("completo", entrenar_completo)] if dispositivo == "cuda" else [])
+    # la cabeza cabe con >= 6 GB; el ajuste completo, como se registro, solo con >= 12 GB
+    variantes = [("cabeza", entrenar_cabeza, "cuda" if libre >= 6 else "cpu")]
+    if libre >= 12:
+        variantes.append(("completo", entrenar_completo, "cuda"))
+    print("GPU libre {:.1f} GB: variantes {}".format(libre, [(v[0], v[2]) for v in variantes]), flush=True)
     res = []
-    for nom, f in variantes:
+    for nom, f, dispositivo in variantes:
         ag = RLAgent(str(t12.LAYA / "multilingual"), device=dispositivo)
         m, tok, cfg = ag.model, ag.tok, ag.cfg
         val_items = [encode_record(registro(t, k + 1), tok, cfg, None, False)[0] for t, k in zip(tit[va], y[va])]
@@ -199,8 +202,12 @@ def main():
         Lt = logits_de(m, tok, cfg, te_items, dispositivo)
         seg = (time.time() - t0) / len(te_items)
         res.append((pv, nom, info, T, Lt.argmax(-1).numpy(), seg, m, cfg))
-        print("VARIANTE {}: perdida de validacion {:.4f} (T {:.2f}) | {}".format(nom, pv, T, info), flush=True)
+        acc = float((Lt.argmax(-1).numpy() == y[te]).mean())
+        print("VARIANTE {}: perdida de validacion {:.4f} (T {:.2f}) | {} | (prueba: exactitud {:.1%})".format(
+            nom, pv, T, info, acc), flush=True)
+        np.save(SAL / "t13_pred_{}.npy".format(nom), Lt.numpy())      # por si se corta la variante siguiente
     pv, nom, info, T, pred, seg, m, cfg = min(res, key=lambda r: r[0])
+    dispositivo = [v[2] for v in variantes if v[0] == nom][0]
     dst = SAL / "t13_laya_nivel"
     if dst.exists():
         shutil.rmtree(dst)
