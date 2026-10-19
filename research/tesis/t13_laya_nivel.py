@@ -114,10 +114,9 @@ def entrenar_cabeza(m, tok, cfg, ent, y_ent, dispositivo, lr=6e-4, epocas=6, lot
             for k, c in enumerate(cs):
                 h[k, :c.shape[0]], att[k, :c.shape[0]] = c.float(), 1
             mpos = torch.tensor([items[j]["markers"] for j in idx])
-            mmask = torch.ones_like(mpos, dtype=torch.bool)
+            mmask = torch.ones_like(mpos, dtype=torch.bool).to(dispositivo)
             q = torch.ones(len(idx), dtype=torch.long)
-            L = t12._cabeza(m, h.to(dispositivo), att.to(dispositivo), mpos.to(dispositivo), mmask.to(dispositivo),
-                            q.to(dispositivo))
+            L = t12._cabeza(m, h.to(dispositivo), att.to(dispositivo), mpos.to(dispositivo), mmask, q.to(dispositivo))
             tgt = torch.nn.functional.one_hot(y_t[idx], 5).float().to(dispositivo)
             perdida = -proper_reward(torch.softmax(L, -1), tgt, q.to(dispositivo), mmask.float()).mean()
             opt.zero_grad()
