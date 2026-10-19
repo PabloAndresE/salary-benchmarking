@@ -8645,3 +8645,23 @@ la validación a la cabeza experta (−0,186 frente a −0,103). En la prueba de
 **Lectura:** la cabeza sola no alcanzaba (88,7 %); mover el codificador cierra la brecha con Qwen-8B. Para el nivel,
 un modelo de decisión ~25 veces más chico **iguala** al embedding grande, con menos errores de dos o más escalones. No
 mejora el acierto, así que la banda no cambiaría; su valor sería de costo y velocidad.
+
+## T-014 — La banda de T-006 con el nivel de Laya. Registrado antes de medir
+
+**Por qué** (autor: «¿podríamos en el diseño final reemplazar Qwen por Laya?»). En T-006, Qwen-8B hace dos cosas:
+reconocer (buscar candidatos; Laya no puede, no es un buscador) y **dar el nivel del cargo nuevo** (regresión logística
+sobre el vector Q-instr). T-013: para el nivel, Laya con ajuste completo iguala a ese clasificador (91,3 % frente a
+91,1 %) con menos errores de 2+ escalones. Igual acierto no garantiza igual banda (son otros errores): se mide.
+
+**Cambio** (`qwen_laya`): T-006 (`qwen_inverso`) tal cual, salvo que el nivel de los títulos preguntados que **no están
+en la base** sale de Laya (ajuste completo de T-013: vocabulario congelado, 3e-5, 2 épocas, lote 16, mejor época y
+temperatura en 10 % de los grupos), **entrenado dentro de la medición solo con las celdas de la base de entrenamiento**
+(sus niveles por grupo, como el clasificador logístico). Con P < `P_NIVEL_CLF` el nivel queda «sin dato», igual que hoy.
+Para aislar el nivel, lo demás se fija en lo que eligió T-006: umbral del cross-encoder 0,82 y escala `k` {analogía
+0,6396; directo 0,9219}.
+
+**Medición:** protocolo v2, frente a **T-006** (`qwen_inverso`).
+
+- **Placebo:** los niveles de Laya permutados entre los títulos preguntados.
+- **Criterio (reemplazo):** **no inferior** frente a T-006 (extremo superior < +0,001) y mejor que el placebo → Laya
+  puede reemplazar a Qwen en el nivel. **«Mejora»** si el IC frente a T-006 queda entero bajo cero.
