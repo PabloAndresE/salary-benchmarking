@@ -8569,3 +8569,29 @@ validación. Antes, una **prueba de sobreajuste** con 64 preguntas (tasa 3e-4, 4
 **todas** las variantes, la temperatura pasa a ser **una por número de opciones** (cubetas de Laya: 2, 3–5, 6–10, 11+;
 mínimo 20 preguntas de validación, si no la general). La elección entre las 5 variantes (4 de ajuste completo + la de
 solo cabeza) sigue siendo la menor pérdida propia en la validación de Laya.
+
+## T-013 — Laya como experto de NIVEL jerárquico (pregunta `score`). Registrado antes de medir
+
+**Por qué:** en T-006, la única mejora de la banda vino de adivinar mejor el nivel del cargo nuevo (clasificador sobre
+Qwen 91,1 % frente a 88,1 % sobre Vertex). Laya tiene un tipo de pregunta para escalas ordenadas (`score`, con la regla
+RPS que castiga más confundir asistente con gerente que con analista); en layaMOE, las preguntas `score` fueron las que
+más mejoraron con una cabeza experta (41,7 → 59,4). Es además la segunda cabeza de la arquitectura de expertos por tipo
+de pregunta (T-012 es la del open set). No necesita etiquetas nuevas ni GPU grande.
+
+**Datos y partición: los de `t03_diagnostico_nivel`** (para comparar con el 91,1 %): `base_v31`, nivel por grupo
+(Qwen v3), partición **por grupo** con semilla 3: 20 % de los grupos a prueba (12.801 títulos), el resto a
+entrenamiento; de este, 10 % de los grupos a validación (época, temperatura y variante).
+
+**Pregunta de Laya:** estado = «Título del cargo: X» (solo el título, como llega un cargo nuevo); `score` =
+«¿Qué nivel jerárquico tiene este cargo?», opciones 1 operativo o asistente · 2 técnico o analista · 3 supervisión o
+coordinación · 4 jefatura · 5 gerencia o dirección.
+
+**Variantes** (elige la validación, pérdida propia de Laya): **codificador congelado + cabeza** (layaMOE: 6e-4, 6
+épocas, lote 32, mejor época); y, solo si hay una GPU con ≥ 12 GB libres, **ajuste completo** (3e-5, 2 épocas).
+Temperatura por la validación.
+
+**Medida (prueba):** exactitud del nivel y error medio en escalones, frente al clasificador actual sobre Qwen consulta
+(91,1 %) y sobre Vertex (88,1 %), recalculados en la misma partición. IC 95 % de la diferencia por bootstrap de grupos.
+
+- **«Laya mejora el nivel»** si el IC de Laya − Qwen queda entero sobre cero. Solo entonces se pasa a la **etapa 2**:
+  el pinball de T-006 con el nivel de Laya (protocolo v2, placebo = nivel de Laya permutado).
