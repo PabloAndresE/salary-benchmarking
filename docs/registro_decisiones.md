@@ -8623,3 +8623,25 @@ entra en 6,7 GB porque la **tabla de vocabulario de mmBERT (256 mil tokens × 76
 codificador y la cabeza: 125M parámetros); lote 16 (pico medido 3,7 GB); corre con ≥ 5 GB libres. Tasa, épocas y
 elección por la validación, como estaban. Para los títulos de cargos en español la tabla de vocabulario casi no cambia
 con el ajuste; queda declarado como diferencia con un ajuste completo estricto.
+
+### T-013, resultado final: Laya con ajuste completo iguala al clasificador actual, no lo supera (2026-10-19)
+
+`t13_nivel.txt`. El ajuste completo (vocabulario congelado, 125M parámetros entrenados; 3e-5, mejor época 1 de 2,
+10 min en ~6 GB de GPU, al sexto intento: los 5 primeros cayeron por una copia del modelo que se guardaba en la GPU) gana
+la validación a la cabeza experta (−0,186 frente a −0,103). En la prueba de t03 (12.801 títulos, 7.720 grupos):
+
+| Clasificador de nivel | Exactitud | Error medio (escalones) | Errores de 2+ escalones |
+|---|---|---|---|
+| **Laya, ajuste completo** | **91,3 %** | **0,107** | **1,48 %** |
+| Regresión logística sobre Qwen consulta (el actual) | 91,1 % | 0,115 | 1,91 % |
+| Regresión logística sobre Vertex | 88,1 % | 0,160 | 2,83 % |
+
+- **Laya − Qwen: +0,21 % [−0,32 %, +0,72 %] → no se distingue.** No cumple «Laya mejora el nivel»: **no se pasa a la
+  etapa 2** (pinball).
+- Laya − Vertex: +3,19 % [+2,57 %, +3,82 %] → mejor.
+- Descriptivo (sin criterio registrado): Laya comete menos errores graves (2+ escalones: 1,48 % frente a 1,91 %).
+- **Costo:** 0,9 ms por título con un modelo de 322M parámetros, frente a Qwen-8B (8.000M, 4.096 dimensiones).
+
+**Lectura:** la cabeza sola no alcanzaba (88,7 %); mover el codificador cierra la brecha con Qwen-8B. Para el nivel,
+un modelo de decisión ~25 veces más chico **iguala** al embedding grande, con menos errores de dos o más escalones. No
+mejora el acierto, así que la banda no cambiaría; su valor sería de costo y velocidad.
