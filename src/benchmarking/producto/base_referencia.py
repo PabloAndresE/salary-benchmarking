@@ -2101,6 +2101,14 @@ class BaseReferencia:
         """Nivel de cada titulo preguntado que no este en la base. Con el clasificador de D-049,
         la clase mas probable si su probabilidad llega a `P_NIVEL_CLF` (si no, None: no se
         sabe y se paga en el intervalo); sin el, la tabla de palabras de siempre."""
+        externo = getattr(self, "nivel_externo", None)        # tesis, T-014: {titulo: (nivel, P)} de Laya
+        if externo:
+            base_ = self._nivel_consulta_clf(titulos, Q)
+            return [(externo[t][0] if externo[t][1] >= P_NIVEL_CLF else None) if t in externo else b_
+                    for t, b_ in zip(titulos, base_)]
+        return self._nivel_consulta_clf(titulos, Q)
+
+    def _nivel_consulta_clf(self, titulos, Q):
         if getattr(self, "clf_nivel", None) is None:
             return [nivel_lexico(t) for t in titulos]
         Wc, bc, kc = self.clf_nivel

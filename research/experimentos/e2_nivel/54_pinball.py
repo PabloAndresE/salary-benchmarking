@@ -232,7 +232,7 @@ def una_variante(nom, clusters):
     emb_vertex = dict(emb)
     emb_analogia = emb_analogia_consulta = None
     if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo", "qwen_umbral",
-               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
+               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo",
                "qwen_filtro", "qwen_filtro_placebo"):   # T-002 / T-004 / T-005 / T-006 / T-007
         b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
         tes = RAIZ / "research" / "tesis" / "salidas"
@@ -253,7 +253,7 @@ def una_variante(nom, clusters):
                 Ad, Ac = Ad[perm], Ac[perm]
             emb_analogia = {str(c): z for c, z in zip(b31["celdas"], Ad)}
             emb_analogia_consulta = {str(c): z for c, z in zip(b31["celdas"], Ac)}
-        if nom.startswith(("qwen_inverso", "qwen_juez9")):   # T-006 / T-009: la analogia con Vertex (el producto)
+        if nom.startswith(("qwen_inverso", "qwen_juez9", "qwen_laya")):   # T-006 / T-009: la analogia con Vertex (el producto)
             emb_analogia = emb_analogia_consulta = {c: emb_v for c, emb_v in emb_vertex.items()}
     if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):   # D-057: los vectores de e5 (de todos los titulos)
         b22 = np.load(RAIZ / "demo" / "base_v22.npz", allow_pickle=True)
@@ -272,7 +272,7 @@ def una_variante(nom, clusters):
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_hibrido",
               "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
-              "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
+              "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo",
               "qwen_filtro", "qwen_filtro_placebo")    # T-002; T-004; T-005; T-006; T-007
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
@@ -337,7 +337,7 @@ def una_variante(nom, clusters):
             base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
         if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):
             base.cos_juez = 0.7041                  # T-002: el equivalente del 0,90 de Vertex (t02_umbral.json)
-        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
+        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo",
                    "qwen_filtro", "qwen_filtro_placebo"):
             base.cos_juez = UMBRAL_T005[0]
         if nom in ("qwen_filtro", "qwen_filtro_placebo"):   # T-007: vecinos del mismo nivel
@@ -402,6 +402,13 @@ def una_variante(nom, clusters):
         emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
         print("prima: {}".format(base.estimar_prima_idioma(emb)), flush=True)
         base.idioma_placebo = nom == "idioma_prima_placebo"     # despues de estimar: misma prima
+    elif nom.startswith("qwen_laya"):    # T-014: lo de T-006 fijo (umbral y k); solo cambia el nivel
+        UMBRAL_T005[0] = base.cos_juez = 0.82
+        base.escala_banda = {"analogia": 0.6396340773501819, "directo": 0.9218836078503391}
+        sys.path.insert(0, str(RAIZ / "research" / "tesis"))
+        import t14_laya_base
+        base.nivel_externo = t14_laya_base.niveles_laya(base.celdas, base.nivel, base.grupo,
+                                                        sorted(set(v["cargo_norm"])), placebo=nom.endswith("placebo"))
     elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
         f_u = RAIZ / "research" / "tesis" / "salidas" / (
             "t06_umbral.json" if nom.startswith("qwen_inverso") else
@@ -594,7 +601,7 @@ if __name__ == "__main__":
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                                            "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
-                                           "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo",
+                                           "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo",
                                            "qwen_filtro", "qwen_filtro_placebo",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",
