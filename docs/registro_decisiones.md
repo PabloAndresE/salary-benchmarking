@@ -8560,3 +8560,12 @@ ya entrenaba todo Laya (codificador + cabeza de decisión), pero con UNA configu
 tuvo rejilla. Para igualar: **rejilla de 4** — tasa del codificador ∈ {2e-5, 5e-5} × épocas ∈ {3, 6} (cabeza a 5× la
 tasa del codificador) —, elegida por la pérdida propia (log + esférica) en la validación de Laya (15 % de sus preguntas,
 nunca la prueba de T-010b). Se guarda la mejor; el umbral y la comparación, como estaban.
+
+**Segunda enmienda a T-012, antes de la etapa 1 (2026-10-19; autor, a partir de layaMOE de V. Mysore).** Se suma a la
+rejilla la variante **«codificador congelado + cabeza»** (como los expertos de layaMOE): las salidas del codificador se
+calculan una vez (dos órdenes de opciones barajados por pregunta de entrenamiento) y solo se entrena la cabeza de
+decisión, copia de la original; tasa 6e-4, 6 épocas, lote 32, calentamiento 6 %, se guarda la **mejor época** en
+validación. Antes, una **prueba de sobreajuste** con 64 preguntas (tasa 3e-4, 40 pasos) para descartar errores. Y en
+**todas** las variantes, la temperatura pasa a ser **una por número de opciones** (cubetas de Laya: 2, 3–5, 6–10, 11+;
+mínimo 20 preguntas de validación, si no la general). La elección entre las 5 variantes (4 de ajuste completo + la de
+solo cabeza) sigue siendo la menor pérdida propia en la validación de Laya.
