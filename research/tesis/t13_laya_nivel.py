@@ -168,7 +168,7 @@ def entrenar_completo(m, tok, cfg, ent, y_ent, dispositivo, lr=3e-5, epocas=2, l
     return "completo 3e-5, mejor epoca {} de {}, {:.0f} min".format(mejor_ep, epocas, (time.time() - t0) / 60)
 
 
-def main():
+def main(pedidas=("cabeza", "completo")):
     from sklearn.linear_model import LogisticRegression
     from rl_agent_api import RLAgent
     b, niv, grupo, tr, va, te = particion()
@@ -178,14 +178,23 @@ def main():
     # lineas base: el clasificador actual (regresion logistica) sobre Qwen consulta y sobre Vertex, misma particion
     base = {}
     for nom, X in (("Qwen consulta", normal(np.load(SAL / "t02_emb_qwen_consulta.npy"))), ("Vertex", normal(b.Z))):
+        f_ = SAL / "t13_base_{}.npy".format(nom.split()[0].lower())
+        if f_.exists():
+            base[nom] = np.load(f_)
+            continue
         clf = LogisticRegression(max_iter=2000, C=1.0).fit(X[tr | va], y[tr | va])
         base[nom] = clf.predict(X[te])
+        np.save(f_, base[nom])
     libre = 0
     if torch.cuda.is_available():
         libre = torch.cuda.mem_get_info()[0] / 2 ** 30
     # la cabeza cabe con >= 6 GB; el ajuste completo, como se registro, solo con >= 12 GB
-    variantes = [("cabeza", entrenar_cabeza, "cuda" if libre >= 6 else "cpu")]
-    if libre >= 12:
+    variantes = []
+    if "cabeza" in pedidas:
+        variantes.append(("cabeza", entrenar_cabeza, "cuda" if libre >= 6 else "cpu"))
+    if "completo" in pedidas:
+        if libre < 12:
+            raise SystemExit("SIN GPU: el ajuste completo necesita >= 12 GB libres ({:.1f})".format(libre))
         variantes.append(("completo", entrenar_completo, "cuda"))
     print("GPU libre {:.1f} GB: variantes {}".format(libre, [(v[0], v[2]) for v in variantes]), flush=True)
     res = []
@@ -206,24 +215,50 @@ def main():
         print("VARIANTE {}: perdida de validacion {:.4f} (T {:.2f}) | {} | (prueba: exactitud {:.1%})".format(
             nom, pv, T, info, acc), flush=True)
         np.save(SAL / "t13_pred_{}.npy".format(nom), Lt.numpy())      # por si se corta la variante siguiente
-    pv, nom, info, T, pred, seg, m, cfg = min(res, key=lambda r: r[0])
-    dispositivo = [v[2] for v in variantes if v[0] == nom][0]
+        (SAL / "t13_var_{}.json".format(nom)).write_text(json.dumps(
+            {"perdida_val": pv, "T": T, "info": info, "seg": seg, "dispositivo": dispositivo}), encoding="utf-8")
+        dv = SAL / "t13_laya_nivel_{}".format(nom)
+        if dv.exists():
+            shutil.rmtree(dv)
+        shutil.copytree(t12.LAYA / "multilingual" / "tokenizer", dv / "tokenizer")
+        shutil.copytree(t12.LAYA / "multilingual" / "encoder", dv / "encoder")
+        from safetensors.torch import save_file
+        save_file({k: v.detach().cpu().contiguous() for k, v in m.state_dict().items()}, str(dv / "model.safetensors"))
+        (dv / "rl_agent_config.json").write_text(json.dumps(dict(cfg, temperature=[T] * 3), indent=1), encoding="utf-8")
+        del m
+        torch.cuda.empty_cache() if torch.cuda.is_available() else None
+    comparar(y[te], grupo[te], base)
+
+
+def comparar(yt=None, gt=None, base=None):
+    """Reune las variantes guardadas (t13_var_*.json), elige por la validacion y compara en prueba."""
+    if yt is None:
+        b, niv, grupo, tr, va, te = particion()
+        y = np.where(np.isfinite(niv), niv, 1).astype(int) - 1
+        yt, gt = y[te], grupo[te]
+        base = {"Qwen consulta": np.load(SAL / "t13_base_qwen.npy"), "Vertex": np.load(SAL / "t13_base_vertex.npy")}
+    res = []
+    for f in sorted(SAL.glob("t13_var_*.json")):
+        nom = f.stem.replace("t13_var_", "")
+        v = json.loads(f.read_text(encoding="utf-8"))
+        res.append((v["perdida_val"], nom, v["info"], v["T"], np.load(SAL / "t13_pred_{}.npy".format(nom)).argmax(-1),
+                    v["seg"], v["dispositivo"]))
+    pv, nom, info, T, pred, seg, dispositivo = min(res, key=lambda r: r[0])
     dst = SAL / "t13_laya_nivel"
     if dst.exists():
         shutil.rmtree(dst)
-    shutil.copytree(t12.LAYA / "multilingual" / "tokenizer", dst / "tokenizer")
-    shutil.copytree(t12.LAYA / "multilingual" / "encoder", dst / "encoder")
-    from safetensors.torch import save_file
-    save_file({k: v.detach().cpu().contiguous() for k, v in m.state_dict().items()}, str(dst / "model.safetensors"))
-    (dst / "rl_agent_config.json").write_text(json.dumps(dict(cfg, temperature=[T] * 3), indent=1), encoding="utf-8")
-    yt, gt = y[te], grupo[te]
+    shutil.copytree(SAL / "t13_laya_nivel_{}".format(nom), dst)
+    _informe(yt, gt, base, res, pv, nom, info, T, pred, seg, dispositivo)
+
+
+def _informe(yt, gt, base, res, pv, nom, info, T, pred, seg, dispositivo):
     ok = {"Laya": pred == yt, **{k: v == yt for k, v in base.items()}}
     esc = {"Laya": np.abs(pred - yt), **{k: np.abs(v - yt) for k, v in base.items()}}
     gru = np.unique(gt)
     pos = {g: np.flatnonzero(gt == g) for g in gru}
     rng = np.random.default_rng(20261019)
     out = ["T-013 · Laya como experto de nivel (score), particion de t03 (prueba {:,} titulos, {:,} grupos)".format(
-        int(te.sum()), len(gru)),
+        len(yt), len(gru)),
            "variante elegida: {} | {}; T {:.2f}; {:.1f} ms por titulo ({})".format(nom, info, T, 1000 * seg, dispositivo),
            "rejilla: " + "; ".join("{} {:.4f}".format(r[1], r[0]) for r in res), ""]
     for k in ("Laya", "Qwen consulta", "Vertex"):
@@ -243,4 +278,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    arg = (sys.argv[1:] or ["ambas"])[0]
+    if arg == "comparar":
+        comparar()
+    else:
+        main(("cabeza", "completo") if arg == "ambas" else (arg,))
