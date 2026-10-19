@@ -8497,3 +8497,23 @@ reetiquetan en `low` para tener un solo régimen.
 12.578 respuestas, en `max`; el control `low` no llegó a terminar). **T-010b queda con la verdad de Qwen3.5-122B**, y como
 control del sesgo, lo ya reportado: acuerdo GLM–Qwen 90,2 % (n = 369) y precisión de lo reconocido con la verdad de GLM
 (A 98,6 %, igual que B).
+
+## T-011 — El open set de T-010b, implementado en la API de la rama `tesis` (2026-10-19)
+
+**Pedido del autor:** implementarlo en la API de la tesis, **no** en el producto (rama `main` sin cambios).
+
+- **Módulo** `src/benchmarking/producto/open_set.py`: Qwen3-Embedding-8B propone (10 grupos sin candado), el
+  cross-encoder reentrenado de T-009 decide con el umbral 0,90 de T-010b → `en_base` | `reconocido` (con su equivalente)
+  | `desconocido`. **No cambia la banda.**
+- **API:** `/referencia` agrega `reconocimiento` ({estado, equivalente, p, 3 candidatos}); `/informes` agrega a cada fila
+  `reconocimiento`, `equivalente_reconocido` y `p_reconocimiento`. `OPEN_SET=no` lo apaga; `OPEN_SET_GPU` elige el
+  dispositivo; rutas en `OPEN_SET_QWEN`, `OPEN_SET_DOCS` y `OPEN_SET_JUEZ`.
+- **Corre en** `127.0.0.1:8093` (solo local). Las 8 GPUs estaban llenas (~138 de 143 GB, de otros usuarios): Qwen va en
+  **CPU** (`OPEN_SET_GPU=cpu`). Tiempos medidos: arranque +30 s; `/referencia` ~2 s por título nuevo; un informe con
+  **200 títulos nuevos, 124 s** (sin open set, 500 filas ~11 s). En GPU sería mucho más rápido.
+
+Ejemplos (`/referencia`): `AUX DE MOSTRADOR Y CAJA` → reconocido `AUXILIAR DE MOSTRADOR` (P 0,977);
+`CHOFER PROFESIONAL DE CAMION PESADO` → `CHOFER: PARA CAMIONES PESADOS` (0,909); `INGENIERO DE PROMPTS PARA
+INTELIGENCIA ARTIFICIAL` → desconocido (mejor: `INGENIERO DE INTELIGENCIA ARTIFICIAL`, 0,864);
+`TECNICO EN MANTENIMIENTO DE DRONES AGRICOLAS` → desconocido (0,438). En una nómina de 200 títulos de la base con
+« ZONA NORTE» agregado: 128 reconocidos y 72 desconocidos (la acotación geográfica baja la P, p. ej. `MECANICO JUNIOR`).

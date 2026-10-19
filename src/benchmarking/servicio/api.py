@@ -53,6 +53,7 @@ from ..producto.antiguedad import TRAMOS as TRAMOS_ANTIGUEDAD
 from ..producto.antiguedad import antiguedad_anios, tramo
 from ..producto import idioma as idioma_mod
 from ..producto import juez as juez_mod
+from ..producto import open_set as open_set_mod
 from ..producto import sinonimos
 from ..producto.base_referencia import (ruta_base_mas_nueva, MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
                                         BaseReferencia, _vecinos)
@@ -205,6 +206,8 @@ SALIDA_MODELO = (
     # tablas, porque la etiqueta de un puesto es UNA grafia y el detalle trae todas.
     "fila", "cargo", "cargo_normalizado", "estado", "antiguedad_anios",
     "antiguedad_tramo",
+    # tesis, T-010b (open set): si el titulo se reconoce como un cargo de la base o es nuevo
+    "reconocimiento", "equivalente_reconocido", "p_reconocimiento",
     "referencia", "sueldo_actual",
     "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
     "posicion_mercado", "equivalente", "rango_desde", "rango_hasta",
@@ -415,6 +418,17 @@ class Motor:
         # apaga. Sin pesos o sin torch, el servicio sigue sin el (por analogia, como antes).
         ruta_juez = os.environ.get("JUEZ", "modelos/juez_v3")
         self.base.juez = None if ruta_juez.lower() == "no" else juez_mod.cargar(ruta_juez)
+        # TESIS, T-010b: open set. Qwen3-Embedding-8B propone, el cross-encoder reentrenado (T-009) decide: el titulo
+        # nuevo queda «reconocido» (con su equivalente) o «desconocido». No cambia la banda. Necesita GPU (~17 GB);
+        # `OPEN_SET=no` lo apaga, `OPEN_SET_GPU` elige el dispositivo (p. ej. cuda:1).
+        self.open_set = None
+        if os.environ.get("OPEN_SET", "si").lower() != "no":
+            self.open_set = open_set_mod.cargar(
+                self.base, os.environ.get("OPEN_SET_QWEN", "modelos/qwen3-embedding-8b"),
+                os.environ.get("OPEN_SET_DOCS", "research/tesis/salidas/t01_emb_qwen_desc.npy"),
+                os.environ.get("OPEN_SET_JUEZ", "research/experimentos/e2_nivel/salidas/t09_modelos/elegido"),
+                os.environ.get("OPEN_SET_GPU", "cuda"))
+        print("[open set] " + (self.open_set.nombre if self.open_set is not None else "apagado"), flush=True)
         # 2026-10-06: el juez tambien filtra los vecinos de la analogia (`JUEZ_VECINOS=no` lo apaga)
         self.base.juez_vecinos = os.environ.get("JUEZ_VECINOS", "si").lower() != "no"
         # D-052: un nivel por grupo y el candado de nivel en la consulta (`NIVEL_GRUPO=no` los apaga)
@@ -682,6 +696,11 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         salida, por_puesto, resumen = comparar(salida, cs, col_cargo, ref,
                                                motor.settings.get_sbu, anio)
     salida["estado"] = [_estado(f) for _, f in salida.iterrows()]
+    if getattr(motor, "open_set", None) is not None:          # tesis, T-010b
+        rec = motor.open_set.reconocer(titulos.tolist())
+        salida["reconocimiento"] = [x["estado"] for x in rec]
+        salida["equivalente_reconocido"] = [x["equivalente"] for x in rec]
+        salida["p_reconocimiento"] = [x["p"] for x in rec]
     # ANTIGUEDAD, para el filtro del front y para explicar por que alguien cobra lo que
     # cobra. Se calcula descontando los periodos fuera: ver `producto/antiguedad.py`.
     salida["antiguedad_anios"] = antiguedad_anios(df, anio).to_numpy()
@@ -1468,6 +1487,8 @@ def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
     d["unidades"] = UNIDADES
     d["aviso"] = ("Sin la nomina completa no hay ancla de empresa: falta la lectura de "
                   "equidad interna. Para el informe completo, POST /informes.")
+    if getattr(m, "open_set", None) is not None:              # tesis, T-010b
+        d["reconocimiento"] = m.open_set.reconocer([t])[0]
     principal = _sinonimo_principal(m, t, fila, anio, segmento, rubro)
     if principal:
         d["sinonimo_principal"] = principal
