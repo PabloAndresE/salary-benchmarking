@@ -188,10 +188,10 @@ def main(pedidas=("cabeza", "completo")):
     libre = 0
     if torch.cuda.is_available():
         libre = torch.cuda.mem_get_info()[0] / 2 ** 30
-    # la cabeza cabe con >= 6 GB; el ajuste completo, como se registro, solo con >= 12 GB
+    # la cabeza cabe con >= 4,5 GB (solo inferencia del codificador); el ajuste completo, como se registro, solo con >= 12 GB
     variantes = []
     if "cabeza" in pedidas:
-        variantes.append(("cabeza", entrenar_cabeza, "cuda" if libre >= 6 else "cpu"))
+        variantes.append(("cabeza", entrenar_cabeza, "cuda" if libre >= 4.5 else "cpu"))
     if "completo" in pedidas:
         if libre < 12:
             raise SystemExit("SIN GPU: el ajuste completo necesita >= 12 GB libres ({:.1f})".format(libre))
