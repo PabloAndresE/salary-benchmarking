@@ -65,8 +65,8 @@ def logits_de(m, tok, cfg, items, dispositivo, cabeza_sola=None):
     out = []
     m.eval()
     with torch.no_grad():
-        for i in range(0, len(items), 256):
-            b = collate_items([items[i:i + 256]], tok.pad_token_id)
+        for i in range(0, len(items), 64):
+            b = collate_items([items[i:i + 64]], tok.pad_token_id)
             with torch.autocast(device_type=dispositivo, dtype=torch.bfloat16, enabled=dispositivo == "cuda"):
                 L, _ = m(b["input_ids"].to(dispositivo), b["attention_mask"].to(dispositivo),
                          b["marker_pos"].to(dispositivo), b["marker_mask"].to(dispositivo), b["qtype"].to(dispositivo))
@@ -133,11 +133,12 @@ def entrenar_cabeza(m, tok, cfg, ent, y_ent, dispositivo, lr=6e-4, epocas=6, lot
     return "cabeza 6e-4, mejor epoca {} de {}, {:.0f} min".format(mejor_ep, epocas, (time.time() - t0) / 60)
 
 
-def entrenar_completo(m, tok, cfg, ent, y_ent, dispositivo, lr=3e-5, epocas=2, lote=32, val=None):
-    for p in m.parameters():
-        p.requires_grad_(True)
+def entrenar_completo(m, tok, cfg, ent, y_ent, dispositivo, lr=3e-5, epocas=2, lote=16, val=None):
+    # enmienda: la tabla de vocabulario (197M parametros) queda congelada; se entrena todo lo demas (125M)
+    for n, p in m.named_parameters():
+        p.requires_grad_("embeddings.tok_embeddings" not in n)
     items = [encode_record(registro(t, y + 1), tok, cfg, None, False)[0] for t, y in zip(ent, y_ent)]
-    enc_p = [p for n, p in m.named_parameters() if n.startswith("encoder.")]
+    enc_p = [p for n, p in m.named_parameters() if n.startswith("encoder.") and p.requires_grad]
     head_p = [p for n, p in m.named_parameters() if not n.startswith("encoder.")]
     opt = torch.optim.AdamW([{"params": enc_p, "lr": lr}, {"params": head_p, "lr": 5 * lr}], weight_decay=0.01)
     pasos = epocas * ((len(items) + lote - 1) // lote)
@@ -193,8 +194,8 @@ def main(pedidas=("cabeza", "completo")):
     if "cabeza" in pedidas:
         variantes.append(("cabeza", entrenar_cabeza, "cuda" if libre >= 4.5 else "cpu"))
     if "completo" in pedidas:
-        if libre < 12:
-            raise SystemExit("SIN GPU: el ajuste completo necesita >= 12 GB libres ({:.1f})".format(libre))
+        if libre < 5:
+            raise SystemExit("SIN GPU: el ajuste completo necesita >= 5 GB libres ({:.1f})".format(libre))
         variantes.append(("completo", entrenar_completo, "cuda"))
     print("GPU libre {:.1f} GB: variantes {}".format(libre, [(v[0], v[2]) for v in variantes]), flush=True)
     res = []

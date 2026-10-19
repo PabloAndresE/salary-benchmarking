@@ -8615,3 +8615,11 @@ Temperatura por la validación.
 pero no a Qwen-8B (4.096 dimensiones): la representación de Qwen sabe más del nivel que la de mmBERT, y una cabeza
 sola no lo compensa. **Pendiente:** el ajuste completo (que sí mueve el codificador) espera una GPU con ≥ 12 GB
 libres; el GLM de la Universidad ocupa las 8 desde el 19/10 15:47. Si corre, se compara con la misma regla.
+
+**Enmienda a T-013, antes de correr el ajuste completo (2026-10-19).** Desde las 15:47 el GLM de la Universidad reserva
+~133 GB en cada una de las 8 GPUs (quedan 6,7 GB por GPU) y no hay ninguna con 12 GB. Medido: el ajuste completo no
+entra en 6,7 GB porque la **tabla de vocabulario de mmBERT (256 mil tokens × 768 = 197M parámetros)** pide al optimizador
+750 MB extra. **Cambio:** el ajuste «completo» congela solo esa tabla y entrena todo lo demás (las 22 capas del
+codificador y la cabeza: 125M parámetros); lote 16 (pico medido 3,7 GB); corre con ≥ 5 GB libres. Tasa, épocas y
+elección por la validación, como estaban. Para los títulos de cargos en español la tabla de vocabulario casi no cambia
+con el ajuste; queda declarado como diferencia con un ajuste completo estricto.
