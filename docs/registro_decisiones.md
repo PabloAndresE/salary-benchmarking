@@ -8595,3 +8595,23 @@ Temperatura por la validación.
 
 - **«Laya mejora el nivel»** si el IC de Laya − Qwen queda entero sobre cero. Solo entonces se pasa a la **etapa 2**:
   el pinball de T-006 con el nivel de Laya (protocolo v2, placebo = nivel de Laya permutado).
+
+### T-013, resultado parcial (solo la cabeza experta): Laya no supera al clasificador actual (2026-10-19)
+
+`t13_nivel.txt`. La variante **codificador congelado + cabeza** (6e-4, mejor época 6 de 6, T 1,20) en la prueba de t03
+(12.801 títulos, 7.720 grupos):
+
+| Clasificador de nivel | Exactitud | Error medio (escalones) | Errores de 2+ escalones |
+|---|---|---|---|
+| Laya, cabeza experta | 88,7 % | 0,148 | 2,67 % |
+| **Regresión logística sobre Qwen consulta (el actual)** | **91,1 %** | **0,115** | **1,91 %** |
+| Regresión logística sobre Vertex | 88,1 % | 0,160 | 2,83 % |
+
+- **Laya − Qwen: −2,34 % [−2,94 %, −1,74 %] → peor.** No se pasa a la etapa 2.
+- Laya − Vertex: +0,64 % [−0,02 %, +1,23 %] → no se distingue.
+- Velocidad: 0,5 ms por título en GPU.
+
+**Lectura:** con el codificador de Laya congelado (mmBERT-base, 768 dimensiones), la cabeza experta alcanza a Vertex
+pero no a Qwen-8B (4.096 dimensiones): la representación de Qwen sabe más del nivel que la de mmBERT, y una cabeza
+sola no lo compensa. **Pendiente:** el ajuste completo (que sí mueve el codificador) espera una GPU con ≥ 12 GB
+libres; el GLM de la Universidad ocupa las 8 desde el 19/10 15:47. Si corre, se compara con la misma regla.

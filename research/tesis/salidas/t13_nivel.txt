@@ -1,0 +1,9 @@
+T-013 · Laya como experto de nivel (score), particion de t03 (prueba 12,801 titulos, 7,720 grupos)
+variante elegida: cabeza | cabeza 6e-4, mejor epoca 6 de 6, 21 min; T 1.20; 0.5 ms por titulo (cuda)
+rejilla: cabeza -0.1029
+
+  Laya           exactitud 88.7%   error medio 0.148 escalones   errores de 2+ escalones 2.67%
+  Qwen consulta  exactitud 91.1%   error medio 0.115 escalones   errores de 2+ escalones 1.91%
+  Vertex         exactitud 88.1%   error medio 0.160 escalones   errores de 2+ escalones 2.83%
+Laya - Qwen consulta: -2.34% [-2.94%, -1.74%] -> LAYA PEOR
+Laya - Vertex: +0.64% [-0.02%, +1.23%] -> no se distingue
