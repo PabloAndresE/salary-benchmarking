@@ -203,9 +203,34 @@ def _registro(q, cands, juicio):
             "qs": [{"t": "choice", "ins": INSTRUCCION, "crit": crit, "soft": soft, "y": int(np.argmax(soft))}]}
 
 
-def entrenar1(epocas=3, lote=16):
+REJILLA = [(2e-5, 3), (2e-5, 6), (5e-5, 3), (5e-5, 6)]     # enmienda: (tasa del codificador, epocas)
+
+
+def entrenar1():
+    """Enmienda de T-012: rejilla de 4 configuraciones; gana la de menor perdida propia en la validacion."""
+    import json
+    mejores = []
+    for lr, ep in REJILLA:
+        val, info = _entrenar_uno(lr, ep)
+        mejores.append((val, lr, ep, info))
+        print("CONFIG lr {} epocas {}: perdida de validacion {:.4f}".format(lr, ep, val), flush=True)
+    val, lr, ep, info = min(mejores, key=lambda x: x[0])
+    import shutil
+    dst = SAL / "t12_laya_ajustado"
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.move(str(SAL / "t12_tmp_{}_{}".format(lr, ep)), str(dst))
+    for _, l_, e_, _ in mejores:
+        shutil.rmtree(SAL / "t12_tmp_{}_{}".format(l_, e_), ignore_errors=True)
+    linea = "T-012 entrenamiento (rejilla {}): elegida lr {} epocas {} (perdida de validacion {:.4f}); {}".format(
+        "; ".join("lr {} ep {}: {:.4f}".format(l_, e_, v_) for v_, l_, e_, _ in mejores), lr, ep, val, info)
+    (SAL / "t12_entrenamiento.txt").write_text(linea + "\n", encoding="utf-8")
+    print(linea, flush=True)
+
+
+def _entrenar_uno(lr_enc, epocas, lote=16):
     """Ajuste de laya-multilingual con la regla de puntuacion propia (log + esferica), opciones barajadas; temperatura
-    en la validacion (15 %)."""
+    en la validacion (15 %). Devuelve (perdida propia en validacion, resumen)."""
     import json
     import random
     import shutil
@@ -228,7 +253,7 @@ def entrenar1(epocas=3, lote=16):
         len(ent), len(val), np.mean([r["qs"][0]["soft"][-1] == 1.0 for r in recs])), flush=True)
     enc_p = [p for n, p in m.named_parameters() if n.startswith("encoder.")]
     head_p = [p for n, p in m.named_parameters() if not n.startswith("encoder.")]
-    opt = torch.optim.AdamW([{"params": enc_p, "lr": 2e-5}, {"params": head_p, "lr": 1e-4}], weight_decay=0.01)
+    opt = torch.optim.AdamW([{"params": enc_p, "lr": lr_enc}, {"params": head_p, "lr": 5 * lr_enc}], weight_decay=0.01)
     pasos = epocas * ((len(ent) + lote - 1) // lote)
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lambda s: min(1.0, (s + 1) / (0.1 * pasos)) * max(0.0, 1 - s / pasos))
     dt = torch.bfloat16 if dispositivo == "cuda" else torch.float32
@@ -267,7 +292,9 @@ def entrenar1(epocas=3, lote=16):
     nll = lambda T: float(-(tgt * torch.log_softmax(L / T, -1).clamp_min(-30)).sum(-1).mean())  # noqa: E731
     T = min(np.arange(0.5, 3.01, 0.05), key=nll)
     acc = float((L.argmax(-1) == tgt.argmax(-1)).float().mean())
-    dst = SAL / "t12_laya_ajustado"
+    mask_v = b["marker_mask"].float()
+    perdida_val = float(-proper_reward(torch.softmax(L / T, -1), tgt, b["qtype"], mask_v).mean())
+    dst = SAL / "t12_tmp_{}_{}".format(lr_enc, epocas)
     if dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(LAYA / "multilingual" / "tokenizer", dst / "tokenizer")
@@ -275,10 +302,8 @@ def entrenar1(epocas=3, lote=16):
     save_file({k: v.detach().cpu().contiguous() for k, v in m.state_dict().items()}, str(dst / "model.safetensors"))
     cfg = dict(cfg, temperature=[float(T)] * 3)
     (dst / "rl_agent_config.json").write_text(json.dumps(cfg, indent=1), encoding="utf-8")
-    linea = "T-012 entrenamiento: {:,} preguntas, {} epocas, {:.0f} min en {}; validacion: acierto {:.1%}, T {:.2f}".format(
-        len(ent), epocas, (time.time() - t0) / 60, dispositivo, acc, T)
-    (SAL / "t12_entrenamiento.txt").write_text(linea + "\n", encoding="utf-8")
-    print(linea, flush=True)
+    return perdida_val, "{:,} preguntas, {:.0f} min en {}; validacion: acierto {:.1%}, T {:.2f}".format(
+        len(ent), (time.time() - t0) / 60, dispositivo, acc, T)
 
 
 def medir1():

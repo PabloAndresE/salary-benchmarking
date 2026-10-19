@@ -8554,3 +8554,9 @@ la misma verdad (Qwen3.5-122B; los elegidos fuera del pool juzgado se reportan c
 juzgados, pero **176 de 436** elegidos caen fuera del pool juzgado en T-010b (sin verdad). **Velocidad: 0,15 s por
 consulta en CPU** (el sistema propuesto, ~2 s con Qwen en CPU). Confirma lo que dicen sus autores: sin ajuste no sirve;
 la etapa 1 decide.
+
+**Enmienda a T-012, antes de la etapa 1 (2026-10-19; autor: «sin ajustarlo le damos las de perder»).** El ajuste fino
+ya entrenaba todo Laya (codificador + cabeza de decisión), pero con UNA configuración fija, mientras el cross-encoder
+tuvo rejilla. Para igualar: **rejilla de 4** — tasa del codificador ∈ {2e-5, 5e-5} × épocas ∈ {3, 6} (cabeza a 5× la
+tasa del codificador) —, elegida por la pérdida propia (log + esférica) en la validación de Laya (15 % de sus preguntas,
+nunca la prueba de T-010b). Se guarda la mejor; el umbral y la comparación, como estaban.
