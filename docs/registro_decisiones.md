@@ -8687,3 +8687,25 @@ de 2, 13 min en ~6 GB de GPU; validación 90,7 %, T 1,25), aplicado a los 20.479
 **Lectura:** en el diseño final, el nivel puede salir de Laya (322M parámetros, ~1 ms por título) en vez de la regresión
 sobre Qwen-8B, sin perder banda y quizás con una ganancia pequeña. Qwen-8B sigue haciendo falta para **buscar**
 candidatos en el open set; sacarlo del todo requiere un buscador más chico (pendiente).
+
+### T-012, etapa 1, resultado: Laya ajustado reconoce un poco más, pero no sabe decir «desconocido» (2026-10-20)
+
+Las GPUs se liberaron de madrugada (02:53): Qwen3.5-122B etiquetó los 26.009 pares en 55 min y la rejilla de 5 variantes
+corrió en GPU. **Elegida por la validación: ajuste completo, 5e-5, 6 épocas** (pérdida 1,906; acierto en validación
+74,3 %); la cabeza experta quedó última (2,126; 67,2 %). Umbral de Laya elegido en calibra: **0,0** (reconocer siempre lo
+que elija, salvo que elija «NINGUNO»).
+
+| Sistema (prueba de T-010b: 413 con equivalente, 23 nuevas) | Exactitud balanceada | Con equivalente: reconoce bien | Nuevas: «desconocido» |
+|---|---|---|---|
+| Laya ajustado (una pregunta de opción múltiple) | 0,562 | **81,9 %** | 30,4 % |
+| **Qwen + cross-encoder reentrenado (T-010b)** | **0,784** | 78,5 % | **78,3 %** |
+
+**Laya − propuesto: −0,222 [−0,340, −0,093] → peor. No se adopta.** 70 elegidos de Laya quedaron sin verdad (fuera del
+pool juzgado).
+
+**Por qué:** de las 1.773 preguntas de entrenamiento con verdad, solo **87 (4,9 %) tenían «NINGUNO» como respuesta**:
+casi todo cargo de la base tiene un equivalente entre sus 10 candidatos. Laya aprendió a casi nunca decir «ninguno».
+Cuando el cargo tiene equivalente, elige bien un poco más que el sistema propuesto (81,9 % frente a 78,5 %), pero
+detecta solo 3 de cada 10 cargos nuevos de verdad, y la exactitud balanceada pesa las dos clases por igual. Para que
+un modelo de decisión sirva en el open set haría falta entrenarlo con muchos más casos «ninguno» (p. ej. sacando de
+los candidatos a todos los equivalentes conocidos, como el brazo «nuevo» de T-010).

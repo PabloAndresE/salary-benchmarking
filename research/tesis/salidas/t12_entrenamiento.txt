@@ -1,0 +1,1 @@
+T-012 entrenamiento: elegida completo lr 5e-05 epocas 6 (perdida de validacion 1.9056; 1,508 preguntas, 1 min en cuda; validacion: acierto 74.3%, T general 2.75, por opciones {'choice:11+': 2.75}). Rejilla: completo 2e-05 3: 1.9723; completo 2e-05 6: 1.9901; completo 5e-05 3: 1.9286; completo 5e-05 6: 1.9056; cabeza 0.0006 6: 2.1260
