@@ -60,6 +60,7 @@ from ..producto.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
 from ..producto.formato import validar as validar_formato
 from ..producto.comparacion import comparar, texto_resumen
 from ..producto.referenciar_nomina import _POSIBLES, _POSIBLES_SUELDO, _buscar_sueldo
+from . import registro_nominas
 
 ESQUEMA = "1.0"
 TTL_SEGUNDOS = 60 * 60          # el informe caduca en una hora: no es un almacen
@@ -1173,6 +1174,22 @@ def crear(tareas: BackgroundTasks,
             t.estado = "listo"
         except Exception as e:                               # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"
+            return
+        # LA NOMINA SE GUARDA DESPUES DEL INFORME, y si falla no lo tumba: el cliente ya
+        # tiene su resultado. Ver `registro_nominas`.
+        if registro_nominas.activo():
+            try:
+                filas = registro_nominas.filas_registro(
+                    df, col, _buscar_sueldo(df, columna_sueldo), t.resultado["detalle"],
+                    id_carga=t.id, carga_hash=registro_nominas.hash_carga(contenido),
+                    anio=int(anio), ruc=ruc, ciiu=ciiu_cliente,
+                    segmento=segmento.upper() if segmento else None,
+                    correcciones=correcciones)
+                registro_nominas.guardar(filas, registro_nominas.tabla_destino(m.settings),
+                                         m.settings.bq_project)
+                print(f"[nominas] {len(filas)} filas guardadas (carga {t.id})", flush=True)
+            except Exception as e:                           # noqa: BLE001
+                print(f"[nominas] NO se pudo guardar la carga {t.id}: {e!r}", flush=True)
 
     tareas.add_task(correr)
     return {"id": t.id, "estado": t.estado, "filas": len(df), "columna_cargo": col,
