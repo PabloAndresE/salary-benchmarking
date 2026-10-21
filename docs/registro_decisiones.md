@@ -8756,3 +8756,10 @@ nuevas):
 **Lectura:** el problema de T-012 era el desbalance del entrenamiento, no el tipo de modelo: con casos «ninguno»
 suficientes, un modelo de decisión de 322M llega al **nivel del sistema propuesto (estadísticamente indistinguible)**,
 en una sola pasada. Con solo 23 cargos nuevos en la prueba, el IC es ancho: no permite afirmar ni que sea peor ni mejor.
+
+**Análisis descriptivo de T-012b (a posteriori, sin criterio; 2026-10-21).** Curva de umbral en la prueba: en todos
+los puntos el sistema propuesto domina a Laya (p. ej., con ~75 % de reconocimiento, Laya detecta 61 % de los cargos
+nuevos y el cross-encoder 83 %). Si se obliga a reconocer siempre, el candidato elegido es correcto en 84,5 % (Laya)
+frente a 92,5 % (cross-encoder). La brecha no es de umbral: Laya elige peor el equivalente y separa peor lo nuevo.
+**Decisión del autor: el open set se queda con el cross-encoder reentrenado.** La destilación desde el cross-encoder
+(T-012c: ~20.000 títulos puntuados por el cross-encoder como profesor) queda como **trabajo futuro**.
