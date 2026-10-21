@@ -8781,3 +8781,26 @@ escala de similitud del espacio (en D-057 cambió de 0,633 a 0,709); `lambda` se
 **Medición:** protocolo v2, frente a **T-014**. Placebo: los vectores de e5 de la analogía permutados entre títulos.
 **Criterio (reemplazo):** no inferior frente a T-014 (extremo < +0,001) y mejor que el placebo; «mejora» si el IC queda
 entero bajo cero. Se reporta además frente al producto (Vertex, `nivel_v3`).
+
+### T-015, resultado: el pipeline 100 % local mejora al producto, pero no cumple el margen frente a T-014 (2026-10-21)
+
+Escala `k` reestimada en el espacio de e5: analogía **0,710** (con Vertex, 0,640), como en D-057. Laya: validación
+91,9 %.
+
+| Comparación | Votos (unión) | Pinball | IC (dos vías) |
+|---|---|---|---|
+| **e5 − T-014** (vecinos de Vertex) | 17.870 | **−0,00090** | [−0,00298, **+0,00141**] |
+| Placebo − T-014 | 17.870 | +0,08551 | [+0,07544, +0,09443] |
+| e5 − placebo | 17.870 | −0,08641 | [−0,09486, −0,07594] |
+| **e5 − producto** (Vertex, `nivel_v3`) | 20.312 | **−0,00323** | **[−0,00550, −0,00109]** |
+
+- Frente a T-014: la estimación puntual favorece a e5 (todo el cambio está en analogía → analogía, −16,1), pero el
+  extremo superior (+0,00141) pasa el margen de +0,001: **no cumple el criterio de reemplazo** registrado. El IC es
+  ancho: no se puede asegurar que no empeore más de 0,001.
+- Frente al **producto v1**, el pipeline 100 % local **mejora** con significancia (−0,0032), algo más que T-014 (−0,0024).
+- El placebo empeora +0,086: los vecinos de e5 llevan información de sueldo.
+
+**Lectura:** reemplazar Vertex por e5 en la analogía no tiene un costo visible (la estimación puntual incluso
+favorece a e5), pero la precisión de la medición no alcanza para garantizarlo dentro del margen registrado. La decisión
+entre el pipeline con Vertex (T-014) y el 100 % local (T-015) queda al autor, con este dato y las ventajas de lo local
+(privacidad, ~20 ms frente a ~370 ms por título, sin costo de API).
