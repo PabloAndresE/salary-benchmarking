@@ -675,8 +675,11 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
              informe_formato: dict | None = None,
              ruc: str | None = None,
              ciiu: str | None = None,
-             mapeo: dict[int, str] | None = None) -> tuple[dict, bytes]:
-    """El informe completo. Es la misma cadena que el CLI, sin tocar el disco."""
+             mapeo: dict[int, str] | None = None) -> tuple[dict, bytes, pd.DataFrame]:
+    """El informe completo. Es la misma cadena que el CLI, sin tocar el disco.
+
+    Devuelve tambien la homologacion cruda (`ref`), fila por fila: el registro de
+    nominas necesita `cargo_base` y `p_juez`, que el JSON no siempre lleva."""
     # LAS CORRECCIONES DEL USUARIO, ANTES DE NORMALIZAR. De aqui en adelante el flujo es
     # identico: el titulo corregido se embebe y se busca como cualquier otro.
     if mapeo:
@@ -915,7 +918,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         "resumen": {k: _py(v) for k, v in (resumen or {}).items()},
         "texto": texto_resumen(resumen, por_puesto) if resumen is not None else "",
     }
-    return cuerpo, xls.getvalue()
+    return cuerpo, xls.getvalue(), ref
 
 
 # ============================== capa HTTP ==============================
@@ -937,7 +940,7 @@ async def ciclo(app: FastAPI):
     _estado_app["motor"] = Motor(
         os.environ.get("BASE_REFERENCIA") or _ruta_base_por_defecto(), s)
     # que quede en el log de arranque a donde van las nominas, o que no van
-    print("[nominas] " + (f"se guardan en {registro_nominas.tabla_destino(s)}"
+    print("[nominas] " + (f"se guardan en {registro_nominas.dataset_destino()}"
                           if registro_nominas.activo() else "NO se guardan (GUARDAR_NOMINAS=no)"),
           flush=True)
     yield
@@ -1169,7 +1172,7 @@ def crear(tareas: BackgroundTasks,
     def correr():
         t.estado = "procesando"
         try:
-            t.resultado, t.excel = procesar(m, df, col, int(anio),
+            t.resultado, t.excel, ref = procesar(m, df, col, int(anio),
                                             segmento.upper() if segmento else None,
                                             rubro.upper() if rubro else None,
                                             columna_sueldo, extra,
@@ -1183,15 +1186,17 @@ def crear(tareas: BackgroundTasks,
         # tiene su resultado. Ver `registro_nominas`.
         if registro_nominas.activo():
             try:
-                filas = registro_nominas.filas_registro(
-                    df, col, _buscar_sueldo(df, columna_sueldo), t.resultado["detalle"],
+                tablas = registro_nominas.registro(
+                    df, col, _buscar_sueldo(df, columna_sueldo), t.resultado["detalle"], ref,
                     id_carga=t.id, carga_hash=registro_nominas.hash_carga(contenido),
                     anio=int(anio), ruc=ruc, ciiu=ciiu_cliente,
                     segmento=segmento.upper() if segmento else None,
-                    correcciones=correcciones)
-                registro_nominas.guardar(filas, registro_nominas.tabla_destino(m.settings),
-                                         m.settings.bq_project)
-                print(f"[nominas] {len(filas)} filas guardadas (carga {t.id})", flush=True)
+                    rubro=rubro.upper() if rubro else None, correcciones=correcciones,
+                    version_api=os.environ.get("VERSION_API") or f"esquema {ESQUEMA}",
+                    version_base=registro_nominas.version_base(m.ruta_base))
+                registro_nominas.guardar(tablas, registro_nominas.dataset_destino())
+                print(f"[nominas] {len(tablas['nomina_filas'])} filas guardadas "
+                      f"(carga {t.id})", flush=True)
             except Exception as e:                           # noqa: BLE001
                 print(f"[nominas] NO se pudo guardar la carga {t.id}: {e!r}", flush=True)
 
