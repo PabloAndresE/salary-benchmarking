@@ -49,7 +49,7 @@ fi
 
 DEST="gs://$BUCKET/benchmarking/$VERSION"
 echo "== artefactos a $DEST"
-gcloud storage cp -L "$BASE" "$DEST/base/$(basename "$BASE")" --project "$PROYECTO"
+gcloud storage cp "$(readlink -f "$BASE")" "$DEST/base/$(basename "$BASE")" --project "$PROYECTO"
 gcloud storage cp -r "$(readlink -f "$JUEZ")"/* "$DEST/modelos/juez/" --project "$PROYECTO"
 gcloud storage cp -r "$(readlink -f "$TRADUCTOR")"/* "$DEST/modelos/opus-mt-en-es/" --project "$PROYECTO"
 
