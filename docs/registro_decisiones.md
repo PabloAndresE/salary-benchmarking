@@ -8763,3 +8763,21 @@ nuevos y el cross-encoder 83 %). Si se obliga a reconocer siempre, el candidato 
 frente a 92,5 % (cross-encoder). La brecha no es de umbral: Laya elige peor el equivalente y separa peor lo nuevo.
 **Decisión del autor: el open set se queda con el cross-encoder reentrenado.** La destilación desde el cross-encoder
 (T-012c: ~20.000 títulos puntuados por el cross-encoder como profesor) queda como **trabajo futuro**.
+
+## T-015 — Pipeline 100 % local: los vecinos de la analogía desde e5 ajustado en vez de Vertex. Registrado antes de medir
+
+**Por qué** (autor: «¿no podemos reemplazar Vertex?»). En el pipeline de la tesis (T-014: Qwen busca, el cross-encoder
+reentrenado decide, Laya da el nivel), a Vertex solo le quedan los **vecinos de la analogía**. En D-057 el e5 ajustado
+(D-045, `48_bi_encoder_B3/semilla_1`, local, 15–21 ms por título) ya empató a Vertex en la banda (−0,00077
+[−0,00257, +0,00108]); el autor no lo activó por errores de **reconocimiento** (p. ej. `SALES DEVELOPMENT
+REPRESENTATIVE` → `DESARROLLADOR DE VENTAS`), que en el pipeline de la tesis ya no hace Vertex sino Qwen + el
+cross-encoder. Si cumple, ningún título de cliente sale del servidor.
+
+**Cambio** (`qwen_laya_e5`): T-014 (`qwen_laya`) con el índice y la consulta de la **analogía** en e5 ajustado
+(prefijo `query: `, promedio de tokens, largo 32), calculados para los 65.181 títulos de `base_v31`. Umbral del
+cross-encoder fijo en 0,82 (el de T-006); la escala `k` se **reestima por la partición interna**, porque depende de la
+escala de similitud del espacio (en D-057 cambió de 0,633 a 0,709); `lambda` se reestima sola en ese espacio.
+
+**Medición:** protocolo v2, frente a **T-014**. Placebo: los vectores de e5 de la analogía permutados entre títulos.
+**Criterio (reemplazo):** no inferior frente a T-014 (extremo < +0,001) y mejor que el placebo; «mejora» si el IC queda
+entero bajo cero. Se reporta además frente al producto (Vertex, `nivel_v3`).
