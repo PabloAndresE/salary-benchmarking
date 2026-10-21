@@ -8728,3 +8728,10 @@ nada nuevo):**
 
 **Medida y criterio:** los de T-012 (prueba de T-010b, frente al sistema propuesto, bootstrap de consultas): **«Laya
 mejora el open set»** si el IC de Laya − propuesto queda entero sobre cero. Se reporta además frente a T-012.
+
+**Enmienda a T-012b, antes de entrenar (2026-10-21).** Con la condición registrada (todos los demás candidatos «no»
+coherentes y al menos 7) salen solo **78** versiones «nuevas»: casi toda consulta tiene algún candidato con juicio
+incoherente (de las 1.773, 1.548 tienen al menos uno). Cambio: la versión «nueva» usa **solo los candidatos con «no»
+coherente** (los incoherentes se descartan) y pide **al menos 5**; y, para que el número de opciones no delate la
+respuesta, cada versión «nueva» va con una **versión emparejada del mismo tamaño**: un candidato «sí» (al azar) más los
+mismos «no» menos uno, con ese «sí» como respuesta. Resto igual.

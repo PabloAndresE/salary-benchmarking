@@ -187,6 +187,37 @@ def _juicios():
     return {(a, b): s for a, b, s in zip(g["q"], g["e"], g["si"])}
 
 
+AUMENTAR = [False]          # T-012b: sumar la version «nueva» de cada pregunta
+
+
+def _registro_nuevo(q, cands, juicio, minimo=5):
+    """T-012b (enmienda): dos preguntas del MISMO tamaño o None.
+    «nueva»: solo los candidatos «no» coherentes (>= minimo) -> NINGUNO.
+    «emparejada»: un «si» al azar + esos «no» menos uno -> ese «si»."""
+    j = [juicio.get((q, c), np.nan) for c in cands]
+    si = [c for c, x in zip(cands, j) if x == 1]
+    no = [c for c, x in zip(cands, j) if x == 0]
+    if not si or len(no) < minimo:
+        return None
+    import zlib
+    rng = np.random.default_rng(zlib.crc32(q.encode()))          # reproducible por titulo
+    crit_n = {c: None for c in no}
+    crit_n[NINGUNO] = "ninguno de los anteriores es el mismo puesto"
+    uno = si[int(rng.integers(len(si)))]
+    quita = int(rng.integers(len(no)))
+    otros = [c for i, c in enumerate(no) if i != quita]
+    ops = otros[:]
+    ops.insert(int(rng.integers(len(ops) + 1)), uno)
+    crit_e = {c: None for c in ops}
+    crit_e[NINGUNO] = "ninguno de los anteriores es el mismo puesto"
+    k = len(ops)
+    return [{"state": "Título del cargo: " + q,
+             "qs": [{"t": "choice", "ins": INSTRUCCION, "crit": crit_n, "soft": [0.0] * len(no) + [1.0], "y": len(no)}]},
+            {"state": "Título del cargo: " + q,
+             "qs": [{"t": "choice", "ins": INSTRUCCION, "crit": crit_e,
+                     "soft": [1.0 if c == uno else 0.0 for c in ops] + [0.0], "y": ops.index(uno)}]}]
+
+
 def _registro(q, cands, juicio):
     """Pregunta de Laya con su objetivo, o None si la verdad no alcanza (algun incoherente y ningun «si»)."""
     opciones = list(cands) + [NINGUNO]
@@ -208,7 +239,7 @@ REJILLA = [("completo", 2e-5, 3), ("completo", 2e-5, 6), ("completo", 5e-5, 3), 
            ("cabeza", 6e-4, 6)]     # enmiendas 1 y 2: (variante, tasa, epocas)
 
 
-def entrenar1():
+def entrenar1(pref="t12"):
     """Enmiendas de T-012: rejilla de 5 variantes; gana la de menor perdida propia en la validacion."""
     import shutil
     res = []
@@ -217,15 +248,16 @@ def entrenar1():
         res.append((val, var, lr, ep, info))
         print("VARIANTE {} lr {} epocas {}: perdida de validacion {:.4f} | {}".format(var, lr, ep, val, info), flush=True)
     val, var, lr, ep, info = min(res, key=lambda x: x[0])
-    dst = SAL / "t12_laya_ajustado"
+    dst = SAL / "{}_laya_ajustado".format(pref)
     if dst.exists():
         shutil.rmtree(dst)
     shutil.move(str(SAL / "t12_tmp_{}_{}_{}".format(var, lr, ep)), str(dst))
     for _, v_, l_, e_, _ in res:
         shutil.rmtree(SAL / "t12_tmp_{}_{}_{}".format(v_, l_, e_), ignore_errors=True)
-    linea = "T-012 entrenamiento: elegida {} lr {} epocas {} (perdida de validacion {:.4f}; {}). Rejilla: {}".format(
-        var, lr, ep, val, info, "; ".join("{} {} {}: {:.4f}".format(v_, l_, e_, x_) for x_, v_, l_, e_, _ in res))
-    (SAL / "t12_entrenamiento.txt").write_text(linea + "\n", encoding="utf-8")
+    linea = "{} entrenamiento: elegida {} lr {} epocas {} (perdida de validacion {:.4f}; {}). Rejilla: {}".format(
+        pref.upper(), var, lr, ep, val, info,
+        "; ".join("{} {} {}: {:.4f}".format(v_, l_, e_, x_) for x_, v_, l_, e_, _ in res))
+    (SAL / "{}_entrenamiento.txt".format(pref)).write_text(linea + "\n", encoding="utf-8")
     print(linea, flush=True)
 
 
@@ -238,13 +270,20 @@ def _preparar():
     ag = RLAgent(str(LAYA / "multilingual"), device=dispositivo)
     juicio = _juicios()
     d = pd.read_parquet(SAL / "t12_entrena.parquet")
-    recs = [r for r in (_registro(q, list(c), juicio) for q, c in zip(d["q"], d["cands"])) if r]
+    grupos = []                                   # por TITULO: su pregunta y, en T-012b, su version «nueva»
+    for q, c in zip(d["q"], d["cands"]):
+        g = [x for x in [_registro(q, list(c), juicio)] + ((_registro_nuevo(q, list(c), juicio) or [])
+                                                             if AUMENTAR[0] else []) if x]
+        if g:
+            grupos.append(g)
     rng = random.Random(SEM)
-    rng.shuffle(recs)
-    n_val = len(recs) * 15 // 100
+    rng.shuffle(grupos)
+    n_val = len(grupos) * 15 // 100
+    val = [x for g in grupos[:n_val] for x in g]
+    ent = [x for g in grupos[n_val:] for x in g]
     print("preguntas: entrenamiento {:,}, validacion {:,}; NINGUNO como objetivo {:.0%}".format(
-        len(recs) - n_val, n_val, np.mean([r["qs"][0]["soft"][-1] == 1.0 for r in recs])), flush=True)
-    return ag.model, ag.tok, ag.cfg, recs[n_val:], recs[:n_val], dispositivo, rng
+        len(ent), len(val), np.mean([r["qs"][0]["soft"][-1] == 1.0 for r in ent + val])), flush=True)
+    return ag.model, ag.tok, ag.cfg, ent, val, dispositivo, rng
 
 
 def _calibrar_y_guardar(m, cfg, L, tgt, mask, qtype, dst, extra):
@@ -510,5 +549,89 @@ def medir1():
     print("\n".join(out))
 
 
+def entrenar1b():
+    AUMENTAR[0] = True
+    entrenar1("t12b")
+
+
+def medir1b():
+    """T-012b: «desconocido» si P(NINGUNO) >= u (u en calibra); si no, el candidato mas probable."""
+    sys.path.insert(0, str(LAYA))
+    from rl_agent_api import RLAgent
+    import torch
+    ag = RLAgent(str(SAL / "t12b_laya_ajustado"), device="cuda" if torch.cuda.is_available() else "cpu")
+    juicio = _juicios()
+    t = pd.read_parquet(SAL / "t10b_decisiones.parquet")
+    g = pd.read_parquet(SAL / "t10b_qwen.parquet")
+    pool = g.groupby("q").agg(alguno=("si", lambda s: bool((s == 1).any())),
+                              todos_no=("si", lambda s: bool((s == 0).all())))
+    t["clase"] = t["q"].map(lambda q: "con equivalente" if pool.loc[q, "alguno"] else
+                            ("nueva" if pool.loc[q, "todos_no"] else "fuera"))
+    t = t[t["clase"] != "fuera"].reset_index(drop=True)
+    ev = pd.read_parquet(SAL / "t12_eval.parquet")
+    cand = dict(zip(ev["q"], (list(c) for c in ev["cands"])))
+    t0 = time.time()
+    pN, mejor = [], []
+    for q in t["q"]:
+        if not cand.get(q):
+            pN.append(1.0)
+            mejor.append("")
+            continue
+        _, _, pr = preguntar(ag, q, cand[q])
+        pN.append(float(pr[NINGUNO]))
+        mejor.append(max((c for c in pr if c != NINGUNO), key=lambda c: pr[c]))
+    seg = (time.time() - t0) / len(t)
+    t["pN"], t["e_L"] = pN, mejor
+    t["j_L"] = [juicio.get((q, e), np.nan) if e else np.nan for q, e in zip(t["q"], t["e_L"])]
+    t["j_A"] = [juicio.get((q, e), np.nan) if e else np.nan for q, e in zip(t["q"], t["e_A"])]
+
+    def aciertos_L(d, u):
+        rec = d["pN"].to_numpy() < u
+        con = (d["clase"] == "con equivalente").to_numpy()
+        j = d["j_L"].to_numpy()
+        ok = np.where(con, rec & (j == 1), ~rec).astype(float)
+        ok[con & rec & np.isnan(j)] = np.nan
+        return ok
+
+    def aciertos_A(d):
+        rec = d["s_A"].to_numpy() >= 0.90
+        con = (d["clase"] == "con equivalente").to_numpy()
+        j = d["j_A"].to_numpy()
+        ok = np.where(con, rec & (j == 1), ~rec).astype(float)
+        ok[con & rec & np.isnan(j)] = np.nan
+        return ok
+
+    def bal(d, ok):
+        con = (d["clase"] == "con equivalente").to_numpy()
+        return 0.5 * (np.nanmean(ok[con]) + np.nanmean(ok[~con]))
+
+    tc, tp = t[t["parte"] == "calibra"].reset_index(drop=True), t[t["parte"] == "prueba"].reset_index(drop=True)
+    rejilla = (0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+    u = max(rejilla, key=lambda x: bal(tc, aciertos_L(tc, x)))
+    okL, okA = aciertos_L(tp, u), aciertos_A(tp)
+    con = (tp["clase"] == "con equivalente").to_numpy()
+    rng = np.random.default_rng(SEM + 3)
+    bs = []
+    for _ in range(2000):
+        ii = rng.integers(0, len(tp), len(tp))
+        s_ = tp.iloc[ii].reset_index(drop=True)
+        bs.append(bal(s_, okL[ii]) - bal(s_, okA[ii]))
+    lo, hi = np.nanpercentile(bs, [2.5, 97.5])
+    d0 = bal(tp, okL) - bal(tp, okA)
+    out = ["T-012b · Laya ajustado CON casos NINGUNO frente al sistema propuesto de T-010b",
+           (SAL / "t12b_entrenamiento.txt").read_text(encoding="utf-8").strip(),
+           "umbral u de P(NINGUNO) elegido en calibra: {}; {:.3f} s por consulta".format(u, seg),
+           "PRUEBA ({} con equivalente, {} nuevas)".format(int(con.sum()), int((~con).sum())),
+           "  Laya T-012b   exactitud balanceada {:.4f}  con equivalente: reconoce bien {:.1%}  nuevas: desconocido {:.1%}  "
+           "(sin verdad {})".format(bal(tp, okL), np.nanmean(okL[con]), np.nanmean(okL[~con]), int(np.isnan(okL).sum())),
+           "  Qwen + cross-encoder reentrenado  {:.4f}  con equivalente: {:.1%}  nuevas: {:.1%}".format(
+               bal(tp, okA), np.nanmean(okA[con]), np.nanmean(okA[~con])),
+           "Laya - propuesto: {:+.4f} [{:+.4f}, {:+.4f}] -> {}".format(
+               d0, lo, hi, "LAYA MEJOR" if lo > 0 else ("LAYA PEOR" if hi < 0 else "no se distingue"))]
+    (SAL / "t12b_etapa1.txt").write_text("\n".join(out) + "\n", encoding="utf-8")
+    print("\n".join(out))
+
+
 if __name__ == "__main__":
-    {"etapa0": etapa0, "armar1": armar1, "etiquetar1": etiquetar1, "entrenar1": entrenar1, "medir1": medir1}[sys.argv[1]]()
+    {"etapa0": etapa0, "armar1": armar1, "etiquetar1": etiquetar1, "entrenar1": entrenar1, "medir1": medir1, "entrenar1b": entrenar1b,
+     "medir1b": medir1b}[sys.argv[1]]()
