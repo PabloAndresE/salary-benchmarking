@@ -8709,3 +8709,22 @@ Cuando el cargo tiene equivalente, elige bien un poco más que el sistema propue
 detecta solo 3 de cada 10 cargos nuevos de verdad, y la exactitud balanceada pesa las dos clases por igual. Para que
 un modelo de decisión sirva en el open set haría falta entrenarlo con muchos más casos «ninguno» (p. ej. sacando de
 los candidatos a todos los equivalentes conocidos, como el brazo «nuevo» de T-010).
+
+## T-012b — Laya en el open set, entrenado con casos «ninguno». Registrado antes de medir
+
+**Por qué:** T-012 falló porque solo 4,9 % de las preguntas de entrenamiento tenían «NINGUNO» como respuesta: Laya
+aprendió a casi nunca decirlo (detectó 30 % de los cargos nuevos de verdad).
+
+**Cambio (solo los datos de entrenamiento y la regla de decisión; mismas etiquetas de Qwen3.5-122B, sin etiquetar
+nada nuevo):**
+
+- A cada pregunta de entrenamiento de T-012 se le suma su **versión «nueva»**: los mismos candidatos **sin los que
+  Qwen juzgó «sí»**, con respuesta «NINGUNO». Solo si todos los que quedan tienen juicio «no» coherente y quedan
+  **al menos 7** (para que «pocas opciones» no delate la respuesta: en la prueba, los cargos nuevos tienen ~10).
+- La partición entrenamiento / validación es **por título** (las dos versiones de un título van juntas).
+- **Regla de decisión:** «desconocido» si P(NINGUNO) ≥ u; si no, «reconocido» con el candidato más probable. El
+  umbral u ∈ {0,05; 0,1; …; 0,9} se elige en calibra, como antes.
+- Misma rejilla de 5 variantes (4 de ajuste completo + cabeza), elegida por la validación.
+
+**Medida y criterio:** los de T-012 (prueba de T-010b, frente al sistema propuesto, bootstrap de consultas): **«Laya
+mejora el open set»** si el IC de Laya − propuesto queda entero sobre cero. Se reporta además frente a T-012.
