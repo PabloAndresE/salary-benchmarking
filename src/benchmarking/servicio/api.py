@@ -936,6 +936,10 @@ async def ciclo(app: FastAPI):
     s = cargar_settings()
     _estado_app["motor"] = Motor(
         os.environ.get("BASE_REFERENCIA") or _ruta_base_por_defecto(), s)
+    # que quede en el log de arranque a donde van las nominas, o que no van
+    print("[nominas] " + (f"se guardan en {registro_nominas.tabla_destino(s)}"
+                          if registro_nominas.activo() else "NO se guardan (GUARDAR_NOMINAS=no)"),
+          flush=True)
     yield
     _estado_app.clear()
 

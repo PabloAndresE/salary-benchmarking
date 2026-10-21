@@ -66,9 +66,17 @@ def _subir(cliente, **form):
     return cliente.get(f"/informes/{r.json()['id']}").json()
 
 
-def test_apagado_por_defecto(cliente, monkeypatch):
+def test_encendido_por_defecto(cliente, monkeypatch):
     llamadas = []
     monkeypatch.delenv("GUARDAR_NOMINAS", raising=False)
+    monkeypatch.setattr(rn, "guardar", lambda *a, **k: llamadas.append(a))
+    assert _subir(cliente)["estado"] == "listo"
+    assert len(llamadas) == 1
+
+
+def test_se_apaga_con_GUARDAR_NOMINAS_no(cliente, monkeypatch):
+    llamadas = []
+    monkeypatch.setenv("GUARDAR_NOMINAS", "no")
     monkeypatch.setattr(rn, "guardar", lambda *a, **k: llamadas.append(a))
     assert _subir(cliente)["estado"] == "listo"
     assert llamadas == []

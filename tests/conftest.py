@@ -6,6 +6,8 @@ import pytest
 
 # los tests no llaman a Vertex al arrancar el servicio (calentamiento de la API)
 os.environ.setdefault("CALENTAR", "no")
+# ...ni escriben nominas en BigQuery: guardar viene ENCENDIDO por defecto en produccion
+os.environ.setdefault("GUARDAR_NOMINAS", "no")
 
 
 @pytest.fixture

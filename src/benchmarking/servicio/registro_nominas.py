@@ -8,7 +8,7 @@ columnas, no quitando las prohibidas: una columna nueva en la plantilla no se cu
 
 La base legal es el contrato: las empresas firman que sus datos se usan para el estudio.
 
-APAGADO POR DEFECTO (`GUARDAR_NOMINAS=si` lo enciende). Y si falla, el informe NO falla:
+ENCENDIDO POR DEFECTO (`GUARDAR_NOMINAS=no` lo apaga). Y si falla, el informe NO falla:
 el cliente recibe su resultado igual y el error queda en el log. Guardar es para nosotros,
 el informe es para el.
 
@@ -42,7 +42,7 @@ ESQUEMA = (
 
 
 def activo() -> bool:
-    return os.environ.get("GUARDAR_NOMINAS", "no").lower() == "si"
+    return os.environ.get("GUARDAR_NOMINAS", "si").lower() != "no"
 
 
 def tabla_destino(settings) -> str:
