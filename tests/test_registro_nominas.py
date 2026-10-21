@@ -127,3 +127,12 @@ def test_si_guardar_falla_el_informe_sale_igual(cliente, monkeypatch):
     monkeypatch.setattr(rn, "guardar", _revienta)
     inf = _subir(cliente)
     assert inf["estado"] == "listo" and inf["detalle"]
+
+
+def test_el_ddl_sale_del_mismo_esquema_que_escribe_la_api():
+    sql = rn.ddl("p.benchmarking")
+    for nombre, cols in rn.ESQUEMAS.items():
+        assert f"CREATE TABLE IF NOT EXISTS `p.benchmarking.{nombre}`" in sql
+        for col, _ in cols:
+            assert f"  {col} " in sql
+    assert sql.count("PARTITION BY DATE(fecha_carga)") == len(rn.ESQUEMAS)

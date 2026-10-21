@@ -174,6 +174,19 @@ def registro(df: pd.DataFrame, col_cargo: str, col_sueldo: str | None,
     return {"cargas": [cabecera], "nomina_filas": filas, "homologaciones": homs}
 
 
+def ddl(dataset: str) -> str:
+    """El `CREATE TABLE IF NOT EXISTS` de las tres tablas, desde `ESQUEMAS`: el esquema
+    tiene una sola fuente, la misma que usa la API al escribir."""
+    tipos = {"FLOAT": "FLOAT64", "INTEGER": "INT64"}
+    sentencias = []
+    for nombre, cols in ESQUEMAS.items():
+        campos = ",\n  ".join(f"{n} {tipos.get(t, t)}" for n, t in cols)
+        sentencias.append(
+            f"CREATE TABLE IF NOT EXISTS `{dataset}.{nombre}` (\n  {campos}\n)\n"
+            f"PARTITION BY DATE(fecha_carga)\nCLUSTER BY id_carga;")
+    return "\n\n".join(sentencias)
+
+
 _CLIENTE = None
 
 
