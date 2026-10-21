@@ -1,0 +1,7 @@
+T-012b · Laya ajustado CON casos NINGUNO frente al sistema propuesto de T-010b
+T12B entrenamiento: elegida completo lr 5e-05 epocas 3 (perdida de validacion 1.5760; 2,428 preguntas, 0 min en cuda; validacion: acierto 67.2%, T general 2.30, por opciones {'choice:11+': 2.2, 'choice:6-10': 2.35}). Rejilla: completo 2e-05 3: 1.6426; completo 2e-05 6: 1.6265; completo 5e-05 3: 1.5760; completo 5e-05 6: 1.6119; cabeza 0.0006 6: 1.7932
+umbral u de P(NINGUNO) elegido en calibra: 0.1; 0.024 s por consulta
+PRUEBA (413 con equivalente, 23 nuevas)
+  Laya T-012b   exactitud balanceada 0.7123  con equivalente: reconoce bien 68.5%  nuevas: desconocido 73.9%  (sin verdad 57)
+  Qwen + cross-encoder reentrenado  0.7838  con equivalente: 78.5%  nuevas: 78.3%
+Laya - propuesto: -0.0715 [-0.1898, +0.0466] -> no se distingue

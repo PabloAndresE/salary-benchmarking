@@ -1,0 +1,1 @@
+T12B entrenamiento: elegida completo lr 5e-05 epocas 3 (perdida de validacion 1.5760; 2,428 preguntas, 0 min en cuda; validacion: acierto 67.2%, T general 2.30, por opciones {'choice:11+': 2.2, 'choice:6-10': 2.35}). Rejilla: completo 2e-05 3: 1.6426; completo 2e-05 6: 1.6265; completo 5e-05 3: 1.5760; completo 5e-05 6: 1.6119; cabeza 0.0006 6: 1.7932

@@ -8735,3 +8735,24 @@ incoherente (de las 1.773, 1.548 tienen al menos uno). Cambio: la versión «nue
 coherente** (los incoherentes se descartan) y pide **al menos 5**; y, para que el número de opciones no delate la
 respuesta, cada versión «nueva» va con una **versión emparejada del mismo tamaño**: un candidato «sí» (al azar) más los
 mismos «no» menos uno, con ese «sí» como respuesta. Resto igual.
+
+### T-012b, resultado: con casos «ninguno», Laya aprende a decir «desconocido», pero no supera al sistema propuesto (2026-10-21)
+
+Rejilla (validación de Laya): gana el **ajuste completo, 5e-5, 3 épocas** (pérdida 1,576; acierto 67,2 %); la cabeza
+experta, última (1,793). Umbral de P(NINGUNO) elegido en calibra: **0,1**. Prueba de T-010b (413 con equivalente, 23
+nuevas):
+
+| Sistema | Exactitud balanceada | Con equivalente: reconoce bien | Nuevas: «desconocido» |
+|---|---|---|---|
+| Laya T-012 (4,9 % de «ninguno» al entrenar) | 0,562 | 81,9 % | 30,4 % |
+| **Laya T-012b (22 % de «ninguno»)** | **0,712** | 68,5 % | **73,9 %** |
+| Qwen + cross-encoder reentrenado (T-010b) | 0,784 | 78,5 % | 78,3 % |
+
+- **Laya T-012b − propuesto: −0,072 [−0,190, +0,047] → no se distingue.** No cumple «Laya mejora el open set».
+- Frente a T-012: la detección de cargos nuevos sube de 30 % a **74 %**, a costa de reconocer menos los que tienen
+  equivalente (81,9 % → 68,5 %). 57 elegidos sin verdad (fuera del pool).
+- 0,024 s por consulta en GPU.
+
+**Lectura:** el problema de T-012 era el desbalance del entrenamiento, no el tipo de modelo: con casos «ninguno»
+suficientes, un modelo de decisión de 322M llega al **nivel del sistema propuesto (estadísticamente indistinguible)**,
+en una sola pasada. Con solo 23 cargos nuevos en la prueba, el IC es ancho: no permite afirmar ni que sea peor ni mejor.
