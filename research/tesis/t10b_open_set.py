@@ -218,8 +218,8 @@ def etiquetar_qwen():
     from vllm.sampling_params import StructuredOutputsParams
     p = pd.read_parquet(SAL / "t10b_pool.parquet")
     sis, sha = e51.sistema()
-    llm = LLM(model=str(RAIZ / "modelos" / "qwen35-122b-a10b-fp8"), tensor_parallel_size=2, max_model_len=8192,
-              gpu_memory_utilization=0.85, seed=20261005,
+    llm = LLM(model=str(RAIZ / "modelos" / "qwen35-122b-a10b-fp8"), tensor_parallel_size=int(os.environ.get("TP", "2")),
+              max_model_len=8192, gpu_memory_utilization=float(os.environ.get("UTIL", "0.85")), seed=20261005,
               compilation_config={"pass_config": {"fuse_allreduce_rms": False}}, gdn_prefill_backend="triton")
     sp = SamplingParams(temperature=0.0, max_tokens=300, seed=20261005,
                         structured_outputs=StructuredOutputsParams(json=e51.ESQUEMA))
