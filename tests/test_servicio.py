@@ -1,0 +1,764 @@
+"""El servicio HTTP, sobre una base SINTETICA.
+
+Nada de esto toca datos reales ni la red: se construye una base de juguete, se guarda a
+un `.npz` temporal y el motor la carga como cargaria la de produccion.
+"""
+
+import io
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from fastapi.testclient import TestClient
+from fakes.cliente_v13 import ClienteV13
+
+from src.domain.base_referencia import BaseReferencia  # noqa: E402
+
+from fakes.ajustes import ANIO, _sbu  # noqa: F401 (otros tests los importan de aqui)
+
+
+def _xlsx(df):
+    b = io.BytesIO()
+    with pd.ExcelWriter(b) as w:
+        df.to_excel(w, index=False)
+    return b.getvalue()
+
+
+def test_salud_declara_lo_que_hay_cargado(cliente):
+    d = cliente.get("/salud").json()
+    assert d["ok"] and d["puestos"] == 3 and 2025 in d["anios_con_sbu"]
+
+
+def test_el_informe_completo_de_punta_a_punta(cliente):
+    df = pd.DataFrame(
+        {
+            "nombre": ["Ana", "Luis", "Eva"],
+            "cargo": ["CONTADOR", "CONTADOR", "VENDEDOR"],
+            "sueldo": ["1500,50", "1400", "800"],
+        }
+    )
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"anio": 2025})
+    assert r.status_code == 202
+    tid = r.json()["id"]
+    assert r.json()["columna_cargo"] == "cargo"
+
+    d = cliente.get(f"/informes/{tid}").json()
+    assert d["estado"] == "listo"
+    assert len(d["detalle"]) == 3 and len(d["por_puesto"]) == 2
+    # el sueldo en formato espanol se leyo bien
+    assert abs(d["detalle"][0]["sueldo_actual"] - 1500.50) < 1e-9
+    # y el Excel se puede descargar
+    x = cliente.get(f"/informes/{tid}/excel")
+    assert x.status_code == 200 and x.content[:2] == b"PK"
+
+
+def test_el_json_declara_UNIDADES_y_el_aviso_de_la_brecha(cliente):
+    # Un front que formatee `vs_mercado` como dolares produce un numero creible y falso.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    assert d["unidades"]["vs_mercado"]["unidad"] == "ratio"
+    assert d["unidades"]["referencia"]["unidad"] == "usd"
+    assert "NO es una brecha salarial" in d["meta"]["aviso"]
+
+
+def test_las_UNIDADES_estan_en_EL_MISMO_SITIO_en_los_dos_endpoints(cliente):
+    # Estaban en `meta` en /informes y en la raiz en /referencia. Un front que leia
+    # `respuesta.unidades` recibia nada del primero y lo daba por vacio: el mapa existia,
+    # se declaraba en el contrato y no llegaba nunca. Es el mismo fallo que UNIDADES
+    # existe para evitar, una capa mas arriba.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    inf = cliente.get(f"/informes/{tid}").json()
+    ref = cliente.get("/referencia", params={"cargo": "CONTADOR"}).json()
+    assert inf["unidades"] == ref["unidades"], "el mismo contrato en dos formas"
+    assert "unidades" not in inf["meta"], "y en un solo sitio, no en dos"
+
+
+def test_los_tramos_publicados_son_los_que_de_verdad_se_calculan(cliente):
+    # El front arma el filtro de antiguedad con esta lista. Si la deduce de los datos
+    # que le llegaron, una nomina joven le deja el filtro sin `mas de 20`. Y si la lista
+    # se copia a mano en dos archivos, se desincronizan.
+    from src.domain.antiguedad import TRAMOS
+
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"], "fecha_ingreso": ["01/01/2020"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    assert d["unidades"]["antiguedad_tramo"]["valores"] == list(TRAMOS)
+    # la nomina solo produce UN tramo, y aun asi se publican los seis
+    assert len({f["antiguedad_tramo"] for f in d["detalle"]}) == 1
+    assert len(d["unidades"]["antiguedad_tramo"]["valores"]) == 6
+
+
+def test_estado_explicito_en_vez_de_null(cliente):
+    # Un nulo puede significar cinco cosas y cada una lleva a otro mensaje en la interfaz.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR"], "sueldo": ["1500", "sin dato"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    estados = {f["estado"] for f in d["detalle"]}
+    assert "sueldo_ilegible" in estados, "el sueldo malo no puede salir como 'sin datos'"
+    assert "directa" in estados
+    assert d["reparto_estado"]
+
+
+def test_el_anio_por_defecto_es_el_ACTUAL(cliente):
+    # Estaba fijado a 2025 y eso envejece solo: en enero se seguirian emitiendo dolares
+    # del ano anterior sin que nadie lo note.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    assert r.status_code == 202 and r.json()["anio"] == ANIO
+
+
+def test_un_anio_sin_SBU_se_rechaza_al_subir_y_no_treinta_segundos_despues(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"anio": 2099})
+    assert r.status_code == 400 and "2099" in r.json()["detail"]
+
+
+def test_una_nomina_ilegible_da_400_y_NO_mata_al_worker(cliente):
+    # El CLI usa SystemExit ante una nomina mala: correcto en una terminal, catastrofico
+    # en un servidor. Aqui tiene que ser un 400 con el motivo, y el servicio seguir vivo.
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", b"esto no es un excel")})
+    assert r.status_code == 400
+    df = pd.DataFrame({"otra_cosa": ["x"]})
+    r2 = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"formato_libre": "true"})
+    assert r2.status_code == 400 and "columna de cargo" in r2.json()["detail"]
+    assert cliente.get("/salud").json()["ok"], "el servicio sigue en pie"
+
+
+def test_segmento_invalido_se_rechaza(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"segmento": "ENORME"})
+    assert r.status_code == 400 and "ENORME" in r.json()["detail"]
+
+
+def test_un_informe_que_no_existe_da_404(cliente):
+    assert cliente.get("/informes/noexiste").status_code == 404
+    assert cliente.get("/informes/noexiste/excel").status_code == 404
+
+
+def test_la_consulta_suelta_AVISA_de_que_no_es_el_producto(cliente):
+    # Sin la nomina completa no hay ancla de empresa, y sin ancla no hay lectura de
+    # equidad interna. Quien monte un front encima tiene que enterarse.
+    d = cliente.get("/referencia", params={"cargo": "contador"}).json()
+    assert d["referencia"] > 0 and d["confianza"]
+    assert "ancla" in d["aviso"] and "POST /informes" in d["aviso"]
+    assert not any(str(k).endswith("_log") for k in d), "nada de escala logaritmica"
+
+
+def test_los_marcadores_de_swagger_NO_son_una_trampa(cliente):
+    # `/docs` deja la palabra "string" en los campos opcionales. Mandarla tal cual daba
+    # un 400 confuso —«segmento invalido: string»— en la primera prueba de cualquiera
+    # que abriera la interfaz. La pantalla de pruebas no puede ser una trampa.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    for datos in (
+        {"segmento": "string", "rubro": "string", "columna_cargo": "string"},
+        {"segmento": "  ", "rubro": "", "columna_sueldo": "  "},
+        {},
+    ):
+        r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data=datos)
+        assert r.status_code == 202, f"{datos} -> {r.status_code} {r.text}"
+
+
+def test_un_rubro_desconocido_se_rechaza_en_vez_de_caer_al_global_en_silencio(cliente):
+    # Antes solo avisaba por `warnings` y devolvia el mercado entero: el cliente recibia
+    # un informe completo creyendo que era sectorial.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"rubro": "ZZZ"})
+    assert r.status_code == 400 and "ZZZ" in r.json()["detail"]
+    assert cliente.get("/referencia", params={"cargo": "CONTADOR", "rubro": "ZZZ"}).status_code == 400
+
+
+def test_una_columna_que_TERMINA_en_espacio_se_encuentra_igual(cliente):
+    # La plantilla actuarial real trae 'Ultimo sueldo/pension mensual ' con espacio al
+    # final. El saneado de los opcionales lo recortaba y dejaba de coincidir, asi que
+    # `_buscar_sueldo` devolvia None EN SILENCIO: informe sin comparacion y sin motivo.
+    df = pd.DataFrame({"Cargo ": ["CONTADOR"], "Ultimo sueldo/pension mensual ": ["1500"]})
+    r = cliente.post(
+        "/informes",
+        files={"archivo": ("n.xlsx", _xlsx(df))},
+        data={"formato_libre": "true", "columna_cargo": "Cargo", "columna_sueldo": "ultimo sueldo/pension mensual"},
+    )
+    assert r.status_code == 202, r.text
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert len(d["por_puesto"]) == 1, "la comparacion tiene que haberse hecho"
+    assert d["detalle"][0]["sueldo_actual"] == 1500.0
+
+
+def test_una_columna_de_sueldo_inventada_da_400_en_vez_de_ignorarse(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post(
+        "/informes",
+        files={"archivo": ("n.xlsx", _xlsx(df))},
+        data={"formato_libre": "true", "columna_sueldo": "no_existe"},
+    )
+    assert r.status_code == 400 and "no_existe" in r.json()["detail"]
+
+
+def test_el_JSON_trae_las_columnas_del_cliente_por_defecto(cliente):
+    # El front necesita el NOMBRE para decir a quien subirle el sueldo, la ANTIGUEDAD
+    # para explicar por que cobra lo que cobra, y el SEXO para el analisis de brecha.
+    # Que `sexo` viaje NO contradice que nunca sea variable del modelo: no entra en
+    # ningun calculo, sale para poder MEDIR la brecha (D-011).
+    df = pd.DataFrame(
+        {"cargo": ["CONTADOR"], "sueldo": ["1500"], "nombre": ["Ana"], "sexo": ["F"], "fecha_ingreso": ["01/01/2015"]}
+    )
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    f = cliente.get(f"/informes/{tid}").json()["detalle"][0]
+    assert f["nombre"] == "Ana" and f["sexo"] == "F"
+    assert f["fecha_ingreso"]
+    # y lo del modelo va primero, para que la fila se lea de un vistazo.
+    # `cargo_normalizado` es la clave con la que el front une el detalle con
+    # `por_puesto`, y va pegada a `cargo` porque es la misma cosa vista de otro modo.
+    assert list(f)[:4] == ["fila", "cargo", "cargo_normalizado", "estado"]
+
+
+def test_se_puede_recortar_a_solo_los_numeros(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"], "centro_costo": ["Admin"], "nombre": ["Ana"]})
+    tid = cliente.post(
+        "/informes",
+        files={"archivo": ("n.xlsx", _xlsx(df))},
+        data={"columnas_originales": "false", "columnas_extra": "centro_costo"},
+    ).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    f = d["detalle"][0]
+    assert f["centro_costo"] == "Admin", "la pedida si"
+    assert "Nombres" not in f, "las demas no"
+    assert "nombre" in d["meta"]["columnas_omitidas"]
+
+
+def test_una_columna_extra_inventada_da_400(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post(
+        "/informes",
+        files={"archivo": ("n.xlsx", _xlsx(df))},
+        data={"columnas_originales": "false", "columnas_extra": "no_existe"},
+    )
+    assert r.status_code == 400 and "no_existe" in r.json()["detail"]
+
+
+def test_la_antiguedad_viaja_calculada_y_en_tramos(cliente):
+    # El front la necesita para el filtro de ANTIGUEDAD y para explicar por que alguien
+    # cobra lo que cobra. La plantilla no la trae: hay que calcularla de las fechas.
+    df = pd.DataFrame(
+        {"cargo": ["CONTADOR", "CONTADOR"], "sueldo": ["1500", "1400"], "fecha_ingreso": ["01/01/2014", "01/01/2024"]}
+    )
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"anio": 2025}).json()["id"]
+    d = cliente.get(f"/informes/{tid}").json()
+    a, b = d["detalle"][0], d["detalle"][1]
+    assert abs(a["antiguedad_anios"] - 12.0) < 0.1
+    assert a["antiguedad_tramo"] == "10 a 20"
+    assert b["antiguedad_tramo"] == "1 a 3"
+    assert d["unidades"]["antiguedad_anios"]["unidad"] == "anios"
+
+
+def test_sin_fechas_la_antiguedad_es_null_y_no_cero(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    f = cliente.get(f"/informes/{tid}").json()["detalle"][0]
+    assert f["antiguedad_anios"] is None and f["antiguedad_tramo"] is None
+
+
+def test_las_tarjetas_de_cabecera(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR", "VENDEDOR"], "sueldo": ["1500", "1400", "800"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    m = cliente.get(f"/informes/{tid}").json()["mercado"]
+    assert m["cargos_del_cliente"] == 2
+    assert m["cargos_con_datos_en_la_base"] == 2
+    # 14 personas por cargo en la base sintetica, y NO se cuenta CONTADOR dos veces
+    assert m["trabajadores_analizados"] == 28
+    assert m["empresas_analizadas"] == 28
+
+
+def test_las_empresas_se_cuentan_SIN_DUPLICAR(cliente):
+    # Es la tarjeta mas visible del informe. La base sintetica usa empresas distintas
+    # por cargo (E0*, E1*, E2*), asi que la union son 42 y no 14.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR", "GUARDIA"], "sueldo": ["1500", "800", "600"]})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    m = cliente.get(f"/informes/{tid}").json()["mercado"]
+    assert m["empresas_analizadas"] == 42
+
+
+def test_el_mismo_cargo_dos_veces_no_infla_el_conteo(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"] * 5, "sueldo": ["1500"] * 5})
+    tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
+    m = cliente.get(f"/informes/{tid}").json()["mercado"]
+    assert m["empresas_analizadas"] == 14 and m["trabajadores_analizados"] == 14
+
+
+def test_la_industria_solo_llega_a_seccion(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    sin = cliente.get(
+        f"/informes/" f"{cliente.post('/informes', files={'archivo': ('n.xlsx', _xlsx(df))}).json()['id']}"
+    ).json()
+    assert sin["industria"] is None, "sin rubro no hay tarjeta de industria"
+
+
+def test_con_rubro_se_cuentan_las_empresas_DE_ESE_RUBRO(cliente):
+    # La tarjeta tiene que describir la comparacion que de verdad se hizo. Contar el
+    # padron entero daria un numero mayor que el conjunto contra el que se comparo.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR"], "sueldo": ["1500", "800"]})
+    sin = cliente.get(
+        f"/informes/{cliente.post('/informes', files={'archivo': ('n.xlsx', _xlsx(df))}).json()['id']}"
+    ).json()
+    assert sin["mercado"]["cargos_comparados_contra_su_rubro"] == 0
+    assert sin["mercado"]["empresas_analizadas"] == 28
+
+
+def test_al_cliente_se_le_dice_que_esta_dentro_de_su_propio_mercado(cliente):
+    # `E00` respalda CONTADOR en la base de juguete. No se le quita del mercado —de una
+    # mediana ponderada no se resta un voto sin guardar los votos, ver D-027—, pero el
+    # informe tiene que DECIRLO en vez de presentar la comparacion como independiente.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR"], "sueldo": ["1500", "1600"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"ruc": "E00"})
+    assert r.status_code == 202
+    # `en_la_base` mira el PADRON, no `meta_ruc`: este ultimo solo se puebla cuando el
+    # marco trae columnas de SCVS —esta base de juguete no las trae— y con la fuente
+    # equivocada se le decia a una empresa que no esta cuando si esta.
+    assert r.json()["empresa"]["en_la_base"] is True
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+
+    m = d["mercado"]
+    assert m["cargos_donde_tu_empresa_esta_en_el_mercado"] == 1
+    assert "nota_espejo" in m
+
+    pp = {f["cargo"]: f for f in d["por_puesto"]}
+    assert pp["CONTADOR"]["tu_empresa"] is True
+    assert pp["VENDEDOR"]["tu_empresa"] is False
+    # 14 empresas respaldan la celda, asi que la influencia es 1/14
+    assert abs(pp["CONTADOR"]["tu_influencia"] - 1 / 14) < 1e-3
+    assert pp["VENDEDOR"]["tu_influencia"] is None
+
+
+def test_sin_ruc_no_se_afirma_nada_sobre_el_espejo(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert "nota_espejo" not in d["mercado"]
+    assert d["por_puesto"][0]["tu_empresa"] is False
+
+
+def test_un_ruc_que_no_esta_en_la_base_no_inventa_pertenencia(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"ruc": "1790000000001"})
+    assert r.json()["empresa"]["en_la_base"] is False
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert d["mercado"]["cargos_donde_tu_empresa_esta_en_el_mercado"] == 0
+    assert d["por_puesto"][0]["tu_empresa"] is False
+
+
+def test_el_mismo_puesto_escrito_de_varias_formas_es_UN_puesto(cliente):
+    # El modelo consulta en mayusculas y sin espacios de borde, asi que las cuatro
+    # grafias reciben la MISMA referencia. Agrupando por el texto crudo salian como
+    # cuatro puestos con `personas=1` y la referencia repetida.
+    #
+    # Y NO ES COSMETICO: `_voto` es la mediana de lo que la empresa paga por el puesto y
+    # es lo que decide la lectura. Fragmentado, cada grafia votaba con la gente que le
+    # tocara y el mismo puesto podia salir "en linea" en una fila y "muy por debajo" en
+    # la de al lado, por como lo escribio quien lleno el Excel.
+    df = pd.DataFrame(
+        {"cargo": ["Contador", "CONTADOR", "contador ", "Contador"], "sueldo": ["1200", "1500", "1800", "2100"]}
+    )
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+
+    assert len(d["por_puesto"]) == 1, d["por_puesto"]
+    fila = d["por_puesto"][0]
+    # LA ETIQUETA ES LA DEL CLIENTE, no el normalizado: el front no puede enseñarle
+    # `CONTADOR` a quien escribio `Contador`. Se elige la grafia mas repetida.
+    assert fila["cargo"] == "Contador"
+    # ...y la clave con la que se agrupo viaja aparte, que es con la que el front une
+    # esta tabla con el detalle.
+    assert fila["cargo_normalizado"] == "CONTADOR"
+    assert fila["personas"] == 4
+    # juntar no puede ser silencioso
+    assert fila["grafias"] == 3
+    # la mediana es la de las CUATRO personas, no la de una
+    assert fila["sueldo_mediano"] == 1650.0
+
+
+def test_el_front_puede_unir_por_puesto_con_el_detalle(cliente):
+    # La etiqueta de un puesto es UNA grafia y el detalle trae todas, asi que unir por
+    # `cargo` dejaria filas huerfanas. `cargo_normalizado` esta en las dos tablas.
+    df = pd.DataFrame({"cargo": ["Contador", "CONTADOR", "VENDEDOR"], "sueldo": ["1200", "1500", "1600"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    claves_pp = {f["cargo_normalizado"] for f in d["por_puesto"]}
+    claves_det = {f["cargo_normalizado"] for f in d["detalle"]}
+    assert claves_det == claves_pp, "ninguna fila del detalle puede quedar huerfana"
+
+
+def test_la_etiqueta_no_depende_del_orden_de_las_filas(cliente):
+    # Dos nominas con las mismas grafias empatadas tienen que rotular igual, o el mismo
+    # informe cambia de nombre entre ejecuciones.
+    etiquetas = []
+    for orden in (["Contador", "CONTADOR"], ["Contador", "CONTADOR"]):
+        df = pd.DataFrame({"cargo": orden, "sueldo": ["1200", "1500"]})
+        r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+        d = cliente.get(f"/informes/{r.json()['id']}").json()
+        etiquetas.append(d["por_puesto"][0]["cargo"])
+    assert etiquetas[0] == etiquetas[1] == "Contador"
+
+
+def test_el_detalle_respeta_lo_que_escribio_el_cliente(cliente):
+    # En `por_puesto` se normaliza porque es un agregado; en el detalle NO, porque el
+    # cliente tiene que poder casar cada fila con su nomina. Lo unico que se le quita
+    # son los espacios de los bordes, que no son texto sino un caracter invisible.
+    df = pd.DataFrame({"cargo": ["Contador", " CONTADOR "], "sueldo": ["1200", "1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert [f["cargo"] for f in d["detalle"]] == ["Contador", "CONTADOR"]
+
+
+def test_el_informe_trae_el_sector_del_cliente_SIN_meterlo_en_el_veredicto(cliente):
+    # Lo que piden los ejecutivos: ver lo que paga SU sector. Lo que NO se les da: que
+    # el veredicto salga de ahi. Medido (D-029): con la cascada cambia el veredicto del
+    # 1,8% de los cargos y en esos la seccion acierta mas (+9,2% de pinball).
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    f = d["por_puesto"][0]
+    # las columnas viajan SIEMPRE, con dato o sin el: un front no puede tener que
+    # programar dos formas de respuesta
+    # El bloque viaja SIEMPRE, con contenido o en `null`: si apareciera solo a veces,
+    # el front tendria que programar dos formas de respuesta y la rara no se prueba.
+    assert "sector_mas_fino" in f
+    # `null` aqui porque esta base de juguete no tiene CIIU, asi que no hay nada que
+    # explicar. Lo que NO puede haber es una cifra de sueldo del sector: competiria con
+    # la referencia y ganaria, porque es la de menos empresas y suele ser la mas grande.
+    assert f["sector_mas_fino"] is None or "referencia" not in f["sector_mas_fino"]
+    planas = [c for c in f if c.startswith("sector_") and c != "sector_mas_fino"]
+    assert not planas, f"las columnas planas se anidan en el bloque: {planas}"
+
+
+def test_la_ficha_del_ruc_devuelve_el_CIIU_COMPLETO(cliente):
+    # `G4761.03` es lo que el cliente reconoce como suyo. `G476` no le dice nada, y la
+    # seccion —"comercio al por mayor y al por menor; reparacion de vehiculos"— le dice
+    # algo FALSO si vende libros.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"ruc": "E00"})
+    ficha = r.json()["empresa"]
+    assert "ciiu" in ficha and "ciiu_seccion" in ficha
+
+
+# --- la base que se carga, y que sabe hacer ---------------------------------------
+
+
+def test_salud_declara_QUE_SABE_HACER_la_base(cliente):
+    # Una base vieja NO falla: responde igual, con menos, y en silencio. El servicio
+    # arrancaba con `demo/base_v8.npz` escrito a mano mientras el RUC, el padron y la
+    # cascada vivian en la v13: tres funciones muertas y nada lo decia.
+    d = cliente.get("/salud").json()
+    assert "capacidades" in d and "base" in d
+    for c in ("padron", "ruc_a_industria", "rubro_multinivel", "segmento_del_ruc"):
+        assert c in d["capacidades"], f"falta declarar {c}"
+
+
+def test_una_base_incompleta_lo_DICE_en_vez_de_callarselo(cliente):
+    # La base de juguete de estos tests no trae RUC ni CIIU, asi que tiene que salir
+    # como degradada. Si saliera "ok" a secas, el aviso no serviria de nada.
+    d = cliente.get("/salud").json()
+    assert d["degradado"], "esta base no soporta el RUC y deberia decirlo"
+    assert d["aviso"] and "BASE_REFERENCIA" in d["aviso"]
+
+
+def test_la_base_por_defecto_NO_esta_escrita_a_mano():
+    # El defecto era `demo/base_v8.npz` en el codigo. Se sirvio una semana mientras se
+    # construian la v9 a la v13. Ahora sale de la mas nueva por NUMERO DE VERSION, no
+    # por fecha: copiar un fichero viejo lo volveria el mas reciente.
+    import re
+    from src.infrastructure.motor import _ruta_base_por_defecto
+
+    r = _ruta_base_por_defecto()
+    assert re.search(r"base_v\d+\.npz$", r) or r.endswith("base_referencia.npz")
+
+
+def test_el_entorno_manda_sobre_el_defecto(monkeypatch, base_npz):
+
+    monkeypatch.setenv("BASE_REFERENCIA", base_npz)
+    import os
+
+    assert os.environ.get("BASE_REFERENCIA") == base_npz
+    # y `capacidades_de` no revienta con una base a la que le falta todo
+    from src.domain.base_referencia import BaseReferencia
+    from src.infrastructure import motor as motor_mod
+
+    c = motor_mod.capacidades_de(BaseReferencia.cargar(base_npz, lambda a: 470.0))
+    assert set(c) == {n for n, _, _ in motor_mod.CAPACIDADES}
+
+
+# --- la cascada, DE PUNTA A PUNTA por HTTP ----------------------------------------
+
+
+@pytest.fixture
+def cliente_ciiu(tmp_path, monkeypatch):
+    """Un servicio sobre una base CON CIIU, que es lo que ninguna prueba cubria.
+
+    El defecto que motiva esto: `ciiu_cliente` se inicializaba a None y se pasaba a
+    `procesar` sin asignarle nunca el valor. Sin CIIU, `rubro_del_veredicto` no tiene con
+    que bajar y TODO se compara contra la seccion: la cascada entera muerta, sin que nada
+    fallara. La base de juguete de los demas tests no trae CIIU, asi que no podia verlo.
+    """
+    filas, emb = [], {}
+    v = np.zeros(3)
+    v[0] = 1.0
+    emb["VENDEDOR"] = v
+    # G4761 con 40 empresas (pasa el umbral de 30) y G4762 con 12 (no pasa)
+    for clase, paga, n in (("G4761.03", 1.0, 40), ("G4762.01", 1.6, 12)):
+        for i in range(n):
+            for _ in range(3):
+                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i, "G", clase))
+    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "ciiu_n1", "ciiu_n6"])
+    scvs = pd.DataFrame(
+        {
+            "ruc": ["EG476100", "EG476200"],
+            "segmento": ["MEDIANA", "MEDIANA"],
+            "ciiu_n6": ["G4761.03", "G4762.01"],
+            "n_empleados": [50, 50],
+        }
+    )
+    b = BaseReferencia.construir(marco, emb, lambda a: 470.0, scvs=scvs)
+    ruta = tmp_path / "b.npz"
+    b.guardar(ruta)
+
+    from src import main as api
+
+    class _S:
+        sbu = {2025: 470, ANIO: 470}
+        vertex_embedding_model = "x"
+        bq_project = "p"
+        vertex_location = "l"
+        gcs_cache_embeddings = ""
+
+        def get_sbu(self, a, estricto=False):
+            return _sbu(a, estricto)
+
+    # EL CONSTRUCTOR DE VERDAD, no `__new__` con los atributos puestos a mano. Copiarlos
+    # uno a uno deja el doble desincronizado en cuanto `Motor.__init__` aprende algo
+    # nuevo, y el test falla por el andamio en vez de por el codigo: paso al añadir
+    # `etiqueta`. Lo unico que se sustituye es `asegurar`, que llamaria a Vertex.
+    from src.infrastructure import motor as motor_mod
+
+    m = motor_mod.Motor(str(ruta), _S())
+    m.asegurar = lambda t: 0
+    # sin `with`: no corre el arranque, y el motor es este
+    monkeypatch.setattr(motor_mod, "_MOTOR", m)
+    yield ClienteV13(TestClient(api.app))
+
+
+def test_el_veredicto_BAJA_a_la_division_pasando_por_HTTP(cliente_ciiu):
+    df = pd.DataFrame({"cargo": ["VENDEDOR"], "sueldo": ["500"]})
+    r = cliente_ciiu.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"ruc": "EG476100"})
+    assert r.json()["empresa"]["ciiu"] == "G4761.03"
+    d = cliente_ciiu.get(f"/informes/{r.json()['id']}").json()
+    f = d["por_puesto"][0]
+    assert f["rubro"] == "G4761", f"se comparo contra {f['rubro']!r}"
+    assert f["rubro_nivel"] == "clase"
+    # el veredicto ya usa el nivel mas fino: no hay nada que explicar
+    assert f["sector_mas_fino"] is None
+
+
+def test_y_cuando_no_alcanza_el_umbral_lo_EXPLICA_por_HTTP(cliente_ciiu):
+    df = pd.DataFrame({"cargo": ["VENDEDOR"], "sueldo": ["500"]})
+    r = cliente_ciiu.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"ruc": "EG476200"})
+    d = cliente_ciiu.get(f"/informes/{r.json()['id']}").json()
+    f = d["por_puesto"][0]
+    assert f["rubro"] != "G4762", "12 empresas no alcanzan para decidir"
+    s = f["sector_mas_fino"]
+    assert s and s["codigo"] == "G4762" and s["empresas"] == 12
+    # el umbral viaja en la respuesta: si se cambia, el texto del front sigue siendo
+    # cierto sin tocarlo
+    assert s["umbral"] == 30
+    assert "referencia" not in s, "la explicacion no lleva sueldo"
+
+
+# --- correcciones del usuario y buscador de puestos -------------------------------
+
+
+def test_el_mapeo_corrige_LA_FILA_y_no_todas_las_que_dicen_lo_mismo(cliente):
+    # El nucleo del diseno: el usuario corrige PERSONAS, no cadenas. Si tres filas dicen
+    # ASISTENTE DE LIMPIEZA y una es en realidad supervisora, un mapeo texto->texto
+    # moveria a las tres.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR", "VENDEDOR"], "sueldo": ["1200", "1300", "520"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"mapeo": '{"1": "VENDEDOR"}'})
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    filas = {f["fila"]: f["cargo"] for f in d["detalle"]}
+    assert filas == {0: "CONTADOR", 1: "VENDEDOR", 2: "VENDEDOR"}
+
+
+def test_el_mapeo_ACUSA_RECIBO(cliente):
+    # Sin el contador, el front no puede distinguir "se aplico" de "se ignoro": FastAPI
+    # descarta EN SILENCIO un campo de formulario no declarado, asi que mandar `mapeo` a
+    # una version que no lo entiende devuelve 202 y un informe identico.
+    df = pd.DataFrame({"cargo": ["CONTADOR", "CONTADOR"], "sueldo": ["1200", "1300"]})
+    r = cliente.post(
+        "/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"mapeo": '{"0": "VENDEDOR", "1": "GUARDIA"}'}
+    )
+    assert r.json()["mapeo_aplicado"] == 2
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert d["meta"]["mapeo_aplicado"] == 2
+
+
+def test_sin_mapeo_el_acuse_es_cero_y_no_falta(cliente):
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1200"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))})
+    assert r.json()["mapeo_aplicado"] == 0
+    d = cliente.get(f"/informes/{r.json()['id']}").json()
+    assert d["meta"]["mapeo_aplicado"] == 0
+
+
+@pytest.mark.parametrize(
+    "malo, trozo",
+    [
+        ("no soy json", "JSON valido"),
+        ('["CONTADOR"]', "tiene que ser un objeto"),
+        ('{"99": "CONTADOR"}', "fuera de rango"),
+        ('{"0": "   "}', "vacio"),
+        ('{"ab": "CONTADOR"}', "no es un numero de fila"),
+    ],
+)
+def test_un_mapeo_invalido_da_400_con_el_motivo(cliente, malo, trozo):
+    # Falla en voz alta: si se ignorase, el cliente corregiria cuatro cargos, leeria
+    # "cambios aplicados" y estaria viendo exactamente los mismos numeros.
+    df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1200"]})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}, data={"mapeo": malo})
+    assert r.status_code == 400, r.text
+    assert trozo in r.json()["detail"]
+
+
+def test_puestos_busca_vecinos_con_su_RESPALDO(cliente):
+    # `empresas` no es un extra: es lo que decide si la sugerencia sirve. Dos candidatos
+    # con la misma similitud y 2 contra 25 empresas detras no valen lo mismo, y esa
+    # diferencia no se ve en el coseno.
+    r = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 3})
+    assert r.status_code == 200
+    d = r.json()
+    assert d and len(d) <= 3
+    for f in d:
+        # los de siempre, mas los del juez (D-048), los sinonimos (D-047) y los grados agrupados
+        assert {"cargo", "grafias", "empresas", "personas", "similitud", "sobre_el_ruido"} <= set(f)
+        assert set(f) <= {
+            "cargo",
+            "grafias",
+            "empresas",
+            "personas",
+            "similitud",
+            "sobre_el_ruido",
+            "sinonimo",
+            "p_juez",
+            "seguro",
+            "palabras_desconocidas",
+            "grados",
+            "cargo_sin_grado",
+            "equivalente",
+            "traduccion",
+        }
+
+
+def test_puestos_ordena_por_PARECIDO(cliente):
+    # Hubo un intento de ordenar el bloque de ruido por respaldo. Se retiro: al ampliar
+    # el grupo de candidatos para colapsar grafias, `MAQUNISTA` (68 empresas, 0,714)
+    # adelantaba a `ODONTOLOGA` (25 empresas, 0,763). Respaldo alto sin parecido es solo
+    # "cargo comun". El respaldo viaja en `empresas` y el front decide.
+    d = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 50}).json()
+    assert [f["similitud"] for f in d] == sorted((f["similitud"] for f in d), reverse=True)
+
+
+def test_puestos_devuelve_UN_PUESTO_y_no_cada_grafia(cliente):
+    # La base guarda 65.181 titulos que son 50.420 puestos. Sin colapsar, buscar
+    # `VENDEDOR` devolvia ocho opciones y siete eran la misma palabra con otra
+    # puntuacion: el usuario no podia llegar a nada distinto, y nada impedia ofrecerle
+    # una ERRATA como correccion.
+    d = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 50}).json()
+    assert len({f["cargo"] for f in d}) == len(d), "no puede repetir puesto"
+    for f in d:
+        assert f["grafias"] >= 1
+
+
+def test_el_umbral_de_ruido_sale_de_la_medicion_no_del_aire(cliente):
+    # Pares al azar de la base llegan a 0,780 en el percentil 99; los del mismo puesto
+    # viven por encima de 0,95. 0,85 deja pasar el 0,08% del azar y conserva el 97,9% de
+    # los pares que de verdad son el mismo puesto.
+    from src.services.puesto_service import UMBRAL_RUIDO
+
+    assert 0.80 <= UMBRAL_RUIDO <= 0.95
+
+
+def test_puestos_NO_esconde_los_de_poco_respaldo(cliente):
+    # Filtrar aqui dejaria al usuario eligiendo entre opciones sin saber que habia mas,
+    # que es justo el problema que este endpoint viene a resolver. Se comprueba pidiendo
+    # mas de los que hay: tienen que venir TODOS los puestos de la base, sin descartar
+    # ninguno por poco respaldo.
+    total = cliente.get("/salud").json()["puestos"]
+    r = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 50}).json()
+    assert len(r) == total, f"devolvio {len(r)} de {total} puestos: algo se filtro"
+
+
+def test_puestos_respeta_el_limite(cliente):
+    r = cliente.get("/puestos", params={"q": "CONTADOR", "limite": 2}).json()
+    assert len(r) == 2
+
+
+def test_puestos_rechaza_una_busqueda_vacia(cliente):
+    assert cliente.get("/puestos", params={"q": "  "}).status_code == 400
+
+
+def test_salud_declara_mapeo_y_puestos(cliente):
+    # El front las usa de interruptor: mientras no lleguen, la pantalla de correccion se
+    # esconde en vez de fingir que funciona.
+    c = cliente.get("/salud").json()["capacidades"]
+    assert c["mapeo"] is True and c["puestos"] is True
+
+
+def test_la_etiqueta_del_puesto_no_es_una_ERRATA(cliente_ciiu):
+    # Tres heuristicas fallaron antes de esta, y las tres salieron en pantalla:
+    #   por PERSONAS  -> `personas` esta agregada por grupo, todas las grafias traen el
+    #                    mismo numero y el desempate lo resolvia el azar: salio VEENDEDOR
+    #   por MAS CORTA -> `VEDEDOR` (7) le gana a `VENDEDOR` (8): salio la errata
+    #   por FRECUENCIA pero eligiendo entre las grafias que ENTRARON en la busqueda ->
+    #                    con `Vendedo` solo entraban 5 de 13 y `VENDEDOR` no estaba
+    # Ahora se precalcula por grupo, sobre TODAS sus grafias, con la frecuencia de cada
+    # palabra en la base: una errata es rara por definicion.
+    from src.domain.presentacion import representante as _representante
+
+    frec = {
+        "VENDEDOR": 462,
+        "VENDEDORA": 40,
+        "VEDEDOR": 3,
+        "VEENDEDOR": 1,
+        "TRABAJADOR": 200,
+        "AGRICOLA": 158,
+        "TRABAJAJOR": 1,
+    }
+    assert _representante(["VEENDEDOR", "VENDEDOR", "VEDEDOR", "VENDEDOR."], frec) == "VENDEDOR"
+    # un dedazo en CUALQUIER palabra delata al titulo, no solo en la primera
+    assert _representante(["TRABAJAJOR AGRICOLA", "TRABAJADOR AGRICOLA"], frec) == "TRABAJADOR AGRICOLA"
+
+
+def test_la_etiqueta_NO_depende_del_limite_de_la_busqueda(cliente_ciiu):
+    # Se elegia entre las grafias que casualmente entraban en los vecinos pedidos, asi
+    # que la misma consulta con otro `limite` daba otra etiqueta y otro conteo.
+    a = cliente_ciiu.get("/puestos", params={"q": "VENDEDOR", "limite": 2}).json()
+    b = cliente_ciiu.get("/puestos", params={"q": "VENDEDOR", "limite": 20}).json()
+    por_cargo = {f["cargo"]: f["grafias"] for f in b}
+    for f in a:
+        assert f["cargo"] in por_cargo, f"{f['cargo']} desaparece al subir el limite"
+        assert f["grafias"] == por_cargo[f["cargo"]], "el conteo cambia con el limite"
+
+
+def test_la_consulta_suelta_saca_el_tamano_del_RUC_o_avisa_que_no_puede(cliente):
+    # D-063: el tamano del cliente activa el ajuste por nivel. Un RUC fuera del padron no puede darlo, y la
+    # respuesta tiene que decirlo en vez de devolver la referencia sin ajustar como si nada.
+    d = cliente.get("/referencia", params={"cargo": "CONTADOR", "ruc": "9999999999001"}).json()
+    assert d["referencia"] > 0
+    assert d["segmento_del_ruc"] is None and "padron" in d["aviso_segmento"]
+    sin = cliente.get("/referencia", params={"cargo": "CONTADOR"}).json()
+    assert "aviso_segmento" not in sin and "segmento_del_ruc" not in sin
+
+
+def test_la_consulta_suelta_no_falla_sin_sinonimos(cliente):
+    # D-072: `sinonimo_principal` solo aparece si hay un sinonimo aprobado con mas empresas; si no, no aparece
+    d = cliente.get("/referencia", params={"cargo": "CONTADOR"}).json()
+    assert d["referencia"] > 0
+    assert "sinonimo_principal" not in d or d["sinonimo_principal"]["empresas"] > d["empresas"]

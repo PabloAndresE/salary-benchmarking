@@ -1,0 +1,37 @@
+# Entornos y caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# Datos reales: NUNCA al repo (LOPDP). Nominas, extractos y bases serializadas.
+*.xlsx
+*.csv
+*.parquet
+*.npz
+*.npy
+data/
+# ...salvo los datos versionados del producto: diccionarios de capa 0 (D-040), glosario
+# de RR. HH. en ingles, sinonimos aprobados (D-047) y el catalogo CIIU. Son titulos de
+# cargo y estandares publicos, no datos de clientes, y el servicio no arranca sin ellos.
+!src/domain/datos/**/*.csv
+
+# Secretos y credenciales
+.env
+*.json
+!src/domain/datos/ciiu.json
+
+# Modelos y base: viven en GCS (gs://act-cicd-stage-prueba-benchmarking/benchmarking/<version>/)
+artefactos/
+modelos/
+
+# Logs
+*.log
+
+# SO
+Thumbs.db
+.DS_Store

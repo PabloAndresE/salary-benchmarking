@@ -1,0 +1,442 @@
+"""Clasificador de nivel jerarquico desde el texto del cargo.
+
+POR QUE EXISTE. Los embeddings codifican el AREA y no la JERARQUIA — medido en D-012:
+pares que solo se diferencian en el rango puntuan 0,857 y pares que solo se diferencian en
+el area, 0,764. Un gerente y un auxiliar del mismo area se parecen mas que dos jefes de
+areas distintas, y `GERENTE DE AUDITORIA` / `JEFE DE AUDITORIA` dan 0,944.
+
+Eso rompe el vecindario del producto: `SUPERVISOR DE CAJA` se promedia con `AUXILIAR DE
+CAJA`, y entre el nivel 1 y el 5 hay **2,11x de diferencia en pago** (D-013). El nivel
+tiene que venir de otra senal.
+
+LA SUPERVISION ES DEBIL Y GRATIS. El ~51% de las etiquetas lleva la palabra de rango
+escrita —`AUXILIAR DE BODEGA`, `JEFE DE PLANTA`— y eso cubre el 38,6% de las personas. Se
+entrena con esas y se predice el resto.
+
+COMO SE VALIDA DE VERDAD. Acertar el rango en una etiqueta que lo lleva escrito es
+trivial: el modelo solo tiene que leer la palabra de vuelta. La prueba util es otra:
+
+  1. entrenar SIN VER SALARIOS,
+  2. predecir el nivel de los titulos que NO llevan rango,
+  3. comprobar si el salario se ordena por ese nivel predicho.
+
+Si aparece la escalera, el clasificador encontro jerarquia real en textos donde nadie la
+escribio. Y no es circular: el salario no entra en ninguna etapa del entrenamiento.
+"""
+
+import re
+
+import numpy as np
+import pandas as pd
+
+# Nivel aproximado de cada palabra de rango. Los sinonimos comparten escalon a proposito:
+# `AUXILIAR` y `AYUDANTE` no son jerarquia entre si, y tratarlos como escalones distintos
+# fabricaria diferencias donde no las hay.
+# QUE NO ENTRA, y por que. `EJECUTIVO` parece nivel 5 y en Ecuador no lo es: `EJECUTIVO DE
+# VENTAS` es un vendedor, y meterlo mandaria 17.000 personas al escalon mas alto por una
+# falsa amistad del idioma. `ADMINISTRADOR`, `OFICIAL`, `GESTOR`, `AGENTE` e `INSPECTOR`
+# son ambiguas —a veces rango, a veces oficio— y no entran sin criterio verificable.
+#
+# Y lo que NO es un hueco del diccionario: `TRABAJADOR AGRICOLA`, `DOCENTE`, `CHOFER`,
+# `GUARDIA`, `MEDICO`... no declaran escalon porque no lo tienen. Son ocupaciones. El 56%
+# de las personas seguira sin nivel lexico y es correcto que asi sea; para esas el
+# tratamiento es el intervalo, no inventarles un rango.
+#
+# El nivel de cada palabra se decide por lo que SIGNIFICA, nunca por lo que cobra: usar el
+# sueldo para asignar el escalon seria la circularidad que todo el proyecto evita.
+RANGOS = {
+    "PASANTE": 1,
+    "PRACTICANTE": 1,
+    "AYUDANTE": 1,
+    "AUXILIAR": 1,
+    "OPERARIO": 1,
+    "OPERADOR": 1,
+    "OBRERO": 1,
+    "ASISTENTE": 1,
+    "TECNICO": 2,
+    "ANALISTA": 2,
+    "SUPERVISOR": 3,
+    "COORDINADOR": 3,
+    "ESPECIALISTA": 3,
+    "JEFE": 4,
+    "SUBGERENTE": 4,
+    "GERENTE": 5,
+    "DIRECTOR": 5,
+    "VICEPRESIDENTE": 5,
+    "PRESIDENTE": 5,
+    # 2026-10-06, decision del autor: los equivalentes en INGLES de las mismas palabras, y
+    # REPRESENTANTE / REPRESENTATIVE en el nivel 1 (como ASESOR y EJECUTIVO). Sin ellos, un
+    # `SALES DEVELOPMENT REPRESENTATIVE` no tenia nivel y su analogia no podia descontar a los
+    # `SALES MANAGER` y `SALES DIRECTOR` vecinos. HEAD, LEAD y OFFICER no entran: ambiguas.
+    "REPRESENTANTE": 1,
+    "REPRESENTATIVE": 1,
+    "ASSISTANT": 1,
+    "INTERN": 1,
+    "ANALYST": 2,
+    "TECHNICIAN": 2,
+    "COORDINATOR": 3,
+    "SPECIALIST": 3,
+    "MANAGER": 5,
+    "PRESIDENT": 5,
+}
+NIVELES = (1, 2, 3, 4, 5)
+
+# El plural castellano es -S o -ES: AUXILIAR/AUXILIARES, JEFE/JEFES. Las alternativas van
+# ordenadas por longitud para que SUBGERENTE no se lea como GERENTE, y los limites de
+# palabra impiden que una subcadena cuele.
+_ALTERNATIVAS = "|".join(sorted(RANGOS, key=len, reverse=True))
+_PATRON = re.compile(r"\b(" + _ALTERNATIVAS + r")(?:ES|S)?\b")
+
+
+# SENIORITY: un modificador DENTRO del escalon, no un escalon.
+#
+# `SUPERVISOR DE CALIDAD SR` sigue siendo un supervisor. Meter `SR` en `RANGOS` como
+# nivel propio romperia la escalera —que esta medida sobre cinco escalones— y el
+# `lambda` por nivel. Asi que va aparte y solo sirve para UNA cosa: impedir que dos
+# titulos con seniority distinta se fusionen.
+#
+# DE DONDE SALE. Sobre 48 pares de la banda 0,93-0,97 juzgados a mano, el motivo de
+# "no son el mismo puesto" era casi siempre una marca de seniority que el lexico de
+# rango no ve. Medido contra esos juicios, este conjunto caza 5 de los 12 `no` y no
+# rompe ninguno de los 36 `si`.
+#
+# QUE NO ENTRA, y por que. Se probaron cuatro conjuntos contra los mismos juicios:
+#
+#   solo SR/JR                    caza 2   rompe 1
+#   + SOUS                        caza 3   rompe 1
+#   + CORPORATIVO                 caza 5   rompe 1   <- este
+#   + GENERAL                     caza 5   rompe 3
+#   + numeros y letras romanas    caza 5   rompe 4
+#
+# `GENERAL` no entra: `SUPERVISOR DE ETIQUETADO` y `SUPERVISOR GENERAL DE ETIQUETADO`
+# se juzgaron como el mismo puesto, y con `GENERAL` dentro se separarian. Los numeros
+# y las letras tampoco: `TECNICO MECANICO A` y `TECNICO MECANICO I` son el mismo, y
+# de los escalones por digito ya se ocupa `_es_errata`.
+SENIORIDAD = {
+    "TRAINEE": -2,
+    "SOUS": -1,
+    "JR": -1,
+    "JUNIOR": -1,
+    # D-040, criterio C: SEMISENIOR es una marca propia, entre la falta de marca y SR.
+    "SEMISENIOR": 0.5,
+    "SEMI SENIOR": 0.5,
+    "SEMI-SENIOR": 0.5,
+    "SSR": 0.5,
+    "SR": 1,
+    "SENIOR": 1,
+    "CORPORATIVO": 2,
+    "CORPORATIVA": 2,
+}
+_PATRON_SEN = re.compile(r"\b(" + "|".join(sorted(SENIORIDAD, key=len, reverse=True)) + r")\b\.?")
+
+
+def seniority_lexica(etiqueta):
+    """Marca de seniority del titulo. 0 si no lleva ninguna.
+
+    Con varias gana la MAS ALTA, por el mismo criterio que `nivel_lexico`: es una
+    heuristica, y el error va en la direccion del ruido y no del sesgo.
+    """
+    vals = [SENIORIDAD[h] for h in _PATRON_SEN.findall(str(etiqueta).upper())]
+    return max(vals) if vals else 0
+
+
+def nivel_lexico(etiqueta):
+    """Nivel segun la palabra de rango del titulo, o None si no lleva ninguna.
+
+    Con varias palabras gana la MAS ALTA: `ASISTENTE DE GERENCIA` no es un gerente, pero
+    `JEFE TECNICO` si es un jefe. Es una heuristica y falla en el primer caso; se acepta
+    porque la alternativa —descartar los titulos con dos rangos— tira senal util y el
+    error va en la direccion del ruido, no del sesgo.
+    """
+    hallados = _PATRON.findall(str(etiqueta).upper())
+    if "ASSISTANT" in hallados and "MANAGER" in hallados:  # como en la rubrica
+        return 4
+    return max((RANGOS[h] for h in hallados), default=None)
+
+
+# --- EL GRADO NO HACE DISTINTO EL PUESTO (D-037; Enmienda 5 de D-036) -------------------
+# `AUXILIAR 1` / `AUXILIAR 2`, `QUIMICO I` / `QUIMICO II`, `AYUDANTE B` / `AYUDANTE C`,
+# `NIVEL 2`: el numero o la letra marca el grado de la escala interna de UNA empresa, no
+# otro puesto. Revierte lo que D-025 protegia como "escalon": la escalera de sueldos que
+# marcaba el grado la recoge la banda (con la antiguedad), no el nombre del cargo.
+#
+# Es la MISMA regla con que se corrigieron las etiquetas y se armo `prueba` para H1
+# (`research/experimentos/e2_nivel/23_correccion_grado.py`), mas una guarda: la primera
+# palabra, la que nombra el puesto, tiene que coincidir (`GERENTE ASISTENTE 1` no es
+# `ASISTENTE GERENTE 2`). Sobre los 433 pares de la plata y los 182 de la evaluacion que la
+# regla junta, la guarda no excluye ninguno.
+ROMANOS_GRADO = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
+ANTES_DE_GRADO = {"NIVEL", "LEVEL", "GRADO", "CATEGORIA", "CAT"}
+NO_LETRA_GRADO = {"E", "Y", "O", "U"}  # conectores, no grados
+NO_GRADO_DESPUES = {"LICENCIA", "TIPO"}  # `LICENCIA C` es un tipo, no un grado
+CONECTORES = {"DE", "DEL", "Y", "E", "EN", "EL", "LA", "LOS", "LAS", "A", "AL"}
+
+
+def _letras_de_grado(toks):
+    """Indices de los tokens (separados por espacios) que son una letra de grado.
+
+    Una letra SUELTA, sola o entre parentesis: `AYUDANTE B`, `PLANIFICADOR (R)`. No lo es
+    pegada a `.`, `/` o `&` (`T.A`, `COORDINADOR/A`, `T&L`), ni junto a un `&` (`M & R` es
+    una sigla), ni tras `LICENCIA`/`TIPO`. La `A` solo al final: `SOLDADOR A`, pero no
+    `ASISTENTE A GERENCIA`.
+    """
+    fuera = set()
+    for i, tk in enumerate(toks):
+        m = re.fullmatch(r"\(?([A-ZÑ])\)?", tk)
+        junto_amp = (i > 0 and toks[i - 1] == "&") or (i + 1 < len(toks) and toks[i + 1] == "&")
+        tras_tipo = i > 0 and toks[i - 1] in NO_GRADO_DESPUES
+        if (
+            m
+            and m.group(1) not in NO_LETRA_GRADO
+            and not junto_amp
+            and not tras_tipo
+            and (m.group(1) != "A" or i == len(toks) - 1)
+        ):
+            fuera.add(i)
+            if i > 0 and toks[i - 1] in ANTES_DE_GRADO:
+                fuera.add(i - 1)
+    return fuera
+
+
+def _palabras_grado(etiqueta):
+    toks = str(etiqueta).upper().split()
+    letras = _letras_de_grado(toks)
+    t = " ".join(tk for i, tk in enumerate(toks) if i not in letras)
+    t = re.sub(r"([A-ZÁÉÍÓÚÑ])([1-9])\b", r"\1 \2", t)  # CONTABLE1 -> CONTABLE 1
+    return re.findall(r"[A-ZÁÉÍÓÚÑÜ0-9]+", t), bool(letras)
+
+
+def _es_grado(w):
+    return (w.isdigit() and len(w) <= 2 and 1 <= int(w) <= 9) or w in ROMANOS_GRADO
+
+
+def quitar_grado(etiqueta):
+    """Las palabras del titulo sin el grado (numero 1-9, romano I-X, letra suelta, y el
+    `NIVEL`/`GRADO`/`CATEGORIA` que los precede). Los numeros de dos cifras se quedan."""
+    ws, _ = _palabras_grado(etiqueta)
+    return [
+        w
+        for i, w in enumerate(ws)
+        if not _es_grado(w) and not (w in ANTES_DE_GRADO and i + 1 < len(ws) and _es_grado(ws[i + 1]))
+    ]
+
+
+def tiene_grado(etiqueta):
+    ws, hay_letra = _palabras_grado(etiqueta)
+    return hay_letra or any(_es_grado(w) for w in ws)
+
+
+def clave_grado(etiqueta):
+    """Clave con la que se juntan las grafias que solo difieren en el grado: la palabra
+    del puesto y el conjunto de las demas, sin conectores ni orden (que ya eran ruido en
+    la rubrica). None si no queda nada."""
+    ws = [w for w in quitar_grado(etiqueta) if w not in CONECTORES]
+    return (ws[0], frozenset(ws)) if ws else None
+
+
+def mismo_salvo_grado(a, b):
+    """True si `a` y `b` son el mismo titulo en cuanto se borra el grado, y alguno lo tenia."""
+    if not (tiene_grado(a) or tiene_grado(b)):
+        return False
+    ka = clave_grado(a)
+    return ka is not None and ka == clave_grado(b)
+
+
+# --- EL NIVEL SEGUN LA RUBRICA (D-040, criterio C) ------------------------------------
+# `nivel_lexico` alimenta la escalera salarial y `efecto_nivel`: cambiarlo moveria
+# estadisticos ya medidos. Este es el lexico de la RUBRICA, para el candado de fusion de la
+# capa 0. Diferencias con `nivel_lexico`:
+#   - mas palabras: ASESOR, EJECUTIVO, CONSULTOR, ENCARGADO, SUBJEFE, ADMINISTRADOR,
+#     CONTROLLER y los rangos en ingles ASSISTANT y MANAGER (ASSISTANT MANAGER = 4). Medido
+#     sobre las 24.654 fusiones por coseno de base_v15: cada una bloquea entre 0 y 16;
+#   - lo que va tras DE / DEL no cuenta (dice a quien apoya: `ASISTENTE DE GERENTE` es un
+#     asistente);
+#   - TECNICO y ESPECIALISTA solo son rango si abren el titulo (`AUXILIAR TECNICO` es un
+#     auxiliar).
+RANGOS_RUBRICA = dict(RANGOS) | {
+    "ASESOR": 1,
+    "EJECUTIVO": 1,
+    "ASSISTANT": 1,
+    "ADMINISTRADOR": 2,
+    "CONTROLLER": 2,
+    "CONSULTOR": 2,
+    "ENCARGADO": 3,
+    "SUBJEFE": 3,
+    "MANAGER": 5,
+    # 2026-10-06: los equivalentes en ingles de la tabla (ver RANGOS)
+    "EXECUTIVE": 1,
+    "ADVISOR": 1,
+    "CONSULTANT": 2,
+}
+_SOLO_AL_INICIO = {"TECNICO", "ESPECIALISTA"}
+
+
+def _raiz_rango(w):
+    """`COORDINADORA`, `ASISTENTES`, `JEFA`, `GERENTES` -> la palabra de la tabla."""
+    for c in (
+        w,
+        w[:-2] if w.endswith("ES") else None,
+        w[:-1] if w.endswith("S") else None,
+        "JEFE" if w in ("JEFA", "JEFAS") else None,
+    ):
+        if c and c in RANGOS_RUBRICA:
+            return c
+    if w.endswith("A") and w[:-1] + "O" in RANGOS_RUBRICA:
+        return w[:-1] + "O"
+    if w.endswith("A") and w[:-1] in RANGOS_RUBRICA:  # COORDINADORA, SUPERVISORA
+        return w[:-1]
+    if w.endswith("AS") and w[:-2] in RANGOS_RUBRICA:
+        return w[:-2]
+    return None
+
+
+def nivel_rubrica(etiqueta):
+    """Nivel de la palabra de rango MAS ALTA segun la rubrica, o None si no hay ninguna."""
+    ws = re.findall(r"[A-Z]+", str(etiqueta).upper())
+    if "ASSISTANT" in ws and "MANAGER" in ws:
+        return 4
+    alto = None
+    for i, w in enumerate(ws):
+        if w in ("DE", "DEL"):
+            break
+        r = _raiz_rango(w)
+        if r is None or (r in _SOLO_AL_INICIO and i > 0):
+            continue
+        alto = max(alto or 0, RANGOS_RUBRICA[r])
+    return alto
+
+
+def enmascarar(etiqueta, marca="PUESTO"):
+    """Quita la palabra de rango del titulo: `AUXILIAR DE BODEGA` -> `PUESTO DE BODEGA`.
+
+    ES LA PIEZA QUE HACE FUNCIONAR LA SUPERVISION DEBIL, y sin ella no funciona. Medido:
+    entrenando sobre el titulo COMPLETO el clasificador acierta el 98,9% del rango — pero
+    porque lee la palabra de vuelta, no porque entienda jerarquia. Al llegarle un titulo
+    sin rango (`CONTADOR`) su detector no tiene a que dispararse y vuelca el 58% de la
+    gente al nivel mas bajo. La escalera salarial resultante no es monotona (1,48x).
+
+    Tapando el rango el atajo desaparece: el modelo tiene que inferir el nivel del RESTO
+    del titulo, y un titulo sin rango deja de ser un caso fuera de distribucion — es
+    exactamente lo que vio entrenando.
+
+    La etiqueta queda ruidosa a proposito: `___ DE BODEGA` es unas veces 1 y otras 4. Eso
+    es correcto. Lo que se aprende es P(nivel | resto del titulo), que es justo la
+    pregunta cuando nadie escribio el rango.
+    """
+    return _PATRON.sub(marca, str(etiqueta).upper()).strip()
+
+
+def etiquetar(etiquetas):
+    """Serie etiqueta -> nivel lexico (NaN donde no hay palabra de rango)."""
+    return pd.Series({e: nivel_lexico(e) for e in etiquetas}, dtype="Float64")
+
+
+class ClasificadorNivel:
+    """Regresion logistica sobre el embedding del titulo.
+
+    Un modelo simple a proposito. El objetivo no es exprimir el ultimo punto de acierto:
+    es comprobar si la jerarquia esta recuperable del texto, y con un modelo complicado no
+    se sabria si el merito es del metodo o de la capacidad. Si el lineal ya la recupera,
+    la respuesta es que la senal esta ahi.
+    """
+
+    def __init__(self, modelo=None):
+        self.modelo = modelo
+
+    def entrenar(self, X, y, semilla=20260805):
+        from sklearn.linear_model import LogisticRegression
+
+        self.modelo = LogisticRegression(max_iter=2000, C=1.0, random_state=semilla, class_weight="balanced")
+        self.modelo.fit(np.asarray(X, dtype=float), np.asarray(y, dtype=int))
+        return self
+
+    def predecir(self, X):
+        return self.modelo.predict(np.asarray(X, dtype=float)).astype(int)
+
+    def probabilidades(self, X):
+        return self.modelo.predict_proba(np.asarray(X, dtype=float))
+
+    def nivel_esperado(self, X):
+        """Nivel como valor continuo: suma de p_k * k.
+
+        Mas util que la clase ganadora para ordenar puestos y para meterlo en una
+        distancia: entre un puesto que el modelo ve claramente de nivel 4 y otro dudoso
+        entre 3 y 5 hay una diferencia que la clase discreta borra.
+        """
+        p = self.probabilidades(X)
+        return p @ np.array(self.modelo.classes_, dtype=float)
+
+
+def escalera_salarial(niveles, y):
+    """Mediana de `y` por nivel, el recorrido entre extremos, y si es monotona.
+
+    Es la prueba que importa: si el nivel PREDICHO sobre titulos sin palabra de rango
+    ordena el salario de forma monotona, el clasificador encontro jerarquia real en textos
+    donde nadie la escribio.
+    """
+    d = pd.DataFrame({"nivel": np.asarray(niveles), "y": np.asarray(y, dtype=float)})
+    d = d.dropna()
+    g = d.groupby("nivel")["y"].agg(["median", "size"])
+    if len(g) < 2:
+        return g, float("nan"), False
+    recorrido = float(np.exp(g["median"].iloc[-1] - g["median"].iloc[0]))
+    monotona = bool(g["median"].is_monotonic_increasing)
+    return g, recorrido, monotona
+
+
+def efecto_nivel(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc", estimador="media"):
+    """Cuanto paga cada escalon, en log, DENTRO de la misma area enmascarada.
+
+    Medido asi porque es el unico contraste sin confusion: `PUESTO DE CAJA` existe como
+    auxiliar y como supervisor, misma area exacta, solo cambia el rango. Comparar entre
+    areas mezclaria "los jefes cobran mas" con "la contabilidad paga mas que la bodega".
+
+    Resultado sobre 2024-2025 (`e2_nivel/03`): monotono, con recorrido 2,37x del nivel 1
+    al 5 y omega2 = 0,288 frente a un placebo de 0,000.
+
+    Devuelve un dict nivel -> efecto en log, centrado en cero.
+    """
+    d = marco[[col, col_y, col_empresa]].dropna(subset=[col_y]).copy()
+    d["area"] = d[col].map(lambda e: enmascarar(e))
+    d["nivel"] = d[col].map(nivel_lexico)
+    # `estimador` existe porque hay un DESAJUSTE en el producto: esto sale de PROMEDIOS y
+    # se suma a `m`, que es una MEDIANA ponderada. Una diferencia-de-promedios solo es una
+    # diferencia-de-medianas si las dos distribuciones tienen la MISMA FORMA, y aqui no la
+    # tienen: los escalones altos arrastran cola derecha mucho mas gorda (`GERENTE GENERAL`
+    # va de $500 a $13.712; `AUXILIAR DE LIMPIEZA`, de $475 a $485). Con mas asimetria el
+    # promedio se aleja mas de su mediana, asi que E[nivel 5]-E[nivel 1] SOBREESTIMA
+    # med[nivel 5]-med[nivel 1] y el ajuste queda sobredimensionado.
+    #
+    # Por defecto sigue siendo `media`: cambiar el estimador cambia la respuesta del 35,9%
+    # de la gente —la que va por analogia— y eso se decide midiendo, no opinando.
+    ag = "median" if estimador == "mediana" else "mean"
+    # dentro de empresa primero: el empleador es el 81% del ruido y taparia el efecto
+    d["r"] = d[col_y] - d.groupby(col_empresa)[col_y].transform(ag)
+    d = d[d["nivel"].notna()]
+    mixtas = d.groupby("area")["nivel"].nunique()
+    d = d[d.area.isin(mixtas[mixtas >= 2].index)]
+    if d.empty:
+        return {}
+    d["r"] = d["r"] - d.groupby("area")["r"].transform(ag)
+    g = d.groupby("nivel")["r"].agg(ag)
+    centro = g.median() if estimador == "mediana" else g.mean()
+    return {int(k): float(v - centro) for k, v in g.items()}
+
+
+def efecto_seniority(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc"):
+    """D-060: cuanto paga la seniority, en log, DENTRO DE LA EMPRESA: SR frente al mismo titulo sin marca, y
+    sin marca frente a JR (misma familia = el titulo sin sus marcas). {-1, 0, 0.5, 1} -> efecto."""
+    d = marco[[col, col_y, col_empresa]].dropna(subset=[col_y]).copy()
+    d[col] = d[col].astype(str)
+    t = pd.Series(d[col].unique())
+    fam = dict(zip(t, [re.sub(r"\s+", " ", _PATRON_SEN.sub(" ", x)).strip(" -/") for x in t]))
+    sen = dict(zip(t, [seniority_lexica(x) for x in t]))
+    d["fam"], d["s"] = d[col].map(fam), d[col].map(sen)
+    g = d[d["s"].isin([-1, 0, 1])].groupby([col_empresa, "fam", "s"])[col_y].median().unstack("s")
+    e = {0: 0.0}
+    if 1 in g and 0 in g and g[[0, 1]].dropna().shape[0] >= 30:
+        e[1] = float((g[1] - g[0]).dropna().median())
+        e[0.5] = e[1] / 2
+    if -1 in g and 0 in g and g[[-1, 0]].dropna().shape[0] >= 30:
+        e[-1] = -float((g[0] - g[-1]).dropna().median())
+    return e
