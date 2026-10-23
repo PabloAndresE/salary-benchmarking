@@ -8890,3 +8890,31 @@ fijos en los de T-006), dos oráculos para los títulos preguntados que **no est
 
 Si el oráculo de reconocimiento mejora más que eso, la tesis central se corrige: el reconocimiento sí importa y el
 límite estaba en nuestro reconocedor.
+
+### T-017, resultado: «entender no es pagar» queda demostrado; el reconocimiento perfecto incluso empeora la banda (2026-10-23)
+
+De los 14.825 títulos preguntados que no están en la base de entrenamiento, el oráculo de nivel cubre 14.699 (los
+demás no tienen nivel 1–5) y el de reconocimiento 5.592 (los que tienen su grupo verdadero en la base).
+
+| Comparación (frente a T-006) | Votos (unión) | Pinball | IC (dos vías) |
+|---|---|---|---|
+| **Oráculo de nivel − T-006** | 12.771 | **−0,00140** | **[−0,00275, −0,00018]** → mejora |
+| Placebo de nivel − T-006 | 12.771 | +0,04420 | [+0,03865, +0,04975] |
+| **Oráculo de reconocimiento − T-006** | 6.919 | **+0,00261** | **[+0,00051, +0,00441]** → **empeora** |
+| Placebo de reconocimiento − T-006 | 6.919 | +0,05439 | [+0,04577, +0,06409] |
+
+Pinball medio en las 38.450 consultas: producto 0,13385 · T-006 0,13287 · **oráculo de nivel 0,13240** · oráculo de
+reconocimiento 0,13334.
+
+**Cumple los dos criterios:** el nivel perfecto mejora la banda, y el reconocimiento perfecto no mejora (el extremo
+inferior +0,00051 ≥ −0,002; de hecho empeora con significancia). **«Entender no es pagar» queda demostrado** dentro de
+este marco.
+
+**Lectura:**
+
+- Saber **con certeza qué cargo es** y tomar la banda de su grupo es **peor** que estimarla por analogía con el nivel
+  ajustado: la banda del grupo trae el sueldo de las empresas que lo componen, y el cargo pesa menos que la empresa.
+- Incluso el **nivel perfecto** mejora poco (−0,0014, un 0,35 % del pinball): el techo de lo que el texto del título
+  puede aportar a la banda es bajo. El resto está en cómo paga cada empresa.
+- Límite: la «verdad» del reconocimiento es nuestro clustering confiable (95 % de precisión en su auditoría), no un
+  juicio humano par a par; la del nivel, las etiquetas de nivel de Qwen v3.

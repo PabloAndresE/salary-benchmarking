@@ -193,3 +193,13 @@ qwen_laya_e5 frente a nivel_v3 (placebo qwen_laya_e5_placebo): union 20,312 voto
    placebo - producto   +0.07279 [+0.06451, +0.07978] (dos vias)  | media por empresa +0.04243
    variante - placebo   -0.07602 [-0.08315, -0.06701] (dos vias)  | media por empresa -0.04296
    CRITERIO (regla de producto, no inferior: extremo < +0.001): CUMPLE
+oraculo_nivel frente a qwen_inverso (placebo oraculo_nivel_placebo): union 12,771 votos, 1,110 empresas, 10,936 cargos
+   variante - producto  -0.00140 [-0.00275, -0.00018] (dos vias)  | media por empresa +0.00029
+   placebo - producto   +0.04420 [+0.03865, +0.04975] (dos vias)  | media por empresa +0.02164
+   variante - placebo   -0.04560 [-0.05094, -0.03969] (dos vias)  | media por empresa -0.02135
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): CUMPLE
+oraculo_reconoce frente a qwen_inverso (placebo oraculo_reconoce_placebo): union 6,919 votos, 1,051 empresas, 5,154 cargos
+   variante - producto  +0.00261 [+0.00051, +0.00441] (dos vias)  | media por empresa +0.00120
+   placebo - producto   +0.05439 [+0.04577, +0.06409] (dos vias)  | media por empresa +0.02988
+   variante - placebo   -0.05178 [-0.06147, -0.04378] (dos vias)  | media por empresa -0.02868
+   CRITERIO (precision: frente al producto y al placebo, IC bajo 0): NO CUMPLE
