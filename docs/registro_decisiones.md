@@ -8830,3 +8830,35 @@ frente al cross-encoder del producto y al reentrenado (T-009) con P ≥ 0,5. IC 
 en un conjunto; «peor» si queda entero bajo cero. En la parte A, «JobBERT recupera mejor» si el IC de JobBERT − Qwen
 título + descripción queda entero sobre cero. Se reporta además la cobertura: qué parte de los títulos cae en una
 ocupación ESCO con similitud alta.
+
+### T-016, resultado: JobBERT recupera mejor que Vertex pero peor que Qwen; el mapeo a ESCO es mucho peor que el cross-encoder (2026-10-23)
+
+ESCO en español desde la API oficial: **2.938 de 2.942** ocupaciones (4 fallan siempre en la API), 13.959 nombres.
+`t16_jobbert.txt`.
+
+**Parte A (recuperación de sinónimos, protocolo T-001, 2.090 consultas):**
+
+| Modelo | recall@1 | recall@10 | MRR |
+|---|---|---|---|
+| Vertex | 3,3 % | 16,7 % | 0,079 |
+| Qwen título | 3,0 % | 18,5 % | 0,081 |
+| **JobBERT-v3** | 2,7 % | **19,2 %** | 0,082 |
+| Qwen título + descripción | 4,1 % | **22,2 %** | 0,101 |
+
+JobBERT − Qwen título + descripción: **−3,1 pts [−4,6, −1,5] → peor.** JobBERT − Vertex: +2,5 pts [+0,9, +4,1] → mejor.
+
+**Parte B (mapeo a ESCO; «mismo cargo» = misma ocupación ESCO):**
+
+| Conjunto | ESCO (JobBERT) | Cross-encoder del producto | Cross-encoder reentrenado | ESCO − reentrenado |
+|---|---|---|---|---|
+| Lejos (`52`, 100 pares) | 0,576 | 0,497 | 0,652 | −0,076 [−0,182, +0,030], no se distingue |
+| **Cerca** (`prueba` + `prueba 2`, 991 pares) | **0,542** | 0,864 | 0,863 | **−0,321 [−0,371, −0,271] → peor** |
+
+Cobertura: la similitud con la ocupación ESCO más cercana tiene mediana **0,70**; solo 22 % de los títulos pasa 0,8 y 6 %
+pasa 0,9.
+
+**Lectura:** un modelo especializado en cargos (JobBERT) recupera mejor que un embedding general (Vertex), pero no
+alcanza a Qwen con la descripción. Y el **mapeo a la taxonomía estándar es demasiado grueso** para decidir «mismo cargo»
+en las nóminas ecuatorianas: en los pares cercanos acierta apenas por encima del azar (0,54 frente a 0,86), porque ESCO
+reúne bajo una sola ocupación cargos que el autor distingue, y separa otros que son iguales; además, la mayoría de los
+títulos queda lejos de cualquier nombre ESCO. Es el argumento empírico para la taxonomía propia de la tesis.
