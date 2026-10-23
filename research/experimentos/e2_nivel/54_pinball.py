@@ -232,7 +232,7 @@ def una_variante(nom, clusters):
     emb_vertex = dict(emb)
     emb_analogia = emb_analogia_consulta = None
     if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo", "qwen_umbral",
-               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo",
+               "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo", "oraculo_nivel", "oraculo_nivel_placebo", "oraculo_reconoce", "oraculo_reconoce_placebo",
                "qwen_filtro", "qwen_filtro_placebo"):   # T-002 / T-004 / T-005 / T-006 / T-007
         b31 = np.load(RAIZ / "demo" / "base_v31.npz", allow_pickle=True)
         tes = RAIZ / "research" / "tesis" / "salidas"
@@ -253,7 +253,7 @@ def una_variante(nom, clusters):
                 Ad, Ac = Ad[perm], Ac[perm]
             emb_analogia = {str(c): z for c, z in zip(b31["celdas"], Ad)}
             emb_analogia_consulta = {str(c): z for c, z in zip(b31["celdas"], Ac)}
-        if nom.startswith(("qwen_inverso", "qwen_juez9", "qwen_laya")):   # T-006 / T-009: la analogia con Vertex (el producto)
+        if nom.startswith(("qwen_inverso", "qwen_juez9", "qwen_laya", "oraculo")):   # T-006 / T-009: la analogia con Vertex (el producto)
             emb_analogia = emb_analogia_consulta = {c: emb_v for c, emb_v in emb_vertex.items()}
         if nom.startswith("qwen_laya_e5"):              # T-015: la analogia con el e5 ajustado (local)
             E5 = np.load(tes / "t15_e5_base_v31.npy").astype(np.float32)
@@ -277,7 +277,7 @@ def una_variante(nom, clusters):
     con_e5 = ("e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_hibrido",
               "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
-              "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo",
+              "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo", "oraculo_nivel", "oraculo_nivel_placebo", "oraculo_reconoce", "oraculo_reconoce_placebo",
               "qwen_filtro", "qwen_filtro_placebo")    # T-002; T-004; T-005; T-006; T-007
     con_v3 = ("nivel_v3", "nivel_v3_placebo", "nivel_v3_sueldo", "nivel_v3_sueldo_placebo") + con_d054 + con_e5
     con_d052 = ("nivel_grupo", "nivel_grupo_placebo", "candado_nivel", "candado_nivel_placebo") + con_v3
@@ -342,7 +342,7 @@ def una_variante(nom, clusters):
             base.cos_juez = 0.8258                  # D-057: el equivalente del 0,90 de Vertex
         if nom in ("qwen", "qwen_placebo", "qwen_hibrido", "qwen_hibrido_placebo"):
             base.cos_juez = 0.7041                  # T-002: el equivalente del 0,90 de Vertex (t02_umbral.json)
-        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo",
+        if nom in ("qwen_umbral", "qwen_umbral_placebo", "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo", "oraculo_nivel", "oraculo_nivel_placebo", "oraculo_reconoce", "oraculo_reconoce_placebo",
                    "qwen_filtro", "qwen_filtro_placebo"):
             base.cos_juez = UMBRAL_T005[0]
         if nom in ("qwen_filtro", "qwen_filtro_placebo"):   # T-007: vecinos del mismo nivel
@@ -407,6 +407,32 @@ def una_variante(nom, clusters):
         emb.update({str(x): z for x, z in zip(et["textos"], et["X"])})
         print("prima: {}".format(base.estimar_prima_idioma(emb)), flush=True)
         base.idioma_placebo = nom == "idioma_prima_placebo"     # despues de estimar: misma prima
+    elif nom.startswith("oraculo"):      # T-017: T-006 con un oraculo (umbral y k de T-006, fijos)
+        UMBRAL_T005[0] = base.cos_juez = 0.82
+        base.escala_banda = {"analogia": 0.6396340773501819, "directo": 0.9218836078503391}
+        preg = sorted({t for t in set(v["cargo_norm"]) if t not in base.idx})
+        rng_o = np.random.default_rng(17)
+        if nom.startswith("oraculo_nivel"):
+            q_ = pd.read_parquet(SAL / "60_niveles_qwen_v3.parquet")
+            niv_v = {str(t): int(x) for t, x in zip(q_["titulo"], q_["nivel"]) if 1 <= int(x) <= 5}
+            con = [t for t in preg if t in niv_v]
+            vals = [niv_v[t] for t in con]
+            if nom.endswith("placebo"):
+                vals = list(rng_o.permutation(vals))
+            base.nivel_externo = {t: (int(x), 1.0) for t, x in zip(con, vals)}
+            print("oraculo de nivel: {:,} de {:,} titulos preguntados fuera de la base{}".format(
+                len(con), len(preg), " (PLACEBO)" if nom.endswith("placebo") else ""), flush=True)
+        else:
+            g_ = kw["grupos"]
+            celda_de = {}
+            for j, c in enumerate(base.celdas):
+                celda_de.setdefault(g_.get(str(c)), j)
+            asig = {t: celda_de[g_[t]] for t in preg if g_.get(t) in celda_de}
+            if nom.endswith("placebo"):
+                asig = {t: int(rng_o.integers(len(base.celdas))) for t in asig}
+            base.asignacion_externa = asig
+            print("oraculo de reconocimiento: {:,} de {:,} titulos preguntados fuera de la base tienen su grupo en la "
+                  "base{}".format(len(asig), len(preg), " (PLACEBO)" if nom.endswith("placebo") else ""), flush=True)
     elif nom.startswith("qwen_laya"):    # T-014: lo de T-006 fijo (umbral y k); solo cambia el nivel
         UMBRAL_T005[0] = base.cos_juez = 0.82
         base.escala_banda = {"analogia": 0.6396340773501819, "directo": 0.9218836078503391}
@@ -610,7 +636,7 @@ if __name__ == "__main__":
                                            "vecinos_grupo_placebo", "idioma_prima", "idioma_prima_placebo",
                                            "grados", "grados_placebo", "e5", "e5_placebo", "e5_sin_ajustar", "qwen", "qwen_placebo", "qwen_hibrido",
                                            "qwen_hibrido_placebo", "qwen_umbral", "qwen_umbral_placebo",
-                                           "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo",
+                                           "qwen_inverso", "qwen_inverso_placebo", "qwen_juez9", "qwen_juez9_placebo", "qwen_laya", "qwen_laya_placebo", "qwen_laya_e5", "qwen_laya_e5_placebo", "oraculo_nivel", "oraculo_nivel_placebo", "oraculo_reconoce", "oraculo_reconoce_placebo",
                                            "qwen_filtro", "qwen_filtro_placebo",
                                            "limpieza", "limpieza_placebo", "limpieza_siglas",
                                            "limpieza_siglas_placebo", "coherencia", "coherencia_placebo",

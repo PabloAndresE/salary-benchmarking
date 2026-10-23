@@ -8862,3 +8862,31 @@ alcanza a Qwen con la descripción. Y el **mapeo a la taxonomía estándar es de
 en las nóminas ecuatorianas: en los pares cercanos acierta apenas por encima del azar (0,54 frente a 0,86), porque ESCO
 reúne bajo una sola ocupación cargos que el autor distingue, y separa otros que son iguales; además, la mayoría de los
 títulos queda lejos de cualquier nombre ESCO. Es el argumento empírico para la taxonomía propia de la tesis.
+
+## T-017 — Experimento oráculo: ¿qué movería la banda si fuera perfecto, el reconocimiento o el nivel? Registrado antes de medir
+
+**Por qué** (revisión del índice, juez 2: «si el oráculo tampoco mueve el pinball, "entender no es pagar" queda
+demostrado y no solo sugerido»). La tesis central dice que reconocer mejor el cargo casi no mejora la banda y que la
+palanca es el nivel. Hasta hoy se infirió de sistemas reales; aquí se mide el **techo** de cada pieza.
+
+**Sobre T-006** (`qwen_inverso`: Qwen reconoce, Vertex da los vecinos; umbral del cross-encoder 0,82 y escala `k`
+fijos en los de T-006), dos oráculos para los títulos preguntados que **no están en la base de entrenamiento**:
+
+- **Oráculo de nivel** (`oraculo_nivel`): el nivel de la consulta es el **verdadero** (la etiqueta de nivel del título,
+  la misma con que se entrena el clasificador), con certeza 1, en lugar de la predicción.
+- **Oráculo de reconocimiento** (`oraculo_reconoce`): el título queda asignado **directamente a su grupo verdadero**
+  (su cluster en `50_clusters_confiable_cargos`) si ese grupo tiene alguna celda en la base de entrenamiento, como si el
+  cross-encoder acertara siempre con P = 1. Si su grupo no está, sigue por analogía.
+- **Placebos:** niveles verdaderos permutados entre los títulos preguntados; asignación a una celda **al azar** de la
+  base para los mismos títulos.
+
+**Medición:** protocolo v2 frente a **T-006**; se reporta también el pinball absoluto y la mejora relativa (%).
+
+**Criterio («entender no es pagar» demostrado):** se cumplen las dos:
+
+1. el **oráculo de nivel mejora** la banda (IC frente a T-006 entero bajo cero), y
+2. el **oráculo de reconocimiento mejora poco**: el extremo inferior de su IC frente a T-006 es **≥ −0,002** (la
+   ganancia del reconocimiento perfecto no supera la que ya dio T-006).
+
+Si el oráculo de reconocimiento mejora más que eso, la tesis central se corrige: el reconocimiento sí importa y el
+límite estaba en nuestro reconocedor.

@@ -2238,6 +2238,11 @@ class BaseReferencia:
                     if getattr(self, "juez", None) is not None else {})
         # `_asignar_con_juez` devuelve por texto buscado; se vuelve al titulo preguntado
         asignado = {t: asignado[b] for t, b in zip(unicos, buscados) if b in asignado}
+        externo_asig = getattr(self, "asignacion_externa", None)   # tesis, T-017: oraculo de reconocimiento
+        if externo_asig:
+            for t in unicos:
+                if t not in self.idx and t in externo_asig:
+                    asignado[t] = (int(externo_asig[t]), 1.0)
         vec_a, sim_a = vec, sim
         if getattr(self, "Z_analogia", None) is not None:
             # T-004: los vecinos de la ANALOGIA salen de otro indice (el que lleva el nivel en el texto)
