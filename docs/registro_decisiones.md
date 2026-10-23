@@ -8962,3 +8962,29 @@ empresa; **31,6 %** queda sin explicar aun con cargo + empresa.
 - **El techo de cualquier banda de mercado basada en el título:** el efecto propio de la empresa (11 %) y el residuo
   (32 %) suman ~43 % de la varianza que ningún reconocimiento del título puede capturar: la banda de mercado no conoce
   cuánto paga la empresa del cliente por encima o por debajo del mercado.
+
+## T-019 — Open set con muchos más cargos nuevos: quitar de la base la familia entera de equivalentes. Registrado antes de medir
+
+**Por qué** (revisión del índice, los dos jueces): en T-010b solo **23** consultas de prueba eran cargos nuevos de verdad;
+la mitad de la exactitud balanceada descansa en ellas.
+
+**Construcción:** se parte de las **809** consultas de T-010b que tenían equivalente. A cada una se le saca de la base su
+grupo **y todos los grupos de los títulos que Qwen3.5-122B juzgó «sí» con ella** en el pool de T-010b (su familia de
+equivalentes conocidos). Se recalculan sus candidatos (10 grupos de Qwen y 10 de Vertex, sin candado) y se corren los
+cinco sistemas de T-010b **con los umbrales que T-010b eligió en calibra** (no se re-eligen): A 0,90; B 0,93; C 0,96;
+C fijo (Vertex ≥ 0,90 y P ≥ 0,5); D coseno 0,70.
+
+**Verdad:** como en T-010b, Qwen3.5-122B (rúbrica v7, sin razonamiento, coherente en los dos órdenes) juzga los pares
+nuevos del pool (el elegido de cada sistema + los 3 primeros de Qwen y de Vertex). La consulta queda **«nueva»** si
+todos sus pares son «no» coherentes, **«con equivalente»** si aparece alguno «sí» (un equivalente que T-010b no había
+visto), y fuera si no.
+
+**Medidas:**
+
+- **Tasa de «desconocido» en las nuevas** de cada sistema, con IC por bootstrap.
+- **Exactitud balanceada combinada:** la clase «con equivalente» de la prueba de T-010b (413) + todas las nuevas de
+  T-019; y también solo con las nuevas que vienen de consultas de prueba.
+
+**Criterio:** el de T-010b, ahora con muchos más cargos nuevos: **«el open set mejora al producto» se confirma** si el
+IC de A − C fijo (exactitud balanceada combinada) queda entero sobre cero. Límite que se mantiene: la verdad es de
+Qwen3.5-122B, el mismo LLM que enseñó al cross-encoder (lo resuelve el oro humano, pendiente).
