@@ -1,0 +1,15 @@
+T-018 · descomposicion de la varianza del voto (mediana de log(sueldo/SBU) por cargo x empresa), 2024-2025
+votos 164,096; cargos 38,715; empresas 6,719; varianza total 0.4773 (desviacion 0.691)
+
+  modelo              R2 dentro     R2 fuera
+  nivel                  46.9%       46.3%   (prueba: 32,733 votos)
+  cargo                  73.9%       57.4%   (prueba: 27,326 votos)
+  empresa                31.9%       26.5%   (prueba: 32,634 votos)
+  nivel + empresa        67.6%       64.1%   (prueba: 32,634 votos)
+  cargo + empresa        83.0%       68.4%   (prueba: 27,231 votos)
+
+Lectura (fuera de muestra):
+  lo que agrega la EMPRESA una vez conocido el cargo: +11.0% de la varianza
+  lo que agrega el CARGO una vez conocida la empresa: +41.9%
+  lo que explica el NIVEL solo: 46.3%; nivel + empresa: 64.1%
+  sin explicar con cargo + empresa: 31.6%

@@ -8936,3 +8936,29 @@ vías por proyecciones alternadas).
   evalúa en el 20 % cuyos cargo y empresa aparecen en el 80 %. Evita que los miles de efectos se ajusten al ruido.
 - Lectura: la parte que **solo la empresa** explica, una vez conocido el cargo (cargo + empresa − cargo), frente a lo que
   agrega el cargo una vez conocida la empresa.
+
+### T-018, resultado: el cargo explica más que la empresa, pero ~43 % de la varianza queda fuera del alcance del título (2026-10-23)
+
+164.096 votos, 38.715 cargos, 6.719 empresas; varianza total 0,477 (desviación 0,691 en log, ~×2 entre votos).
+
+| Modelo | R² dentro de muestra | R² fuera de muestra |
+|---|---|---|
+| nivel (5 valores) | 46,9 % | **46,3 %** |
+| cargo | 73,9 % | **57,4 %** |
+| empresa | 31,9 % | 26,5 % |
+| nivel + empresa | 67,6 % | 64,1 % |
+| cargo + empresa | 83,0 % | **68,4 %** |
+
+Fuera de muestra: la **empresa agrega 11,0 %** una vez conocido el cargo; el **cargo agrega 41,9 %** una vez conocida la
+empresa; **31,6 %** queda sin explicar aun con cargo + empresa.
+
+**Lectura:**
+
+- **El cargo pesa más que la empresa.** Esto **corrige** la frase de la lectura de T-017 («el cargo pesa menos que la
+  empresa»), que no se sostiene.
+- **El nivel solo explica 46 %, más de cuatro quintos de lo que explica el cargo (57 %).** Con la empresa conocida, la
+  identidad exacta del cargo agrega 4 puntos sobre el nivel (64,1 % → 68,4 %). Es el mecanismo de T-013/T-017: casi
+  toda la información útil del título para el sueldo está en su nivel.
+- **El techo de cualquier banda de mercado basada en el título:** el efecto propio de la empresa (11 %) y el residuo
+  (32 %) suman ~43 % de la varianza que ningún reconocimiento del título puede capturar: la banda de mercado no conoce
+  cuánto paga la empresa del cliente por encima o por debajo del mercado.
