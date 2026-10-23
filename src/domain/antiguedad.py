@@ -49,7 +49,10 @@ def columnas_de_fecha(df) -> tuple[str | None, list[str], list[str]]:
             salidas.append(c)
         elif ingreso is None and _RE_INGRESO.search(n):
             ingreso = c
-    orden = lambda c: (int(m.group()) if (m := re.search(r"\d+", str(c))) else 0)
+
+    def orden(c):
+        return int(m.group()) if (m := re.search(r"\d+", str(c))) else 0
+
     return ingreso, sorted(salidas, key=orden), sorted(reingresos, key=orden)
 
 

@@ -5,12 +5,8 @@ Nada de esto toca la red: `guardar` se sustituye."""
 import io
 
 import pandas as pd
-import pytest
 
 from src.services import registro_nomina_service as rn
-
-pytest.importorskip("fastapi", reason="extra opcional: pip install -e .[servicio]")
-from test_servicio import base_npz, cliente  # noqa: E402,F401  (fixtures)
 
 
 def _columnas(tabla):
@@ -150,7 +146,9 @@ def test_si_guardar_falla_el_informe_sale_igual(cliente, monkeypatch):
 
 
 def test_el_ddl_sale_del_mismo_esquema_que_escribe_la_api():
-    sql = rn.ddl("p.benchmarking")
+    from src.persistence.tablas import ddl
+
+    sql = ddl("p.benchmarking")
     for nombre, cols in rn.ESQUEMAS.items():
         assert f"CREATE TABLE IF NOT EXISTS `p.benchmarking.{nombre}`" in sql
         for col, _ in cols:

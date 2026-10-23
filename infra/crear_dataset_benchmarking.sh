@@ -33,9 +33,9 @@ bq show --project_id="$PROYECTO" "$PROYECTO:$DATASET" >/dev/null 2>&1 || \
      --description "Salary Benchmarking - PRODUCTO (cargas, homologaciones, versiones). La tesis vive en benchmarking_tesis." \
      "$PROYECTO:$DATASET"
 
-echo "== tablas de las cargas (desde registro_nominas.ESQUEMAS)"
-PYTHONPATH="$RAIZ/src" "$PY" -c \
-  "from benchmarking.servicio.registro_nominas import ddl; print(ddl('$PROYECTO.$DATASET'))" \
+echo "== tablas de las cargas (desde src/persistence/tablas.py)"
+PYTHONPATH="$RAIZ" "$PY" -c \
+  "from src.persistence.tablas import ddl; print(ddl('$PROYECTO.$DATASET'))" \
   | consulta
 
 echo "== versiones, marco_v31 y vistas"

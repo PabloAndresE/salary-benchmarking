@@ -189,7 +189,10 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
 
     Devuelve (detalle_por_persona, resumen_por_puesto, resumen_empresa).
     """
-    col = lambda c: pd.Series(np.asarray(ref_df[c], dtype=float), index=df.index)
+
+    def col(c):
+        return pd.Series(np.asarray(ref_df[c], dtype=float), index=df.index)
+
     y = _log_sueldo(df[col_sueldo], sbu, anio)
     ref = col("referencia_log")
     confianza = list(ref_df["confianza"])

@@ -65,3 +65,11 @@ target-version = ["py314"]
 # "." para importar `src.*`; "tests" para el generador `sintetico` y las fixtures
 pythonpath = [".", "tests"]
 testpaths = ["tests"]
+markers = [
+    "endpoint: routers con TestClient",
+    "service: services, mockeando persistencia e integraciones",
+    "integration: clientes de integracion",
+    "persistence: acceso a BigQuery",
+    "function: logica pura",
+    "model: dominio y DTOs",
+]

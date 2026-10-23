@@ -30,6 +30,9 @@ import numpy as np
 import pandas as pd
 import requests
 
+from src.services.informe_service import CLAVES_DATO
+from src.shared.utils.conversion import a_camel, claves_a_camel
+
 FOTO = pathlib.Path.home() / "fotos-benchmarking" / "foto_v1.3.json.gz"
 SEMILLA = 20261023
 # Lo que cambia entre corridas sin que cambie la respuesta
@@ -142,36 +145,49 @@ def construir_entradas(ruta_base: str) -> dict:
 # ---- adaptadores al contrato --------------------------------------------------------
 
 
+def _es_contrato_nuevo(url: str) -> bool:
+    """La API refactorizada tiene `/health` y el sobre; la v1.3 no."""
+    try:
+        return requests.get(f"{url}/health", timeout=30).status_code == 200
+    except requests.RequestException:
+        return False
+
+
 def _contenido(r: requests.Response):
     """Lo util de una respuesta, con o sin el sobre `BaseResponseModel`."""
     d = r.json()
     if isinstance(d, dict) and {"status", "content"} <= set(d) and "message" in d:
-        return {
-            "_http": r.status_code,
-            "_status": d["status"],
-            **(d["content"] if isinstance(d["content"], dict) else {"_content": d["content"]}),
-        }
+        if d["status"] != 0:
+            return {"_http": r.status_code, "_message": d["message"]}
+        c = d["content"]
+        return {"_http": r.status_code, **(c if isinstance(c, dict) else {"_lista": c})}
+    if r.status_code >= 400 and isinstance(d, dict) and "detail" in d:
+        return {"_http": r.status_code, "_message": d["detail"]}
     return {"_http": r.status_code, **(d if isinstance(d, dict) else {"_lista": d})}
 
 
-def _informe(url: str, e: dict) -> dict:
+def _informe(url: str, e: dict, nuevo: bool) -> dict:
     files = {"archivo": ("nomina.csv", e["csv"].encode())}
     form = {"formato_libre": "true", "columna_cargo": "cargo", **e["form"]}
+    if nuevo:
+        form = {a_camel(k): v for k, v in form.items()}
     r = requests.post(f"{url}/informes", files=files, data=form, timeout=600)
     if r.status_code == 202:  # contrato viejo: 202 + consulta
         tid = r.json()["id"]
         while True:
             q = requests.get(f"{url}/informes/{tid}", timeout=60)
             if q.json().get("estado") not in ("en_cola", "procesando"):
-                return {"_http": 200, **q.json()}
+                return {"_http": q.status_code, **q.json()}
             time.sleep(1)
     return _contenido(r)
 
 
 def pedir_todo(url: str, entradas: dict) -> dict:
+    nuevo = _es_contrato_nuevo(url)
+    print(f"  contrato {'nuevo (sobre + camelCase)' if nuevo else 'v1.3'}", flush=True)
     out = {"informes": {}, "referencias": [], "puestos": []}
     for e in entradas["informes"]:
-        out["informes"][e["nombre"]] = _informe(url, e)
+        out["informes"][e["nombre"]] = _informe(url, e, nuevo)
         print(f"  informe {e['nombre']}", flush=True)
     for p in entradas["referencias"]:
         out["referencias"].append(_contenido(requests.get(f"{url}/referencia", params=p, timeout=120)))
@@ -235,7 +251,23 @@ def main():
     with gzip.open(ruta, "rt") as f:
         foto = json.load(f)
     nuevas = pedir_todo(a.url, foto["entradas"])
-    difs = _diferencias(foto["respuestas"], nuevas)
+    viejas = foto["respuestas"]
+    if _es_contrato_nuevo(a.url):
+        # la foto es v1.3: se lleva a la forma nueva con LAS MISMAS reglas que la API, y se
+        # ignora solo lo que el contrato nuevo agrega
+        def conv(x):
+            return claves_a_camel(
+                x, conservar=frozenset({"cargo", "sueldo", "_http", "_message", "_lista"}), claves_dato=CLAVES_DATO
+            )
+
+        viejas = {
+            "informes": {k: conv(v) for k, v in viejas["informes"].items()},
+            "referencias": [conv(x) for x in viejas["referencias"]],
+            "puestos": [conv(x) for x in viejas["puestos"]],
+        }
+        VOLATILES.update({"estado", "idCarga", "filas", "columnaCargo", "empresa", "excelBase64"})
+        VOLATILES.update({a_camel(k) for k in list(VOLATILES)})
+    difs = _diferencias(viejas, nuevas)
     if difs:
         print(f"{len(difs)} DIFERENCIAS. Las primeras:")
         for d in difs[:40]:

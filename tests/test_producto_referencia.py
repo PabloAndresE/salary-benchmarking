@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from src.domain.base_referencia import BaseReferencia
+from src.domain.base_referencia import _distancia1, _es_errata, _fusionar_erratas, _par_genero
 
 
 def _sbu(anio):
@@ -256,7 +257,7 @@ def test_el_castigo_por_nivel_desconocido_sale_del_vecindario():
     emb = dict(emb)
     # vecindario homogeneo: pegado a los auxiliares de CAJA
     emb["ENCARGADO X"] = emb["AUXILIAR DE CAJA"]
-    b = _base(filas, emb)
+    _base(filas, emb)
     # y uno cuyo vecindario mezcla escalones: en medio de todo
     todos = np.mean([emb[f"{r} DE CAJA"] for r in ("AUXILIAR", "TECNICO", "SUPERVISOR", "JEFE", "GERENTE")], axis=0)
     emb["ENCARGADO Y"] = todos
@@ -356,7 +357,10 @@ def test_el_enlace_completo_no_encadena():
     filas = [(f"E{n}{e}", n, 0.5) for n in emb for e in range(4)]
     base = _base(filas, emb)
     g = {n: int(base.grupo[base.idx[n]]) for n in emb}
-    cos = lambda u, v: float(u @ v / (np.linalg.norm(u) * np.linalg.norm(v)))
+
+    def cos(u, v):
+        return float(u @ v / (np.linalg.norm(u) * np.linalg.norm(v)))
+
     assert cos(a, b) > 0.95 and cos(b, c) > 0.95, "la cadena existe"
     assert cos(a, c) < 0.95, "y los extremos no se parecen"
     assert g["PUESTO ALFA"] != g["PUESTO GAMA"], "el enlace completo no debe encadenar"
@@ -630,7 +634,6 @@ def test_sin_columna_de_rubro_la_base_se_construye_igual():
 # fijan sobre todo es lo que NO debe fusionarse — un falso positivo funde dos
 # oficios distintos y contamina la referencia de los dos.
 # --------------------------------------------------------------------------
-from src.domain.base_referencia import _distancia1, _es_errata, _fusionar_erratas
 
 
 def test_distancia1_reconoce_las_tres_formas():
@@ -739,7 +742,6 @@ def test_los_dos_falsos_positivos_que_encontro_la_base_real():
 # es un ACCIDENTE —el 48% de los pares ya esta junto y el 52% no, segun donde
 # cayo el coseno— y el titulo actua como PROXY DE GENERO dentro del modelo.
 # --------------------------------------------------------------------------
-from src.domain.base_referencia import _par_genero
 
 
 def test_reconoce_el_par_de_genero_y_cual_es_cual():

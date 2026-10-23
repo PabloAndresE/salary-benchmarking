@@ -21,60 +21,21 @@ duplicados por `carga_hash`, unidades) antes de una version nueva.
 
 import datetime as _dt
 import hashlib
+import logging
 import os
 import pathlib
+import time
+import uuid
 
 import pandas as pd
 
-DATASET_POR_DEFECTO = "act-cicd-stage-prueba.benchmarking"
+from src.persistence import bigquery_client
+from src.persistence.tablas import ESQUEMAS, ORDEN  # noqa: F401 (ESQUEMAS se reexporta para los tests)
+from src.shared.constants import ESQUEMA
 
-# El contrato de las tablas, en el orden de las columnas en BigQuery. Las tres llevan
-# `fecha_carga`: es la columna de particion, y sin ella cada join leeria la tabla entera.
-ESQUEMAS = {
-    "cargas": (
-        ("id_carga", "STRING"),  # el id del informe
-        ("fecha_carga", "TIMESTAMP"),
-        ("carga_hash", "STRING"),  # sha256 del archivo: la misma nomina subida dos veces
-        ("anio", "INTEGER"),  # el ano del SBU con que se pidio el informe
-        ("empresa_ruc", "STRING"),  # el que mando el cliente; NULL si no lo mando
-        ("ciiu", "STRING"),  # el del padron para ese RUC
-        ("segmento", "STRING"),  # el que se uso (pedido o del RUC)
-        ("rubro", "STRING"),  # la seccion CIIU con que se comparo
-        ("n_filas", "INTEGER"),
-        ("columna_cargo", "STRING"),  # como se llamaban en el archivo
-        ("columna_sueldo", "STRING"),
-        ("correcciones", "INTEGER"),  # filas corregidas por el usuario (`mapeo`)
-        ("version_api", "STRING"),
-        ("version_base", "STRING"),
-    ),
-    "nomina_filas": (
-        ("id_carga", "STRING"),
-        ("fecha_carga", "TIMESTAMP"),
-        ("fila", "INTEGER"),  # orden en el archivo
-        ("cargo", "STRING"),  # tal como lo escribio el cliente
-        ("cargo_corregido_usuario", "STRING"),
-        ("sueldo", "FLOAT"),  # NULL si no habia columna o no era un numero
-    ),
-    "homologaciones": (
-        ("id_carga", "STRING"),
-        ("fecha_carga", "TIMESTAMP"),
-        ("fila", "INTEGER"),
-        ("cargo_normalizado", "STRING"),
-        ("puesto_asignado", "STRING"),  # el puesto de la base; NULL por analogia
-        ("via", "STRING"),  # datos directos / rubro X / por analogia / por traduccion
-        ("estado", "STRING"),
-        ("similitud", "FLOAT"),
-        ("p_juez", "FLOAT"),
-        ("referencia", "FLOAT"),  # lo que le dijimos, en dolares
-        ("p25", "FLOAT"),
-        ("p75", "FLOAT"),
-        ("confianza", "STRING"),
-        ("rubro", "STRING"),  # el CIIU al que se bajo en la cascada
-        ("rubro_nivel", "STRING"),
-    ),
-}
-# Se escriben las filas antes que la cabecera: una carga en `cargas` esta completa.
-ORDEN = ("nomina_filas", "homologaciones", "cargas")
+logger = logging.getLogger(__name__)
+
+DATASET_POR_DEFECTO = "act-cicd-stage-prueba.benchmarking"
 
 
 def activo() -> bool:
@@ -208,38 +169,66 @@ def registro(
     return {"cargas": [cabecera], "nomina_filas": filas, "homologaciones": homs}
 
 
-def ddl(dataset: str) -> str:
-    """El `CREATE TABLE IF NOT EXISTS` de las tres tablas, desde `ESQUEMAS`: el esquema
-    tiene una sola fuente, la misma que usa la API al escribir."""
-    tipos = {"FLOAT": "FLOAT64", "INTEGER": "INT64"}
-    sentencias = []
-    for nombre, cols in ESQUEMAS.items():
-        campos = ",\n  ".join(f"{n} {tipos.get(t, t)}" for n, t in cols)
-        sentencias.append(
-            f"CREATE TABLE IF NOT EXISTS `{dataset}.{nombre}` (\n  {campos}\n)\n"
-            f"PARTITION BY DATE(fecha_carga)\nCLUSTER BY id_carga;"
-        )
-    return "\n\n".join(sentencias)
-
-
-_CLIENTE = None
-
-
 def guardar(tablas: dict[str, list[dict]], dataset: str) -> None:
-    """Anade las filas a cada tabla (la crea si no existe, particionada por dia)."""
-    global _CLIENTE
-    from google.cloud import bigquery
-
-    if _CLIENTE is None:
-        _CLIENTE = bigquery.Client(project=dataset.split(".")[0])
+    """Escribe la carga en sus tres tablas, la cabecera (`cargas`) al final."""
     for nombre in ORDEN:
         filas = tablas.get(nombre) or []
-        if not filas:
-            continue
-        cfg = bigquery.LoadJobConfig(
-            schema=[bigquery.SchemaField(n, t) for n, t in ESQUEMAS[nombre]],
-            write_disposition="WRITE_APPEND",
-            time_partitioning=bigquery.TimePartitioning(field="fecha_carga"),
-            clustering_fields=["id_carga"],
+        claves = [f"{f['id_carga']}:{nombre}:{f.get('fila', '')}" for f in filas]
+        bigquery_client.insertar_filas(dataset=dataset, tabla=nombre, filas=filas, claves=claves)
+
+
+def nuevo_id() -> str:
+    return uuid.uuid4().hex
+
+
+def guardar_carga(
+    *,
+    df: pd.DataFrame,
+    col_cargo: str,
+    col_sueldo: str | None,
+    detalle: list[dict],
+    homologacion: pd.DataFrame | None,
+    id_carga: str,
+    contenido: bytes,
+    anio: int,
+    ruc: str | None,
+    ciiu: str | None,
+    segmento: str | None,
+    rubro: str | None,
+    correcciones: dict[int, str] | None,
+    ruta_base: str,
+) -> bool:
+    """Guarda la carga si el registro esta encendido. NUNCA lanza: si BigQuery falla, el
+    informe sale igual y el error queda en el log. Devuelve si se guardo."""
+    if not activo():
+        return False
+    t0 = time.perf_counter()
+    try:
+        tablas = registro(
+            df,
+            col_cargo,
+            col_sueldo,
+            detalle,
+            homologacion,
+            id_carga=id_carga,
+            carga_hash=hash_carga(contenido),
+            anio=anio,
+            ruc=ruc,
+            ciiu=ciiu,
+            segmento=segmento,
+            rubro=rubro,
+            correcciones=correcciones,
+            version_api=os.environ.get("VERSION_API") or f"esquema {ESQUEMA}",
+            version_base=version_base(ruta_base),
         )
-        _CLIENTE.load_table_from_json(filas, f"{dataset}.{nombre}", job_config=cfg).result()
+        guardar(tablas, dataset_destino())
+    except Exception:
+        logger.error("guardar_carga: fallo la carga %s", id_carga, exc_info=True)
+        return False
+    logger.info(
+        "guardar_carga: %d filas de la carga %s en %.1fms",
+        len(tablas["nomina_filas"]),
+        id_carga,
+        (time.perf_counter() - t0) * 1000,
+    )
+    return True

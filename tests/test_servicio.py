@@ -4,62 +4,18 @@ Nada de esto toca datos reales ni la red: se construye una base de juguete, se g
 un `.npz` temporal y el motor la carga como cargaria la de produccion.
 """
 
-import datetime as _dt
 import io
 
 import numpy as np
 import pandas as pd
 import pytest
 
-fastapi = pytest.importorskip("fastapi", reason="extra opcional: pip install -e .[servicio]")
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
+from fakes.cliente_v13 import ClienteV13
 
 from src.domain.base_referencia import BaseReferencia  # noqa: E402
 
-# El servicio dolariza con el ano ACTUAL por defecto, asi que el doble tiene que
-# conocerlo: si solo supiera 2025, los tests probarian un camino que produccion no usa.
-ANIO = _dt.date.today().year
-
-
-def _sbu(anio, estricto=False):
-    if anio not in (2025, ANIO):
-        if estricto:
-            raise ValueError(f"No hay SBU para {anio}")
-        return 470.0
-    return 470.0
-
-
-@pytest.fixture
-def base_npz(tmp_path):
-    filas, emb = [], {}
-    for k, cargo in enumerate(("CONTADOR", "VENDEDOR", "GUARDIA")):
-        v = np.zeros(4)
-        v[k] = 1.0
-        emb[cargo] = v
-        for i in range(14):
-            filas.append((f"E{k}{i}", cargo, 1.0 + 0.2 * k + 0.01 * (i % 5)))
-    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
-    b = BaseReferencia.construir(marco, emb, lambda a: 470.0)
-    ruta = tmp_path / "base.npz"
-    b.guardar(ruta)
-    return str(ruta)
-
-
-@pytest.fixture
-def cliente(base_npz, monkeypatch):
-    from src import main as api
-
-    class _S:
-        sbu = {2025: 470, ANIO: 470}
-        vertex_embedding_model = "x"
-        bq_project = "p"
-        vertex_location = "l"
-        get_sbu = staticmethod(_sbu)
-
-    monkeypatch.setattr(api, "cargar_settings", lambda: _S())
-    monkeypatch.setenv("BASE_REFERENCIA", base_npz)
-    with TestClient(api.app) as c:
-        yield c
+from fakes.ajustes import ANIO, _sbu  # noqa: F401 (otros tests los importan de aqui)
 
 
 def _xlsx(df):
@@ -512,14 +468,13 @@ def test_la_base_por_defecto_NO_esta_escrita_a_mano():
     # construian la v9 a la v13. Ahora sale de la mas nueva por NUMERO DE VERSION, no
     # por fecha: copiar un fichero viejo lo volveria el mas reciente.
     import re
-    from src.main import _ruta_base_por_defecto
+    from src.infrastructure.motor import _ruta_base_por_defecto
 
     r = _ruta_base_por_defecto()
     assert re.search(r"base_v\d+\.npz$", r) or r.endswith("base_referencia.npz")
 
 
 def test_el_entorno_manda_sobre_el_defecto(monkeypatch, base_npz):
-    from src import main as api
 
     monkeypatch.setenv("BASE_REFERENCIA", base_npz)
     import os
@@ -527,9 +482,10 @@ def test_el_entorno_manda_sobre_el_defecto(monkeypatch, base_npz):
     assert os.environ.get("BASE_REFERENCIA") == base_npz
     # y `capacidades_de` no revienta con una base a la que le falta todo
     from src.domain.base_referencia import BaseReferencia
+    from src.infrastructure import motor as motor_mod
 
-    c = api.capacidades_de(BaseReferencia.cargar(base_npz, lambda a: 470.0))
-    assert set(c) == {n for n, _, _ in api.CAPACIDADES}
+    c = motor_mod.capacidades_de(BaseReferencia.cargar(base_npz, lambda a: 470.0))
+    assert set(c) == {n for n, _, _ in motor_mod.CAPACIDADES}
 
 
 # --- la cascada, DE PUNTA A PUNTA por HTTP ----------------------------------------
@@ -582,11 +538,13 @@ def cliente_ciiu(tmp_path, monkeypatch):
     # uno a uno deja el doble desincronizado en cuanto `Motor.__init__` aprende algo
     # nuevo, y el test falla por el andamio en vez de por el codigo: paso al añadir
     # `etiqueta`. Lo unico que se sustituye es `asegurar`, que llamaria a Vertex.
-    m = api.Motor(str(ruta), _S())
+    from src.infrastructure import motor as motor_mod
+
+    m = motor_mod.Motor(str(ruta), _S())
     m.asegurar = lambda t: 0
-    api.app.dependency_overrides[api.motor] = lambda: m
-    yield TestClient(api.app)
-    api.app.dependency_overrides.clear()
+    # sin `with`: no corre el arranque, y el motor es este
+    monkeypatch.setattr(motor_mod, "_MOTOR", m)
+    yield ClienteV13(TestClient(api.app))
 
 
 def test_el_veredicto_BAJA_a_la_division_pasando_por_HTTP(cliente_ciiu):
@@ -722,7 +680,7 @@ def test_el_umbral_de_ruido_sale_de_la_medicion_no_del_aire(cliente):
     # Pares al azar de la base llegan a 0,780 en el percentil 99; los del mismo puesto
     # viven por encima de 0,95. 0,85 deja pasar el 0,08% del azar y conserva el 97,9% de
     # los pares que de verdad son el mismo puesto.
-    from src.main import UMBRAL_RUIDO
+    from src.services.puesto_service import UMBRAL_RUIDO
 
     assert 0.80 <= UMBRAL_RUIDO <= 0.95
 
@@ -762,7 +720,7 @@ def test_la_etiqueta_del_puesto_no_es_una_ERRATA(cliente_ciiu):
     #                    con `Vendedo` solo entraban 5 de 13 y `VENDEDOR` no estaba
     # Ahora se precalcula por grupo, sobre TODAS sus grafias, con la frecuencia de cada
     # palabra en la base: una errata es rara por definicion.
-    from src.main import _representante
+    from src.domain.presentacion import representante as _representante
 
     frec = {
         "VENDEDOR": 462,

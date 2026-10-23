@@ -1,8 +1,15 @@
 import io
 import os
 
+import numpy as np
 import openpyxl
+import pandas as pd
 import pytest
+from fastapi.testclient import TestClient
+
+from fakes.ajustes import make_fake_ajustes
+from fakes.cliente_v13 import ClienteV13
+from src.domain.base_referencia import BaseReferencia
 
 # los tests no llaman a Vertex al arrancar el servicio (calentamiento de la API)
 os.environ.setdefault("CALENTAR", "no")
@@ -35,3 +42,31 @@ def plantilla_xlsx_bytes():
     buf = io.BytesIO()
     wb.save(buf)
     return buf.getvalue()
+
+
+@pytest.fixture
+def base_npz(tmp_path):
+    """Una base SINTETICA de tres puestos, guardada como la de produccion."""
+    filas, emb = [], {}
+    for k, cargo in enumerate(("CONTADOR", "VENDEDOR", "GUARDIA")):
+        v = np.zeros(4)
+        v[k] = 1.0
+        emb[cargo] = v
+        for i in range(14):
+            filas.append((f"E{k}{i}", cargo, 1.0 + 0.2 * k + 0.01 * (i % 5)))
+    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
+    b = BaseReferencia.construir(marco, emb, lambda a: 470.0)
+    ruta = tmp_path / "base.npz"
+    b.guardar(ruta)
+    return str(ruta)
+
+
+@pytest.fixture
+def cliente(base_npz, monkeypatch):
+    """La app arrancada sobre `base_npz`, detras del adaptador v1.3 (ver `fakes/cliente_v13.py`)."""
+    from src import main as api
+
+    monkeypatch.setattr("src.config.ajustes.cargar_settings", lambda: make_fake_ajustes())
+    monkeypatch.setenv("BASE_REFERENCIA", base_npz)
+    with TestClient(api.app) as c:
+        yield ClienteV13(c)

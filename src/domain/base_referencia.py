@@ -2217,7 +2217,10 @@ class BaseReferencia:
         for g in padre:
             comps.setdefault(raiz(g), []).append(g)
         rep = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).first()
-        emp_g = lambda g: int(self.emp[rep[g]])
+
+        def emp_g(g):
+            return int(self.emp[rep[g]])
+
         celdas_de = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).apply(list)
         rng = np.random.default_rng(semilla)
         if placebo:
@@ -2737,7 +2740,7 @@ class BaseReferencia:
                     banda = dict(zip(CUANTILES, q))
                 if np.isfinite(qp).all():
                     banda_per = dict(zip(CUANTILES, qp))
-                mejor, directo_ok = 1.0, True
+                mejor, _directo_ok = 1.0, True
                 if fam_d:
                     mu += fam_d
                     if banda is not None:
@@ -2906,7 +2909,7 @@ class BaseReferencia:
                 _, uno = np.unique(self.grupo[j], return_index=True)
                 n_emp = int(self.emp[j[uno]].sum())
                 n_per = int(self.personas[j[uno]].sum())
-                mejor, directo_ok = float(s.max()), False
+                mejor, _directo_ok = float(s.max()), False
             # DOS CANTIDADES, DOS PREGUNTAS. `sd_modelo` es la del modelo y sirve para
             # la CONFIANZA: contra el suelo mide que parte del ancho es ignorancia
             # nuestra y no anchura del mercado. La BANDA es lo que se entrega, y con
@@ -3438,7 +3441,6 @@ def _una_pasada_erratas(
     palabra_min=0,
 ):
     """Una vuelta de absorcion. La separa de `_fusionar_erratas` para poder repetirla."""
-    n = len(celdas)
     candado = _CandadoGrado(grados, grupo)
     idx = defaultdict(list)
     for i, c in enumerate(celdas):

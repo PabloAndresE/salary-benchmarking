@@ -21,8 +21,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-fastapi = pytest.importorskip("fastapi", reason="extra opcional: pip install -e .[servicio]")
 from fastapi.testclient import TestClient
+from fakes.cliente_v13 import ClienteV13
 
 from src.domain.base_referencia import BaseReferencia
 
@@ -82,10 +82,10 @@ def cliente(base_scvs, monkeypatch):
         vertex_location = "l"
         get_sbu = staticmethod(_sbu)
 
-    monkeypatch.setattr(api, "cargar_settings", lambda: _S())
+    monkeypatch.setattr("src.config.ajustes.cargar_settings", lambda: _S())
     monkeypatch.setenv("BASE_REFERENCIA", base_scvs)
     with TestClient(api.app) as c:
-        yield c
+        yield ClienteV13(c)
 
 
 def _xlsx(df):
