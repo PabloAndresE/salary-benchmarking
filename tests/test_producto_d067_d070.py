@@ -1,7 +1,7 @@
 """D-067..D-070: corrector de tipeo, reglas de palabras de sinonimos y cortes de confianza por ancho."""
-from benchmarking.producto import sinonimos
-from benchmarking.producto.base_referencia import CONF_ANCHO_ALTA, CONF_ANCHO_BAJA
-from benchmarking.producto.tipeo import Corrector, distancia
+from src.domain import sinonimos
+from src.domain.base_referencia import CONF_ANCHO_ALTA, CONF_ANCHO_BAJA
+from src.domain.tipeo import Corrector, distancia
 
 
 def test_distancia_cuenta_la_transposicion_como_uno():
@@ -31,7 +31,7 @@ def test_cortes_de_confianza_por_ancho_publicados():
 
 
 def test_d091_manager_es_jefe_y_head_es_gerente():
-    from benchmarking.producto.idioma import invertir_rangos
+    from src.domain.idioma import invertir_rangos
     assert invertir_rangos("SALES MANAGER") == "SALES CHIEF"                 # -> JEFE DE VENTAS
     assert invertir_rangos("HEAD OF HR") == "HR MANAGER"                     # -> GERENTE DE RECURSOS HUMANOS
     assert invertir_rangos("HEAD OF INSURANCE - CONSULTING") == "INSURANCE MANAGER"

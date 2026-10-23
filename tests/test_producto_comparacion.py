@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from benchmarking.producto.comparacion import (a_numero, anclar, comparar,
+from src.domain.comparacion import (a_numero, anclar, comparar,
                                                texto_resumen)
 
 

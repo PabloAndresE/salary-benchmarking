@@ -2,7 +2,7 @@
 import pandas as pd
 import pytest
 
-from benchmarking.producto.formato import FormatoInvalido, validar
+from src.domain.formato import FormatoInvalido, validar
 
 
 def test_el_minimo_es_solo_cargo():

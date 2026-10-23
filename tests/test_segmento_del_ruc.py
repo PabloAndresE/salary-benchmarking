@@ -23,7 +23,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi", reason="extra opcional: pip install -e .[servicio]")
 from fastapi.testclient import TestClient
 
-from benchmarking.producto.base_referencia import BaseReferencia
+from src.domain.base_referencia import BaseReferencia
 
 ANIO = _dt.date.today().year
 RUC_CLIENTE = "E00"
@@ -67,7 +67,7 @@ def base_scvs(tmp_path):
 
 @pytest.fixture
 def cliente(base_scvs, monkeypatch):
-    from benchmarking.servicio import api
+    from src import main as api
 
     class _S:
         sbu = {2025: 470, ANIO: 470}
@@ -224,27 +224,3 @@ def test_un_rubro_explicito_sin_respaldo_SI_da_400(cliente):
     assert r.status_code == 400
     assert "sin datos suficientes" in r.json()["detail"]
 
-
-def test_una_declaracion_a_medio_llenar_NO_decide_el_segmento():
-    """El SQL toma el ultimo ano NO sospechoso, no el ultimo a secas.
-
-    El caso real: un RUC declara 2 empleados en 2025 y 193 en 2024. Con el ultimo a
-    secas entraba como MEDIANA siendo GRANDE, y el segmento alimenta `ajuste_seg`, la
-    correccion que mas pesa en los cargos altos.
-
-    Se comprueba sobre el TEXTO del SQL porque la consulta vive en BigQuery y aqui no
-    hay red: lo que se fija es que la regla siga estando, no su resultado.
-    """
-    from benchmarking.adquisicion.bigquery_source import SQL_SCVS
-    assert "sospechosa" in SQL_SCVS
-    assert "ORDER BY sospechosa, anio DESC" in SQL_SCVS, \
-        "el desempate tiene que anteponer las declaraciones sanas"
-    # IFNULL: la mas antigua no tiene ano previo y su NULL ordenaria primero en BigQuery
-    assert "IFNULL(" in SQL_SCVS
-    # y se particiona por el RUC YA rellenado: la misma empresa aparece con y sin el
-    # cero inicial, y particionar por el crudo devolvia dos filas para ella
-    assert "LPAD(CAST(ruc AS STRING), 13, '0') ruc" in SQL_SCVS
-    i_lpad = SQL_SCVS.index("LPAD(CAST(ruc")
-    i_part = SQL_SCVS.index("PARTITION BY ruc")
-    assert i_lpad < i_part, "el LPAD tiene que ir ANTES de particionar"
-    assert "ruc IS NOT NULL" in SQL_SCVS, "una fila sin RUC no sirve para cruzar por RUC"

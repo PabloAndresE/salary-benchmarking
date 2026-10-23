@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from benchmarking.producto.base_referencia import BaseReferencia
+from src.domain.base_referencia import BaseReferencia
 
 
 def _sbu(anio):
@@ -410,7 +410,7 @@ def test_una_celda_de_tres_personas_no_publica_su_mediana():
     # El suelo de EMPRESAS no dice nada de PERSONAS: tres empresas con una persona cada
     # una son tres personas, y la mediana de sus tres votos ES el sueldo de una de ellas.
     # Con `MIN_PERSONAS` esa celda pasa a contestarse por analogia.
-    from benchmarking.producto.base_referencia import MIN_EMPRESAS, MIN_PERSONAS
+    from src.domain.base_referencia import MIN_EMPRESAS, MIN_PERSONAS
     emb = {"RARO": np.array([1.0, 0.0, 0.0]), "VECINO": np.array([0.93, 0.37, 0.0])}
     # 3 empresas, 1 persona cada una: pasa el suelo de empresas, no el de personas
     filas = [(f"ER{e}", "RARO", 1.0 + 0.1 * e) for e in range(3)]
@@ -426,7 +426,7 @@ def test_una_celda_de_tres_personas_no_publica_su_mediana():
 
 
 def test_el_suelo_de_personas_no_toca_las_celdas_con_gente():
-    from benchmarking.producto.base_referencia import MIN_PERSONAS
+    from src.domain.base_referencia import MIN_PERSONAS
     emb = {"GORDO": np.array([1.0, 0.0, 0.0]), "OTRO": np.array([0.0, 1.0, 0.0])}
     filas = [(f"EG{e}", "GORDO", 1.0 + 0.05 * k) for e in range(4) for k in range(5)]
     filas += [(f"EO{e}", "OTRO", 0.5) for e in range(4) for _ in range(5)]
@@ -459,8 +459,8 @@ def _caso_segmentado(n_por_seg=14):
 
 
 def test_el_tamano_corrige_el_centro_en_los_cargos_altos():
-    from benchmarking.producto.base_referencia import NIVEL_MIN_SEGMENTAR
-    from benchmarking.producto.nivel import nivel_lexico
+    from src.domain.base_referencia import NIVEL_MIN_SEGMENTAR
+    from src.domain.nivel import nivel_lexico
     marco, emb = _caso_segmentado()
     b = BaseReferencia.construir(marco, emb, _sbu)
     assert nivel_lexico("GERENTE DE PLANTA") >= NIVEL_MIN_SEGMENTAR
@@ -498,7 +498,7 @@ def test_sin_segmento_el_comportamiento_es_el_de_siempre():
 
 def test_un_segmento_con_pocas_empresas_no_mueve_nada():
     # Por debajo del minimo el desplazamiento seria ruido. Aqui MICROEMPRESA tiene 2.
-    from benchmarking.producto.base_referencia import MIN_EMPRESAS_SEGMENTO
+    from src.domain.base_referencia import MIN_EMPRESAS_SEGMENTO
     marco, emb = _caso_segmentado()
     extra = pd.DataFrame(
         [(f"EMICRO{e}", "GERENTE DE PLANTA", 0.1 + 0.01 * k, "MICROEMPRESA")
@@ -620,7 +620,7 @@ def test_sin_columna_de_rubro_la_base_se_construye_igual():
 # fijan sobre todo es lo que NO debe fusionarse — un falso positivo funde dos
 # oficios distintos y contamina la referencia de los dos.
 # --------------------------------------------------------------------------
-from benchmarking.producto.base_referencia import (_distancia1, _es_errata,
+from src.domain.base_referencia import (_distancia1, _es_errata,
                                                    _fusionar_erratas)
 
 
@@ -731,7 +731,7 @@ def test_los_dos_falsos_positivos_que_encontro_la_base_real():
 # es un ACCIDENTE —el 48% de los pares ya esta junto y el 52% no, segun donde
 # cayo el coseno— y el titulo actua como PROXY DE GENERO dentro del modelo.
 # --------------------------------------------------------------------------
-from benchmarking.producto.base_referencia import _par_genero
+from src.domain.base_referencia import _par_genero
 
 
 def test_reconoce_el_par_de_genero_y_cual_es_cual():
@@ -1058,7 +1058,7 @@ def test_el_suelo_de_PUBLICACION_y_el_de_DECISION_son_distintos():
     # `MIN_EMPRESAS_RUBRO` (10) dice cuando un dato se puede enseñar sin identificar a
     # nadie. `MIN_EMPRESAS_VEREDICTO` (30) dice cuando se puede DECIDIR con el. Que se
     # usara el primero para lo segundo es el defecto que midio e3/19.
-    from benchmarking.producto.base_referencia import (MIN_EMPRESAS_RUBRO,
+    from src.domain.base_referencia import (MIN_EMPRESAS_RUBRO,
                                                        MIN_EMPRESAS_VEREDICTO)
     assert MIN_EMPRESAS_VEREDICTO > MIN_EMPRESAS_RUBRO
     marco, emb = _marco_niveles(n_clase_a=15)      # pasa el de publicacion, no el otro
@@ -1114,7 +1114,7 @@ def test_un_grado_que_la_base_no_tiene_se_referencia_con_su_puesto():
 
 
 def test_el_grado_no_junta_puestos_distintos():
-    from benchmarking.producto.base_referencia import _fusionar_grado
+    from src.domain.base_referencia import _fusionar_grado
     celdas = ["GERENTE ASISTENTE 1", "ASISTENTE GERENTE 2",      # otra palabra de puesto
               "ANALISTA R & D", "ANALISTA R&M",                  # siglas, no grados
               "CHOFER LICENCIA C", "CHOFER LICENCIA E",          # tipo de licencia

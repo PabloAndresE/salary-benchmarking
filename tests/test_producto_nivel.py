@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from benchmarking.producto.nivel import (ClasificadorNivel, escalera_salarial,
+from src.domain.nivel import (ClasificadorNivel, escalera_salarial,
                                          etiquetar, mismo_salvo_grado, nivel_lexico,
                                          quitar_grado, seniority_lexica, tiene_grado)
 
@@ -86,7 +86,7 @@ def test_la_escalera_no_se_inventa_orden_donde_no_lo_hay():
 
 
 def test_enmascarar_quita_el_rango_y_deja_el_resto():
-    from benchmarking.producto.nivel import enmascarar
+    from src.domain.nivel import enmascarar
     assert enmascarar("AUXILIAR DE BODEGA") == "PUESTO DE BODEGA"
     assert enmascarar("JEFE DE BODEGA") == "PUESTO DE BODEGA"
     assert enmascarar("GERENTE GENERAL") == "PUESTO GENERAL"
@@ -95,12 +95,12 @@ def test_enmascarar_quita_el_rango_y_deja_el_resto():
 def test_dos_titulos_de_distinto_rango_e_igual_area_quedan_iguales():
     # ESA es la razon de existir del enmascarado: el modelo no puede distinguirlos por la
     # palabra, tiene que inferir el nivel del resto — o admitir que no sabe.
-    from benchmarking.producto.nivel import enmascarar
+    from src.domain.nivel import enmascarar
     assert enmascarar("AUXILIAR DE CAJA") == enmascarar("SUPERVISOR DE CAJA")
 
 
 def test_un_titulo_sin_rango_no_se_toca():
-    from benchmarking.producto.nivel import enmascarar
+    from src.domain.nivel import enmascarar
     assert enmascarar("CONTADOR") == "CONTADOR"
     assert enmascarar("trabajador agricola") == "TRABAJADOR AGRICOLA"
 
@@ -108,7 +108,7 @@ def test_un_titulo_sin_rango_no_se_toca():
 def test_el_efecto_de_nivel_se_mide_dentro_del_area():
     # Contraste sin confusion: la misma area con dos rangos. Si se midiera ENTRE areas se
     # mezclaria "los jefes cobran mas" con "contabilidad paga mas que bodega".
-    from benchmarking.producto.nivel import efecto_nivel
+    from src.domain.nivel import efecto_nivel
     filas = []
     for area, base in (("BODEGA", 0.0), ("CONTABLE", 1.0)):   # areas con niveles distintos
         for nivel, palabra, extra in ((1, "AUXILIAR", 0.0), (4, "JEFE", 0.6)):
@@ -122,7 +122,7 @@ def test_el_efecto_de_nivel_se_mide_dentro_del_area():
 
 def test_el_efecto_de_nivel_ignora_las_areas_de_un_solo_rango():
     # Un area donde solo hay auxiliares no dice nada sobre cuanto vale ser jefe.
-    from benchmarking.producto.nivel import efecto_nivel
+    from src.domain.nivel import efecto_nivel
     filas = [{"cargo_norm": "AUXILIAR DE X", "empresa_ruc": f"E{e}", "y": 0.0}
              for e in range(20)]
     assert efecto_nivel(pd.DataFrame(filas)) == {}

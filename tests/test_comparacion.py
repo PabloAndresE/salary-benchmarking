@@ -9,7 +9,7 @@ def test_la_masa_salarial_NO_es_la_mediana_y_el_texto_lo_dice():
     """
     import numpy as np
     import pandas as pd
-    from benchmarking.producto.comparacion import comparar, texto_resumen
+    from src.domain.comparacion import comparar, texto_resumen
 
     # 10 abajo pagados por debajo, 2 arriba pagados muy por encima
     cargos = ["OPERARIO"] * 10 + ["GERENTE"] * 2
@@ -42,7 +42,7 @@ def test_la_masa_solo_suma_a_quien_tiene_LAS_DOS_cifras():
     # una diferencia inventada. Se cuenta cuanta gente queda fuera para poder juzgarlo.
     import numpy as np
     import pandas as pd
-    from benchmarking.producto.comparacion import comparar
+    from src.domain.comparacion import comparar
 
     df = pd.DataFrame({"cargo": ["A", "B"], "sueldo": [1000.0, 1000.0]})
     ref = pd.DataFrame({

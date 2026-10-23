@@ -6,7 +6,7 @@ import io
 import pandas as pd
 import pytest
 
-from benchmarking.servicio import registro_nominas as rn
+from src.services import registro_nomina_service as rn
 
 pytest.importorskip("fastapi", reason="extra opcional: pip install -e .[servicio]")
 from test_servicio import base_npz, cliente  # noqa: E402,F401  (fixtures)

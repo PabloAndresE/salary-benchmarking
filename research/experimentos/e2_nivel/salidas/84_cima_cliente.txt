@@ -1,6 +1,0 @@
-84 · GG SEGUN LA ESTRUCTURA DEL CLIENTE (D-078)
-empresas apartadas con voto GG: 177; con estructura (otro nivel 5): 105
-   CON estructura  banda con estructura - banda de siempre: -0.0019 [-0.0166, +0.0131] (n=105)
-   sin estructura  banda con estructura - banda de siempre: +0.0324 [+0.0163, +0.0485] (n=72)
-   variante - placebo (empresas con estructura): +0.0033 [-0.0049, +0.0121]
-CRITERIO (mejora con estructura y frente al placebo): NO CUMPLE

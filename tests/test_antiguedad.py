@@ -6,7 +6,7 @@ corte le regala a la persona los anios que estuvo fuera.
 import numpy as np
 import pandas as pd
 
-from benchmarking.producto.antiguedad import antiguedad_anios, columnas_de_fecha, tramo
+from src.domain.antiguedad import antiguedad_anios, columnas_de_fecha, tramo
 
 
 def test_sin_salidas_es_la_resta_simple():

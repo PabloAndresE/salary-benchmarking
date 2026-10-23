@@ -13,7 +13,7 @@ import pytest
 fastapi = pytest.importorskip("fastapi", reason="extra opcional: pip install -e .[servicio]")
 from fastapi.testclient import TestClient  # noqa: E402
 
-from benchmarking.producto.base_referencia import BaseReferencia  # noqa: E402
+from src.domain.base_referencia import BaseReferencia  # noqa: E402
 
 
 # El servicio dolariza con el ano ACTUAL por defecto, asi que el doble tiene que
@@ -46,7 +46,7 @@ def base_npz(tmp_path):
 
 @pytest.fixture
 def cliente(base_npz, monkeypatch):
-    from benchmarking.servicio import api
+    from src import main as api
 
     class _S:
         sbu = {2025: 470, ANIO: 470}
@@ -120,7 +120,7 @@ def test_los_tramos_publicados_son_los_que_de_verdad_se_calculan(cliente):
     # El front arma el filtro de antiguedad con esta lista. Si la deduce de los datos
     # que le llegaron, una nomina joven le deja el filtro sin `mas de 20`. Y si la lista
     # se copia a mano en dos archivos, se desincronizan.
-    from benchmarking.producto.antiguedad import TRAMOS
+    from src.domain.antiguedad import TRAMOS
     df = pd.DataFrame({"cargo": ["CONTADOR"], "sueldo": ["1500"],
                        "fecha_ingreso": ["01/01/2020"]})
     tid = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(df))}).json()["id"]
@@ -511,18 +511,18 @@ def test_la_base_por_defecto_NO_esta_escrita_a_mano():
     # construian la v9 a la v13. Ahora sale de la mas nueva por NUMERO DE VERSION, no
     # por fecha: copiar un fichero viejo lo volveria el mas reciente.
     import re
-    from benchmarking.servicio.api import _ruta_base_por_defecto
+    from src.main import _ruta_base_por_defecto
     r = _ruta_base_por_defecto()
     assert re.search(r"base_v\d+\.npz$", r) or r.endswith("base_referencia.npz")
 
 
 def test_el_entorno_manda_sobre_el_defecto(monkeypatch, base_npz):
-    from benchmarking.servicio import api
+    from src import main as api
     monkeypatch.setenv("BASE_REFERENCIA", base_npz)
     import os
     assert os.environ.get("BASE_REFERENCIA") == base_npz
     # y `capacidades_de` no revienta con una base a la que le falta todo
-    from benchmarking.producto.base_referencia import BaseReferencia
+    from src.domain.base_referencia import BaseReferencia
     c = api.capacidades_de(BaseReferencia.cargar(base_npz, lambda a: 470.0))
     assert set(c) == {n for n, _, _ in api.CAPACIDADES}
 
@@ -557,7 +557,7 @@ def cliente_ciiu(tmp_path, monkeypatch):
     ruta = tmp_path / "b.npz"
     b.guardar(ruta)
 
-    from benchmarking.servicio import api
+    from src import main as api
 
     class _S:
         sbu = {2025: 470, ANIO: 470}
@@ -699,7 +699,7 @@ def test_el_umbral_de_ruido_sale_de_la_medicion_no_del_aire(cliente):
     # Pares al azar de la base llegan a 0,780 en el percentil 99; los del mismo puesto
     # viven por encima de 0,95. 0,85 deja pasar el 0,08% del azar y conserva el 97,9% de
     # los pares que de verdad son el mismo puesto.
-    from benchmarking.servicio.api import UMBRAL_RUIDO
+    from src.main import UMBRAL_RUIDO
     assert 0.80 <= UMBRAL_RUIDO <= 0.95
 
 
@@ -738,7 +738,7 @@ def test_la_etiqueta_del_puesto_no_es_una_ERRATA(cliente_ciiu):
     #                    con `Vendedo` solo entraban 5 de 13 y `VENDEDOR` no estaba
     # Ahora se precalcula por grupo, sobre TODAS sus grafias, con la frecuencia de cada
     # palabra en la base: una errata es rara por definicion.
-    from benchmarking.servicio.api import _representante
+    from src.main import _representante
     frec = {"VENDEDOR": 462, "VENDEDORA": 40, "VEDEDOR": 3, "VEENDEDOR": 1,
             "TRABAJADOR": 200, "AGRICOLA": 158, "TRABAJAJOR": 1}
     assert _representante(["VEENDEDOR", "VENDEDOR", "VEDEDOR", "VENDEDOR."], frec) \

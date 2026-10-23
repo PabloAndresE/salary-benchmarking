@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from benchmarking.evaluacion.referencia import (  # noqa: E501
+from src.domain.estadistica import (  # noqa: E501
     sigma2_por_celda,
     componentes_varianza, pesos_empresa, cuantil_ponderado, predecir, aplicar_abstencion)
 

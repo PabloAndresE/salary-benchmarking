@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import numpy as np
-from benchmarking.evaluacion.embeddings import CacheArchivo, CacheMemoriaEmb, embeber
+from src.integrations.vertex.vertex_client import CacheArchivo, CacheMemoriaEmb, embeber
 
 
 def _cliente_falso():

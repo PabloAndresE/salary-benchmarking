@@ -4,13 +4,13 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from benchmarking.producto.base_referencia import BaseReferencia
-from benchmarking.producto.base_referencia import (_fusionar_capa0, _fusionar_erratas,
+from src.domain.base_referencia import BaseReferencia
+from src.domain.base_referencia import (_fusionar_capa0, _fusionar_erratas,
                                                   _fusionar_genero)
-from benchmarking.producto.capa0 import (Capa0, compatibles, grado_numerico, limpiar,
+from src.domain.capa0 import (Capa0, compatibles, grado_numerico, limpiar,
                                          proponer_erratas, quitar_grado_final,
                                          quitar_letra_final)
-from benchmarking.producto.nivel import nivel_rubrica, seniority_lexica
+from src.domain.nivel import nivel_rubrica, seniority_lexica
 
 
 def _sbu(anio):
@@ -220,7 +220,7 @@ def test_grupos_inyectados_reemplazan_la_agrupacion():                 # D-046
 
 
 def test_sinonimos_por_grupo_simetricos_y_por_capa0(tmp_path):     # D-046/D-047
-    from benchmarking.producto import sinonimos
+    from src.domain import sinonimos
     filas = [(f"E{i}", t, 0.7 + 0.01 * (i % 5)) for t in ("CHOFER", "CONDUCTOR", "CAJERO")
              for i in range(12)]
     marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
@@ -240,7 +240,7 @@ def test_sinonimos_por_grupo_simetricos_y_por_capa0(tmp_path):     # D-046/D-047
 
 
 def test_sinonimos_de_consulta_escrito_a_grupo(tmp_path):            # D-048
-    from benchmarking.producto import sinonimos
+    from src.domain import sinonimos
     filas = [(f"E{i}", t, 0.7) for t in ("ODONTOLOGO", "CAJERO") for i in range(12)]
     marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
     emb = {"ODONTOLOGO": np.array([1.0, 0.0]), "CAJERO": np.array([0.0, 1.0])}
