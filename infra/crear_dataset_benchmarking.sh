@@ -11,7 +11,7 @@
 # Variables:
 #   PROYECTO  (default act-cicd-stage-prueba)   DATASET  (default benchmarking)
 #   LOCATION  (default us-central1)             VERSION  (default v1.3)
-#   BASE, JUEZ, TRADUCTOR: rutas locales (default: las del H200, como construir_api.sh)
+#   BASE, JUEZ, TRADUCTOR: rutas locales (default: artefactos/ del repo)
 set -euo pipefail
 
 RAIZ="$(cd "$(dirname "$0")/.." && pwd)"
@@ -20,9 +20,9 @@ DATASET="${DATASET:-benchmarking}"
 LOCATION="${LOCATION:-us-central1}"
 VERSION="${VERSION:-v1.3}"
 BUCKET="${BUCKET:-}"
-BASE="${BASE:-$RAIZ/../salary-benchmarking/demo/base_v31.npz}"
-JUEZ="${JUEZ:-$RAIZ/../salary-benchmarking/modelos/juez_v3}"
-TRADUCTOR="${TRADUCTOR:-$RAIZ/../salary-benchmarking/modelos/opus-mt-en-es}"
+BASE="${BASE:-$RAIZ/artefactos/base/base_v31.npz}"
+JUEZ="${JUEZ:-$RAIZ/artefactos/modelos/juez}"
+TRADUCTOR="${TRADUCTOR:-$RAIZ/artefactos/modelos/opus-mt-en-es}"
 PY="${PY:-python3}"
 
 consulta() { bq query --project_id="$PROYECTO" --location="$LOCATION" --use_legacy_sql=false --quiet "$@"; }

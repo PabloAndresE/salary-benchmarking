@@ -95,9 +95,13 @@ def capacidades_de(base) -> dict:
     return out
 
 
+CARPETA_ARTEFACTOS = "artefactos"
+
+
 def _ruta_base_por_defecto() -> str:
-    """La base mas nueva de `demo/`, por numero de version (ver `ruta_base_mas_nueva`)."""
-    return ruta_base_mas_nueva("demo")
+    """Sin `BASE_REFERENCIA`: la base mas nueva de `artefactos/base/`, por numero de version
+    (ver `ruta_base_mas_nueva`). Es donde la deja `artefactos.bajar` en local."""
+    return ruta_base_mas_nueva(f"{CARPETA_ARTEFACTOS}/base", defecto=f"{CARPETA_ARTEFACTOS}/base/base_referencia.npz")
 
 
 class Motor:
@@ -143,7 +147,7 @@ class Motor:
         self.vocabulario = {w for c in self.base.celdas for w in limpiar(_norm(str(c))).split()}
         # D-048: el juez v3 para los titulos nuevos. `JUEZ` = carpeta con los pesos; `JUEZ=no` lo
         # apaga. Sin pesos o sin torch, el servicio sigue sin el (por analogia, como antes).
-        ruta_juez = os.environ.get("JUEZ", "modelos/juez_v3")
+        ruta_juez = os.environ.get("JUEZ", f"{CARPETA_ARTEFACTOS}/modelos/juez")
         self.base.juez = None if ruta_juez.lower() == "no" else juez_mod.cargar(ruta_juez)
         # 2026-10-06: el juez tambien filtra los vecinos de la analogia (`JUEZ_VECINOS=no` lo apaga)
         self.base.juez_vecinos = os.environ.get("JUEZ_VECINOS", "si").lower() != "no"
@@ -154,7 +158,7 @@ class Motor:
         # D-050: el traductor local ingles -> espanol, para MOSTRAR el equivalente en espanol
         # (`equivalente`, y primero en `/puestos`). No calcula bandas: para el sueldo empeora (la prima
         # de los titulos en ingles); `IDIOMA_SUELDO=si` lo haria, solo para medir. `TRADUCTOR=no` lo apaga.
-        ruta_tr = os.environ.get("TRADUCTOR", "modelos/opus-mt-en-es")
+        ruta_tr = os.environ.get("TRADUCTOR", f"{CARPETA_ARTEFACTOS}/modelos/opus-mt-en-es")
         self.base.traductor = None if ruta_tr.lower() == "no" else idioma_mod.cargar(ruta_tr)
         if self.base.traductor is not None:
             # D-091 (decision del autor): MANAGER = jefe y HEAD = gerente (`INVERTIR_RANGOS=no` vuelve a lo literal)
@@ -303,7 +307,13 @@ def iniciar_motor() -> Motor:
     global _MOTOR
     from src.config.ajustes import cargar_settings
 
-    _MOTOR = Motor(os.environ.get("BASE_REFERENCIA") or _ruta_base_por_defecto(), cargar_settings())
+    ruta = os.environ.get("BASE_REFERENCIA") or _ruta_base_por_defecto()
+    if not pathlib.Path(ruta).is_file():
+        raise RuntimeError(
+            f"no hay base de referencia en {ruta!r}: define ARTEFACTOS_GCS (se baja del bucket) "
+            f"o BASE_REFERENCIA (ruta local). Ver CLAUDE.md, 'Arranque local'."
+        )
+    _MOTOR = Motor(ruta, cargar_settings())
     return _MOTOR
 
 

@@ -15,6 +15,10 @@ from src.domain.base_referencia import BaseReferencia
 os.environ.setdefault("CALENTAR", "no")
 # ...ni escriben nominas en BigQuery: guardar viene ENCENDIDO por defecto en produccion
 os.environ.setdefault("GUARDAR_NOMINAS", "no")
+# ...ni cargan los modelos reales aunque haya `artefactos/` en el disco: los tests son los
+# mismos en un clon recien hecho que en una maquina con la version bajada
+os.environ.setdefault("JUEZ", "no")
+os.environ.setdefault("TRADUCTOR", "no")
 
 
 @pytest.fixture
