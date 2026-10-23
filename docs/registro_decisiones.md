@@ -8918,3 +8918,21 @@ este marco.
   puede aportar a la banda es bajo. El resto está en cómo paga cada empresa.
 - Límite: la «verdad» del reconocimiento es nuestro clustering confiable (95 % de precisión en su auditoría), no un
   juicio humano par a par; la del nivel, las etiquetas de nivel de Qwen v3.
+
+## T-018 — Descomposición de la varianza del sueldo: ¿cuánto pesa la empresa frente al cargo y al nivel? Registrado antes de calcular
+
+**Por qué** (revisión del índice, juez 2; y T-017: ni el reconocimiento perfecto mejora la banda). La tesis dice que
+el límite de la banda está en cómo paga cada empresa. Aquí se cuantifica. **Descriptivo, sin criterio de adopción.**
+
+**Unidad:** el **voto** (mediana de `y` = log(sueldo / SBU) por cargo × empresa), la misma unidad con que se mide el
+pinball; marco 2024–2025. **Factores:** nivel (1–5, etiqueta de Qwen v3 del título), **cargo** (cluster de
+`50_clusters_confiable_cargos`, la unidad de la base), **empresa** (RUC), y combinaciones aditivas (efectos fijos en dos
+vías por proyecciones alternadas).
+
+**Medidas:**
+
+- R² **dentro de muestra** de cada modelo: nivel; cargo; empresa; nivel + empresa; cargo + empresa.
+- R² **fuera de muestra**: los votos se parten al azar 80/20 (semilla fija); los efectos se ajustan con el 80 % y se
+  evalúa en el 20 % cuyos cargo y empresa aparecen en el 80 %. Evita que los miles de efectos se ajusten al ruido.
+- Lectura: la parte que **solo la empresa** explica, una vez conocido el cargo (cargo + empresa − cargo), frente a lo que
+  agrega el cargo una vez conocida la empresa.
