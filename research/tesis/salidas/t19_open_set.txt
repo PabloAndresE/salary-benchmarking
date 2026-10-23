@@ -1,0 +1,23 @@
+T-019 · open set con mas cargos nuevos (familias de equivalentes quitadas de la base)
+consultas de T-019: 809 -> nuevas 40, con otro equivalente 525, fuera 244
+nuevas de T-019 que vienen de consultas de prueba: 15; nuevas de prueba en T-010b: 23
+umbrales fijos (los de T-010b): {'A': 0.9, 'B': 0.93, 'C': 0.96, 'Cfijo': 0.5, 'D': 0.7}
+
+todas las nuevas de T-019 (n = 40) + con equivalente de la prueba de T-010b (n = 413)
+  A      Qwen + cross-encoder reentrenado           reconoce bien 78.5%  desconocido en nuevas 77.5%  balanceada 0.780
+  B      Qwen + cross-encoder del producto          reconoce bien 69.9%  desconocido en nuevas 67.5%  balanceada 0.687
+  C      Vertex + cross-encoder del producto        reconoce bien 60.2%  desconocido en nuevas 75.0%  balanceada 0.676
+  Cfijo  producto hoy (Vertex >= 0,90, P >= 0,5)    reconoce bien 29.0%  desconocido en nuevas 95.0%  balanceada 0.620
+  D      solo coseno de Qwen                        reconoce bien 45.1%  desconocido en nuevas 87.5%  balanceada 0.663
+  A - Cfijo: +0.160 [+0.084, +0.233] -> A MEJOR
+  A - B: +0.093 [+0.026, +0.162] -> A MEJOR
+
+solo nuevas de consultas de prueba (n = 15) + con equivalente de la prueba de T-010b (n = 413)
+  A      Qwen + cross-encoder reentrenado           reconoce bien 78.5%  desconocido en nuevas 73.3%  balanceada 0.759
+  B      Qwen + cross-encoder del producto          reconoce bien 69.9%  desconocido en nuevas 80.0%  balanceada 0.749
+  C      Vertex + cross-encoder del producto        reconoce bien 60.2%  desconocido en nuevas 93.3%  balanceada 0.768
+  Cfijo  producto hoy (Vertex >= 0,90, P >= 0,5)    reconoce bien 29.0%  desconocido en nuevas 100.0%  balanceada 0.645
+  D      solo coseno de Qwen                        reconoce bien 45.1%  desconocido en nuevas 100.0%  balanceada 0.726
+  A - Cfijo: +0.114 [-0.010, +0.223] -> no se distingue
+  A - B: +0.010 [-0.068, +0.058] -> no se distingue
+

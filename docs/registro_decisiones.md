@@ -8988,3 +8988,31 @@ visto), y fuera si no.
 **Criterio:** el de T-010b, ahora con muchos más cargos nuevos: **«el open set mejora al producto» se confirma** si el
 IC de A − C fijo (exactitud balanceada combinada) queda entero sobre cero. Límite que se mantiene: la verdad es de
 Qwen3.5-122B, el mismo LLM que enseñó al cross-encoder (lo resuelve el oro humano, pendiente).
+
+### T-019, resultado: el open set mejora al producto se confirma; los cargos nuevos de verdad son raros (2026-10-23)
+
+Se quitó de la base, para cada una de las 809 consultas, su grupo y su familia de equivalentes conocidos (mediana 4
+grupos, máximo 9). Qwen3.5-122B juzgó 3.124 pares nuevos (coherentes 74,6 %; «sí» 56 %). Tras dos arranques fallidos
+de vLLM por memoria compartida que otros usuarios tomaban y soltaban, corrió en las GPUs 0 y 2.
+
+**Clases:** de 809 consultas, solo **40 quedaron como cargos nuevos de verdad**; **525 seguían teniendo otro
+equivalente** en la base (que el pool de T-010b no había visto) y 244 quedaron fuera (juicio incoherente).
+
+| Sistema (umbrales de T-010b) | Con equivalente: reconoce bien (413) | Nuevas: «desconocido» (40) | Exactitud balanceada |
+|---|---|---|---|
+| **Qwen + cross-encoder reentrenado** | **78,5 %** | 77,5 % | **0,780** |
+| Qwen + cross-encoder del producto | 69,9 % | 67,5 % | 0,687 |
+| Vertex + cross-encoder del producto | 60,2 % | 75,0 % | 0,676 |
+| Producto hoy | 29,0 % | 95,0 % | 0,620 |
+| Solo coseno de Qwen | 45,1 % | 87,5 % | 0,663 |
+
+- **A − producto hoy: +0,160 [+0,084, +0,233] → se confirma** que el open set mejora al producto (criterio cumplido).
+- A − B: +0,093 [+0,026, +0,162] → el reentrenamiento ayuda.
+- Solo con las 15 nuevas que vienen de consultas de prueba: A − producto +0,114 [−0,010, +0,223], no se distingue (n
+  chico).
+
+**Lectura:** la exactitud del sistema propuesto se sostiene con casi el doble de cargos nuevos (0,784 en T-010b → 0,780).
+Y aparece un hallazgo por sí mismo: **aun quitando la familia de equivalentes conocidos, el 93 % de los cargos sigue
+teniendo otro equivalente en la base**. En nóminas reales, un cargo **nuevo de verdad es raro**: el problema práctico
+del open set es sobre todo **encontrar el equivalente**, no detectar lo nuevo. Por eso las clases quedan desbalanceadas
+y la evidencia sobre «nuevas» sigue siendo de decenas, no de cientos.
