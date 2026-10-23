@@ -8804,3 +8804,29 @@ Escala `k` reestimada en el espacio de e5: analogía **0,710** (con Vertex, 0,64
 favorece a e5), pero la precisión de la medición no alcanza para garantizarlo dentro del margen registrado. La decisión
 entre el pipeline con Vertex (T-014) y el 100 % local (T-015) queda al autor, con este dato y las ventajas de lo local
 (privacidad, ~20 ms frente a ~370 ms por título, sin costo de API).
+
+## T-016 — Baseline estándar: JobBERT-v3 y el mapeo a la taxonomía ESCO. Registrado antes de medir
+
+**Por qué** (revisión del índice por dos jueces independientes; autor: «probemos JobBERT para ver si reconocemos mejor
+que un mapeo estándar»). La literatura de normalización de títulos de cargo compara contra taxonomías ocupacionales
+(ESCO, ISCO/CIUO, O*NET) y modelos como **JobBERT** (Decorte et al., TechWolf). Hoy la tesis solo se compara contra
+Vertex y el producto.
+
+**Modelos y datos:** `TechWolf/JobBERT-v3` (multilingüe, incluye español; xlm-roberta, 21 M de pares título–habilidad;
+licencia MIT), rama «anchor» para títulos. **ESCO** (API oficial de la Comisión Europea, 2.942 ocupaciones) con su
+nombre preferido y sus **nombres alternativos en español**.
+
+**Parte A — recuperación de sinónimos** (protocolo de T-001: las 2.090 consultas del oro, recall@10 del grupo
+equivalente sobre `base_v31`): JobBERT-v3 sobre el título, frente a Vertex (16,7 %), Qwen título (18,5 %) y Qwen
+título + descripción (22,2 %). IC por bootstrap de pares.
+
+**Parte B — «mapeo estándar»:** cada título se asigna a la ocupación ESCO más cercana según JobBERT-v3 (similitud
+máxima contra sus nombres en español). Dos títulos son «el mismo cargo» si caen en la misma ocupación ESCO. Se evalúa
+en los conjuntos de juicio humano de T-009 que **ningún cross-encoder vio**: **lejos** (`52`, 100 pares, autor ciego) y
+**cerca** (`prueba` + `prueba 2`, 991 pares). Medida: exactitud balanceada (los «sí» juntos, los «no» separados),
+frente al cross-encoder del producto y al reentrenado (T-009) con P ≥ 0,5. IC por bootstrap estratificado.
+
+**Criterio:** «el mapeo estándar reconoce mejor» si el IC de ESCO − cross-encoder reentrenado queda entero sobre cero
+en un conjunto; «peor» si queda entero bajo cero. En la parte A, «JobBERT recupera mejor» si el IC de JobBERT − Qwen
+título + descripción queda entero sobre cero. Se reporta además la cobertura: qué parte de los títulos cae en una
+ocupación ESCO con similitud alta.
