@@ -45,7 +45,7 @@ Sube una nomina y devuelve el informe **en la misma respuesta** (20-35 s). Es
 | `porPuesto` | una fila por puesto: `cargo`, `cargoNormalizado`, `grafias`, `personas`, `sueldoMediano`, `referencia`, `p10Emp`..`p90Emp`, `vsMercado`, `confianza`, `brechaGrafia`, `rubro`, `rubroNivel`, `lectura`, `sectorMasFino` |
 | `resumen` | `personas`, `conReferencia`, `nivelVsMercado`, `anclaFiable`, `masaReal`, `masaAMercado`, `masaVsMercado`... |
 | `mercado` | tarjetas de cabecera: `cargosDelCliente`, `cargosConDatosEnLaBase`, `trabajadoresAnalizados`, `empresasAnalizadas`, `tamanoDeLasEmpresas`, notas |
-| `industria` | contra que sector se comparo (con RUC o rubro): `codigo`, `nivel`, `nombre`, `niveles`, `grupoCiiu`... |
+| `industria` | contra que sector se comparo (con RUC o rubro): `codigo`, `nivel`, `nombre`, `cargosEnEseNivel`, `niveles`, `ciiuSeccion`, `nombreSeccion`, `gruposCiiu` |
 | `meta` | `anio`, `sbu`, `segmento`, `rubro`, `mapeoAplicado`, avisos |
 | `repartoEstado`, `repartoConfianza` | conteos; sus claves son VALORES (`directa`, `analogia`, `ALTA`...) |
 | `formato` | informe del formato (columnas reconocidas, avisos) |
