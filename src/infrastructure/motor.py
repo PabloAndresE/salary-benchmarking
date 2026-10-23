@@ -13,8 +13,10 @@ un titulo nuevo, y por eso va detras de un cerrojo y con tope.
     con la base compartida, corromperia las peticiones en vuelo. No se hace.
 """
 
+import json
 import logging
 import os
+import pathlib
 import threading
 import time
 from collections import Counter
@@ -31,6 +33,20 @@ from src.integrations.vertex import vertex_client as embeddings
 logger = logging.getLogger(__name__)
 
 TOPE_EMBEDDINGS_NUEVOS = 50_000
+ARCHIVO_PRIMA = "prima_direccion.json"
+
+
+def ruta_prima_direccion(ruta_base: str) -> pathlib.Path:
+    """La prima precalculada vive JUNTO a su base: es de esa base y de ninguna otra."""
+    return pathlib.Path(os.environ.get("PRIMA_DIRECCION_ARCHIVO") or pathlib.Path(ruta_base).with_name(ARCHIVO_PRIMA))
+
+
+def cargar_prima_direccion(ruta_base: str) -> tuple[float, float] | None:
+    ruta = ruta_prima_direccion(ruta_base)
+    if not ruta.is_file():
+        return None
+    d = json.loads(ruta.read_text())
+    return (float(d["mediana"]), float(d["varianza"]))
 
 
 # QUE SABE HACER UNA BASE, y que deja de funcionar si no lo trae. Existe porque una
@@ -212,15 +228,25 @@ class Motor:
             and self.base.traductor is not None
             and self.base.idioma_sueldo == "siempre"
         ):
-            try:
-                dirs = [
-                    c for c in self.base.celdas if idioma_mod.es_direccion(c) and self.base.emp[self.base.idx[c]] >= 3
-                ]
-                self.asegurar(dirs)
-                logger.info("prima de direccion %s", self.base.estimar_prima_direccion(self.emb))
-            except Exception as e:  # noqa: BLE001 - se informa y se sigue
-                self.base.prima_direccion = None
-                logger.warning("sin prima de direccion (%r)", e)
+            # PRECALCULADA si se puede: son dos numeros que dependen solo de la base y de
+            # los embeddings, y calcularlos al arrancar cuesta ~30 s de llamadas a Vertex en
+            # cada arranque en frio. `infra/precalcular_prima.py` los deja junto a la base.
+            guardada = cargar_prima_direccion(self.ruta_base)
+            if guardada is not None:
+                self.base.prima_direccion = guardada
+                logger.info("prima de direccion precalculada %s", guardada)
+            else:
+                try:
+                    dirs = [
+                        c
+                        for c in self.base.celdas
+                        if idioma_mod.es_direccion(c) and self.base.emp[self.base.idx[c]] >= 3
+                    ]
+                    self.asegurar(dirs)
+                    logger.info("prima de direccion calculada %s", self.base.estimar_prima_direccion(self.emb))
+                except Exception as e:  # noqa: BLE001 - se informa y se sigue
+                    self.base.prima_direccion = None
+                    logger.warning("sin prima de direccion (%r)", e)
         # CALENTAMIENTO (2026-10-12, medido): la primera consulta con un titulo nuevo tardaba 29,6 s —cliente de
         # Vertex, juez, traductor, corrector y clasificador se cargan al primer uso— y despues ~0,6 s. Se paga al
         # arrancar y no el primer cliente. `CALENTAR=no` lo salta; si falla (sin red), el servicio sigue.

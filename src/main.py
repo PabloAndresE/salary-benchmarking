@@ -20,6 +20,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.api.routers import informe_router, puesto_router, referencia_router, salud_router
 from src.config.logging_config import setup_logging
+from src.infrastructure.artefactos import preparar_artefactos
 from src.infrastructure.motor import iniciar_motor, liberar_motor
 from src.middleware.logger import RequestLoggerMiddleware
 from src.services import registro_nomina_service
@@ -33,6 +34,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def ciclo(app: FastAPI):
     setup_logging()
+    preparar_artefactos()  # con ARTEFACTOS_GCS: base y modelos desde el bucket
     iniciar_motor()
     if registro_nomina_service.activo():
         logger.info("las nominas se guardan en %s", registro_nomina_service.dataset_destino())

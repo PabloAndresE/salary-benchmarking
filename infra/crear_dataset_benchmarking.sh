@@ -52,6 +52,9 @@ echo "== artefactos a $DEST"
 gcloud storage cp "$(readlink -f "$BASE")" "$DEST/base/$(basename "$BASE")" --project "$PROYECTO"
 gcloud storage cp -r "$(readlink -f "$JUEZ")"/* "$DEST/modelos/juez/" --project "$PROYECTO"
 gcloud storage cp -r "$(readlink -f "$TRADUCTOR")"/* "$DEST/modelos/opus-mt-en-es/" --project "$PROYECTO"
+# la prima de direccion precalculada (infra/precalcular_prima.py), si esta junto a la base
+PRIMA="$(dirname "$(readlink -f "$BASE")")/prima_direccion.json"
+[ -f "$PRIMA" ] && gcloud storage cp "$PRIMA" "$DEST/base/prima_direccion.json" --project "$PROYECTO"
 
 SHA="$(sha256sum "$(readlink -f "$BASE")" | cut -d' ' -f1)"
 JUEZ_NOMBRE="$("$PY" -c "import json,sys; print(json.load(open(sys.argv[1])).get('nombre',''))" "$(readlink -f "$JUEZ")/info.json" 2>/dev/null || true)"
