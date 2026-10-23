@@ -22,12 +22,13 @@ error un 12,8%, y un 14,6% en empresas con mas de 100 personas referenciadas.
   partes 1 y 2 son aritmetica directa y no dependen de ese numero; la 3 si. Tratarla como
   preliminar hasta verificarla.
 """
+
 import re
 
 import numpy as np
 import pandas as pd
 
-MIN_PARA_ANCLA = 5      # por debajo, el nivel de la empresa es ruido y se dice
+MIN_PARA_ANCLA = 5  # por debajo, el nivel de la empresa es ruido y se dice
 
 
 _LIMPIA = re.compile(r"[^\d,.\-]")
@@ -243,22 +244,27 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     # LA BRECHA ENTRE GRAFIAS va en `por_puesto` y no en el detalle: es una propiedad
     # del CARGO, no de la persona, y repetirla en cada fila la convierte en ruido. Se
     # lee de `ref_df` con guarda porque las bases anteriores a D-026 no la traen.
-    out["_brecha"] = (pd.Series(list(ref_df["brecha_grafia"]), index=df.index)
-                      if "brecha_grafia" in ref_df.columns else "")
+    out["_brecha"] = (
+        pd.Series(list(ref_df["brecha_grafia"]), index=df.index) if "brecha_grafia" in ref_df.columns else ""
+    )
     # .ESTA EL CLIENTE DENTRO DEL MERCADO CON QUE SE LE COMPARA? Tambien es propiedad del
     # cargo y no de la persona. Con guarda: las bases anteriores a D-027 no lo traen.
-    out["_tuemp"] = (pd.Series(list(ref_df["tu_empresa"]), index=df.index)
-                     if "tu_empresa" in ref_df.columns else False)
-    out["_tuinf"] = (pd.Series(list(ref_df["tu_influencia"]), index=df.index)
-                     if "tu_influencia" in ref_df.columns else np.nan)
+    out["_tuemp"] = pd.Series(list(ref_df["tu_empresa"]), index=df.index) if "tu_empresa" in ref_df.columns else False
+    out["_tuinf"] = (
+        pd.Series(list(ref_df["tu_influencia"]), index=df.index) if "tu_influencia" in ref_df.columns else np.nan
+    )
     # POR QUE el veredicto se comparo al nivel que se comparo. Va en `por_puesto` y no
     # en el detalle: es propiedad del cargo. NO lleva sueldo — ver `sector_mas_fino`:
     # una segunda cifra al lado de la referencia compite con ella y gana la mas grande,
     # que resulta ser la de menos empresas.
-    for c, d_ in (("sector_codigo", ""), ("sector_nivel", ""), ("sector_empresas", 0),
-                  ("rubro", ""), ("rubro_nivel", "")):
-        out["_" + c] = (pd.Series(list(ref_df[c]), index=df.index)
-                        if c in ref_df.columns else d_)
+    for c, d_ in (
+        ("sector_codigo", ""),
+        ("sector_nivel", ""),
+        ("sector_empresas", 0),
+        ("rubro", ""),
+        ("rubro_nivel", ""),
+    ):
+        out["_" + c] = pd.Series(list(ref_df[c]), index=df.index) if c in ref_df.columns else d_
     f = float(sbu(int(anio)))
     out["_y"] = yv
     for q in ("p10", "p25", "p75", "p90"):
@@ -279,41 +285,50 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
     # Se muestra el titulo normalizado —es el que se consulto— y se dice cuantas grafias
     # se unieron, para que juntar no sea silencioso.
     out["_cargo"] = out[col_cargo].fillna("").astype(str).str.strip().str.upper()
-    por_puesto = (out.groupby("_cargo")
-                     .agg(_etiqueta=(col_cargo, _grafia_mas_usada),
-                          personas=(col_sueldo, "size"),
-                          grafias=(col_cargo, "nunique"),
-                          sueldo_mediano=("sueldo_actual", "median"),
-                          referencia=("referencia", "first"),
-                          p10_emp=("p10_emp", "first"),
-                          p25_emp=("p25_emp", "first"),
-                          p75_emp=("p75_emp", "first"),
-                          p90_emp=("p90_emp", "first"),
-                          vs_mercado=("vs_mercado", "median"),
-                          confianza=("confianza", "first"),
-                          brecha_grafia=("_brecha", "first"),
-                          tu_empresa=("_tuemp", "first"),
-                          tu_influencia=("_tuinf", "first"),
-                          rubro=("_rubro", "first"),
-                          rubro_nivel=("_rubro_nivel", "first"),
-                          sector_codigo=("_sector_codigo", "first"),
-                          sector_nivel=("_sector_nivel", "first"),
-                          sector_empresas=("_sector_empresas", "first"),
-                          _voto=("_y", "median"), _p10=("_p10", "first"),
-                          _p25=("_p25", "first"), _p75=("_p75", "first"),
-                          _p90=("_p90", "first"))
-                     .sort_values("vs_mercado").reset_index())
+    por_puesto = (
+        out.groupby("_cargo")
+        .agg(
+            _etiqueta=(col_cargo, _grafia_mas_usada),
+            personas=(col_sueldo, "size"),
+            grafias=(col_cargo, "nunique"),
+            sueldo_mediano=("sueldo_actual", "median"),
+            referencia=("referencia", "first"),
+            p10_emp=("p10_emp", "first"),
+            p25_emp=("p25_emp", "first"),
+            p75_emp=("p75_emp", "first"),
+            p90_emp=("p90_emp", "first"),
+            vs_mercado=("vs_mercado", "median"),
+            confianza=("confianza", "first"),
+            brecha_grafia=("_brecha", "first"),
+            tu_empresa=("_tuemp", "first"),
+            tu_influencia=("_tuinf", "first"),
+            rubro=("_rubro", "first"),
+            rubro_nivel=("_rubro_nivel", "first"),
+            sector_codigo=("_sector_codigo", "first"),
+            sector_nivel=("_sector_nivel", "first"),
+            sector_empresas=("_sector_empresas", "first"),
+            _voto=("_y", "median"),
+            _p10=("_p10", "first"),
+            _p25=("_p25", "first"),
+            _p75=("_p75", "first"),
+            _p90=("_p90", "first"),
+        )
+        .sort_values("vs_mercado")
+        .reset_index()
+    )
     por_puesto["lectura"] = _lectura(
-        por_puesto["_voto"].to_numpy(float), por_puesto["_p10"].to_numpy(float),
-        por_puesto["_p25"].to_numpy(float), por_puesto["_p75"].to_numpy(float),
-        por_puesto["_p90"].to_numpy(float))
+        por_puesto["_voto"].to_numpy(float),
+        por_puesto["_p10"].to_numpy(float),
+        por_puesto["_p25"].to_numpy(float),
+        por_puesto["_p75"].to_numpy(float),
+        por_puesto["_p90"].to_numpy(float),
+    )
     # `cargo` es lo que escribio el cliente; `cargo_normalizado` es la clave con la que
     # se agrupo Y la que el front necesita para unir esta tabla con el detalle — donde
     # las filas conservan cada grafia original y por tanto NO casan con la etiqueta.
     por_puesto[col_cargo] = por_puesto["_etiqueta"]
     por_puesto["cargo_normalizado"] = por_puesto["_cargo"]
-    por_puesto = por_puesto.drop(columns=[c for c in por_puesto.columns
-                                          if c.startswith("_")])
+    por_puesto = por_puesto.drop(columns=[c for c in por_puesto.columns if c.startswith("_")])
     orden = [col_cargo, "cargo_normalizado", "grafias"]
     por_puesto = por_puesto[orden + [c for c in por_puesto.columns if c not in orden]]
     out["cargo_normalizado"] = out["_cargo"]
@@ -350,8 +365,7 @@ def comparar(df, col_sueldo, col_cargo, ref_df, sbu, anio):
         "masa_personas": int(con_ambas.sum()),
         "masa_real": round(masa_real, 2),
         "masa_a_mercado": round(masa_mercado, 2),
-        "masa_vs_mercado": (round(masa_real / masa_mercado - 1.0, 4)
-                            if masa_mercado > 0 else float("nan")),
+        "masa_vs_mercado": (round(masa_real / masa_mercado - 1.0, 4) if masa_mercado > 0 else float("nan")),
     }
     return out, por_puesto, resumen
 
@@ -366,28 +380,32 @@ def texto_resumen(resumen, por_puesto):
     n = resumen["nivel_vs_mercado"]
     if np.isfinite(n):
         lado = "POR ENCIMA" if n > 0 else "POR DEBAJO"
-        lin.append(f"La persona TIPICA de la empresa cobra un {abs(n):.1%} {lado} "
-                   f"del mercado.")
+        lin.append(f"La persona TIPICA de la empresa cobra un {abs(n):.1%} {lado} " f"del mercado.")
     m = resumen.get("masa_vs_mercado")
     if m is not None and np.isfinite(m) and resumen.get("masa_personas", 0):
         lado_m = "POR ENCIMA" if m > 0 else "POR DEBAJO"
-        lin.append(f"La NOMINA ENTERA cuesta {resumen['masa_real']:,.0f} al mes; a "
-                   f"precios de mercado costaria {resumen['masa_a_mercado']:,.0f}: "
-                   f"un {abs(m):.1%} {lado_m}.")
+        lin.append(
+            f"La NOMINA ENTERA cuesta {resumen['masa_real']:,.0f} al mes; a "
+            f"precios de mercado costaria {resumen['masa_a_mercado']:,.0f}: "
+            f"un {abs(m):.1%} {lado_m}."
+        )
         if resumen["masa_personas"] < resumen["personas"]:
-            lin.append(f"  (la masa suma las {resumen['masa_personas']} personas con "
-                       f"sueldo y referencia, de {resumen['personas']})")
+            lin.append(
+                f"  (la masa suma las {resumen['masa_personas']} personas con "
+                f"sueldo y referencia, de {resumen['personas']})"
+            )
     if not resumen["ancla_fiable"]:
         lin.append("")
         lin.append("  " + "!" * 68)
-        lin.append(f"  AVISO: el nivel de la empresa sale de solo "
-                   f"{resumen['usadas_para_el_ancla']} personas con referencia fiable.")
+        lin.append(
+            f"  AVISO: el nivel de la empresa sale de solo "
+            f"{resumen['usadas_para_el_ancla']} personas con referencia fiable."
+        )
         lin.append("  Con tan pocas, ese porcentaje es ORIENTATIVO y la lectura de equidad")
         lin.append("  interna no es concluyente. Medido: la mejora por anclar pasa de 8,1%")
         lin.append("  con 5-19 personas referenciadas a 14,6% con mas de 100.")
         lin.append("  " + "!" * 68)
-    lin.append(f"{resumen['con_referencia']} de {resumen['personas']} personas "
-               f"tienen referencia de mercado.")
+    lin.append(f"{resumen['con_referencia']} de {resumen['personas']} personas " f"tienen referencia de mercado.")
     # LA BRECHA ENTRE GRAFIAS, dicha en el resumen y no escondida en una columna. Se
     # unifican las dos grafias del mismo oficio (D-026) porque el titulo era un proxy de
     # genero dentro del modelo; la diferencia que habia se guarda y se reporta, porque
@@ -397,10 +415,8 @@ def texto_resumen(resumen, por_puesto):
         gr = por_puesto[b.abs() >= CORTE_BRECHA]
         if len(gr):
             lin.append("")
-            lin.append(f"  En {len(gr)} puesto(s), la grafia femenina y la masculina del "
-                       f"titulo estaban en")
-            lin.append("  celdas distintas y pagaban distinto. La referencia que se "
-                       "entrega ya las unifica:")
+            lin.append(f"  En {len(gr)} puesto(s), la grafia femenina y la masculina del " f"titulo estaban en")
+            lin.append("  celdas distintas y pagaban distinto. La referencia que se " "entrega ya las unifica:")
             # Ordenar DENTRO del subconjunto filtrado. Reindexar `gr` con el indice
             # completo metia filas NaN de los puestos sin brecha, y el resumen imprimia
             # una linea "nan +nan%".
@@ -408,8 +424,7 @@ def texto_resumen(resumen, por_puesto):
             for _, r in gr.loc[orden_gr].head(5).iterrows():
                 v = float(r["brecha_grafia"])
                 lin.append(f"    {str(r.iloc[0])[:38]:<40} {v:>+7.1%} la femenina")
-            lin.append("  NO es una brecha salarial medida: compara dos GRAFIAS escritas "
-                       "por empresas")
+            lin.append("  NO es una brecha salarial medida: compara dos GRAFIAS escritas " "por empresas")
             lin.append("  distintas, sin controlar por empresa, sector ni antiguedad.")
     ilegibles = resumen.get("sueldos_ilegibles", 0)
     if ilegibles:
@@ -429,11 +444,15 @@ def texto_resumen(resumen, por_puesto):
     if len(bajos):
         lin.append(f"\nPuestos MUY POR DEBAJO del mercado ({len(bajos)}):")
         for _, r in bajos.head(8).iterrows():
-            lin.append(f"  {str(r.iloc[0])[:38]:<40} {r.vs_mercado:>+7.1%}  "
-                       f"({int(r.personas)} pers., confianza {r.confianza})")
+            lin.append(
+                f"  {str(r.iloc[0])[:38]:<40} {r.vs_mercado:>+7.1%}  "
+                f"({int(r.personas)} pers., confianza {r.confianza})"
+            )
     if len(altos):
         lin.append(f"\nPuestos MUY POR ENCIMA ({len(altos)}):")
         for _, r in altos.tail(8).iterrows():
-            lin.append(f"  {str(r.iloc[0])[:38]:<40} {r.vs_mercado:>+7.1%}  "
-                       f"({int(r.personas)} pers., confianza {r.confianza})")
+            lin.append(
+                f"  {str(r.iloc[0])[:38]:<40} {r.vs_mercado:>+7.1%}  "
+                f"({int(r.personas)} pers., confianza {r.confianza})"
+            )
     return "\n".join(lin)

@@ -9,7 +9,7 @@ def test_estructura_basica():
     assert df["empresa_ruc"].nunique() == 10
     assert df["rol_verdadero"].nunique() == 3
     assert df["id_hash"].is_unique
-    assert "identificacion" not in df.columns          # frontera de privacidad
+    assert "identificacion" not in df.columns  # frontera de privacidad
 
 
 def test_los_roles_se_separan_por_composicion_no_por_sueldo():
@@ -41,5 +41,7 @@ def test_tamanos_de_empresa_desiguales():
 
 
 def test_determinista():
-    pd.testing.assert_frame_equal(generar(n_empresas=5, personas_por_empresa=10, semilla=7),
-                                  generar(n_empresas=5, personas_por_empresa=10, semilla=7))
+    pd.testing.assert_frame_equal(
+        generar(n_empresas=5, personas_por_empresa=10, semilla=7),
+        generar(n_empresas=5, personas_por_empresa=10, semilla=7),
+    )

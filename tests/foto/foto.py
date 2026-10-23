@@ -16,9 +16,9 @@ Uso:
   python tests/foto/foto.py grabar   --url http://127.0.0.1:8097 --base demo/base_v31.npz
   python tests/foto/foto.py comparar --url http://127.0.0.1:8098
 """
+
 import argparse
 import gzip
-import io
 import json
 import math
 import pathlib
@@ -37,13 +37,35 @@ VOLATILES = {"id", "caduca_en_s", "carga_s", "titulos_nuevos_embebidos", "fecha_
 
 # Titulos a mano: los que ya usamos en las pruebas, ingles, erratas, grados y basura
 A_MANO = [
-    "Asistente Administrativo", "Auxiliar de Bodega", "Auxiliar de Farmacia",
-    "Gerente de Operaciones", "Jefe de Bodega", "CONTADOR", "Contdor Generl",
-    "ASIST. CONTABLE", "AUXILIAR 3 DE CONTABILIDAD", "Chief Operational Officer",
-    "Head of Insurance - Consulting", "Country Manager", "Sales Manager", "CEO",
-    "General Accountant", "Software Engineer", "VENDEROR", "CONDUCTOR", "TALENTO HUMANO",
-    "JEFE DE SEGURIDAD PATRIMONIAL", "LOTERO", "OPERADOR DE PARQUEADERO", "XXXX", "123",
-    "", "GERENTE GENERAL", "Data Scientist", "Head of AI", "Recepcionista bilingue",
+    "Asistente Administrativo",
+    "Auxiliar de Bodega",
+    "Auxiliar de Farmacia",
+    "Gerente de Operaciones",
+    "Jefe de Bodega",
+    "CONTADOR",
+    "Contdor Generl",
+    "ASIST. CONTABLE",
+    "AUXILIAR 3 DE CONTABILIDAD",
+    "Chief Operational Officer",
+    "Head of Insurance - Consulting",
+    "Country Manager",
+    "Sales Manager",
+    "CEO",
+    "General Accountant",
+    "Software Engineer",
+    "VENDEROR",
+    "CONDUCTOR",
+    "TALENTO HUMANO",
+    "JEFE DE SEGURIDAD PATRIMONIAL",
+    "LOTERO",
+    "OPERADOR DE PARQUEADERO",
+    "XXXX",
+    "123",
+    "",
+    "GERENTE GENERAL",
+    "Data Scientist",
+    "Head of AI",
+    "Recepcionista bilingue",
 ]
 
 
@@ -54,7 +76,7 @@ def _perturbar(t: str, rng: random.Random) -> str:
         return t.title()
     if op == 1 and len(t) > 6:
         i = rng.randrange(1, len(t) - 1)
-        return t[:i] + t[i + 1:]                       # errata
+        return t[:i] + t[i + 1 :]  # errata
     if op == 2:
         return f"{t} {rng.choice(['1', '2', 'III', 'SR', 'JR'])}"
     if op == 3:
@@ -75,21 +97,20 @@ def construir_entradas(ruta_base: str) -> dict:
     ruc_g = next(r for r, c in con if c.startswith("G46"))
     ruc_c = next(r for r, c in con if c.startswith("C10"))
 
-    nomina = pd.DataFrame({"cargo": titulos,
-                           "sueldo": [round(rng.uniform(460, 6000), 2) for _ in titulos]})
+    nomina = pd.DataFrame({"cargo": titulos, "sueldo": [round(rng.uniform(460, 6000), 2) for _ in titulos]})
     corta = nomina.head(40)
     informes = [
         {"nombre": "sin_parametros", "csv": nomina.to_csv(index=False), "form": {}},
-        {"nombre": "segmento_mediana", "csv": nomina.to_csv(index=False),
-         "form": {"segmento": "MEDIANA"}},
+        {"nombre": "segmento_mediana", "csv": nomina.to_csv(index=False), "form": {"segmento": "MEDIANA"}},
         {"nombre": "rubro_g", "csv": corta.to_csv(index=False), "form": {"rubro": "G"}},
         {"nombre": "ruc_g46", "csv": corta.to_csv(index=False), "form": {"ruc": ruc_g}},
-        {"nombre": "ruc_c10_grande", "csv": corta.to_csv(index=False),
-         "form": {"ruc": ruc_c, "segmento": "GRANDE"}},
-        {"nombre": "mapeo", "csv": corta.to_csv(index=False),
-         "form": {"mapeo": json.dumps({"3": "JEFE DE BODEGA", "20": "ODONTOLOGA"})}},
-        {"nombre": "solo_numeros", "csv": corta.to_csv(index=False),
-         "form": {"columnas_originales": "false"}},
+        {"nombre": "ruc_c10_grande", "csv": corta.to_csv(index=False), "form": {"ruc": ruc_c, "segmento": "GRANDE"}},
+        {
+            "nombre": "mapeo",
+            "csv": corta.to_csv(index=False),
+            "form": {"mapeo": json.dumps({"3": "JEFE DE BODEGA", "20": "ODONTOLOGA"})},
+        },
+        {"nombre": "solo_numeros", "csv": corta.to_csv(index=False), "form": {"columnas_originales": "false"}},
         {"nombre": "anio_2025", "csv": corta.to_csv(index=False), "form": {"anio": "2025"}},
     ]
     sueltos = [t for t in titulos if t][:70]
@@ -97,23 +118,39 @@ def construir_entradas(ruta_base: str) -> dict:
     for t in sueltos:
         referencias.append({"cargo": t})
     for t in sueltos[:25]:
-        referencias += [{"cargo": t, "segmento": "GRANDE"}, {"cargo": t, "rubro": "C"},
-                        {"cargo": t, "ruc": ruc_g}]
-    puestos = [{"q": q} for q in ["CHOFER", "contador", "jefe de bod", "gerente", "AUXILIAR",
-                                  "Sales", "analista de credito", "enfermera", "XX",
-                                  "Head of", "ASIST", "operador"]]
-    return {"semilla": SEMILLA, "informes": informes, "referencias": referencias,
-            "puestos": puestos}
+        referencias += [{"cargo": t, "segmento": "GRANDE"}, {"cargo": t, "rubro": "C"}, {"cargo": t, "ruc": ruc_g}]
+    puestos = [
+        {"q": q}
+        for q in [
+            "CHOFER",
+            "contador",
+            "jefe de bod",
+            "gerente",
+            "AUXILIAR",
+            "Sales",
+            "analista de credito",
+            "enfermera",
+            "XX",
+            "Head of",
+            "ASIST",
+            "operador",
+        ]
+    ]
+    return {"semilla": SEMILLA, "informes": informes, "referencias": referencias, "puestos": puestos}
 
 
 # ---- adaptadores al contrato --------------------------------------------------------
+
 
 def _contenido(r: requests.Response):
     """Lo util de una respuesta, con o sin el sobre `BaseResponseModel`."""
     d = r.json()
     if isinstance(d, dict) and {"status", "content"} <= set(d) and "message" in d:
-        return {"_http": r.status_code, "_status": d["status"], **(
-            d["content"] if isinstance(d["content"], dict) else {"_content": d["content"]})}
+        return {
+            "_http": r.status_code,
+            "_status": d["status"],
+            **(d["content"] if isinstance(d["content"], dict) else {"_content": d["content"]}),
+        }
     return {"_http": r.status_code, **(d if isinstance(d, dict) else {"_lista": d})}
 
 
@@ -121,7 +158,7 @@ def _informe(url: str, e: dict) -> dict:
     files = {"archivo": ("nomina.csv", e["csv"].encode())}
     form = {"formato_libre": "true", "columna_cargo": "cargo", **e["form"]}
     r = requests.post(f"{url}/informes", files=files, data=form, timeout=600)
-    if r.status_code == 202:                     # contrato viejo: 202 + consulta
+    if r.status_code == 202:  # contrato viejo: 202 + consulta
         tid = r.json()["id"]
         while True:
             q = requests.get(f"{url}/informes/{tid}", timeout=60)
@@ -147,6 +184,7 @@ def pedir_todo(url: str, entradas: dict) -> dict:
 
 # ---- comparacion --------------------------------------------------------------------
 
+
 def _diferencias(a, b, ruta="", out=None, rtol=1e-9):
     out = [] if out is None else out
     if isinstance(a, dict) and isinstance(b, dict):
@@ -163,8 +201,11 @@ def _diferencias(a, b, ruta="", out=None, rtol=1e-9):
         for i, (x, y) in enumerate(zip(a, b)):
             _diferencias(x, y, f"{ruta}[{i}]", out, rtol)
     elif isinstance(a, float) or isinstance(b, float):
-        if a is None or b is None or not (
-                (math.isnan(a) and math.isnan(b)) or math.isclose(a, b, rel_tol=rtol, abs_tol=1e-12)):
+        if (
+            a is None
+            or b is None
+            or not ((math.isnan(a) and math.isnan(b)) or math.isclose(a, b, rel_tol=rtol, abs_tol=1e-12))
+        ):
             out.append(f"{ruta}: {a!r} -> {b!r}")
     elif a != b:
         out.append(f"{ruta}: {a!r} -> {b!r}")

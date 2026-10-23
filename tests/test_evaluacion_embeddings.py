@@ -6,8 +6,7 @@ from src.integrations.vertex.vertex_client import CacheArchivo, CacheMemoriaEmb,
 
 def _cliente_falso():
     cl = MagicMock()
-    cl.get_embeddings.side_effect = lambda textos: [
-        MagicMock(values=[float(len(t)), 1.0, 0.0, 0.0]) for t in textos]
+    cl.get_embeddings.side_effect = lambda textos: [MagicMock(values=[float(len(t)), 1.0, 0.0, 0.0]) for t in textos]
     return cl
 
 
@@ -21,7 +20,7 @@ def test_solo_embebe_textos_unicos():
     X = embeber(["VENDEDOR", "VENDEDOR", "CONTADOR", "VENDEDOR"], cl, "m")
     assert X.shape == (4, 4)
     assert _enviados(cl) == ["CONTADOR", "VENDEDOR"]
-    np.testing.assert_array_equal(X[0], X[1])          # filas repetidas, mismo vector
+    np.testing.assert_array_equal(X[0], X[1])  # filas repetidas, mismo vector
 
 
 def test_las_filas_quedan_alineadas_con_la_entrada():

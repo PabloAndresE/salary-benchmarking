@@ -1,6 +1,7 @@
 """Guardar las nominas cargadas en el dataset del producto: tres tablas, solo cargo y
 sueldo del empleado, encendido por defecto, y sin tumbar el informe si BigQuery falla.
 Nada de esto toca la red: `guardar` se sustituye."""
+
 import io
 
 import pandas as pd
@@ -23,31 +24,49 @@ def _xlsx(df):
 
 
 def _nomina():
-    return pd.DataFrame({"cargo": ["CONTADOR", "VENDEDOR", "", "GUARDIA"],
-                         "sueldo": ["1200", "650.5", "", "no se"],
-                         "nombre": ["Ana Perez", "Luis Mora", "", "Juan Diaz"],
-                         "sexo": ["F", "M", "", "M"]})
+    return pd.DataFrame(
+        {
+            "cargo": ["CONTADOR", "VENDEDOR", "", "GUARDIA"],
+            "sueldo": ["1200", "650.5", "", "no se"],
+            "nombre": ["Ana Perez", "Luis Mora", "", "Juan Diaz"],
+            "sexo": ["F", "M", "", "M"],
+        }
+    )
 
 
 def _registro(df, detalle=(), hom=None, **kw):
-    args = dict(id_carga="t1", carga_hash="h", anio=2026, ruc=None, ciiu=None,
-                segmento=None, rubro=None, correcciones=None, version_api="v1.3",
-                version_base="base_v31")
+    args = dict(
+        id_carga="t1",
+        carga_hash="h",
+        anio=2026,
+        ruc=None,
+        ciiu=None,
+        segmento=None,
+        rubro=None,
+        correcciones=None,
+        version_api="v1.3",
+        version_base="base_v31",
+    )
     args.update(kw)
-    return rn.registro(df, "cargo", "sueldo" if "sueldo" in df else None, list(detalle),
-                       hom, **args)
+    return rn.registro(df, "cargo", "sueldo" if "sueldo" in df else None, list(detalle), hom, **args)
 
 
 def test_tres_tablas_con_su_esquema_y_sin_datos_personales():
-    t = _registro(_nomina(), ruc=" 0990000000001 ", ciiu="G4649.22", segmento="MEDIANA",
-                  rubro="G", correcciones={1: "VENDEDOR EXTERNO"})
+    t = _registro(
+        _nomina(),
+        ruc=" 0990000000001 ",
+        ciiu="G4649.22",
+        segmento="MEDIANA",
+        rubro="G",
+        correcciones={1: "VENDEDOR EXTERNO"},
+    )
     assert set(t) == {"cargas", "nomina_filas", "homologaciones"}
     for nombre, filas in t.items():
         assert filas and all(set(f) == _columnas(nombre) for f in filas)
     texto = repr(t)
     for dato in ("Ana Perez", "Luis Mora", "Juan Diaz"):
         assert dato not in texto
-    cab, = t["cargas"]
+    (cab,) = t["cargas"]
     assert cab["empresa_ruc"] == "0990000000001" and cab["ciiu"] == "G4649.22"
     assert cab["n_filas"] == 3 and cab["correcciones"] == 1
     assert cab["version_api"] == "v1.3" and cab["version_base"] == "base_v31"
@@ -61,11 +80,12 @@ def test_tres_tablas_con_su_esquema_y_sin_datos_personales():
 
 def test_el_puesto_sale_de_la_homologacion_aunque_el_detalle_no_lo_traiga():
     # con columnas_originales=false el detalle NO lleva cargo_base ni p_juez
-    df = pd.DataFrame({"cargo": ["CONTDOR", "CONTADOR", "HEAD OF AI"],
-                       "sueldo": ["1", "2", "3"]})
-    det = [{"fila": 0, "base": "datos directos", "cargo_normalizado": "CONTDOR"},
-           {"fila": 1, "base": "rubro G46", "cargo_normalizado": "CONTADOR"},
-           {"fila": 2, "base": "por analogia", "cargo_normalizado": "HEAD OF AI"}]
+    df = pd.DataFrame({"cargo": ["CONTDOR", "CONTADOR", "HEAD OF AI"], "sueldo": ["1", "2", "3"]})
+    det = [
+        {"fila": 0, "base": "datos directos", "cargo_normalizado": "CONTDOR"},
+        {"fila": 1, "base": "rubro G46", "cargo_normalizado": "CONTADOR"},
+        {"fila": 2, "base": "por analogia", "cargo_normalizado": "HEAD OF AI"},
+    ]
     hom = pd.DataFrame({"cargo_base": ["CONTADOR", "", ""], "p_juez": [0.97, None, 0.4]})
     h = _registro(df, det, hom)["homologaciones"]
     assert [x["puesto_asignado"] for x in h] == ["CONTADOR", "CONTADOR", None]
@@ -73,7 +93,7 @@ def test_el_puesto_sale_de_la_homologacion_aunque_el_detalle_no_lo_traiga():
 
 
 def test_sin_columna_de_sueldo_se_guarda_el_cargo_igual():
-    f, = _registro(pd.DataFrame({"cargo": ["CONTADOR"]}))["nomina_filas"]
+    (f,) = _registro(pd.DataFrame({"cargo": ["CONTADOR"]}))["nomina_filas"]
     assert f["cargo"] == "CONTADOR" and f["sueldo"] is None
 
 
@@ -94,7 +114,7 @@ def test_encendido_por_defecto_y_al_dataset_del_producto(cliente, monkeypatch):
     monkeypatch.setattr(rn, "guardar", lambda t, d: llamadas.append((t, d)))
     inf = _subir(cliente)
     assert inf["estado"] == "listo"
-    (t, d), = llamadas
+    ((t, d),) = llamadas
     assert d == "act-cicd-stage-prueba.benchmarking"
     assert len(t["nomina_filas"]) == 3 and len(t["homologaciones"]) == 3
     assert t["cargas"][0]["id_carga"] == inf["id"]

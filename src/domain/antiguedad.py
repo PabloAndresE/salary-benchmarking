@@ -18,6 +18,7 @@ se salta todo esto. Esa alimenta la BASE y cambiarla movería estadisticos ya me
 esta es para la nomina del CLIENTE. Que convivan dos definiciones es deuda, y esta
 anotada como tal.
 """
+
 from __future__ import annotations
 
 import re
@@ -83,18 +84,17 @@ def _fechas(s: pd.Series) -> pd.Series:
     para que cada celda se resuelva sola y una fila no le imponga su formato al resto.
     """
     if pd.api.types.is_datetime64_any_dtype(s):
-        return s                      # ya viene resuelta de Excel: no se re-interpreta
+        return s  # ya viene resuelta de Excel: no se re-interpreta
     t = s.astype(str).str.strip()
     out = pd.Series(pd.NaT, index=s.index, dtype="datetime64[ns]")
     anio_primero = t.str.match(_RE_ANIO_PRIMERO)
     if anio_primero.any():
-        out[anio_primero] = pd.to_datetime(t[anio_primero], errors="coerce",
-                                           yearfirst=True, dayfirst=False,
-                                           format="mixed")
+        out[anio_primero] = pd.to_datetime(
+            t[anio_primero], errors="coerce", yearfirst=True, dayfirst=False, format="mixed"
+        )
     resto = ~anio_primero
     if resto.any():
-        out[resto] = pd.to_datetime(t[resto], errors="coerce", dayfirst=True,
-                                    format="mixed")
+        out[resto] = pd.to_datetime(t[resto], errors="coerce", dayfirst=True, format="mixed")
     return out
 
 
@@ -136,8 +136,7 @@ def antiguedad_anios(df, anio: int) -> pd.Series:
         fin = fin_de[k] if k < len(fin_de) else pd.Series(pd.NaT, index=df.index)
         cierra = fin.notna() & vivos
         hasta = fin.where(cierra, corte)
-        dias = dias.add((hasta - inicio).dt.days.where(vivos).clip(lower=0).fillna(0),
-                        fill_value=0)
+        dias = dias.add((hasta - inicio).dt.days.where(vivos).clip(lower=0).fillna(0), fill_value=0)
         cerrado_en_corte = cerrado_en_corte | (vivos & ~cierra)
         abierto = abierto & ~cierra & ~cerrado_en_corte
 

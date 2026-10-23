@@ -13,6 +13,7 @@ compara, y el ajuste dejaria de significar lo que dice. Eso es lo que fija el pr
 
 Nada de esto toca datos reales ni la red: base de juguete a un `.npz` temporal.
 """
+
 import datetime as _dt
 import io
 
@@ -47,12 +48,17 @@ def _marco_con_scvs():
         v[k] = 1.0
         emb[cargo] = v
         for i in range(14):
-            filas.append((f"E{k}{i}", cargo, 1.0 + 0.2 * k + 0.01 * (i % 5),
-                          "PEQUENA" if k == 0 else "GRANDE",
-                          "C2394" if k == 0 else "G4610",
-                          40 if k == 0 else 900))
-    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y",
-                                         "segmento", "ciiu_n6", "n_empleados"])
+            filas.append(
+                (
+                    f"E{k}{i}",
+                    cargo,
+                    1.0 + 0.2 * k + 0.01 * (i % 5),
+                    "PEQUENA" if k == 0 else "GRANDE",
+                    "C2394" if k == 0 else "G4610",
+                    40 if k == 0 else 900,
+                )
+            )
+    marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "segmento", "ciiu_n6", "n_empleados"])
     return marco, emb
 
 
@@ -132,14 +138,12 @@ def test_una_base_guardada_antes_del_segmento_sigue_cargando(base_scvs, tmp_path
 
 
 def test_el_segmento_se_deriva_del_ruc_cuando_el_cliente_no_lo_declara(cliente):
-    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))},
-                     data={"ruc": RUC_CLIENTE})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))}, data={"ruc": RUC_CLIENTE})
     assert r.status_code == 202
     assert r.json()["empresa"]["segmento_derivado"] == "PEQUENA"
 
     d = cliente.get(f"/informes/{r.json()['id']}").json()
-    assert d["meta"]["segmento"] == "PEQUENA", \
-        "el informe tiene que calcularse CON el segmento, no solo reportarlo"
+    assert d["meta"]["segmento"] == "PEQUENA", "el informe tiene que calcularse CON el segmento, no solo reportarlo"
 
 
 def test_sin_ruc_no_hay_segmento_que_derivar(cliente):
@@ -158,8 +162,9 @@ def test_el_segmento_explicito_manda_sobre_el_del_ruc_y_se_avisa(cliente):
     El aviso va en `aviso_segmento` y no en `aviso` para no pisar el del rubro cuando los
     dos discrepan en el mismo pedido.
     """
-    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))},
-                     data={"ruc": RUC_CLIENTE, "segmento": "GRANDE"})
+    r = cliente.post(
+        "/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))}, data={"ruc": RUC_CLIENTE, "segmento": "GRANDE"}
+    )
     assert r.status_code == 202
 
     emp = r.json()["empresa"]
@@ -177,8 +182,7 @@ def test_un_segmento_derivado_no_puede_devolver_400(cliente):
     deriva. Un 400 sobre un valor que el cliente NO mando seria imposible de entender
     desde el front.
     """
-    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))},
-                     data={"ruc": RUC_CLIENTE})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))}, data={"ruc": RUC_CLIENTE})
     assert r.status_code == 202
 
 
@@ -200,8 +204,7 @@ def test_un_rubro_derivado_sin_respaldo_no_tumba_el_pedido(cliente):
     Ahora, sin respaldo no se deriva: el informe sale global --lo mismo que habria
     recibido sin mandar el RUC-- y la ficha lo dice en vez de callarlo.
     """
-    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))},
-                     data={"ruc": RUC_CLIENTE})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))}, data={"ruc": RUC_CLIENTE})
     assert r.status_code == 202, "un rubro derivado sin respaldo no puede dar 400"
 
     emp = r.json()["empresa"]
@@ -219,8 +222,6 @@ def test_un_rubro_explicito_sin_respaldo_SI_da_400(cliente):
     pedido no se puede cumplir y con que rubros si. Solo el derivado se degrada en
     silencio, porque solo ese no lo pidio nadie.
     """
-    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))},
-                     data={"rubro": "C"})
+    r = cliente.post("/informes", files={"archivo": ("n.xlsx", _xlsx(_nomina()))}, data={"rubro": "C"})
     assert r.status_code == 400
     assert "sin datos suficientes" in r.json()["detail"]
-

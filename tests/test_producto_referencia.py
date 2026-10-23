@@ -21,16 +21,18 @@ def caso():
     """Tres familias bien separadas en el espacio de texto, con pagos distintos."""
     rng = np.random.default_rng(3)
     filas, emb = [], {}
-    centros = {"BODEGA": np.array([1., 0., 0.]), "VENTAS": np.array([0., 1., 0.]),
-               "SISTEMAS": np.array([0., 0., 1.])}
+    centros = {
+        "BODEGA": np.array([1.0, 0.0, 0.0]),
+        "VENTAS": np.array([0.0, 1.0, 0.0]),
+        "SISTEMAS": np.array([0.0, 0.0, 1.0]),
+    }
     paga = {"BODEGA": 0.2, "VENTAS": 0.8, "SISTEMAS": 1.4}
     for fam, c in centros.items():
         for v in range(6):
             etq = f"{fam} {v}"
             emb[etq] = c + rng.normal(0, 0.02, 3)
             for e in range(8):
-                filas += [(f"E{fam}{v}{e}", etq, paga[fam] + rng.normal(0, .05))
-                          for _ in range(4)]
+                filas += [(f"E{fam}{v}{e}", etq, paga[fam] + rng.normal(0, 0.05)) for _ in range(4)]
     return filas, emb, centros
 
 
@@ -63,7 +65,7 @@ def test_un_vecino_lejano_no_gana_por_tener_mas_datos(caso):
     # y una familia enorme y lejana que paga muy distinto
     for v in range(3):
         etq = f"VENTAS MASIVO {v}"
-        emb[etq] = centros["VENTAS"] + np.random.default_rng(v).normal(0, .01, 3)
+        emb[etq] = centros["VENTAS"] + np.random.default_rng(v).normal(0, 0.01, 3)
         filas += [(f"EM{v}{e}", etq, 0.8) for e in range(60) for _ in range(6)]
     b = _base(filas, emb)
     emb["BODEGUERO X"] = gemelo + np.array([0.0005, 0.0, 0.0])
@@ -77,7 +79,7 @@ def test_sin_vecindario_real_la_confianza_cae(caso):
     filas, emb, _ = caso
     b = _base(filas, emb)
     emb2 = dict(emb)
-    emb2["LOTERO"] = np.array([0.58, 0.58, 0.58])       # lejos de las tres familias
+    emb2["LOTERO"] = np.array([0.58, 0.58, 0.58])  # lejos de las tres familias
     lejos = b.referenciar(["LOTERO"], emb2).iloc[0]
     cerca = b.referenciar(["BODEGA 0"], emb2).iloc[0]
     assert lejos["confianza"] == "BAJA"
@@ -107,7 +109,7 @@ def test_la_banda_no_incluye_la_dispersion_DENTRO_de_la_empresa():
     # empresa. Aqui las 12 empresas tienen la MISMA mediana y una dispersion interna
     # enorme; la banda tiene que salir estrecha.
     emb = {"PUESTO": np.array([1.0, 0.0, 0.0]), "OTRO": np.array([0.0, 1.0, 0.0])}
-    filas = [(f"E{e}", "PUESTO", v) for e in range(12) for v in (0.0, .1, .2, .3, .4)]
+    filas = [(f"E{e}", "PUESTO", v) for e in range(12) for v in (0.0, 0.1, 0.2, 0.3, 0.4)]
     filas += [(f"O{e}", "OTRO", 1.0) for e in range(4)]
     r = _base(filas, emb).referenciar(["PUESTO"], emb).iloc[0]
     assert r["base"] == "datos directos"
@@ -171,7 +173,7 @@ def test_un_mercado_ruidoso_no_degrada_la_confianza_por_si_solo(caso):
     b.tau2_c = b.tau2_c.copy()
     b.tau2_c[i] = 0.5
     b.bandas = b.bandas.copy()
-    b.bandas[i] = np.nan          # sin banda empirica, se ve el efecto del modelo
+    b.bandas[i] = np.nan  # sin banda empirica, se ve el efecto del modelo
     despues = b.referenciar(["BODEGA 0"], emb).iloc[0]
     assert despues["ancho_rel"] > antes["ancho_rel"]
     assert despues["confianza"] == "ALTA"
@@ -199,10 +201,8 @@ def _caso_jerarquico(sin=()):
     dentro de empresa —el empleador es el 81% del ruido—, asi que con una persona por
     empresa el residuo es cero y el efecto no se puede estimar.
     """
-    paga = {"AUXILIAR": 0.0, "TECNICO": 0.3, "SUPERVISOR": 0.6, "JEFE": 1.0,
-            "GERENTE": 1.5}
-    areas = {"CAJA": (0.0, [0.11, 1.0, 0.0]), "BODEGA": (0.2, [0.55, 1.0, 0.0]),
-             "PLANTA": (0.4, [0.90, 1.0, 0.0])}
+    paga = {"AUXILIAR": 0.0, "TECNICO": 0.3, "SUPERVISOR": 0.6, "JEFE": 1.0, "GERENTE": 1.5}
+    areas = {"CAJA": (0.0, [0.11, 1.0, 0.0]), "BODEGA": (0.2, [0.55, 1.0, 0.0]), "PLANTA": (0.4, [0.90, 1.0, 0.0])}
     filas, emb = [], {}
     for area, (base, vec) in areas.items():
         for rango, extra in paga.items():
@@ -258,8 +258,7 @@ def test_el_castigo_por_nivel_desconocido_sale_del_vecindario():
     emb["ENCARGADO X"] = emb["AUXILIAR DE CAJA"]
     b = _base(filas, emb)
     # y uno cuyo vecindario mezcla escalones: en medio de todo
-    todos = np.mean([emb[f"{r} DE CAJA"] for r in
-                     ("AUXILIAR", "TECNICO", "SUPERVISOR", "JEFE", "GERENTE")], axis=0)
+    todos = np.mean([emb[f"{r} DE CAJA"] for r in ("AUXILIAR", "TECNICO", "SUPERVISOR", "JEFE", "GERENTE")], axis=0)
     emb["ENCARGADO Y"] = todos
     b2 = _base(filas, emb)
     homogeneo = b2.referenciar(["ENCARGADO X"], emb).iloc[0]
@@ -269,6 +268,7 @@ def test_el_castigo_por_nivel_desconocido_sale_del_vecindario():
 
 
 # --- fusion de cuasi-duplicados -------------------------------------------------
+
 
 def _caso_grafias(n_empresas=2):
     """El mismo puesto tecleado de dos formas, lejos de todo lo demas.
@@ -281,8 +281,7 @@ def _caso_grafias(n_empresas=2):
     emb["ANALISTA DE RIESGO DE CREDITO"] = np.array([1.0, 0.0, 0.0])
     emb["ANALISTA DE RIESGO CREDITICIO"] = np.array([1.0, 0.0, 0.0])
     emb["MENSAJERO"] = np.array([0.0, 1.0, 0.0])
-    for i, etq in enumerate(["ANALISTA DE RIESGO DE CREDITO",
-                             "ANALISTA DE RIESGO CREDITICIO"]):
+    for i, etq in enumerate(["ANALISTA DE RIESGO DE CREDITO", "ANALISTA DE RIESGO CREDITICIO"]):
         for e in range(n_empresas):
             filas += [(f"EA{i}{e}", etq, 1.0 + 0.01 * j) for j in range(4)]
     for e in range(9):
@@ -302,8 +301,10 @@ def test_dos_grafias_del_mismo_puesto_votan_juntas():
     assert con.loc["ANALISTA DE RIESGO CREDITICIO", "base"] == "datos directos"
     assert con.loc["ANALISTA DE RIESGO CREDITICIO", "empresas"] == 4
     # y las dos grafias dan exactamente la misma respuesta, que es el punto
-    assert (con.loc["ANALISTA DE RIESGO CREDITICIO", "referencia_log"]
-            == con.loc["ANALISTA DE RIESGO DE CREDITO", "referencia_log"])
+    assert (
+        con.loc["ANALISTA DE RIESGO CREDITICIO", "referencia_log"]
+        == con.loc["ANALISTA DE RIESGO DE CREDITO", "referencia_log"]
+    )
 
 
 def test_sin_fusionar_el_informe_cuenta_mensajeros_como_evidencia():
@@ -323,7 +324,7 @@ def test_la_fusion_no_cuela_una_celda_por_debajo_del_suelo():
     # EL riesgo de la fusion. Si el grupo entero sigue sin llegar a MIN_EMPRESAS, su
     # mediana no puede reaparecer disfrazada de "vecino a distancia cero": el suelo es
     # de confidencialidad, no de gusto. La respuesta debe venir de FUERA del grupo.
-    filas, emb = _caso_grafias(n_empresas=1)          # 1 + 1 = 2 empresas, bajo el suelo
+    filas, emb = _caso_grafias(n_empresas=1)  # 1 + 1 = 2 empresas, bajo el suelo
     b = _base(filas, emb)
     r = b.referenciar(["ANALISTA DE RIESGO CREDITICIO"], emb).iloc[0]
     assert r["base"] == "por analogia"
@@ -339,8 +340,7 @@ def test_el_escalon_impide_fusionar_puestos_de_distinto_rango():
     b = _base(filas, emb)
     assert b.grupo[b.idx["AUXILIAR DE CAJA"]] != b.grupo[b.idx["GERENTE DE CAJA"]]
     r = b.referenciar(["AUXILIAR DE CAJA", "GERENTE DE CAJA"], emb).set_index("cargo")
-    assert (r.loc["AUXILIAR DE CAJA", "referencia_log"]
-            < r.loc["GERENTE DE CAJA", "referencia_log"])
+    assert r.loc["AUXILIAR DE CAJA", "referencia_log"] < r.loc["GERENTE DE CAJA", "referencia_log"]
 
 
 def test_el_enlace_completo_no_encadena():
@@ -373,11 +373,11 @@ def test_la_confianza_baja_cuando_hay_MENOS_empresas_aunque_el_mercado_sea_igual
     # gente de sobra: lo que se contrasta es el NUMERO DE EMPRESAS, no el de personas
     filas = []
     for e in range(40):
-        u = rng.normal(0, .30)
-        filas += [(f"EM{e}", "MUCHAS", 0.5 + u + rng.normal(0, .02)) for _ in range(3)]
+        u = rng.normal(0, 0.30)
+        filas += [(f"EM{e}", "MUCHAS", 0.5 + u + rng.normal(0, 0.02)) for _ in range(3)]
     for e in range(4):
-        u = rng.normal(0, .30)
-        filas += [(f"EP{e}", "POCAS", 0.5 + u + rng.normal(0, .02)) for _ in range(3)]
+        u = rng.normal(0, 0.30)
+        filas += [(f"EP{e}", "POCAS", 0.5 + u + rng.normal(0, 0.02)) for _ in range(3)]
     b = _base(filas, emb)
     r = b.referenciar(["MUCHAS", "POCAS"], emb).set_index("cargo")
     assert r.loc["MUCHAS", "base"] == r.loc["POCAS", "base"] == "datos directos"
@@ -392,15 +392,21 @@ def test_la_confianza_no_depende_del_ancho_del_mercado():
     # igual de bien determinado. Con la regla vieja esto se confundia.
     rng = np.random.default_rng(11)
     emb = {"ESTRECHO": np.array([1.0, 0.0, 0.0]), "ANCHO": np.array([0.0, 1.0, 0.0])}
-    filas = [(f"EE{e}", "ESTRECHO", 0.5 + rng.normal(0, .02)) for e in range(30)]
-    filas += [(f"EA{e}", "ANCHO", 0.5 + rng.normal(0, .60)) for e in range(30)]
+    filas = [(f"EE{e}", "ESTRECHO", 0.5 + rng.normal(0, 0.02)) for e in range(30)]
+    filas += [(f"EA{e}", "ANCHO", 0.5 + rng.normal(0, 0.60)) for e in range(30)]
     # relleno: el encogimiento empirico-bayesiano de `tau_c` necesita 3+ celdas para
     # estimar la varianza ENTRE celdas. Con dos cae al global y el test no mide lo suyo.
     for k in range(4):
         etq = f"RELLENO {k}"
-        emb[etq] = np.array([0.0, 0.0, 1.0]) + rng.normal(0, .05, 3)
-        filas += [(f"ER{k}{e}", etq, 1.0 + rng.normal(0, .1 * (k + 1)), )
-                  for e in range(20)]
+        emb[etq] = np.array([0.0, 0.0, 1.0]) + rng.normal(0, 0.05, 3)
+        filas += [
+            (
+                f"ER{k}{e}",
+                etq,
+                1.0 + rng.normal(0, 0.1 * (k + 1)),
+            )
+            for e in range(20)
+        ]
     r = _base(filas, emb).referenciar(["ESTRECHO", "ANCHO"], emb).set_index("cargo")
     assert r.loc["ANCHO", "ancho_rel"] > 5 * r.loc["ESTRECHO", "ancho_rel"], "la banda si"
     assert r.loc["ESTRECHO", "confianza"] == "ALTA", "el centro se conoce bien"
@@ -411,6 +417,7 @@ def test_una_celda_de_tres_personas_no_publica_su_mediana():
     # una son tres personas, y la mediana de sus tres votos ES el sueldo de una de ellas.
     # Con `MIN_PERSONAS` esa celda pasa a contestarse por analogia.
     from src.domain.base_referencia import MIN_EMPRESAS, MIN_PERSONAS
+
     emb = {"RARO": np.array([1.0, 0.0, 0.0]), "VECINO": np.array([0.93, 0.37, 0.0])}
     # 3 empresas, 1 persona cada una: pasa el suelo de empresas, no el de personas
     filas = [(f"ER{e}", "RARO", 1.0 + 0.1 * e) for e in range(3)]
@@ -427,6 +434,7 @@ def test_una_celda_de_tres_personas_no_publica_su_mediana():
 
 def test_el_suelo_de_personas_no_toca_las_celdas_con_gente():
     from src.domain.base_referencia import MIN_PERSONAS
+
     emb = {"GORDO": np.array([1.0, 0.0, 0.0]), "OTRO": np.array([0.0, 1.0, 0.0])}
     filas = [(f"EG{e}", "GORDO", 1.0 + 0.05 * k) for e in range(4) for k in range(5)]
     filas += [(f"EO{e}", "OTRO", 0.5) for e in range(4) for _ in range(5)]
@@ -438,29 +446,31 @@ def test_el_suelo_de_personas_no_toca_las_celdas_con_gente():
 
 # --- D-018: correccion del centro por tamano de empresa -------------------------
 
+
 def _caso_segmentado(n_por_seg=14):
     """Un cargo ALTO donde el tamano manda, y uno de BASE donde no.
 
     Reproduce el patron medido: en el nivel 5 la empresa pequena paga la mitad que la
     grande, y en el nivel 1 pagan lo mismo.
     """
-    emb = {"GERENTE DE PLANTA": np.array([1.0, 0.0, 0.0]),
-           "AUXILIAR DE PLANTA": np.array([0.0, 1.0, 0.0])}
-    paga = {("GERENTE DE PLANTA", "GRANDE"): 2.0,
-            ("GERENTE DE PLANTA", "PEQUEÑA"): 1.0,
-            ("AUXILIAR DE PLANTA", "GRANDE"): 0.2,
-            ("AUXILIAR DE PLANTA", "PEQUEÑA"): 0.2}
+    emb = {"GERENTE DE PLANTA": np.array([1.0, 0.0, 0.0]), "AUXILIAR DE PLANTA": np.array([0.0, 1.0, 0.0])}
+    paga = {
+        ("GERENTE DE PLANTA", "GRANDE"): 2.0,
+        ("GERENTE DE PLANTA", "PEQUEÑA"): 1.0,
+        ("AUXILIAR DE PLANTA", "GRANDE"): 0.2,
+        ("AUXILIAR DE PLANTA", "PEQUEÑA"): 0.2,
+    }
     filas = []
     for (cargo, seg), base in paga.items():
         for e in range(n_por_seg):
-            filas += [(f"E{cargo[:3]}{seg[:2]}{e}", cargo, base + 0.01 * k, seg)
-                      for k in range(4)]
+            filas += [(f"E{cargo[:3]}{seg[:2]}{e}", cargo, base + 0.01 * k, seg) for k in range(4)]
     return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "segmento"]), emb
 
 
 def test_el_tamano_corrige_el_centro_en_los_cargos_altos():
     from src.domain.base_referencia import NIVEL_MIN_SEGMENTAR
     from src.domain.nivel import nivel_lexico
+
     marco, emb = _caso_segmentado()
     b = BaseReferencia.construir(marco, emb, _sbu)
     assert nivel_lexico("GERENTE DE PLANTA") >= NIVEL_MIN_SEGMENTAR
@@ -492,23 +502,22 @@ def test_sin_segmento_el_comportamiento_es_el_de_siempre():
     b = BaseReferencia.construir(marco, emb, _sbu)
     a = b.referenciar(["GERENTE DE PLANTA"], emb)
     for vacio in (None, "", "NA", "  "):
-        pd.testing.assert_frame_equal(a, b.referenciar(["GERENTE DE PLANTA"], emb,
-                                                       segmento=vacio))
+        pd.testing.assert_frame_equal(a, b.referenciar(["GERENTE DE PLANTA"], emb, segmento=vacio))
 
 
 def test_un_segmento_con_pocas_empresas_no_mueve_nada():
     # Por debajo del minimo el desplazamiento seria ruido. Aqui MICROEMPRESA tiene 2.
     from src.domain.base_referencia import MIN_EMPRESAS_SEGMENTO
+
     marco, emb = _caso_segmentado()
     extra = pd.DataFrame(
-        [(f"EMICRO{e}", "GERENTE DE PLANTA", 0.1 + 0.01 * k, "MICROEMPRESA")
-         for e in range(2) for k in range(4)],
-        columns=["empresa_ruc", "cargo_norm", "y", "segmento"])
+        [(f"EMICRO{e}", "GERENTE DE PLANTA", 0.1 + 0.01 * k, "MICROEMPRESA") for e in range(2) for k in range(4)],
+        columns=["empresa_ruc", "cargo_norm", "y", "segmento"],
+    )
     b = BaseReferencia.construir(pd.concat([marco, extra]), emb, _sbu)
     assert 2 < MIN_EMPRESAS_SEGMENTO
     sin = b.referenciar(["GERENTE DE PLANTA"], emb).iloc[0]["referencia_log"]
-    mi = b.referenciar(["GERENTE DE PLANTA"], emb,
-                       segmento="MICROEMPRESA").iloc[0]["referencia_log"]
+    mi = b.referenciar(["GERENTE DE PLANTA"], emb, segmento="MICROEMPRESA").iloc[0]["referencia_log"]
     assert abs(mi - sin) < 1e-9, "2 empresas no bastan para desplazar la referencia"
 
 
@@ -517,6 +526,7 @@ def test_un_segmento_con_pocas_empresas_no_mueve_nada():
 # mejora la precision (D-022, indistinguible de placebo). Lo que estos tests fijan
 # no es que acierte mas, sino que sea COHERENTE y que el coste sea visible.
 # --------------------------------------------------------------------------
+
 
 def _marco_rubro(filas):
     return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "ciiu_n1"])
@@ -545,8 +555,9 @@ def test_el_rubro_cambia_la_referencia_cuando_tiene_respaldo():
     c = b.referenciar(["CONTADOR"], emb, rubro="C").iloc[0]
     g = b.referenciar(["CONTADOR"], emb, rubro="G").iloc[0]
     assert c["rubro"] == "C" and g["rubro"] == "G" and glob["rubro"] == ""
-    assert c["referencia_log"] < glob["referencia_log"] < g["referencia_log"], (
-        "el rubro barato debe quedar por debajo del global y el caro por encima")
+    assert (
+        c["referencia_log"] < glob["referencia_log"] < g["referencia_log"]
+    ), "el rubro barato debe quedar por debajo del global y el caro por encima"
     assert abs(g["referencia_log"] - c["referencia_log"] - 1.0) < 0.1
 
 
@@ -556,8 +567,7 @@ def test_el_centro_del_rubro_cae_DENTRO_de_la_banda_del_rubro():
     b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
     for r in ("C", "G"):
         f = b.referenciar(["CONTADOR"], _emb_rubro(), rubro=r).iloc[0]
-        assert f["p25_log"] <= f["referencia_log"] <= f["p75_log"], (
-            f"rubro {r}: el centro cae fuera de su propia banda")
+        assert f["p25_log"] <= f["referencia_log"] <= f["p75_log"], f"rubro {r}: el centro cae fuera de su propia banda"
         assert f["p10_log"] <= f["p25_log"] <= f["p75_log"] <= f["p90_log"]
 
 
@@ -565,8 +575,7 @@ def test_el_cargo_sin_respaldo_en_su_rubro_cae_al_global_EL_SOLO():
     # El fallback es por CARGO, no por informe: `CONTADOR` tiene rubro y `BODEGUERO` no,
     # y los dos salen en la misma consulta.
     b = BaseReferencia.construir(_dos_rubros(), _emb_rubro(), _sbu)
-    out = b.referenciar(["CONTADOR", "BODEGUERO"], _emb_rubro(),
-                        rubro="C").set_index("cargo")
+    out = b.referenciar(["CONTADOR", "BODEGUERO"], _emb_rubro(), rubro="C").set_index("cargo")
     assert out.loc["CONTADOR", "rubro"] == "C"
     assert out.loc["BODEGUERO", "rubro"] == "", "4 empresas no llegan al suelo"
 
@@ -579,8 +588,9 @@ def test_el_coste_del_rubro_es_visible_en_el_respaldo():
     glob = b.referenciar(["CONTADOR"], emb).iloc[0]
     c = b.referenciar(["CONTADOR"], emb, rubro="C").iloc[0]
     assert c["empresas"] < glob["empresas"], "el rubro tiene menos empresas detras"
-    assert c["incert_centro"] > glob["incert_centro"], (
-        "menos empresas => 1/W mayor => el centro se conoce peor, y hay que decirlo")
+    assert (
+        c["incert_centro"] > glob["incert_centro"]
+    ), "menos empresas => 1/W mayor => el centro se conoce peor, y hay que decirlo"
 
 
 def test_un_rubro_desconocido_avisa_y_sigue_en_global():
@@ -620,16 +630,15 @@ def test_sin_columna_de_rubro_la_base_se_construye_igual():
 # fijan sobre todo es lo que NO debe fusionarse — un falso positivo funde dos
 # oficios distintos y contamina la referencia de los dos.
 # --------------------------------------------------------------------------
-from src.domain.base_referencia import (_distancia1, _es_errata,
-                                                   _fusionar_erratas)
+from src.domain.base_referencia import _distancia1, _es_errata, _fusionar_erratas
 
 
 def test_distancia1_reconoce_las_tres_formas():
-    assert _distancia1("ASISTENTE", "ASITENTE")      # borrado
-    assert _distancia1("VENDEDOR", "VENDERDOR")      # insercion
-    assert _distancia1("VENDEDOR", "VENDEDOL")       # sustitucion
-    assert not _distancia1("VENDEDOR", "VENDEDOR")   # identicas: distancia 0
-    assert not _distancia1("VENDEDOR", "VENDRDOL")   # dos cambios
+    assert _distancia1("ASISTENTE", "ASITENTE")  # borrado
+    assert _distancia1("VENDEDOR", "VENDERDOR")  # insercion
+    assert _distancia1("VENDEDOR", "VENDEDOL")  # sustitucion
+    assert not _distancia1("VENDEDOR", "VENDEDOR")  # identicas: distancia 0
+    assert not _distancia1("VENDEDOR", "VENDRDOL")  # dos cambios
     assert not _distancia1("VENDEDOR", "CONTADOR")
 
 
@@ -655,7 +664,8 @@ def _marco_errata(n_comun=12, n_raro=1):
 
 def _emb_errata():
     # 0,93 de coseno: se parecen mucho pero NO llegan al umbral de fusion.
-    v = np.array([1.0, 0.0]);  w = np.array([0.93, np.sqrt(1 - 0.93 ** 2)])
+    v = np.array([1.0, 0.0])
+    w = np.array([0.93, np.sqrt(1 - 0.93**2)])
     return {"ASISTENTE CONTABLE": v, "ASITENTE CONTABLE": w}
 
 
@@ -674,16 +684,14 @@ def test_sin_asimetria_no_se_fusiona():
     # Dos titulos raros a distancia 1: ninguno cruza el suelo ni antes ni despues, y
     # juntarlos solo anade riesgo de fundir dos oficios distintos.
     emb = _emb_errata()
-    b = BaseReferencia.construir(_marco_errata(n_comun=2, n_raro=2), emb, _sbu,
-                                 umbral_fusion=0.95)
+    b = BaseReferencia.construir(_marco_errata(n_comun=2, n_raro=2), emb, _sbu, umbral_fusion=0.95)
     assert b.grupo[b.idx["ASISTENTE CONTABLE"]] != b.grupo[b.idx["ASITENTE CONTABLE"]]
 
 
 def test_un_titulo_tecleado_por_muchas_empresas_no_es_un_dedazo():
     # 5 empresas escriben lo mismo: eso es una grafia en uso, no un error.
     emb = _emb_errata()
-    b = BaseReferencia.construir(_marco_errata(n_comun=20, n_raro=5), emb, _sbu,
-                                 umbral_fusion=0.95)
+    b = BaseReferencia.construir(_marco_errata(n_comun=20, n_raro=5), emb, _sbu, umbral_fusion=0.95)
     assert b.grupo[b.idx["ASISTENTE CONTABLE"]] != b.grupo[b.idx["ASITENTE CONTABLE"]]
 
 
@@ -715,11 +723,11 @@ def test_la_cadena_NO_pasa_por_un_grupo_raro():
 def test_los_dos_falsos_positivos_que_encontro_la_base_real():
     # Aparecieron al inspeccionar el efecto sobre las 65.181 celdas y habrian pasado
     # como dedazos, fundiendo un escalafon y un par de genero.
-    assert not _es_errata("AYUDANTE B DE MANTENIMIENTO", "AYUDANTE C DE MANTENIMIENTO"), \
-        "una letra suelta es GRADO, no ortografia"
+    assert not _es_errata(
+        "AYUDANTE B DE MANTENIMIENTO", "AYUDANTE C DE MANTENIMIENTO"
+    ), "una letra suelta es GRADO, no ortografia"
     assert not _es_errata("SUPERVISOR C", "SUPERVISOR D")
-    assert not _es_errata("ENFERMERAS", "ENFERMEROS"), \
-        "genero en plural: la vocal va seguida de la S"
+    assert not _es_errata("ENFERMERAS", "ENFERMEROS"), "genero en plural: la vocal va seguida de la S"
     assert not _es_errata("OPERARIAS", "OPERARIOS")
     # ...y siguen siendo erratas las que si lo son
     assert _es_errata("ENFERMERAS", "ENFERMERAX")
@@ -755,8 +763,7 @@ def _marco_genero():
 
 def _emb_genero():
     # 0,90 de coseno: NO llegan al umbral, asi que sin la tercera pasada quedan sueltos.
-    return {"ENFERMERA": np.array([1.0, 0.0]),
-            "ENFERMERO": np.array([0.90, np.sqrt(1 - 0.90 ** 2)])}
+    return {"ENFERMERA": np.array([1.0, 0.0]), "ENFERMERO": np.array([0.90, np.sqrt(1 - 0.90**2)])}
 
 
 def test_las_dos_grafias_acaban_en_la_misma_celda():
@@ -794,12 +801,13 @@ def test_la_brecha_no_se_publica_con_una_sola_empresa_detras():
     # calculadas sobre UNA empresa: ruido presentado como diagnostico. La fusion se hace
     # igual —esa es la parte que corrige el proxy— pero la brecha se calla.
     emb = _emb_genero()
-    filas = [(f"F{i}", "ENFERMERA", 1.0) for i in range(2)]          # 2 empresas
+    filas = [(f"F{i}", "ENFERMERA", 1.0) for i in range(2)]  # 2 empresas
     filas += [(f"M{i}", "ENFERMERO", 1.5 + 0.01 * i) for i in range(14)]
     b = BaseReferencia.construir(_marco(filas), emb, _sbu, genero=True)
     assert b.grupo[b.idx["ENFERMERA"]] == b.grupo[b.idx["ENFERMERO"]], "se fusiona igual"
-    assert b.referenciar(["ENFERMERA"], emb).iloc[0]["brecha_grafia"] == "", \
-        "pero no se publica una brecha de 2 empresas"
+    assert (
+        b.referenciar(["ENFERMERA"], emb).iloc[0]["brecha_grafia"] == ""
+    ), "pero no se publica una brecha de 2 empresas"
 
 
 def test_un_cargo_en_blanco_NO_tumba_el_informe_entero():
@@ -807,8 +815,7 @@ def test_un_cargo_en_blanco_NO_tumba_el_informe_entero():
     # caer las 199 con `KeyError: ''`. Un cargo vacio es DATO, no un error de programa.
     emb = _emb_errata()
     b = BaseReferencia.construir(_marco_errata(), emb, _sbu)
-    out = b.referenciar(["ASISTENTE CONTABLE", "", "   ", "ASISTENTE CONTABLE"],
-                        emb).set_index("cargo", drop=False)
+    out = b.referenciar(["ASISTENTE CONTABLE", "", "   ", "ASISTENTE CONTABLE"], emb).set_index("cargo", drop=False)
     assert len(out) == 4
     assert out["base"].tolist().count("sin cargo") == 2
     ok = out[out["base"] == "datos directos"]
@@ -832,6 +839,7 @@ def test_una_nomina_entera_sin_cargos_no_revienta():
 
 # --- el cliente dentro de su propio mercado (D-027) -------------------------------
 
+
 def test_el_padron_se_indexa_por_grupo_AUNQUE_no_haya_fusion(caso):
     # Bug silencioso: sin fusion el padron quedaba con claves de texto y `empresas_de`
     # las buscaba por numero de grupo. No fallaba: devolvia vacio, y la tarjeta de
@@ -845,11 +853,11 @@ def test_el_padron_se_indexa_por_grupo_AUNQUE_no_haya_fusion(caso):
 def test_grupos_de_empresa_encuentra_a_quien_esta_y_no_inventa_a_quien_no(caso):
     filas, emb, _ = caso
     b = _base(filas, emb)
-    ruc = "EBODEGA00"                      # respalda BODEGA 0 y nada mas
+    ruc = "EBODEGA00"  # respalda BODEGA 0 y nada mas
     grupos = b.grupos_de_empresa(ruc)
     assert grupos == {int(b.grupo[b.idx["BODEGA 0"]])}
     assert b.grupos_de_empresa("NO-EXISTE-9999") == set()
-    assert b.grupos_de_empresa(None) == set() or True   # `ruc=None` no llega aqui
+    assert b.grupos_de_empresa(None) == set() or True  # `ruc=None` no llega aqui
 
 
 def test_al_cliente_se_le_DICE_que_esta_dentro_del_mercado(caso):
@@ -885,7 +893,9 @@ def test_un_cargo_en_blanco_devuelve_False_y_no_un_cero(caso):
     # `np.False_` vale: `_py` del servicio lo convierte. Lo que NO vale es un 0, que es
     # lo que salia antes y obligaria al front a aceptar dos tipos.
     assert bool(vacio["tu_empresa"]) is False
-    assert not isinstance(vacio["tu_empresa"], (int, np.integer)) or         isinstance(vacio["tu_empresa"], (bool, np.bool_)),         f"salio {type(vacio['tu_empresa']).__name__}, se esperaba un booleano"
+    assert not isinstance(vacio["tu_empresa"], (int, np.integer)) or isinstance(
+        vacio["tu_empresa"], (bool, np.bool_)
+    ), f"salio {type(vacio['tu_empresa']).__name__}, se esperaba un booleano"
 
 
 def test_el_enlace_RUC_padron_sobrevive_al_guardado(caso, tmp_path):
@@ -905,12 +915,14 @@ def test_el_padron_SCVS_cubre_al_pais_y_no_solo_a_la_base(caso):
     filas, emb, _ = caso
     en_la_base = "EBODEGA00"
     de_fuera = "9999999999001"
-    scvs = pd.DataFrame({
-        "ruc": [en_la_base, de_fuera],
-        "segmento": ["GRANDE", "PEQUEÑA"],
-        "ciiu_n6": ["C1071.01", "G4711.02"],
-        "n_empleados": [500, 12],
-    })
+    scvs = pd.DataFrame(
+        {
+            "ruc": [en_la_base, de_fuera],
+            "segmento": ["GRANDE", "PEQUEÑA"],
+            "ciiu_n6": ["C1071.01", "G4711.02"],
+            "n_empleados": [500, 12],
+        }
+    )
     b = BaseReferencia.construir(_marco(filas), emb, _sbu, scvs=scvs)
 
     # la que nunca aporto datos igual se resuelve
@@ -932,13 +944,18 @@ def test_el_tamano_del_MERCADO_solo_cuenta_a_quien_esta_en_el(caso):
     # `tam`/`ciiu` alimentan la tarjeta de tamanos del informe, que describe el mercado
     # comparado. Una empresa del registro que no aporto datos no puede engordarla.
     filas, emb, _ = caso
-    scvs = pd.DataFrame({"ruc": ["EBODEGA00", "9999999999001"],
-                         "segmento": ["GRANDE", "GRANDE"],
-                         "ciiu_n6": ["C1071.01", "C1071.01"],
-                         "n_empleados": [500, 900]})
+    scvs = pd.DataFrame(
+        {
+            "ruc": ["EBODEGA00", "9999999999001"],
+            "segmento": ["GRANDE", "GRANDE"],
+            "ciiu_n6": ["C1071.01", "C1071.01"],
+            "n_empleados": [500, 900],
+        }
+    )
     b = BaseReferencia.construir(_marco(filas), emb, _sbu, scvs=scvs)
-    assert 900 not in b.pad_tam.tolist(), "una empresa de fuera del padron no puede " \
-                                          "aparecer en los tamanos del mercado"
+    assert 900 not in b.pad_tam.tolist(), (
+        "una empresa de fuera del padron no puede " "aparecer en los tamanos del mercado"
+    )
     assert 500 in b.pad_tam.tolist()
 
 
@@ -950,18 +967,18 @@ def test_sin_scvs_el_comportamiento_es_el_de_antes(caso):
 
 # --- el sector fino, informativo (D-029) -----------------------------------------
 
+
 def _marco_ciiu(n_por_clase=14):
     """Dos clases CIIU dentro de la misma seccion G, pagando distinto."""
     filas, emb = [], {}
-    v = np.zeros(3); v[0] = 1.0
+    v = np.zeros(3)
+    v[0] = 1.0
     emb["VENDEDOR"] = v
     for clase, paga in (("G4761.03", 1.0), ("G4762.01", 1.6)):
         for i in range(n_por_clase):
             for _ in range(3):
-                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i,
-                              "G", clase))
-    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y",
-                                        "ciiu_n1", "ciiu_n6"]), emb
+                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i, "G", clase))
+    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "ciiu_n1", "ciiu_n6"]), emb
 
 
 def test_el_sector_mas_fino_EXPLICA_la_eleccion_y_no_trae_sueldo():
@@ -969,7 +986,7 @@ def test_el_sector_mas_fino_EXPLICA_la_eleccion_y_no_trae_sueldo():
     # la base real discrepaban en 25.702 casos, con cola hasta +107%: un GERENTE agricola
     # veia $1.256 de su seccion (41 empresas) junto a $2.604 de su division (19). Nadie
     # juzga eso de un vistazo y gana el numero grande, que es el de menos empresas.
-    marco, emb = _marco_ciiu()               # 14 empresas por clase: pasan 10, no 30
+    marco, emb = _marco_ciiu()  # 14 empresas por clase: pasan 10, no 30
     b = BaseReferencia.construir(marco, emb, _sbu)
     r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
 
@@ -977,11 +994,13 @@ def test_el_sector_mas_fino_EXPLICA_la_eleccion_y_no_trae_sueldo():
     assert r["rubro"] != "G4761"
     assert r["sector_codigo"] == "G4761" and r["sector_empresas"] == 14
     # ...y lo que viaja es la MUESTRA, no una cifra que compita con la referencia
-    assert not [c for c in r.index if c.startswith("sector_") and "ref" in c],         "el sector no puede traer sueldo: competiria con el veredicto"
+    assert not [
+        c for c in r.index if c.startswith("sector_") and "ref" in c
+    ], "el sector no puede traer sueldo: competiria con el veredicto"
 
 
 def test_cuando_el_veredicto_YA_usa_el_nivel_mas_fino_no_hay_nada_que_explicar():
-    marco, emb = _marco_ciiu(n_por_clase=40)     # 40 por clase: el veredicto baja
+    marco, emb = _marco_ciiu(n_por_clase=40)  # 40 por clase: el veredicto baja
     b = BaseReferencia.construir(marco, emb, _sbu)
     r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
     assert r["rubro"] == "G4761"
@@ -991,7 +1010,7 @@ def test_cuando_el_veredicto_YA_usa_el_nivel_mas_fino_no_hay_nada_que_explicar()
 def test_baja_de_nivel_hasta_donde_haya_datos():
     # Con pocas empresas por clase, la clase no aguanta el suelo y hay que subir. El
     # cliente no tiene por que saber a que nivel alcanzo: se le dice.
-    marco, emb = _marco_ciiu(n_por_clase=4)     # 4 por clase, 8 en la seccion
+    marco, emb = _marco_ciiu(n_por_clase=4)  # 4 por clase, 8 en la seccion
     b = BaseReferencia.construir(marco, emb, _sbu)
     r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
     assert r["sector_codigo"] != "G4761", "4 empresas no pueden sostener una banda"
@@ -1021,18 +1040,18 @@ def test_las_entradas_de_SECCION_no_cambian_al_anadir_los_niveles_finos():
 
 # --- el veredicto baja de nivel, con umbral de fiabilidad (D-029) ------------------
 
+
 def _marco_niveles(n_clase_a=40, n_clase_b=12):
     """Dos clases de la misma seccion, una con respaldo de sobra y otra sin el."""
     filas, emb = [], {}
-    v = np.zeros(3); v[0] = 1.0
+    v = np.zeros(3)
+    v[0] = 1.0
     emb["VENDEDOR"] = v
     for clase, paga, n in (("G4761.03", 1.0, n_clase_a), ("G4762.01", 1.6, n_clase_b)):
         for i in range(n):
             for _ in range(3):
-                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i,
-                              "G", clase))
-    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y",
-                                        "ciiu_n1", "ciiu_n6"]), emb
+                filas.append((f"E{clase[:5]}{i}", "VENDEDOR", paga + 0.02 * i, "G", clase))
+    return pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y", "ciiu_n1", "ciiu_n6"]), emb
 
 
 def test_el_veredicto_baja_a_la_clase_cuando_hay_respaldo():
@@ -1058,10 +1077,10 @@ def test_el_suelo_de_PUBLICACION_y_el_de_DECISION_son_distintos():
     # `MIN_EMPRESAS_RUBRO` (10) dice cuando un dato se puede enseñar sin identificar a
     # nadie. `MIN_EMPRESAS_VEREDICTO` (30) dice cuando se puede DECIDIR con el. Que se
     # usara el primero para lo segundo es el defecto que midio e3/19.
-    from src.domain.base_referencia import (MIN_EMPRESAS_RUBRO,
-                                                       MIN_EMPRESAS_VEREDICTO)
+    from src.domain.base_referencia import MIN_EMPRESAS_RUBRO, MIN_EMPRESAS_VEREDICTO
+
     assert MIN_EMPRESAS_VEREDICTO > MIN_EMPRESAS_RUBRO
-    marco, emb = _marco_niveles(n_clase_a=15)      # pasa el de publicacion, no el otro
+    marco, emb = _marco_niveles(n_clase_a=15)  # pasa el de publicacion, no el otro
     b = BaseReferencia.construir(marco, emb, _sbu)
     r = b.referenciar(["VENDEDOR"], emb, rubro="G", ciiu="G4761.03").iloc[0]
     assert r["rubro"] != "G4761", "15 empresas se pueden enseñar pero no decidir"
@@ -1087,9 +1106,11 @@ def _marco_grado():
 
 def _emb_grado():
     # ortogonales: sin la cuarta pasada, la fusion semantica no los junta
-    return {"AUXILIAR 1 DE CONTABILIDAD": np.array([1.0, 0.0]),
-            "AUXILIAR 2 DE CONTABILIDAD": np.array([0.0, 1.0]),
-            "AUXILIAR 3 DE CONTABILIDAD": np.array([0.7, 0.7])}
+    return {
+        "AUXILIAR 1 DE CONTABILIDAD": np.array([1.0, 0.0]),
+        "AUXILIAR 2 DE CONTABILIDAD": np.array([0.0, 1.0]),
+        "AUXILIAR 3 DE CONTABILIDAD": np.array([0.7, 0.7]),
+    }
 
 
 def test_las_grafias_que_solo_difieren_en_el_grado_van_a_la_misma_celda():
@@ -1115,10 +1136,17 @@ def test_un_grado_que_la_base_no_tiene_se_referencia_con_su_puesto():
 
 def test_el_grado_no_junta_puestos_distintos():
     from src.domain.base_referencia import _fusionar_grado
-    celdas = ["GERENTE ASISTENTE 1", "ASISTENTE GERENTE 2",      # otra palabra de puesto
-              "ANALISTA R & D", "ANALISTA R&M",                  # siglas, no grados
-              "CHOFER LICENCIA C", "CHOFER LICENCIA E",          # tipo de licencia
-              "JEFE DE VENTAS Y MARKETING", "JEFE DE MARKETING Y VENTAS"]  # sin grado
+
+    celdas = [
+        "GERENTE ASISTENTE 1",
+        "ASISTENTE GERENTE 2",  # otra palabra de puesto
+        "ANALISTA R & D",
+        "ANALISTA R&M",  # siglas, no grados
+        "CHOFER LICENCIA C",
+        "CHOFER LICENCIA E",  # tipo de licencia
+        "JEFE DE VENTAS Y MARKETING",
+        "JEFE DE MARKETING Y VENTAS",
+    ]  # sin grado
     grupo = np.arange(len(celdas))
     niv = np.full(len(celdas), np.nan)
     nuevo, n = _fusionar_grado(celdas, grupo, niv, {})

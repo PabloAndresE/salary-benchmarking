@@ -34,6 +34,7 @@ viven versionados en `datos/capa0_<version>/` con solo las filas aprobadas.
 `proponer_erratas` es la regla que propone, con sus protecciones (menos de 5 letras, el
 diccionario de espanol e ingles: CASERO no se toca aunque haya mil CAJERO).
 """
+
 from __future__ import annotations
 
 import csv
@@ -55,9 +56,25 @@ NO_GRADO_DESPUES = {"LICENCIA", "TIPO"}
 # Un numero justo detras de un LUGAR o UNIDAD no es grado: es la zona, la oficina o el turno
 # (`COORDINADOR ZONA 1` / `ZONA 2`, `EJECUTIVO ASISTENTE (OFC 1)`). Visto en la plata (`39`).
 # `OFICINA` y `BODEGA` NO van: `ASISTENTE DE OFICINA 2` y `AUXILIAR DE BODEGA 1` son grados.
-LUGAR_ANTES_DE_NUMERO = {"ZONA", "SECTOR", "OFC", "REGION", "AGENCIA", "SUCURSAL", "TIENDA",
-                         "PLANTA", "TURNO", "LINEA", "DISTRITO", "CUADRILLA", "FRENTE",
-                         "LOCAL", "SEDE", "PISO", "MODULO"}
+LUGAR_ANTES_DE_NUMERO = {
+    "ZONA",
+    "SECTOR",
+    "OFC",
+    "REGION",
+    "AGENCIA",
+    "SUCURSAL",
+    "TIENDA",
+    "PLANTA",
+    "TURNO",
+    "LINEA",
+    "DISTRITO",
+    "CUADRILLA",
+    "FRENTE",
+    "LOCAL",
+    "SEDE",
+    "PISO",
+    "MODULO",
+}
 _PREFIJO = re.compile(r"^(?:[\d.\-*+#'\[\]()]+\s*|\d+[.\-]?\d*\s+)+")
 _PUNTO_PEGADO = re.compile(r"\.(?=[A-Z])")
 
@@ -68,18 +85,27 @@ def _es_grado_token(tok, previo, es_ultimo):
         return True
     if t in ROMANOS:
         return True
-    if (re.fullmatch(r"\(?[A-Z]\)?", tok) and t not in NO_LETRA_GRADO
-            and previo != "&" and previo not in NO_GRADO_DESPUES
-            and (t != "A" or es_ultimo)):
+    if (
+        re.fullmatch(r"\(?[A-Z]\)?", tok)
+        and t not in NO_LETRA_GRADO
+        and previo != "&"
+        and previo not in NO_GRADO_DESPUES
+        and (t != "A" or es_ultimo)
+    ):
         return True
     return False
 
 
 def _es_letra_grado(tok, previo, es_ultimo):
     t = tok.strip("()")
-    return (bool(re.fullmatch(r"\(?[A-Z]\)?", tok)) and t not in NO_LETRA_GRADO
-            and t not in ROMANOS and previo != "&" and previo not in NO_GRADO_DESPUES
-            and (t != "A" or es_ultimo))
+    return (
+        bool(re.fullmatch(r"\(?[A-Z]\)?", tok))
+        and t not in NO_LETRA_GRADO
+        and t not in ROMANOS
+        and previo != "&"
+        and previo not in NO_GRADO_DESPUES
+        and (t != "A" or es_ultimo)
+    )
 
 
 def quitar_letra_final(titulo):
@@ -159,8 +185,7 @@ def limpiar(titulo):
 def expandir_abreviaturas(titulo, abreviaturas):
     if not abreviaturas:
         return titulo
-    return " ".join(abreviaturas.get(t, t)
-                    for t in _PUNTO_PEGADO.sub(". ", titulo).split())
+    return " ".join(abreviaturas.get(t, t) for t in _PUNTO_PEGADO.sub(". ", titulo).split())
 
 
 def mapa_plural(vocabulario):
@@ -180,12 +205,13 @@ def mapa_plural(vocabulario):
 @dataclass
 class Capa0:
     """La capa 0 de una base: sus reglas, sus diccionarios y su version."""
+
     plural: dict = field(default_factory=dict)
     erratas: dict = field(default_factory=dict)
     abreviaturas: dict = field(default_factory=dict)
     genero: dict = field(default_factory=dict)
-    grado: bool = False            # numeros: apagado (criterio A de D-040: son escalon)
-    letras: bool = True            # letras: se fusionan (D-041)
+    grado: bool = False  # numeros: apagado (criterio A de D-040: son escalon)
+    letras: bool = True  # letras: se fusionan (D-041)
     version: str = VERSION
     existentes: set = field(default_factory=set, repr=False)
 
@@ -221,18 +247,32 @@ class Capa0:
 
     # --- persistencia: va dentro del .npz de la base ------------------------------------
     def a_json(self):
-        return json.dumps({"version": self.version, "grado": self.grado,
-                           "letras": self.letras,
-                           "plural": self.plural, "erratas": self.erratas,
-                           "abreviaturas": self.abreviaturas, "genero": self.genero},
-                          ensure_ascii=False, sort_keys=True)
+        return json.dumps(
+            {
+                "version": self.version,
+                "grado": self.grado,
+                "letras": self.letras,
+                "plural": self.plural,
+                "erratas": self.erratas,
+                "abreviaturas": self.abreviaturas,
+                "genero": self.genero,
+            },
+            ensure_ascii=False,
+            sort_keys=True,
+        )
 
     @classmethod
     def de_json(cls, s, titulos):
         d = json.loads(s)
-        c = cls(plural=d["plural"], erratas=d["erratas"], abreviaturas=d["abreviaturas"],
-                genero=d["genero"], grado=d["grado"], version=d["version"],
-                letras=d.get("letras", False))
+        c = cls(
+            plural=d["plural"],
+            erratas=d["erratas"],
+            abreviaturas=d["abreviaturas"],
+            genero=d["genero"],
+            grado=d["grado"],
+            version=d["version"],
+            letras=d.get("letras", False),
+        )
         erratas, c.erratas = c.erratas, {}
         c.existentes = {c.atomo(t) for t in titulos}
         c.erratas = erratas
@@ -249,15 +289,17 @@ def cargar_diccionarios(version=VERSION, base=DATOS):
             return {}
         with open(f, encoding="utf-8") as fh:
             return {r[a]: r[b] for r in csv.DictReader(fh)}
-    return {"erratas": leer("erratas.csv", "rara", "corregida"),
-            "abreviaturas": leer("abreviaturas.csv", "abreviatura", "expansion"),
-            "genero": leer("genero.csv", "femenino", "masculino")}
+
+    return {
+        "erratas": leer("erratas.csv", "rara", "corregida"),
+        "abreviaturas": leer("abreviaturas.csv", "abreviatura", "expansion"),
+        "genero": leer("genero.csv", "femenino", "masculino"),
+    }
 
 
 def nueva(version=VERSION, grado=False, letras=True, base=DATOS):
     """Una capa 0 con los diccionarios aprobados de `version`."""
-    return Capa0(grado=grado, letras=letras, version=version,
-                 **cargar_diccionarios(version, base))
+    return Capa0(grado=grado, letras=letras, version=version, **cargar_diccionarios(version, base))
 
 
 # --- la regla que PROPONE erratas (el autor aprueba) ------------------------------------
@@ -295,12 +337,13 @@ def proponer_erratas(frecuencias: Counter, diccionario: set, frec=10, razon=10):
         por_fon[fonetica(w)].append(w)
     propuestas, descartes = {}, Counter()
     for r, fr in frecuencias.items():
-        op = [(0, -frecuencias[c], c) for c in por_fon.get(fonetica(r), [])
-              if c != r and frecuencias[c] >= razon * fr]
+        op = [(0, -frecuencias[c], c) for c in por_fon.get(fonetica(r), []) if c != r and frecuencias[c] >= razon * fr]
         if len(r) >= 7:
-            op += [(d, -frecuencias[c], c) for c in frecuentes
-                   if c != r and abs(len(c) - len(r)) <= 2 and frecuencias[c] >= razon * fr
-                   and (d := _damerau(r, c)) <= 2]
+            op += [
+                (d, -frecuencias[c], c)
+                for c in frecuentes
+                if c != r and abs(len(c) - len(r)) <= 2 and frecuencias[c] >= razon * fr and (d := _damerau(r, c)) <= 2
+            ]
         if not op:
             continue
         if len(r) < 5:

@@ -1,15 +1,21 @@
 """Capa 0 (D-040): una sola funcion de texto, igual al construir y al consultar."""
+
 from collections import Counter
 
 import numpy as np
 import pandas as pd
 
 from src.domain.base_referencia import BaseReferencia
-from src.domain.base_referencia import (_fusionar_capa0, _fusionar_erratas,
-                                                  _fusionar_genero)
-from src.domain.capa0 import (Capa0, compatibles, grado_numerico, limpiar,
-                                         proponer_erratas, quitar_grado_final,
-                                         quitar_letra_final)
+from src.domain.base_referencia import _fusionar_capa0, _fusionar_erratas, _fusionar_genero
+from src.domain.capa0 import (
+    Capa0,
+    compatibles,
+    grado_numerico,
+    limpiar,
+    proponer_erratas,
+    quitar_grado_final,
+    quitar_letra_final,
+)
 from src.domain.nivel import nivel_rubrica, seniority_lexica
 
 
@@ -22,14 +28,13 @@ def test_casero_no_se_corrige_aunque_haya_mil_cajero():
     # CASERO no llega ni a candidato (otra clave fonetica, y la distancia solo mira 7+
     # letras); el diccionario es la segunda barrera. CARIDAD -> CALIDAD si es candidato
     # (7 letras, distancia 1) y es la proteccion del diccionario la que lo para.
-    frec = Counter({"CAJERO": 1000, "CASERO": 3, "CAGERO": 2,
-                    "CALIDAD": 1000, "CARIDAD": 2, "CALIDDA": 1})
+    frec = Counter({"CAJERO": 1000, "CASERO": 3, "CAGERO": 2, "CALIDAD": 1000, "CARIDAD": 2, "CALIDDA": 1})
     diccionario = {"CAJERO", "CASERO", "CALIDAD", "CARIDAD"}
     propuestas, descartes = proponer_erratas(frec, diccionario)
     assert "CASERO" not in propuestas
     assert "CARIDAD" not in propuestas
     assert descartes["existe en el diccionario"] >= 1
-    assert propuestas.get("CAGERO") == "CAJERO"   # errata fonetica (G ante E suena J)
+    assert propuestas.get("CAGERO") == "CAJERO"  # errata fonetica (G ante E suena J)
     assert propuestas.get("CALIDDA") == "CALIDAD"
 
 
@@ -43,15 +48,14 @@ def test_una_abreviatura_antes_de_quitar_el_punto():
     c = Capa0(abreviaturas={"ASIST.": "ASISTENTE", "SUPERV.": "SUPERVISOR"})
     c.preparar(["ASISTENTE CONTABLE", "SUPERVISOR DE CALIDAD"])
     assert c.atomo("ASIST. CONTABLE") == "ASISTENTE CONTABLE"
-    assert c.atomo("SUPERV.DE CALIDAD") == "SUPERVISOR DE CALIDAD"   # punto pegado
+    assert c.atomo("SUPERV.DE CALIDAD") == "SUPERVISOR DE CALIDAD"  # punto pegado
 
 
 def test_un_plural():
-    c = Capa0().preparar(["ASESOR DE VENTA", "ASESOR DE VENTAS", "OPERADOR", "OPERADORES",
-                          "ANALISIS DE DATOS"])
+    c = Capa0().preparar(["ASESOR DE VENTA", "ASESOR DE VENTAS", "OPERADOR", "OPERADORES", "ANALISIS DE DATOS"])
     assert c.atomo("ASESOR DE VENTAS") == c.atomo("ASESOR DE VENTA")
     assert c.atomo("OPERADORES") == "OPERADOR"
-    assert c.atomo("ANALISIS DE DATOS").startswith("ANALISIS")      # -IS no se toca
+    assert c.atomo("ANALISIS DE DATOS").startswith("ANALISIS")  # -IS no se toca
 
 
 # --- el resto de la capa 0 ----------------------------------------------------------------
@@ -60,16 +64,15 @@ def test_codigo_inicial_y_puntuacion():
     assert limpiar("1. JEFE DE COMPRAS") == "JEFE DE COMPRAS"
     assert limpiar("3 LANCHERO") == "LANCHERO"
     assert limpiar("ASIST-CONTABLE") == "ASIST CONTABLE"
-    assert limpiar("123") == "123"                                  # no se borra todo
+    assert limpiar("123") == "123"  # no se borra todo
 
 
-def test_las_letras_se_fusionan_y_los_numeros_no():                 # D-041
+def test_las_letras_se_fusionan_y_los_numeros_no():  # D-041
     c = Capa0().preparar(["AYUDANTE", "AUXILIAR DE COCINA 2"])
-    assert c.atomo("AYUDANTE A") == c.atomo("AYUDANTE B") == c.atomo("AYUDANTE (C)") \
-        == "AYUDANTE"
+    assert c.atomo("AYUDANTE A") == c.atomo("AYUDANTE B") == c.atomo("AYUDANTE (C)") == "AYUDANTE"
     assert c.atomo("AUXILIAR DE COCINA 2") == "AUXILIAR DE COCINA 2"
     assert c.atomo("QUIMICO II") == "QUIMICO II"
-    assert quitar_letra_final("JEFE V") == "JEFE V"                     # romano, no letra
+    assert quitar_letra_final("JEFE V") == "JEFE V"  # romano, no letra
     assert quitar_letra_final("COORDINADOR M & R") == "COORDINADOR M & R"
     assert quitar_letra_final("CHOFER LICENCIA C") == "CHOFER LICENCIA C"
     assert quitar_letra_final("OPERARIO CATEGORIA B") == "OPERARIO"
@@ -80,8 +83,8 @@ def test_el_grado_numerico_esta_apagado_por_defecto_y_con_guardas_si_se_enciende
     assert quitar_grado_final("AUXILIAR DE COCINA 2") == "AUXILIAR DE COCINA"
     assert quitar_grado_final("QUIMICO II") == "QUIMICO"
     assert quitar_grado_final("OPERARIO CATEGORIA B") == "OPERARIO"
-    assert quitar_grado_final("COORDINADOR M & R") == "COORDINADOR M & R"   # sigla
-    assert quitar_grado_final("CHOFER LICENCIA C") == "CHOFER LICENCIA C"   # tipo
+    assert quitar_grado_final("COORDINADOR M & R") == "COORDINADOR M & R"  # sigla
+    assert quitar_grado_final("CHOFER LICENCIA C") == "CHOFER LICENCIA C"  # tipo
     assert quitar_grado_final("JEFE DE VENTAS") == "JEFE DE VENTAS"
     c = Capa0(grado=True).preparar(["AUXILIAR DE COCINA"])
     assert c.atomo("AUXILIAR DE COCINA 3") == "AUXILIAR DE COCINA"
@@ -92,14 +95,14 @@ def test_candado_de_grado():
     assert grado_numerico("AUXILIAR 2 DE CONTABILIDAD") == {2}
     assert grado_numerico("TECNICO2") == {2}
     assert grado_numerico("QUIMICO II") == {2}
-    assert grado_numerico("1. JEFE DE COMPRAS") == set()            # codigo de planilla
+    assert grado_numerico("1. JEFE DE COMPRAS") == set()  # codigo de planilla
     assert grado_numerico("JEFE DE I+D") == set()
-    assert grado_numerico("COORDINADOR ZONA 2") == set()            # lugar, no grado
+    assert grado_numerico("COORDINADOR ZONA 2") == set()  # lugar, no grado
     assert grado_numerico("EJECUTIVO ASISTENTE (OFC 1)") == set()
-    assert grado_numerico("ASISTENTE DE OFICINA 2") == {2}          # OFICINA no es guarda
+    assert grado_numerico("ASISTENTE DE OFICINA 2") == {2}  # OFICINA no es guarda
     assert not compatibles("AUXILIAR 1", "AUXILIAR 2")
     assert not compatibles("QUIMICO I", "QUIMICO II")
-    assert compatibles("AUXILIAR", "AUXILIAR 2")                    # sin numero no bloquea
+    assert compatibles("AUXILIAR", "AUXILIAR 2")  # sin numero no bloquea
     assert compatibles("AYUDANTE A", "AYUDANTE B")
 
 
@@ -110,8 +113,8 @@ def test_el_candado_bloquea_aunque_la_pasada_quiera_juntar():
     # un diccionario que se colara un numero daria el mismo atomo a los tres
     nuevo, k = _fusionar_capa0(["AUXILIAR"] * 3, grupo, grados=gnum)
     assert nuevo[0] != nuevo[1]
-    assert k == 1                                     # el sin numero se une a uno solo
-    nuevo, _ = _fusionar_capa0(["AUXILIAR"] * 3, grupo)          # sin candado, los tres
+    assert k == 1  # el sin numero se une a uno solo
+    nuevo, _ = _fusionar_capa0(["AUXILIAR"] * 3, grupo)  # sin candado, los tres
     assert len(set(nuevo)) == 1
     # genero: OPERARIA 2 y OPERARIO 3 son par de genero, pero el numero los separa
     celdas = ["OPERARIA 2", "OPERARIO 3"]
@@ -119,21 +122,20 @@ def test_el_candado_bloquea_aunque_la_pasada_quiera_juntar():
     niv = np.array([np.nan, np.nan])
     nuevo, pares = _fusionar_genero(celdas, np.arange(2), niv, {0: 5, 1: 5}, grados=gnum)
     assert nuevo[0] != nuevo[1] and not pares
-    nuevo, pares = _fusionar_genero(["OPERARIA 2", "OPERARIO 2"], np.arange(2), niv,
-                                    {0: 5, 1: 5}, grados=[{2}, {2}])
+    nuevo, pares = _fusionar_genero(["OPERARIA 2", "OPERARIO 2"], np.arange(2), niv, {0: 5, 1: 5}, grados=[{2}, {2}])
     assert nuevo[0] == nuevo[1]
     # errata: el raro no se absorbe en un comun con otro numero
     celdas = ["SUPERVISOR DE BODEGA 1", "SUPERVISOR DE BODEGA 2"]
-    nuevo, k = _fusionar_erratas(celdas, np.arange(2), niv, {0: 40, 1: 1},
-                                 grados=[grado_numerico(c) for c in celdas])
+    nuevo, k = _fusionar_erratas(celdas, np.arange(2), niv, {0: 40, 1: 1}, grados=[grado_numerico(c) for c in celdas])
     assert k == 0
 
 
 def test_la_errata_solo_se_aplica_si_el_titulo_corregido_existe():
     c = Capa0(erratas={"VENDEROR": "VENDEDOR"}).preparar(["VENDEDOR"])
     assert c.atomo("VENDEROR") == "VENDEDOR"
-    assert c.atomo("VENDEROR DE AUTOS") == "VENDEROR DE AUTO" or \
-        c.atomo("VENDEROR DE AUTOS").startswith("VENDEROR")         # destino inexistente
+    assert c.atomo("VENDEROR DE AUTOS") == "VENDEROR DE AUTO" or c.atomo("VENDEROR DE AUTOS").startswith(
+        "VENDEROR"
+    )  # destino inexistente
 
 
 def test_genero_por_palabra():
@@ -143,13 +145,13 @@ def test_genero_por_palabra():
 
 # --- el nivel de la rubrica (criterio C) ---------------------------------------------------
 def test_nivel_rubrica():
-    assert nivel_rubrica("ASISTENTE DE GERENTE") == 1         # tras DE no cuenta
-    assert nivel_rubrica("AUXILIAR TECNICO DE BODEGA") == 1   # TECNICO no abre el titulo
+    assert nivel_rubrica("ASISTENTE DE GERENTE") == 1  # tras DE no cuenta
+    assert nivel_rubrica("AUXILIAR TECNICO DE BODEGA") == 1  # TECNICO no abre el titulo
     assert nivel_rubrica("TECNICO ESPECIALISTA") == 2
     assert nivel_rubrica("ASSISTANT MANAGER") == 4
     assert nivel_rubrica("SUBJEFE DE ALMACEN") == 3
     assert nivel_rubrica("JEFA DE COMPRAS") == 4
-    assert nivel_rubrica("VENDEDOR") is None                  # sin nivel: no bloquea
+    assert nivel_rubrica("VENDEDOR") is None  # sin nivel: no bloquea
     assert seniority_lexica("ANALISTA SEMISENIOR") == 0.5
     assert seniority_lexica("ANALISTA SEMI SENIOR") == 0.5
 
@@ -160,10 +162,13 @@ def _base_con_capa0(capa0, umbral=None):
     filas += [(f"F{i}", "ASIST. CONTABLE", 1.05 + 0.01 * (i % 5)) for i in range(11)]
     filas += [(f"G{i}", "CHOFER", 0.7 + 0.01 * (i % 5)) for i in range(12)]
     marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
-    emb = {"ASISTENTE CONTABLE": np.array([1.0, 0.0]), "ASIST. CONTABLE": np.array([0.0, 1.0]),
-           "CHOFER": np.array([0.7, -0.7]), "ASIST CONTABLE": np.array([0.5, 0.5])}
-    return BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=umbral,
-                                    capa0=capa0), emb
+    emb = {
+        "ASISTENTE CONTABLE": np.array([1.0, 0.0]),
+        "ASIST. CONTABLE": np.array([0.0, 1.0]),
+        "CHOFER": np.array([0.7, -0.7]),
+        "ASIST CONTABLE": np.array([0.5, 0.5]),
+    }
+    return BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=umbral, capa0=capa0), emb
 
 
 def test_la_capa0_agrupa_al_construir_aunque_no_haya_fusion_por_coseno():
@@ -174,9 +179,8 @@ def test_la_capa0_agrupa_al_construir_aunque_no_haya_fusion_por_coseno():
 
 
 def test_la_consulta_usa_la_misma_capa0_que_la_construccion(tmp_path):
-    b, emb = _base_con_capa0(Capa0(abreviaturas={"ASIST": "ASISTENTE",
-                                                 "ASIST.": "ASISTENTE"}))
-    r = b.referenciar(["ASIST CONTABLE"], emb).iloc[0]       # no esta tal cual en la base
+    b, emb = _base_con_capa0(Capa0(abreviaturas={"ASIST": "ASISTENTE", "ASIST.": "ASISTENTE"}))
+    r = b.referenciar(["ASIST CONTABLE"], emb).iloc[0]  # no esta tal cual en la base
     assert r["base"] == "datos directos"
     assert r["cargo_base"] in ("ASISTENTE CONTABLE", "ASIST. CONTABLE")
     ruta = tmp_path / "b.npz"
@@ -202,53 +206,51 @@ def test_con_capa0_la_errata_no_absorbe_siglas_cortas():
     niv = np.full(4, np.nan)
     nuevo, k = _fusionar_erratas(celdas, grupo, niv, {0: 40, 2: 1, 3: 1}, palabra_min=4)
     assert k == 0 and len(set(nuevo.tolist())) == 3
-    nuevo, k = _fusionar_erratas(celdas, grupo, niv, {0: 40, 2: 1, 3: 1})   # sin la guarda
+    nuevo, k = _fusionar_erratas(celdas, grupo, niv, {0: 40, 2: 1, 3: 1})  # sin la guarda
     assert k >= 1
 
 
-def test_grupos_inyectados_reemplazan_la_agrupacion():                 # D-046
+def test_grupos_inyectados_reemplazan_la_agrupacion():  # D-046
     filas = [(f"E{i}", "CHOFER", 0.7 + 0.01 * (i % 5)) for i in range(12)]
     filas += [(f"F{i}", "CONDUCTOR", 0.72 + 0.01 * (i % 5)) for i in range(12)]
     filas += [(f"G{i}", "CAJERO", 0.6 + 0.01 * (i % 5)) for i in range(12)]
     marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
-    emb = {"CHOFER": np.array([1.0, 0.0]), "CONDUCTOR": np.array([0.0, 1.0]),
-           "CAJERO": np.array([0.7, -0.7])}
-    b = BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=None, capa0=Capa0(),
-                                 grupos={"CHOFER": 7, "CONDUCTOR": 7})
+    emb = {"CHOFER": np.array([1.0, 0.0]), "CONDUCTOR": np.array([0.0, 1.0]), "CAJERO": np.array([0.7, -0.7])}
+    b = BaseReferencia.construir(
+        marco, emb, _sbu, umbral_fusion=None, capa0=Capa0(), grupos={"CHOFER": 7, "CONDUCTOR": 7}
+    )
     assert b.grupo[b.idx["CHOFER"]] == b.grupo[b.idx["CONDUCTOR"]]
     assert b.grupo[b.idx["CAJERO"]] != b.grupo[b.idx["CHOFER"]]
 
 
-def test_sinonimos_por_grupo_simetricos_y_por_capa0(tmp_path):     # D-046/D-047
+def test_sinonimos_por_grupo_simetricos_y_por_capa0(tmp_path):  # D-046/D-047
     from src.domain import sinonimos
-    filas = [(f"E{i}", t, 0.7 + 0.01 * (i % 5)) for t in ("CHOFER", "CONDUCTOR", "CAJERO")
-             for i in range(12)]
+
+    filas = [(f"E{i}", t, 0.7 + 0.01 * (i % 5)) for t in ("CHOFER", "CONDUCTOR", "CAJERO") for i in range(12)]
     marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
-    emb = {"CHOFER": np.array([1.0, 0.0]), "CONDUCTOR": np.array([0.0, 1.0]),
-           "CAJERO": np.array([0.7, -0.7])}
+    emb = {"CHOFER": np.array([1.0, 0.0]), "CONDUCTOR": np.array([0.0, 1.0]), "CAJERO": np.array([0.7, -0.7])}
     b = BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=None, capa0=Capa0())
     d = tmp_path / "sinonimos_v9"
     d.mkdir()
-    (d / "sinonimos.csv").write_text("titulo_a,titulo_b\nCHOFER,CONDUCTOR\nCHOFER,NO EXISTE\n",
-                                     encoding="utf-8")
+    (d / "sinonimos.csv").write_text("titulo_a,titulo_b\nCHOFER,CONDUCTOR\nCHOFER,NO EXISTE\n", encoding="utf-8")
     pares = sinonimos.cargar_pares("v9", base=tmp_path)
     m = sinonimos.por_grupo(b, pares)
     gc, gd = b.grupo[b.idx["CHOFER"]], b.grupo[b.idx["CONDUCTOR"]]
-    assert m[gc] == {gd} and m[gd] == {gc}                 # simetrico; lo que no existe se ignora
-    assert sinonimos.grupo_de(b, "1. CHOFER.") == gc        # por la capa 0 (codigo y puntuacion)
-    assert b.grupo[b.idx["CHOFER"]] != b.grupo[b.idx["CONDUCTOR"]]   # la base no se fusiona
+    assert m[gc] == {gd} and m[gd] == {gc}  # simetrico; lo que no existe se ignora
+    assert sinonimos.grupo_de(b, "1. CHOFER.") == gc  # por la capa 0 (codigo y puntuacion)
+    assert b.grupo[b.idx["CHOFER"]] != b.grupo[b.idx["CONDUCTOR"]]  # la base no se fusiona
 
 
-def test_sinonimos_de_consulta_escrito_a_grupo(tmp_path):            # D-048
+def test_sinonimos_de_consulta_escrito_a_grupo(tmp_path):  # D-048
     from src.domain import sinonimos
+
     filas = [(f"E{i}", t, 0.7) for t in ("ODONTOLOGO", "CAJERO") for i in range(12)]
     marco = pd.DataFrame(filas, columns=["empresa_ruc", "cargo_norm", "y"])
     emb = {"ODONTOLOGO": np.array([1.0, 0.0]), "CAJERO": np.array([0.0, 1.0])}
     b = BaseReferencia.construir(marco, emb, _sbu, umbral_fusion=None, capa0=Capa0())
     d = tmp_path / "sinonimos_v9"
     d.mkdir()
-    (d / "consulta.csv").write_text("escrito,cargo_base\ndentista,ODONTOLOGO\nX,NO EXISTE\n",
-                                    encoding="utf-8")
+    (d / "consulta.csv").write_text("escrito,cargo_base\ndentista,ODONTOLOGO\nX,NO EXISTE\n", encoding="utf-8")
     m = sinonimos.de_consulta(b, sinonimos.cargar_consulta("v9", base=tmp_path))
     assert m == {sinonimos.clave(b, "DENTISTA"): b.grupo[b.idx["ODONTOLOGO"]]}
-    assert sinonimos.clave(b, "DENTISTA.") == sinonimos.clave(b, "DENTISTA")   # capa 0
+    assert sinonimos.clave(b, "DENTISTA.") == sinonimos.clave(b, "DENTISTA")  # capa 0

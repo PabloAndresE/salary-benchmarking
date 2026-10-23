@@ -55,6 +55,7 @@ puede predecir (tau = 0,29). Esto da el MERCADO, no la politica salarial de una 
 concreta. Dos personas identicas en empresas distintas cobran muy diferente y ningun
 metodo basado en el puesto arregla eso.
 """
+
 import re
 import warnings
 from collections import defaultdict
@@ -62,16 +63,29 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 
-from src.domain.estadistica import (_cuantil_por_grupo, componentes_varianza,
-                                     cuantiles_de_empresa, cuantiles_de_persona,
-                                     sigma2_por_celda,
-                                     tabla_votos, tau2_por_celda)
+from src.domain.estadistica import (
+    _cuantil_por_grupo,
+    componentes_varianza,
+    cuantiles_de_empresa,
+    cuantiles_de_persona,
+    sigma2_por_celda,
+    tabla_votos,
+    tau2_por_celda,
+)
 from src.domain.capa0 import grado_numerico
-from src.domain.nivel import (RANGOS_RUBRICA, clave_grado, efecto_nivel, mismo_salvo_grado, nivel_lexico,
-                    nivel_rubrica, seniority_lexica, tiene_grado)
+from src.domain.nivel import (
+    RANGOS_RUBRICA,
+    clave_grado,
+    efecto_nivel,
+    mismo_salvo_grado,
+    nivel_lexico,
+    nivel_rubrica,
+    seniority_lexica,
+    tiene_grado,
+)
 
 VECINOS = 25
-MIN_EMPRESAS = 3        # suelo de identificabilidad y confidencialidad (precedente QCEW)
+MIN_EMPRESAS = 3  # suelo de identificabilidad y confidencialidad (precedente QCEW)
 
 # EL SUELO DE EMPRESAS NO DICE NADA DE PERSONAS, y hace falta que lo diga.
 #
@@ -126,8 +140,8 @@ P_JUEZ = 0.5
 MIN_VECINOS_JUEZ = 3  # D-041: con capa 0, el dedazo va en una palabra de 4+ letras
 # D-049: el clasificador de nivel da su clase solo si es al menos asi de probable
 P_NIVEL_CLF = 0.5
-VECINOS_FUSION = 10     # candidatas a fusion; los cuasi-duplicados estan siempre arriba
-TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la toca
+VECINOS_FUSION = 10  # candidatas a fusion; los cuasi-duplicados estan siempre arriba
+TOPE_GRUPO = 60  # red de seguridad; medido, el enlace completo nunca la toca
 
 # SEGUNDA PASADA: LAS ERRATAS. Los embeddings NO ven las letras —codifican significado— y
 # por eso un dedazo se les escapa: `ASITENTE`/`ASISTENTE` puntua 0,92-0,94 y no llega al
@@ -156,9 +170,9 @@ TOPE_GRUPO = 60         # red de seguridad; medido, el enlace completo nunca la 
 # De ahi la regla: el lado raro con <=2 empresas y el comun con >=10. Es exactamente el
 # caso con valor —la gente del dedazo pasa de contestarse por analogia a tener datos
 # propios— y deja fuera la familia (b), que no gana nada.
-MIN_LARGO_ERRATA = 8    # bajo esto un caracter cambia el significado: `SUB`/`SUR`
-MAX_EMPRESAS_ERRATA = 2     # el lado raro: un dedazo no lo teclean tres empresas
-MIN_EMPRESAS_ABSORBE = 10   # el lado comun, mismo suelo que la banda empirica
+MIN_LARGO_ERRATA = 8  # bajo esto un caracter cambia el significado: `SUB`/`SUR`
+MAX_EMPRESAS_ERRATA = 2  # el lado raro: un dedazo no lo teclean tres empresas
+MIN_EMPRESAS_ABSORBE = 10  # el lado comun, mismo suelo que la banda empirica
 # Vueltas de absorcion. >1 para la errata DE una errata: `VENDEROA` viene de `VENDERORA`,
 # que viene de `VENDEDORA`. Ver `_fusionar_erratas` y D-031.
 PASADAS_ERRATA = 5
@@ -262,7 +276,7 @@ NOMBRE_NIVEL = {5: "clase", 4: "grupo", 3: "division", 1: "seccion"}
 # `AUXILIAR DE LIMPIEZA` que en `GERENTE GENERAL`. Se eligio despues de ver los datos,
 # asi que necesita su propia confirmacion antes de entrar.
 MIN_EMPRESAS_VEREDICTO = 30
-MIN_EMPRESAS_RUBRO = MIN_EMPRESAS_BANDA     # mismo suelo que la banda global
+MIN_EMPRESAS_RUBRO = MIN_EMPRESAS_BANDA  # mismo suelo que la banda global
 MIN_PERSONAS_RUBRO = MIN_PERSONAS
 _RUBRO_NULO = {"", "NAN", "NONE", "NA", "NULL"}
 
@@ -299,7 +313,7 @@ _RUBRO_NULO = {"", "NAN", "NONE", "NA", "NULL"}
 # D-086 (2026-10-12): cortes recalibrados con el error real (terciles de `incert_centro` en los votos apartados).
 # Antes 0,05 / 0,15, a mano: MEDIA y BAJA tenian el mismo error (32 % y 33 %). Ahora ALTA 15,6 %, MEDIA 29,7 %,
 # BAJA 36,2 %, sin solaparse.
-CORTE_ALTA = 0.043      # el centro se conoce a mejor que +/-4,3 %
+CORTE_ALTA = 0.043  # el centro se conoce a mejor que +/-4,3 %
 CORTE_MEDIA = 0.360
 
 
@@ -312,6 +326,7 @@ def ruta_base_mas_nueva(carpeta="demo", defecto="demo/base_referencia.npz") -> s
     La usan el servicio y la linea de comandos.
     """
     import pathlib as _pl
+
     d = _pl.Path(carpeta)
     if not d.is_dir():
         return defecto
@@ -351,8 +366,9 @@ def _lambda_semantica(m, W, vec, sim, m_todos=None, W_todos=None):
     i = np.repeat(np.arange(len(m)), vec.shape[1])
     j = vec.ravel()
     s = sim.ravel()
-    ok = (np.isfinite(m[i]) & np.isfinite(mt[j]) & (W[i] > 0) & (Wt[j] > 0)
-          & (s < 0.9999))                      # descarta la celda consigo misma
+    ok = (
+        np.isfinite(m[i]) & np.isfinite(mt[j]) & (W[i] > 0) & (Wt[j] > 0) & (s < 0.9999)
+    )  # descarta la celda consigo misma
     if ok.sum() < 100:
         return 1.0
     d2 = (m[i][ok] - mt[j][ok]) ** 2 - (1.0 / W[i][ok] + 1.0 / Wt[j][ok])
@@ -448,9 +464,17 @@ def _bandas_por_rubro(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave):
     la que se usa para pesar dentro del rubro. Reestimarlas con las 10-90 empresas del
     rubro daria ruido con nombre de parametro.
     """
-    vacio = (np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0),
-             np.zeros(0), np.zeros(0, np.int64), np.zeros(0, np.int64),
-             np.zeros((0, len(CUANTILES))), np.zeros((0, len(CUANTILES))), [])
+    vacio = (
+        np.zeros(0, np.int64),
+        np.zeros(0, np.int64),
+        np.zeros(0),
+        np.zeros(0),
+        np.zeros(0, np.int64),
+        np.zeros(0, np.int64),
+        np.zeros((0, len(CUANTILES))),
+        np.zeros((0, len(CUANTILES))),
+        [],
+    )
     if COL_RUBRO not in d.columns:
         return vacio
     x = d[[colg, COL_RUBRO, "empresa_ruc", "y"]].dropna(subset=["y"]).copy()
@@ -467,15 +491,12 @@ def _bandas_por_rubro(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave):
 
     # Respaldo y peso total. `W` es lo que hace que la confianza baje sola cuando el
     # rubro tiene menos empresas que el mercado entero: es el coste, hecho visible.
-    v = (x.groupby(["_cr", "empresa_ruc"], sort=False)["y"].size()
-          .rename("n").reset_index())
-    den = (t2.reindex(v["_cr"]).to_numpy(float)
-           + s2.reindex(v["_cr"]).to_numpy(float) / v["n"].to_numpy(float))
+    v = x.groupby(["_cr", "empresa_ruc"], sort=False)["y"].size().rename("n").reset_index()
+    den = t2.reindex(v["_cr"]).to_numpy(float) + s2.reindex(v["_cr"]).to_numpy(float) / v["n"].to_numpy(float)
     v["w"] = np.where(den > 0, 1.0 / np.where(den > 0, den, 1.0), 1.0)
     agg = v.groupby("_cr").agg(W=("w", "sum"), empresas=("empresa_ruc", "nunique"))
     agg["personas"] = x.groupby("_cr").size()
-    agg = agg[(agg["empresas"] >= MIN_EMPRESAS_RUBRO)
-              & (agg["personas"] >= MIN_PERSONAS_RUBRO)]
+    agg = agg[(agg["empresas"] >= MIN_EMPRESAS_RUBRO) & (agg["personas"] >= MIN_PERSONAS_RUBRO)]
     if agg.empty:
         return vacio
 
@@ -504,8 +525,11 @@ def _bandas_por_rubro(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave):
         if not np.isfinite(centro):
             continue
         banda = np.array([fila_q[q] for q in CUANTILES], dtype=float)
-        banda_p = (np.array([fila_p[q] for q in CUANTILES], dtype=float)
-                   if fila_p is not None else np.full(len(CUANTILES), np.nan))
+        banda_p = (
+            np.array([fila_p[q] for q in CUANTILES], dtype=float)
+            if fila_p is not None
+            else np.full(len(CUANTILES), np.nan)
+        )
         for i in etiquetas:
             cel.append(i)
             cod.append(pos_r[r])
@@ -517,14 +541,22 @@ def _bandas_por_rubro(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave):
             bp.append(banda_p)
     if not cel:
         return vacio
-    return (np.array(cel, dtype=np.int64), np.array(cod, dtype=np.int64),
-            np.array(m, dtype=float), np.array(W, dtype=float),
-            np.array(emp, dtype=np.int64), np.array(per, dtype=np.int64),
-            np.vstack(bq), np.vstack(bp), rubros)
+    return (
+        np.array(cel, dtype=np.int64),
+        np.array(cod, dtype=np.int64),
+        np.array(m, dtype=float),
+        np.array(W, dtype=float),
+        np.array(emp, dtype=np.int64),
+        np.array(per, dtype=np.int64),
+        np.vstack(bq),
+        np.vstack(bp),
+        rubros,
+    )
 
 
-def _ajuste_segmento(marco, col, celdas, niveles, tau2_c, sigma2_c,
-                     nivel_min=NIVEL_MIN_SEGMENTAR, min_emp=MIN_EMPRESAS_SEGMENTO):
+def _ajuste_segmento(
+    marco, col, celdas, niveles, tau2_c, sigma2_c, nivel_min=NIVEL_MIN_SEGMENTAR, min_emp=MIN_EMPRESAS_SEGMENTO
+):
     """Desplazamiento en log de cada (celda, segmento). Devuelve array celdas x SEGMENTOS.
 
     Es la diferencia entre la mediana ponderada de los votos de ESE segmento y la de
@@ -538,8 +570,7 @@ def _ajuste_segmento(marco, col, celdas, niveles, tau2_c, sigma2_c,
     fuera = np.zeros((len(celdas), len(SEGMENTOS)))
     if "segmento" not in marco.columns:
         return fuera
-    alto = {c for c, n in zip(celdas, niveles)
-            if np.isfinite(n) and int(n) >= nivel_min}
+    alto = {c for c, n in zip(celdas, niveles) if np.isfinite(n) and int(n) >= nivel_min}
     if not alto:
         return fuera
 
@@ -547,9 +578,11 @@ def _ajuste_segmento(marco, col, celdas, niveles, tau2_c, sigma2_c,
     d = d[[col, "empresa_ruc", "segmento", "y"]].dropna(subset=["y"])
     if d.empty:
         return fuera
-    v = (d.groupby([col, "empresa_ruc"], sort=False)
-          .agg(voto=("y", "median"), n=("y", "size"),
-               seg=("segmento", "first")).reset_index())
+    v = (
+        d.groupby([col, "empresa_ruc"], sort=False)
+        .agg(voto=("y", "median"), n=("y", "size"), seg=("segmento", "first"))
+        .reset_index()
+    )
     v["seg"] = v["seg"].map(_norm_segmento)
     c = v[col].astype(str).map(idx)
     t2 = np.asarray(tau2_c)[c.to_numpy()]
@@ -590,8 +623,7 @@ def _cols_sector(hallazgo):
     return {"sector_codigo": cod, "sector_nivel": niv, "sector_empresas": emp}
 
 
-def _bandas_multinivel(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave,
-                       niveles=NIVELES_RUBRO):
+def _bandas_multinivel(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave, niveles=NIVELES_RUBRO):
     """La misma tabla de `_bandas_por_rubro`, pero a VARIOS niveles de CIIU a la vez.
 
     POR QUE UNA SOLA TABLA Y NO CUATRO. El codigo lleva su nivel en la longitud —`G`,
@@ -618,18 +650,38 @@ def _bandas_multinivel(d, colg, clave_etiqueta, t2_por_clave, s2_por_clave,
         if len(t[0]) == 0:
             continue
         cel.append(t[0])
-        cod.append(np.asarray(t[1]) + len(rubros))     # los codigos se desplazan
-        m.append(t[2]); W.append(t[3]); emp.append(t[4]); per.append(t[5])
-        ban.append(t[6]); banp.append(t[7])
+        cod.append(np.asarray(t[1]) + len(rubros))  # los codigos se desplazan
+        m.append(t[2])
+        W.append(t[3])
+        emp.append(t[4])
+        per.append(t[5])
+        ban.append(t[6])
+        banp.append(t[7])
         rubros.extend(t[8])
         del dd
     if not cel:
-        return (np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0), np.zeros(0),
-                np.zeros(0, np.int64), np.zeros(0, np.int64),
-                np.zeros((0, len(CUANTILES))), np.zeros((0, len(CUANTILES))), [])
-    return (np.concatenate(cel), np.concatenate(cod), np.concatenate(m),
-            np.concatenate(W), np.concatenate(emp), np.concatenate(per),
-            np.vstack(ban), np.vstack(banp), rubros)
+        return (
+            np.zeros(0, np.int64),
+            np.zeros(0, np.int64),
+            np.zeros(0),
+            np.zeros(0),
+            np.zeros(0, np.int64),
+            np.zeros(0, np.int64),
+            np.zeros((0, len(CUANTILES))),
+            np.zeros((0, len(CUANTILES))),
+            [],
+        )
+    return (
+        np.concatenate(cel),
+        np.concatenate(cod),
+        np.concatenate(m),
+        np.concatenate(W),
+        np.concatenate(emp),
+        np.concatenate(per),
+        np.vstack(ban),
+        np.vstack(banp),
+        rubros,
+    )
 
 
 def _lambda_por_nivel(m, W, vec, sim, niveles, lam_global, minimo=200):
@@ -678,8 +730,7 @@ def _lambda_por_nivel(m, W, vec, sim, niveles, lam_global, minimo=200):
     i = np.repeat(np.arange(len(m)), vec.shape[1])
     j = vec.ravel()
     s = sim.ravel()
-    ok = (np.isfinite(m[i]) & np.isfinite(m[j]) & (W[i] > 0) & (W[j] > 0)
-          & (s < 0.9999))
+    ok = np.isfinite(m[i]) & np.isfinite(m[j]) & (W[i] > 0) & (W[j] > 0) & (s < 0.9999)
     if ok.sum() < minimo:
         return {}
     d2 = (m[i][ok] - m[j][ok]) ** 2 - (1.0 / W[i][ok] + 1.0 / W[j][ok])
@@ -700,11 +751,11 @@ def _lambda_por_nivel(m, W, vec, sim, niveles, lam_global, minimo=200):
     return out
 
 
-
 def _entrenar_clf_nivel(Z, niv, semilla=20261006):
     """D-049: regresion logistica embedding -> nivel (1-5), con las etiquetas que tienen nivel.
     Devuelve (pesos, sesgos, clases) para guardarlos en la base sin depender de sklearn al cargar."""
     from sklearn.linear_model import LogisticRegression
+
     ok = np.isfinite(niv)
     if ok.sum() < 100 or len(set(niv[ok].astype(int))) < 2:
         return None
@@ -712,18 +763,39 @@ def _entrenar_clf_nivel(Z, niv, semilla=20261006):
     m.fit(Z[ok], niv[ok].astype(int))
     return (m.coef_.astype(np.float32), m.intercept_.astype(np.float32), m.classes_.astype(np.int64))
 
+
 class BaseReferencia:
     """Construida una vez sobre el universo; se consulta por titulo."""
 
-    def __init__(self, celdas, m, W, emp, Z, tau2, sigma2, lam, sbu,
-                 nivel=None, efecto=None, grupo=None,
-                 tau2_c=None, sigma2_c=None, bandas=None, personas=None,
-                 bandas_per=None, lam_nivel=None, ajuste_seg=None, rubro=None,
-                 brecha_gen=None, padron=None):
+    def __init__(
+        self,
+        celdas,
+        m,
+        W,
+        emp,
+        Z,
+        tau2,
+        sigma2,
+        lam,
+        sbu,
+        nivel=None,
+        efecto=None,
+        grupo=None,
+        tau2_c=None,
+        sigma2_c=None,
+        bandas=None,
+        personas=None,
+        bandas_per=None,
+        lam_nivel=None,
+        ajuste_seg=None,
+        rubro=None,
+        brecha_gen=None,
+        padron=None,
+    ):
         self.celdas = list(celdas)
         self.idx = {c: i for i, c in enumerate(self.celdas)}
-        self.capa0 = None              # D-040; `construir` o `cargar` la ponen
-        self.grado_consulta = False    # D-037, apagado por defecto desde D-040
+        self.capa0 = None  # D-040; `construir` o `cargar` la ponen
+        self.grado_consulta = False  # D-037, apagado por defecto desde D-040
         # `m`, `W` y `emp` estan indexados por ETIQUETA pero contienen los valores de su
         # GRUPO de fusion: las grafias de un mismo puesto comparten estadisticos.
         self.m, self.W, self.emp = m, W, emp
@@ -733,8 +805,7 @@ class BaseReferencia:
         # PRODUCCION` quedan identicos siendo trabajos distintos. La jerarquia entra por
         # el AJUSTE de `nivel`, no por la representacion.
         self.Z = Z
-        self.grupo = (np.arange(len(self.celdas)) if grupo is None
-                      else np.asarray(grupo, dtype=np.int64))
+        self.grupo = np.arange(len(self.celdas)) if grupo is None else np.asarray(grupo, dtype=np.int64)
         # Al buscar vecinos hay que pedir de mas: los hermanos de grafia se descartan
         # despues (comparten celda, no son evidencia nueva) y sin este margen podrian
         # comerse los 25 sitios.
@@ -743,10 +814,8 @@ class BaseReferencia:
         # Componentes de varianza POR CELDA. Si faltan —bases guardadas antes de
         # `e3_varianza`— se cae al global y el comportamiento es el de entonces.
         n = len(self.celdas)
-        self.tau2_c = (np.full(n, float(tau2)) if tau2_c is None
-                       else np.asarray(tau2_c, dtype=float))
-        self.sigma2_c = (np.full(n, float(sigma2)) if sigma2_c is None
-                         else np.asarray(sigma2_c, dtype=float))
+        self.tau2_c = np.full(n, float(tau2)) if tau2_c is None else np.asarray(tau2_c, dtype=float)
+        self.sigma2_c = np.full(n, float(sigma2)) if sigma2_c is None else np.asarray(sigma2_c, dtype=float)
         # `bandas` son los cuantiles EMPIRICOS de los votos por empresa, en el orden de
         # `CUANTILES`. NaN donde la celda no llega a `MIN_EMPRESAS_BANDA`.
         # DOS BANDAS, DOS PREGUNTAS. `bandas` es la de EMPRESAS —"la mitad de las
@@ -755,45 +824,68 @@ class BaseReferencia:
         # que hay que poner al lado del sueldo de UNA PERSONA. Poner la de empresas hace
         # que la gente parezca mas rara de lo que es, y mas donde la banda es estrecha:
         # `AUXILIAR DE LIMPIEZA` es un 26% mas ancha en personas que en empresas.
-        self.bandas = (np.full((n, len(CUANTILES)), np.nan) if bandas is None
-                       else np.asarray(bandas, dtype=float))
-        self.bandas_per = (np.full((n, len(CUANTILES)), np.nan) if bandas_per is None
-                           else np.asarray(bandas_per, dtype=float))
+        self.bandas = np.full((n, len(CUANTILES)), np.nan) if bandas is None else np.asarray(bandas, dtype=float)
+        self.bandas_per = (
+            np.full((n, len(CUANTILES)), np.nan) if bandas_per is None else np.asarray(bandas_per, dtype=float)
+        )
         # `lambda` por escalon. Vacio en bases guardadas antes de D-021: ahi se cae al
         # global y el comportamiento es el de entonces.
         self.lam_nivel = dict(lam_nivel or {})
         # Desplazamiento de la referencia por tamano de empresa, solo en cargos altos.
         # Cero donde no aplica, asi que sumarlo siempre es inocuo. Ver `_ajuste_segmento`.
-        self.ajuste_seg = (np.zeros((n, len(SEGMENTOS))) if ajuste_seg is None
-                           else np.asarray(ajuste_seg, dtype=float))
+        self.ajuste_seg = np.zeros((n, len(SEGMENTOS))) if ajuste_seg is None else np.asarray(ajuste_seg, dtype=float)
         # BANDA POR RUBRO, dispersa. `self.rub` mapea (indice de celda, codigo de rubro)
         # a la fila de los arrays paralelos; lo que no esta en el diccionario cae al
         # global, que es el fallback POR CARGO. Las bases guardadas antes de esto no
         # traen nada y el comportamiento es el de entonces.
-        (self.rub_cel, self.rub_cod, self.rub_m, self.rub_W, self.rub_emp,
-         self.rub_per, self.rub_bandas, self.rub_bandas_per) = (
-            np.zeros(0, np.int64), np.zeros(0, np.int64), np.zeros(0), np.zeros(0),
-            np.zeros(0, np.int64), np.zeros(0, np.int64),
-            np.zeros((0, len(CUANTILES))), np.zeros((0, len(CUANTILES))))
+        (
+            self.rub_cel,
+            self.rub_cod,
+            self.rub_m,
+            self.rub_W,
+            self.rub_emp,
+            self.rub_per,
+            self.rub_bandas,
+            self.rub_bandas_per,
+        ) = (
+            np.zeros(0, np.int64),
+            np.zeros(0, np.int64),
+            np.zeros(0),
+            np.zeros(0),
+            np.zeros(0, np.int64),
+            np.zeros(0, np.int64),
+            np.zeros((0, len(CUANTILES))),
+            np.zeros((0, len(CUANTILES))),
+        )
         # Diferencia en log entre la grafia femenina y la masculina de la celda, para
         # las que la pasada de genero unio. NaN en el resto. NO es la brecha salarial
         # —son empleadores distintos y no hay controles—: es lo que habia entre las dos
         # grafias antes de juntarlas, guardado para que fusionar no lo borre.
-        self.brecha_gen = (np.full(n, np.nan) if brecha_gen is None
-                           else np.asarray(brecha_gen, dtype=float))
+        self.brecha_gen = np.full(n, np.nan) if brecha_gen is None else np.asarray(brecha_gen, dtype=float)
         self.rubros = []
         if rubro is not None:
-            (self.rub_cel, self.rub_cod, self.rub_m, self.rub_W, self.rub_emp,
-             self.rub_per, self.rub_bandas, self.rub_bandas_per, rr) = rubro
+            (
+                self.rub_cel,
+                self.rub_cod,
+                self.rub_m,
+                self.rub_W,
+                self.rub_emp,
+                self.rub_per,
+                self.rub_bandas,
+                self.rub_bandas_per,
+                rr,
+            ) = rubro
             self.rubros = list(rr)
-        self.rub = {(int(c), self.rubros[int(k)]): i
-                    for i, (c, k) in enumerate(zip(self.rub_cel, self.rub_cod))}
+        self.rub = {(int(c), self.rubros[int(k)]): i for i, (c, k) in enumerate(zip(self.rub_cel, self.rub_cod))}
         # PADRON: que empresas respaldan cada celda, con indices OPACOS —posiciones en
         # una lista de RUCs que no se guarda—. Permite contar uniones sin duplicar; no
         # identifica a nadie. Vacio en bases anteriores, y ahi el servicio da cotas.
-        (self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu) = (
-            np.zeros(1, np.int64), np.zeros(0, np.int32),
-            np.zeros(0, np.int64), np.zeros(0, dtype=object))
+        self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu = (
+            np.zeros(1, np.int64),
+            np.zeros(0, np.int32),
+            np.zeros(0, np.int64),
+            np.zeros(0, dtype=object),
+        )
         self.pad_fila = {}
         # `meta_ruc`: RUC -> (grupo CIIU, n_empleados). Va por RUC y sin ninguna
         # relacion con los indices del padron, que son una permutacion sembrada. Sirve
@@ -803,13 +895,11 @@ class BaseReferencia:
         # permite saber si el CLIENTE respalda la celda contra la que se le compara.
         self.pad_ruc = {}
         if padron is not None:
-            (self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu,
-             claves, self.meta_ruc, self.pad_ruc) = padron
+            self.pad_ptr, self.pad_idx, self.pad_tam, self.pad_ciiu, claves, self.meta_ruc, self.pad_ruc = padron
             # Las bases guardadas antes del segmento traen pares (ciiu, tam). Se
             # completan aca, en el borde, para que ningun consumidor tenga que
             # preguntarse de que largo es la tupla.
-            self.meta_ruc = {r: (tuple(v) + ("",))[:3] if len(v) < 3 else tuple(v)
-                             for r, v in self.meta_ruc.items()}
+            self.meta_ruc = {r: (tuple(v) + ("",))[:3] if len(v) < 3 else tuple(v) for r, v in self.meta_ruc.items()}
             self.pad_fila = {str(k): i for i, k in enumerate(claves)}
         # Inverso de `pad_fila`, para ir de fila del padron al grupo de fusion
         self._fila_grupo = {i: int(k) for k, i in self.pad_fila.items()}
@@ -817,16 +907,14 @@ class BaseReferencia:
         # Personas detras de cada celda (del GRUPO fusionado). No entra en ningun calculo
         # —el estimador cuenta empresas, no personas— pero es lo primero que pregunta
         # quien lee un informe: ".cuanta gente hay detras de este numero?".
-        self.personas = (np.zeros(n, dtype=np.int64) if personas is None
-                         else np.asarray(personas, dtype=np.int64))
+        self.personas = np.zeros(n, dtype=np.int64) if personas is None else np.asarray(personas, dtype=np.int64)
         # Suelo de personas, ademas del de empresas. Es atributo y no constante para poder
         # barrerlo en los experimentos sin reconstruir la base. Las bases guardadas antes
         # de `e3_varianza/11` no traen `personas` —quedan en cero— y ahi el suelo se apaga
         # solo, porque aplicarlo dejaria toda la base sin respuesta directa.
         self.min_personas = MIN_PERSONAS if self.personas.max(initial=0) > 0 else 0
         self.tau2, self.sigma2, self.lam, self.sbu = tau2, sigma2, lam, sbu
-        self.nivel = (np.full(len(self.celdas), np.nan) if nivel is None
-                      else np.asarray(nivel, dtype=float))
+        self.nivel = np.full(len(self.celdas), np.nan) if nivel is None else np.asarray(nivel, dtype=float)
         self.efecto = dict(efecto or {})
         # D-049: clasificador de nivel para los titulos que no estan en la base (la consulta):
         # (pesos, sesgos, clases) de una regresion logistica sobre el embedding, entrenada con
@@ -843,10 +931,24 @@ class BaseReferencia:
     # -- construccion ----------------------------------------------------------
 
     @classmethod
-    def construir(cls, marco, X_por_etiqueta, sbu, col="cargo_norm",
-                  umbral_fusion=UMBRAL_FUSION, erratas=True, mapa_erratas=None,
-                  genero=True, mapa_genero=None, grado=False, mapa_grado=None, capa0=None,
-                  scvs=None, grupos=None, niveles=None):
+    def construir(
+        cls,
+        marco,
+        X_por_etiqueta,
+        sbu,
+        col="cargo_norm",
+        umbral_fusion=UMBRAL_FUSION,
+        erratas=True,
+        mapa_erratas=None,
+        genero=True,
+        mapa_genero=None,
+        grado=False,
+        mapa_grado=None,
+        capa0=None,
+        scvs=None,
+        grupos=None,
+        niveles=None,
+    ):
         """`marco` es el universo evaluable; `X_por_etiqueta` un dict etiqueta -> vector.
 
         `grupos` (D-046) es un dict etiqueta -> id de grupo que REEMPLAZA la agrupacion final,
@@ -881,6 +983,7 @@ class BaseReferencia:
         raros pero hacia destinos al azar: si la mejora se reprodujera barajando, no
         vendria de la distancia de edicion sino del mero hecho de absorber.
         """
+
         def _stats(d, columna, por_celda=True):
             """(m, W, emp, claves, tau2, sigma2, t2_serie, s2_serie) de `columna`.
 
@@ -894,8 +997,7 @@ class BaseReferencia:
             t2c = None
             if por_celda:
                 t2c, _ = tau2_por_celda(d, columna, s2c, tau2_global=tau2)
-            votos = tabla_votos(d, columna, tau2=tau2, sigma2=sigma2, sigma2_celda=s2c,
-                                tau2_celda=t2c)
+            votos = tabla_votos(d, columna, tau2=tau2, sigma2=sigma2, sigma2_celda=s2c, tau2_celda=t2c)
             # Vectorizado. Un bucle por celda son 65.081 iteraciones de pandas y minutos
             # de espera; `_cuantil_por_grupo` lo hace de una pasada. Es el mismo error
             # que ya se corrigio dos veces en el paquete, asi que aqui se reutiliza.
@@ -906,24 +1008,33 @@ class BaseReferencia:
             vv = v["voto"].to_numpy(float)[o]
             ww = v["w"].to_numpy(float)[o]
             k = len(claves)
-            return (np.asarray(_cuantil_por_grupo(cod, vv, ww, k)),
-                    np.bincount(cod, weights=ww, minlength=k),
-                    np.bincount(cod, minlength=k).astype(int),
-                    list(claves), float(tau2), float(sigma2), t2c, s2c)
+            return (
+                np.asarray(_cuantil_por_grupo(cod, vv, ww, k)),
+                np.bincount(cod, weights=ww, minlength=k),
+                np.bincount(cod, minlength=k).astype(int),
+                list(claves),
+                float(tau2),
+                float(sigma2),
+                t2c,
+                s2c,
+            )
 
         celdas = sorted(set(marco[col].astype(str)))
         Z = np.vstack([X_por_etiqueta[c] for c in celdas]).astype(float)
         Z /= np.linalg.norm(Z, axis=1, keepdims=True)
-        niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan
-                        for c in celdas], dtype=float)
+        niv = np.array([nivel_lexico(c) if nivel_lexico(c) else np.nan for c in celdas], dtype=float)
         # D-049: `niveles` (etiqueta -> nivel 1-5 de Qwen; 0 = no es un cargo) reemplaza al lexico
         # en el ajuste por nivel, `lambda` por nivel y el segmento. Los candados siguen con la
         # tabla (`niv_c`). Las etiquetas sin nivel de Qwen conservan el lexico.
         clf_nivel = None
         if niveles is not None:
-            niv = np.array([float(niveles[c]) if niveles.get(c, 0) >= 1 else
-                            (np.nan if c in niveles else n_)
-                            for c, n_ in zip(celdas, niv)], dtype=float)
+            niv = np.array(
+                [
+                    float(niveles[c]) if niveles.get(c, 0) >= 1 else (np.nan if c in niveles else n_)
+                    for c, n_ in zip(celdas, niv)
+                ],
+                dtype=float,
+            )
             clf_nivel = _entrenar_clf_nivel(Z, niv)
         n = len(celdas)
         # D-040: con capa 0, el CANDADO de las fusiones usa el nivel de la rubrica (criterio
@@ -932,8 +1043,7 @@ class BaseReferencia:
         if capa0 is not None:
             capa0.preparar(celdas)
             atomos = [capa0.atomo(c) for c in celdas]
-            niv_c = np.array([nivel_rubrica(c) if nivel_rubrica(c) else np.nan
-                              for c in celdas], dtype=float)
+            niv_c = np.array([nivel_rubrica(c) if nivel_rubrica(c) else np.nan for c in celdas], dtype=float)
             # CANDADO DE GRADO (D-041): numero de grado distinto, nunca el mismo grupo.
             gnum = [grado_numerico(c) for c in celdas]
         else:
@@ -955,15 +1065,12 @@ class BaseReferencia:
         mm = np.where(ix0 >= 0, m0[np.maximum(ix0, 0)], np.nan)
         WW = np.where(ix0 >= 0, W0[np.maximum(ix0, 0)], 0.0)
         rng = np.random.default_rng(20260805)
-        muestra = (rng.choice(n, 3000, replace=False) if n > 3000 else np.arange(n))
-        vec_s, sim_s = _vecinos(Z[muestra], Z, min(VECINOS, n - 1) if n > 1 else 1,
-                                excluir_propio=False)
-        lam = _lambda_semantica(mm[muestra], WW[muestra], vec_s, sim_s,
-                                m_todos=mm, W_todos=WW)
+        muestra = rng.choice(n, 3000, replace=False) if n > 3000 else np.arange(n)
+        vec_s, sim_s = _vecinos(Z[muestra], Z, min(VECINOS, n - 1) if n > 1 else 1, excluir_propio=False)
+        lam = _lambda_semantica(mm[muestra], WW[muestra], vec_s, sim_s, m_todos=mm, W_todos=WW)
         # ...y por escalon, que es donde de verdad cambia. Sobre TODAS las celdas: la
         # muestra de 3.000 basta para un escalar pero no para cinco.
-        vec_n, sim_n = _vecinos(Z, Z, min(VECINOS, n - 1) if n > 1 else 1,
-                                excluir_propio=True)
+        vec_n, sim_n = _vecinos(Z, Z, min(VECINOS, n - 1) if n > 1 else 1, excluir_propio=True)
         lam_nivel = _lambda_por_nivel(mm, WW, vec_n, sim_n, niv, lam)
 
         # Los estadisticos SI salen del grupo fusionado: las grafias de un mismo puesto
@@ -973,8 +1080,7 @@ class BaseReferencia:
         # escalones --un `SUPERVISOR DE CALIDAD SR` sigue siendo supervisor-- asi que
         # no entran en `RANGOS` ni mueven el nivel. Solo impiden la fusion.
         sen = np.array([seniority_lexica(c) for c in celdas])
-        grupo = (_fusionar(Z, niv_c, umbral_fusion, senior=sen, grados=gnum)
-                 if umbral_fusion else np.arange(n))
+        grupo = _fusionar(Z, niv_c, umbral_fusion, senior=sen, grados=gnum) if umbral_fusion else np.arange(n)
         brecha_gen = np.full(n, np.nan)
         if capa0 is not None:
             # CAPA 0 (D-040): mismo atomo, mismo grupo. Va primero entre las pasadas de
@@ -987,31 +1093,31 @@ class BaseReferencia:
             # sabe DESPUES de la fusion semantica. Se cuenta aqui con un groupby barato,
             # antes de los estadisticos, para no calcularlos dos veces.
             if mapa_erratas is not None:
-                grupo = np.array([mapa_erratas.get(int(g), int(g)) for g in grupo],
-                                 dtype=np.int64)
+                grupo = np.array([mapa_erratas.get(int(g), int(g)) for g in grupo], dtype=np.int64)
                 print(f"fusion por errata: {len(mapa_erratas):,} absorciones INYECTADAS")
             elif erratas:
                 g0 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
-                emp_g0 = (marco.assign(_g=g0).groupby("_g")["empresa_ruc"]
-                          .nunique().to_dict())
+                emp_g0 = marco.assign(_g=g0).groupby("_g")["empresa_ruc"].nunique().to_dict()
                 grupo, n_err = _fusionar_erratas(
-                    celdas, grupo, niv_c, emp_g0, grados=gnum,
-                    palabra_min=PALABRA_MIN_ERRATA if capa0 is not None else 0)
+                    celdas,
+                    grupo,
+                    niv_c,
+                    emp_g0,
+                    grados=gnum,
+                    palabra_min=PALABRA_MIN_ERRATA if capa0 is not None else 0,
+                )
                 print(f"fusion por errata: {n_err:,} grupos absorbidos")
             if mapa_genero is not None:
                 antes_gen = grupo.copy()
-                grupo = np.array([mapa_genero.get(int(g), int(g)) for g in grupo],
-                                 dtype=np.int64)
+                grupo = np.array([mapa_genero.get(int(g), int(g)) for g in grupo], dtype=np.int64)
                 print(f"fusion por genero: {len(mapa_genero):,} uniones INYECTADAS")
             elif genero:
                 # Recuento fresco: la pasada de erratas acaba de mover grupos y el
                 # superviviente de cada par de genero se elige por numero de empresas.
                 g1 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
-                emp_g1 = (marco.assign(_g=g1).groupby("_g")["empresa_ruc"]
-                          .nunique().to_dict())
+                emp_g1 = marco.assign(_g=g1).groupby("_g")["empresa_ruc"].nunique().to_dict()
                 antes_gen = grupo.copy()
-                grupo, fem_masc = _fusionar_genero(celdas, grupo, niv_c, emp_g1,
-                                                   grados=gnum)
+                grupo, fem_masc = _fusionar_genero(celdas, grupo, niv_c, emp_g1, grados=gnum)
                 print(f"fusion por genero: {len(fem_masc):,} pares juntados")
                 # LA BRECHA NO DESAPARECE CON LA FUSION, SE HACE VISIBLE. Fusionar da una
                 # referencia justa, pero si el numero se limita a promediar las dos
@@ -1023,28 +1129,28 @@ class BaseReferencia:
                 # escriben `ENFERMERA` no son las que escriben `ENFERMERO`, y aqui no hay
                 # control por empresa, sector ni antiguedad. NO es la brecha salarial:
                 # esa es la descomposicion Oaxaca de D-011, que usa la columna `sexo`.
-                brecha_gen = _brecha_por_grafia(marco, col, celdas,
-                                                antes_gen, fem_masc, grupo)
+                brecha_gen = _brecha_por_grafia(marco, col, celdas, antes_gen, fem_masc, grupo)
             # CUARTA PASADA: EL GRADO (D-037). Despues de las otras tres, con recuento
             # fresco, porque el superviviente se elige por numero de empresas.
             if mapa_grado is not None:
-                grupo = np.array([mapa_grado.get(int(g), int(g)) for g in grupo],
-                                 dtype=np.int64)
+                grupo = np.array([mapa_grado.get(int(g), int(g)) for g in grupo], dtype=np.int64)
                 print(f"fusion por grado: {len(mapa_grado):,} uniones INYECTADAS")
             elif grado:
                 g2 = marco[col].astype(str).map(dict(zip(celdas, grupo))).astype("int64")
-                emp_g2 = (marco.assign(_g=g2).groupby("_g")["empresa_ruc"]
-                          .nunique().to_dict())
+                emp_g2 = marco.assign(_g=g2).groupby("_g")["empresa_ruc"].nunique().to_dict()
                 grupo, n_gra = _fusionar_grado(celdas, grupo, niv_c, emp_g2)
                 print(f"fusion por grado: {n_gra:,} grupos unidos")
 
             if grupos is not None:
                 # los ids externos y los internos no pueden chocar: los internos se desplazan
-                fuera = 10 ** 9
-                grupo = np.array([int(grupos[c]) if c in grupos else fuera + int(g)
-                                  for c, g in zip(celdas, grupo)], dtype=np.int64)
-                print(f"grupos inyectados: {sum(c in grupos for c in celdas):,} etiquetas, "
-                      f"{len(set(grupo.tolist())):,} grupos")
+                fuera = 10**9
+                grupo = np.array(
+                    [int(grupos[c]) if c in grupos else fuera + int(g) for c, g in zip(celdas, grupo)], dtype=np.int64
+                )
+                print(
+                    f"grupos inyectados: {sum(c in grupos for c in celdas):,} etiquetas, "
+                    f"{len(set(grupo.tolist())):,} grupos"
+                )
             g_por_etiqueta = dict(zip(celdas, grupo))
             d = marco.assign(_g=marco[col].astype(str).map(g_por_etiqueta).astype("int64"))
             m_g, W_g, emp_g, claves, tau2, sigma2, t2_serie, s2_serie = _stats(d, "_g")
@@ -1069,8 +1175,7 @@ class BaseReferencia:
         qp = cuantiles_de_persona(d, colg, t2_serie, s2_serie, CUANTILES)
 
         def _expandir(serie, defecto):
-            v = pd.Series(serie).reindex(
-                pd.Index(grupo) if fusiona else pd.Index(celdas)).to_numpy(float)
+            v = pd.Series(serie).reindex(pd.Index(grupo) if fusiona else pd.Index(celdas)).to_numpy(float)
             return np.where(np.isfinite(v), v, defecto)
 
         tau2_c = _expandir(t2_serie, tau2)
@@ -1085,15 +1190,13 @@ class BaseReferencia:
 
         # personas por GRUPO, no por etiqueta: las grafias de un puesto suman juntas
         pg = d.groupby(colg).size()
-        personas = pd.Series(pg).reindex(
-            pd.Index(grupo) if fusiona else pd.Index(celdas)
-        ).fillna(0).to_numpy(dtype=np.int64)
+        personas = (
+            pd.Series(pg).reindex(pd.Index(grupo) if fusiona else pd.Index(celdas)).fillna(0).to_numpy(dtype=np.int64)
+        )
 
         # Padron de empresas por celda, para poder contar uniones sin duplicar.
-        (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves,
-         meta_ruc, pad_ruc) = _padron(d, colg, celdas, grupo, scvs)
-        print(f"padron: {len(pad_idx):,} pares (celda, empresa) sobre "
-              f"{len(pad_tam):,} empresas")
+        pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves, meta_ruc, pad_ruc = _padron(d, colg, celdas, grupo, scvs)
+        print(f"padron: {len(pad_idx):,} pares (celda, empresa) sobre " f"{len(pad_tam):,} empresas")
 
         ajuste_seg = _ajuste_segmento(marco, col, celdas, niv, tau2_c, sigma2_c)
 
@@ -1106,17 +1209,38 @@ class BaseReferencia:
         t2_cl = t2_cl[~t2_cl.index.duplicated()]
         s2_cl = s2_cl[~s2_cl.index.duplicated()]
         rubro = _bandas_multinivel(d, colg, clave_et, t2_cl, s2_cl)
-        print(f"banda por rubro: {len(rubro[0]):,} pares (celda, rubro) sobre "
-              f"{len(rubro[8])} rubros de {len(NIVELES_RUBRO)} niveles")
+        print(
+            f"banda por rubro: {len(rubro[0]):,} pares (celda, rubro) sobre "
+            f"{len(rubro[8])} rubros de {len(NIVELES_RUBRO)} niveles"
+        )
 
         ef = efecto_nivel(marco, col=col)
-        base = cls(celdas, m, W, emp, Z, tau2, sigma2, lam, sbu, niv, ef, grupo,
-                   tau2_c, sigma2_c, bandas, personas, bandas_per, lam_nivel,
-                   ajuste_seg, rubro, brecha_gen,
-                   (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves,
-                    meta_ruc, pad_ruc))
+        base = cls(
+            celdas,
+            m,
+            W,
+            emp,
+            Z,
+            tau2,
+            sigma2,
+            lam,
+            sbu,
+            niv,
+            ef,
+            grupo,
+            tau2_c,
+            sigma2_c,
+            bandas,
+            personas,
+            bandas_per,
+            lam_nivel,
+            ajuste_seg,
+            rubro,
+            brecha_gen,
+            (pad_ptr, pad_idx, pad_tam, pad_ciiu, pad_claves, meta_ruc, pad_ruc),
+        )
         base.capa0 = capa0
-        base.grado_consulta = bool(grado)      # D-037: la consulta por grado, si se encendio
+        base.grado_consulta = bool(grado)  # D-037: la consulta por grado, si se encendio
         base.clf_nivel = clf_nivel
         return base
 
@@ -1132,7 +1256,7 @@ class BaseReferencia:
         f = self.pad_fila.get(str(int(self.grupo[i_celda])))
         if f is None:
             return np.zeros(0, dtype=np.int32)
-        return self.pad_idx[self.pad_ptr[f]:self.pad_ptr[f + 1]]
+        return self.pad_idx[self.pad_ptr[f] : self.pad_ptr[f + 1]]
 
     def _por_capa0(self, titulo):
         """La celda de la base con el mismo ATOMO que `titulo` (D-040), o None. Entre varias,
@@ -1146,8 +1270,7 @@ class BaseReferencia:
         cands = self._idx_atomo.get(atomo, ())
         # `emp` es del GRUPO: entre celdas del mismo grupo empata. Desempata la grafia que ya
         # es el atomo (`AYUDANTE DE BODEGA`, no `ADYUDANTE DE BODEGA`), y luego la mas corta.
-        return max(cands, key=lambda i: (self.emp[i], self.celdas[i] == atomo,
-                                         -len(self.celdas[i]))) if cands else None
+        return max(cands, key=lambda i: (self.emp[i], self.celdas[i] == atomo, -len(self.celdas[i]))) if cands else None
 
     def _asignar_con_juez(self, unicos, vec, sim, niv_consulta=None):
         """D-048: titulo nuevo -> (celda del grupo elegido, P) cuando el juez lo reconoce.
@@ -1160,6 +1283,7 @@ class BaseReferencia:
         candidato AL AZAR en vez del mejor, cuando el mejor llega a `P_JUEZ`.
         """
         from src.domain.capa0 import compatibles
+
         if niv_consulta is not None and getattr(self, "candado_nivel_placebo", False):
             # D-052, solo para medir: el candado con niveles de la consulta permutados (el ajuste
             # por nivel de la analogia sigue con los suyos)
@@ -1170,7 +1294,7 @@ class BaseReferencia:
                 continue
             vistos, cands = set(), []
             for j, s_ in zip(vec[k], sim[k]):
-                if s_ < getattr(self, "cos_juez", COS_JUEZ):      # D-057: otro modelo, otro umbral
+                if s_ < getattr(self, "cos_juez", COS_JUEZ):  # D-057: otro modelo, otro umbral
                     break
                 g = int(self.grupo[j])
                 if g in vistos:
@@ -1178,15 +1302,14 @@ class BaseReferencia:
                 vistos.add(g)
                 c = str(self.celdas[j])
                 if getattr(self, "candado_seguridad", None) and not _sin_falso(self, unicos[k], c):
-                    continue                                # D-089: SEGURO no es SEGURIDAD
+                    continue  # D-089: SEGURO no es SEGURIDAD
                 if getattr(self, "candado_nivel", False) and niv_consulta is not None:
                     # D-052: el nivel del clasificador para el titulo y el del grupo (Qwen)
                     na = niv_consulta[k]
                     nb = self.nivel[j] if np.isfinite(self.nivel[j]) else None
                 else:
                     na, nb = nivel_rubrica(t), nivel_rubrica(c)
-                if ((na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c)
-                        or not compatibles(t, c)):
+                if (na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c) or not compatibles(t, c):
                     continue
                 cands.append(int(j))
                 if len(cands) == N_CAND_JUEZ:
@@ -1215,6 +1338,7 @@ class BaseReferencia:
         `idioma_placebo` (solo para medir) cambia cada destino por el de otro titulo resuelto."""
         from src.domain.capa0 import compatibles
         from src.domain.idioma import es_ingles
+
         tr = getattr(self, "traductor", None)
         if tr is None:
             return {}
@@ -1249,10 +1373,13 @@ class BaseReferencia:
             c = str(self.celdas[v[0]])
             na, nb = nivel_rubrica(self._titulo_para_candado(t)), nivel_rubrica(c)
             if na is None and getattr(self, "head_jefe", False) and str(t).upper().startswith("HEAD "):
-                na = 4                                      # D-087: HEAD es jefatura
-            if ((na and nb and na != nb) or seniority_lexica(t) != seniority_lexica(c)
-                    or not compatibles(t, c)
-                    or (getattr(self, "candado_seguridad", None) and not _sin_falso(self, v[3], c))):
+                na = 4  # D-087: HEAD es jefatura
+            if (
+                (na and nb and na != nb)
+                or seniority_lexica(t) != seniority_lexica(c)
+                or not compatibles(t, c)
+                or (getattr(self, "candado_seguridad", None) and not _sin_falso(self, v[3], c))
+            ):
                 continue
             ok[t] = v
         if getattr(self, "idioma_placebo", False) and len(ok) > 1:
@@ -1266,8 +1393,14 @@ class BaseReferencia:
         en el. `placebo` (solo para medir): las familias se permutan entre equivalentes. Guarda y devuelve un
         resumen."""
         from src.domain.idioma import es_ingles
-        ing = [c for c in self.celdas if es_ingles(c) and self.emp[self.idx[c]] >= MIN_EMPRESAS
-               and self.personas[self.idx[c]] >= self.min_personas]
+
+        ing = [
+            c
+            for c in self.celdas
+            if es_ingles(c)
+            and self.emp[self.idx[c]] >= MIN_EMPRESAS
+            and self.personas[self.idx[c]] >= self.min_personas
+        ]
         r = self.resolver_idioma(ing, X_por_etiqueta)
         fam = {}
         for t, v in r.items():
@@ -1278,8 +1411,11 @@ class BaseReferencia:
             orden = np.random.default_rng(semilla).permutation(len(ks))
             fam = {k: vals[i] for k, i in zip(ks, orden)}
         self.familia_ingles = fam
-        return {"equivalentes": len(fam), "con_2_o_mas": sum(len(x) >= 2 for x in fam.values()),
-                "titulos": sum(len(x) for x in fam.values())}
+        return {
+            "equivalentes": len(fam),
+            "con_2_o_mas": sum(len(x) >= 2 for x in fam.values()),
+            "titulos": sum(len(x) for x in fam.values()),
+        }
 
     def _p_no_cargo(self, z):
         """D-075: P(no es un cargo) del clasificador sobre el embedding normalizado."""
@@ -1294,21 +1430,26 @@ class BaseReferencia:
         if getattr(self, "_palabras_cargo_", None) is None:
             import collections
             from src.domain.idioma import PALABRAS_EN
+
             cab, pal = collections.Counter(), collections.Counter()
             for c in self.celdas:
                 ws = re.findall(r"[A-Z]+", str(c))
                 if ws:
                     cab[ws[0]] += 1
                     pal.update(set(ws))
-            self._palabras_cargo_ = ({w for w, n in cab.items() if n >= FILTRO_CABEZA}
-                                     | {w for w, n in pal.items() if n >= FILTRO_PALABRA}
-                                     | set(RANGOS_RUBRICA) | set(PALABRAS_EN)) - CONECTORES_FILTRO
+            self._palabras_cargo_ = (
+                {w for w, n in cab.items() if n >= FILTRO_CABEZA}
+                | {w for w, n in pal.items() if n >= FILTRO_PALABRA}
+                | set(RANGOS_RUBRICA)
+                | set(PALABRAS_EN)
+            ) - CONECTORES_FILTRO
         return any(w in self._palabras_cargo_ for w in re.findall(r"[A-Z]+", str(t).upper()))
 
     def _corrector(self):
         """D-068 (a): el corrector de tipeo con el vocabulario de la base (se arma la primera vez)."""
         if getattr(self, "_corrector_", None) is None:
             from src.domain.tipeo import Corrector
+
             self._corrector_ = Corrector([str(c) for c in self.celdas], self.personas, RANGOS_RUBRICA)
         return self._corrector_
 
@@ -1320,11 +1461,13 @@ class BaseReferencia:
         tr = getattr(self, "traductor", None)
         if tr is not None and getattr(tr, "invertir", False):
             from src.domain.idioma import invertir_rangos
-            t = invertir_rangos(t)                    # D-091: el candado lee el titulo con los rangos invertidos
+
+            t = invertir_rangos(t)  # D-091: el candado lee el titulo con los rangos invertidos
         activo = getattr(self, "idioma_por_traduccion", False) or getattr(self, "candado_glosario", False)
         if not activo or tr is None or not getattr(tr, "glosario", None):
             return t
         from src.domain.idioma import aplicar_glosario
+
         if getattr(self, "idioma_por_traduccion", False):
             glos = tr.glosario
         else:
@@ -1340,10 +1483,14 @@ class BaseReferencia:
         vecinos, nivel de la consulta, juez y seniority. `idioma_por_traduccion_placebo` (solo para medir) le da a
         cada titulo en ingles la traduccion de OTRO."""
         tr = getattr(self, "traductor", None)
-        if (not getattr(self, "idioma_por_traduccion", False) or tr is None
-                or getattr(self, "idioma_sueldo", False) != "siempre"):
+        if (
+            not getattr(self, "idioma_por_traduccion", False)
+            or tr is None
+            or getattr(self, "idioma_sueldo", False) != "siempre"
+        ):
             return list(unicos)
         from src.domain.idioma import es_ingles
+
         ing = [t for t in unicos if es_ingles(t)]
         trad = tr.traducir(ing) if ing else {}
         par = {t: trad[t] for t in ing if trad.get(t) and trad[t] != t and trad[t] in X_por_etiqueta}
@@ -1356,10 +1503,16 @@ class BaseReferencia:
         """D-092: la prima de los cargos de direccion en ingles, (mediana, (1,4826 MAD)^2) de m(ingles) -
         m(equivalente) en los pares de direccion de la base con datos directos. Guarda `self.prima_direccion`."""
         from src.domain.idioma import es_direccion
+
         ing = [c for c in self.celdas if es_direccion(c) and self.emp[self.idx[c]] >= MIN_EMPRESAS]
         r = self.resolver_idioma(ing, X_por_etiqueta)
-        d = np.array([float(self.m[self.idx[t]] - self.m[v[0]]) for t, v in r.items()
-                      if self.grupo[self.idx[t]] != self.grupo[v[0]] and self.emp[v[0]] >= MIN_EMPRESAS])
+        d = np.array(
+            [
+                float(self.m[self.idx[t]] - self.m[v[0]])
+                for t, v in r.items()
+                if self.grupo[self.idx[t]] != self.grupo[v[0]] and self.emp[v[0]] >= MIN_EMPRESAS
+            ]
+        )
         if not len(d):
             self.prima_direccion = None
             return {}
@@ -1373,14 +1526,16 @@ class BaseReferencia:
         Mediana por nivel (>= `min_pares`) y global; varianza `(1,4826 MAD)^2`. Guarda y devuelve
         `self.idioma_prima` = {nivel o "global": (pi, var)}."""
         from src.domain.idioma import es_ingles
+
         ing = [c for c in self.celdas if es_ingles(c) and self.emp[self.idx[c]] >= MIN_EMPRESAS]
         r = self.resolver_idioma(ing, X_por_etiqueta)
         filas = []
         for t, v in r.items():
             i, j = self.idx[t], v[0]
             if self.grupo[i] != self.grupo[j] and self.emp[j] >= MIN_EMPRESAS:
-                filas.append((self.nivel[i], float(self.m[i] - self.m[j]),
-                              float(1.0 / self.W[i] + 1.0 / self.W[j])))      # D-085: ruido de medicion del par
+                filas.append(
+                    (self.nivel[i], float(self.m[i] - self.m[j]), float(1.0 / self.W[i] + 1.0 / self.W[j]))
+                )  # D-085: ruido de medicion del par
         if not filas:
             self.idioma_prima = None
             return {}
@@ -1393,6 +1548,7 @@ class BaseReferencia:
                 # D-085: sin el ruido de medir los dos grupos, que no es incertidumbre de la prima
                 var = max(0.0, var - float(np.median(ruido)))
             return med, var
+
         out = {"global": est(d[:, 1], d[:, 2]), "pares": len(d)}
         for lv in range(1, 6):
             x = d[d[:, 0] == lv, 1]
@@ -1400,8 +1556,7 @@ class BaseReferencia:
                 # D-067: la prima del nivel encogida hacia la global con `encoger` pares de peso
                 pi_l, var_l = est(x, d[d[:, 0] == lv, 2])
                 w = len(x) / (len(x) + float(encoger))
-                out[lv] = (w * pi_l + (1 - w) * out["global"][0],
-                           var_l if len(x) >= min_pares else out["global"][1])
+                out[lv] = (w * pi_l + (1 - w) * out["global"][0], var_l if len(x) >= min_pares else out["global"][1])
             elif len(x) >= min_pares:
                 out[lv] = est(x, d[d[:, 0] == lv, 2])
         self.idioma_prima = {k: v for k, v in out.items() if k != "pares"}
@@ -1410,6 +1565,7 @@ class BaseReferencia:
     def traducciones_a_embeber(self, titulos):
         """Las traducciones de los titulos en ingles, para embeberlas antes de `referenciar`."""
         from src.domain.idioma import es_ingles
+
         tr = getattr(self, "traductor", None)
         if tr is None:
             return []
@@ -1433,8 +1589,7 @@ class BaseReferencia:
         k = clave_grado(titulo)
         if k is None:
             return None
-        cands = [i for i in self._idx_grado.get(k, ())
-                 if mismo_salvo_grado(titulo, self.celdas[i])]
+        cands = [i for i in self._idx_grado.get(k, ()) if mismo_salvo_grado(titulo, self.celdas[i])]
         return max(cands, key=lambda i: self.emp[i]) if cands else None
 
     def grupos_de_empresa(self, ruc) -> set[int]:
@@ -1451,8 +1606,7 @@ class BaseReferencia:
         if len(hits) == 0:
             return set()
         filas = np.searchsorted(self.pad_ptr, hits, side="right") - 1
-        return {self._fila_grupo[int(f)] for f in np.unique(filas)
-                if int(f) in self._fila_grupo}
+        return {self._fila_grupo[int(f)] for f in np.unique(filas) if int(f) in self._fila_grupo}
 
     def rubro_del_veredicto(self, i_celda: int, ciiu: str, seccion: str):
         """De que rubro sale la referencia: el mas fino con respaldo, o la seccion.
@@ -1511,7 +1665,7 @@ class BaseReferencia:
             fr = self.rub.get((int(i_celda), c6[:k]))
             if fr is not None:
                 if c6[:k] == str(ya_usado):
-                    return None          # el veredicto ya baja hasta aqui
+                    return None  # el veredicto ya baja hasta aqui
                 return (c6[:k], NOMBRE_NIVEL.get(k, str(k)), int(self.rub_emp[fr]))
         return None
 
@@ -1522,24 +1676,38 @@ class BaseReferencia:
         y embeber 65.081 titulos—; cargarla debe tardar segundos. Sin esto, cada consulta
         de un cliente rehace todo el trabajo."""
         np.savez_compressed(
-            ruta, celdas=np.array(self.celdas, dtype=object), m=self.m, W=self.W,
-            emp=self.emp, Z=self.Z.astype(np.float32), nivel=self.nivel,
-            grupo=self.grupo, tau2_c=self.tau2_c, sigma2_c=self.sigma2_c,
-            bandas=self.bandas, bandas_per=self.bandas_per,
+            ruta,
+            celdas=np.array(self.celdas, dtype=object),
+            m=self.m,
+            W=self.W,
+            emp=self.emp,
+            Z=self.Z.astype(np.float32),
+            nivel=self.nivel,
+            grupo=self.grupo,
+            tau2_c=self.tau2_c,
+            sigma2_c=self.sigma2_c,
+            bandas=self.bandas,
+            bandas_per=self.bandas_per,
             ajuste_seg=self.ajuste_seg,
             lam_k=np.array(sorted(self.lam_nivel), dtype=float),
-            lam_v=np.array([self.lam_nivel[k] for k in sorted(self.lam_nivel)],
-                           dtype=float),
+            lam_v=np.array([self.lam_nivel[k] for k in sorted(self.lam_nivel)], dtype=float),
             personas=self.personas,
             ef_k=np.array(sorted(self.efecto), dtype=float),
             ef_v=np.array([self.efecto[k] for k in sorted(self.efecto)], dtype=float),
             # Banda por rubro, dispersa: pares (celda, rubro) y sus estadisticos.
-            rub_cel=self.rub_cel, rub_cod=self.rub_cod, rub_m=self.rub_m, rub_W=self.rub_W, rub_emp=self.rub_emp,
-            rub_per=self.rub_per, rub_bandas=self.rub_bandas,
+            rub_cel=self.rub_cel,
+            rub_cod=self.rub_cod,
+            rub_m=self.rub_m,
+            rub_W=self.rub_W,
+            rub_emp=self.rub_emp,
+            rub_per=self.rub_per,
+            rub_bandas=self.rub_bandas,
             rub_bandas_per=self.rub_bandas_per,
             rubros=np.array(self.rubros, dtype=object),
             brecha_gen=self.brecha_gen,
-            pad_ptr=self.pad_ptr, pad_idx=self.pad_idx, pad_tam=self.pad_tam,
+            pad_ptr=self.pad_ptr,
+            pad_idx=self.pad_idx,
+            pad_tam=self.pad_tam,
             pad_ciiu=np.array(self.pad_ciiu, dtype=object),
             pad_claves=np.array(list(self.pad_fila), dtype=object),
             ruc_lista=np.array(list(self.meta_ruc), dtype=object),
@@ -1557,26 +1725,56 @@ class BaseReferencia:
             sen_k=np.array(sorted(getattr(self, "efecto_sen", None) or {}), dtype=float),
             sen_v=np.array([self.efecto_sen[k] for k in sorted(getattr(self, "efecto_sen", None) or {})], dtype=float),
             # D-055: la prima del titulo en ingles, {nivel o -1 (global): (pi, var)}
-            pri_k=np.array([(-1 if k == "global" else int(k)) for k in (getattr(self, "idioma_prima", None) or {})], dtype=np.int64),
-            pri_v=np.array([v for v in (getattr(self, "idioma_prima", None) or {}).values()], dtype=float).reshape(-1, 2),
+            pri_k=np.array(
+                [(-1 if k == "global" else int(k)) for k in (getattr(self, "idioma_prima", None) or {})], dtype=np.int64
+            ),
+            pri_v=np.array([v for v in (getattr(self, "idioma_prima", None) or {}).values()], dtype=float).reshape(
+                -1, 2
+            ),
             esc_v=np.array([self.escala_banda[k] for k in sorted(self.escala_banda)], dtype=float),
             # D-075: el clasificador «es un cargo» (pesos, sesgo, umbral)
-            **({} if getattr(self, "clf_cargo", None) is None else
-               dict(cc_W=np.asarray(self.clf_cargo[0], float), cc_b=np.array(float(self.clf_cargo[1])),
-                    cc_u=np.array(float(self.clf_cargo[2])))),
+            **(
+                {}
+                if getattr(self, "clf_cargo", None) is None
+                else dict(
+                    cc_W=np.asarray(self.clf_cargo[0], float),
+                    cc_b=np.array(float(self.clf_cargo[1])),
+                    cc_u=np.array(float(self.clf_cargo[2])),
+                )
+            ),
             # D-063: el tamano por nivel (corrimiento estandarizado por grupo y efecto por nivel x segmento)
-            **({} if getattr(self, "ajuste_tam", None) is None else
-               dict(tam_aj=np.asarray(self.ajuste_tam, dtype=float), tam_delta=np.asarray(self.delta_tam, dtype=float))),
+            **(
+                {}
+                if getattr(self, "ajuste_tam", None) is None
+                else dict(
+                    tam_aj=np.asarray(self.ajuste_tam, dtype=float), tam_delta=np.asarray(self.delta_tam, dtype=float)
+                )
+            ),
             **({} if getattr(self, "delta_tam_g", None) is None else dict(tam_dg=np.asarray(self.delta_tam_g, float))),
-            **({} if not getattr(self, "techo_cima", None) else
-               dict(techo_k=np.array(list(self.techo_cima), dtype=np.int64),
+            **(
+                {}
+                if not getattr(self, "techo_cima", None)
+                else dict(
+                    techo_k=np.array(list(self.techo_cima), dtype=np.int64),
                     techo_v=np.array(list(self.techo_cima.values()), dtype=float),
-                    techo_g=np.array(int(self.cima_grupo)))),
-            **({} if not getattr(self, "cima_piso", None) else
-               dict(piso_k=np.array(list(self.cima_piso), dtype=np.int64),
-                    piso_v=np.array(list(self.cima_piso.values()), dtype=float), piso_g=np.array(int(self.cima_grupo)))),
-            **({} if self.clf_nivel is None else
-               dict(clf_W=self.clf_nivel[0], clf_b=self.clf_nivel[1], clf_k=self.clf_nivel[2])))
+                    techo_g=np.array(int(self.cima_grupo)),
+                )
+            ),
+            **(
+                {}
+                if not getattr(self, "cima_piso", None)
+                else dict(
+                    piso_k=np.array(list(self.cima_piso), dtype=np.int64),
+                    piso_v=np.array(list(self.cima_piso.values()), dtype=float),
+                    piso_g=np.array(int(self.cima_grupo)),
+                )
+            ),
+            **(
+                {}
+                if self.clf_nivel is None
+                else dict(clf_W=self.clf_nivel[0], clf_b=self.clf_nivel[1], clf_k=self.clf_nivel[2])
+            ),
+        )
 
     @classmethod
     def cargar(cls, ruta, sbu):
@@ -1585,52 +1783,100 @@ class BaseReferencia:
             ef = {int(k): float(v) for k, v in zip(z["ef_k"], z["ef_v"])}
             # `grupo` falta en las bases guardadas antes de la fusion; sin el, cada
             # etiqueta es su propio grupo y el comportamiento es el de entonces.
-            opc = {k: (z[k] if k in z.files else None)
-                   for k in ("grupo", "tau2_c", "sigma2_c", "bandas", "personas",
-                             "bandas_per", "ajuste_seg")}
-            lam_nivel = ({int(k): float(v) for k, v in zip(z["lam_k"], z["lam_v"])}
-                         if "lam_k" in z.files else {})
+            opc = {
+                k: (z[k] if k in z.files else None)
+                for k in ("grupo", "tau2_c", "sigma2_c", "bandas", "personas", "bandas_per", "ajuste_seg")
+            }
+            lam_nivel = {int(k): float(v) for k, v in zip(z["lam_k"], z["lam_v"])} if "lam_k" in z.files else {}
             # La banda por rubro falta en las bases guardadas antes de D-023; sin ella
             # `--rubro` no encuentra nada y todo cae al global, que es el comportamiento
             # de entonces y no un error.
             rubro = None
             if "rub_cel" in z.files:
-                rubro = (z["rub_cel"], z["rub_cod"], z["rub_m"], z["rub_W"],
-                         z["rub_emp"], z["rub_per"], z["rub_bandas"],
-                         z["rub_bandas_per"], list(z["rubros"]))
-            base = cls(list(z["celdas"]), z["m"], z["W"], z["emp"],
-                       z["Z"].astype(float), float(tau2), float(sigma2), float(lam),
-                       sbu, z["nivel"], ef, opc["grupo"], opc["tau2_c"],
-                       opc["sigma2_c"], opc["bandas"], opc["personas"],
-                       opc["bandas_per"], lam_nivel, opc["ajuste_seg"], rubro,
-                       z["brecha_gen"] if "brecha_gen" in z.files else None,
-                       ((z["pad_ptr"], z["pad_idx"], z["pad_tam"], z["pad_ciiu"],
-                         list(z["pad_claves"]),
-                         dict(zip((str(r) for r in z["ruc_lista"]),
-                                  zip((str(c) for c in z["ruc_ciiu"]),
-                                      (int(t) for t in z["ruc_tam"]),
-                                      # `ruc_seg` falta en las bases guardadas antes de
-                                      # esto: se rellena vacio y el segmento simplemente
-                                      # no se deriva, que es el comportamiento anterior.
-                                      # No hace falta reconstruir la base para cargarla.
-                                      (str(s) for s in z["ruc_seg"])
-                                      if "ruc_seg" in z.files
-                                      else ("" for _ in z["ruc_lista"]))))
-                         if "ruc_lista" in z.files else {},
-                         dict(zip((str(r) for r in z["pad_ruc_lista"]),
-                                  (int(i) for i in z["pad_ruc_idx"])))
-                         if "pad_ruc_lista" in z.files else {})
-                        if "pad_ptr" in z.files else None))
+                rubro = (
+                    z["rub_cel"],
+                    z["rub_cod"],
+                    z["rub_m"],
+                    z["rub_W"],
+                    z["rub_emp"],
+                    z["rub_per"],
+                    z["rub_bandas"],
+                    z["rub_bandas_per"],
+                    list(z["rubros"]),
+                )
+            base = cls(
+                list(z["celdas"]),
+                z["m"],
+                z["W"],
+                z["emp"],
+                z["Z"].astype(float),
+                float(tau2),
+                float(sigma2),
+                float(lam),
+                sbu,
+                z["nivel"],
+                ef,
+                opc["grupo"],
+                opc["tau2_c"],
+                opc["sigma2_c"],
+                opc["bandas"],
+                opc["personas"],
+                opc["bandas_per"],
+                lam_nivel,
+                opc["ajuste_seg"],
+                rubro,
+                z["brecha_gen"] if "brecha_gen" in z.files else None,
+                (
+                    (
+                        z["pad_ptr"],
+                        z["pad_idx"],
+                        z["pad_tam"],
+                        z["pad_ciiu"],
+                        list(z["pad_claves"]),
+                        (
+                            dict(
+                                zip(
+                                    (str(r) for r in z["ruc_lista"]),
+                                    zip(
+                                        (str(c) for c in z["ruc_ciiu"]),
+                                        (int(t) for t in z["ruc_tam"]),
+                                        # `ruc_seg` falta en las bases guardadas antes de
+                                        # esto: se rellena vacio y el segmento simplemente
+                                        # no se deriva, que es el comportamiento anterior.
+                                        # No hace falta reconstruir la base para cargarla.
+                                        (
+                                            (str(s) for s in z["ruc_seg"])
+                                            if "ruc_seg" in z.files
+                                            else ("" for _ in z["ruc_lista"])
+                                        ),
+                                    ),
+                                )
+                            )
+                            if "ruc_lista" in z.files
+                            else {}
+                        ),
+                        (
+                            dict(zip((str(r) for r in z["pad_ruc_lista"]), (int(i) for i in z["pad_ruc_idx"])))
+                            if "pad_ruc_lista" in z.files
+                            else {}
+                        ),
+                    )
+                    if "pad_ptr" in z.files
+                    else None
+                ),
+            )
             # D-040: la capa 0 con que se construyo. Las bases anteriores no la traen: la
             # consulta busca el titulo tal cual, que es el comportamiento de entonces.
             if "capa0_json" in z.files and str(z["capa0_json"]):
                 from src.domain.capa0 import Capa0
+
                 base.capa0 = Capa0.de_json(str(z["capa0_json"]), base.celdas)
             if "grado_consulta" in z.files:
                 base.grado_consulta = bool(z["grado_consulta"])
             if "sen_k" in z.files and len(z["sen_k"]):
-                base.efecto_sen = {(int(k) if float(k).is_integer() else float(k)): float(v)
-                                   for k, v in zip(z["sen_k"], z["sen_v"])}
+                base.efecto_sen = {
+                    (int(k) if float(k).is_integer() else float(k)): float(v) for k, v in zip(z["sen_k"], z["sen_v"])
+                }
             if "cc_W" in z.files:
                 base.clf_cargo = (np.asarray(z["cc_W"], float), float(z["cc_b"]), float(z["cc_u"]))
             if "techo_k" in z.files:
@@ -1644,8 +1890,10 @@ class BaseReferencia:
             if "tam_aj" in z.files:
                 base.ajuste_tam, base.delta_tam = np.asarray(z["tam_aj"], float), np.asarray(z["tam_delta"], float)
             if "pri_k" in z.files and len(z["pri_k"]):
-                base.idioma_prima = {("global" if int(k) == -1 else int(k)): (float(v[0]), float(v[1]))
-                                     for k, v in zip(z["pri_k"], z["pri_v"])}
+                base.idioma_prima = {
+                    ("global" if int(k) == -1 else int(k)): (float(v[0]), float(v[1]))
+                    for k, v in zip(z["pri_k"], z["pri_v"])
+                }
             if "esc_k" in z.files:
                 base.escala_banda = {str(k): float(v) for k, v in zip(z["esc_k"], z["esc_v"])}
             if "clf_W" in z.files:
@@ -1657,8 +1905,7 @@ class BaseReferencia:
     def nivel_por_grupo(self, placebo=False, semilla=8):
         """D-052: cada titulo toma el nivel mayoritario de su grupo, ponderado por personas.
         `placebo` permuta esos niveles entre grupos (solo para medir)."""
-        d = pd.DataFrame({"g": self.grupo, "n": self.nivel,
-                          "w": np.maximum(np.asarray(self.personas, float), 1.0)})
+        d = pd.DataFrame({"g": self.grupo, "n": self.nivel, "w": np.maximum(np.asarray(self.personas, float), 1.0)})
         d = d[np.isfinite(d["n"])]
         if d.empty:
             return
@@ -1676,8 +1923,16 @@ class BaseReferencia:
         posible. Usa `m` de la base (en el pinball, solo entrenamiento). Va DESPUES de
         `nivel_por_grupo`; cambia `self.nivel` de todo el grupo. `placebo` elige un posible al azar.
         Devuelve cuantos grupos se desempataron y cuantos cambiaron de nivel."""
-        d = pd.DataFrame({"t": self.celdas, "g": self.grupo, "m": self.m, "emp": self.emp,
-                          "w": np.asarray(self.personas, float), "n": self.nivel})
+        d = pd.DataFrame(
+            {
+                "t": self.celdas,
+                "g": self.grupo,
+                "m": self.m,
+                "emp": self.emp,
+                "w": np.asarray(self.personas, float),
+                "n": self.nivel,
+            }
+        )
         rep = d.sort_values("w").groupby("g").tail(1).set_index("g")
         rep["pos"] = [sorted(k for k in posibles.get(t, []) if k >= 1) for t in rep["t"]]
         uno = rep[(rep["pos"].str.len() == 1) & (rep["emp"] >= min_emp)]
@@ -1688,8 +1943,7 @@ class BaseReferencia:
             cand = [k for k in r["pos"] if k in escalera]
             if len(cand) < 2:
                 continue
-            k = (int(rng.choice(cand)) if placebo
-                 else min(cand, key=lambda x: abs(r["m"] - escalera[x])))
+            k = int(rng.choice(cand)) if placebo else min(cand, key=lambda x: abs(r["m"] - escalera[x]))
             n_des += 1
             n_cambia += int(not (np.isfinite(r["n"]) and int(r["n"]) == k))
             nuevo[int(g)] = float(k)
@@ -1758,8 +2012,14 @@ class BaseReferencia:
             self.personas[cel] = int(per_ok.get(k, 0))
             movidos += 1
             dif.append(dd)
-        return ({"votos_quitados": int(malo.sum()), "grupos_recalculados": movidos,
-                 "corrimiento_mediano": float(np.median(dif)) if dif else 0.0}, limpio)
+        return (
+            {
+                "votos_quitados": int(malo.sum()),
+                "grupos_recalculados": movidos,
+                "corrimiento_mediano": float(np.median(dif)) if dif else 0.0,
+            },
+            limpio,
+        )
 
     def preparar_cima_piso(self, marco, col="cargo_norm", titulo="GERENTE GENERAL"):
         """D-081: el piso del GG por tamano (y sin tamano): P75 de las referencias de los gerentes de area (nivel 5,
@@ -1775,17 +2035,25 @@ class BaseReferencia:
         d["g"], d["L"] = self.grupo[j], self.nivel[j]
         d["area"] = (d["g"] != gg) & (d["L"] == 5) & d[col].astype(str).str.startswith("GERENTE DE")
         d["k"] = d["segmento"].map(lambda v: SEGMENTOS.index(_norm_segmento(v)) if _norm_segmento(v) else -1)
-        v = d.groupby(["empresa_ruc", "g"]).agg(y=("y", "median"), area=("area", "first"), k=("k", "first")).reset_index()
+        v = (
+            d.groupby(["empresa_ruc", "g"])
+            .agg(y=("y", "median"), area=("area", "first"), k=("k", "first"))
+            .reset_index()
+        )
         e_gg = v[v["g"] == gg].set_index("empresa_ruc")
         e_ar = v[v["area"]].groupby("empresa_ruc")["y"].median()
         comun = e_gg.index.intersection(e_ar.index)
-        dif = (e_gg.loc[comun, "y"] - e_ar[comun])
+        dif = e_gg.loc[comun, "y"] - e_ar[comun]
         kk = e_gg.loc[comun, "k"]
         rep = pd.Series(np.arange(len(self.celdas))).groupby(self.grupo).first()
         areas = [int(rep[g]) for g in v.loc[v["area"], "g"].unique() if self.emp[rep[g]] >= 10]
         self.cima_piso = {}
         for k in [-1] + list(range(len(SEGMENTOS))):
-            e = float(np.median(dif)) if k == -1 else (float(np.median(dif[kk == k])) if (kk == k).sum() >= 10 else None)
+            e = (
+                float(np.median(dif))
+                if k == -1
+                else (float(np.median(dif[kk == k])) if (kk == k).sum() >= 10 else None)
+            )
             if e is None or not areas:
                 continue
             refs = [self._ref_log_directo(c, None if k == -1 else k) for c in areas]
@@ -1817,22 +2085,34 @@ class BaseReferencia:
         if placebo:
             otros = [int(rep[g]) for g in rep.index if g != gg and self.nivel[rep[g]] == 5 and self.emp[rep[g]] >= 10]
             fuente = int(np.random.default_rng(semilla).choice(otros))
-        self.techo_cima = {SEGMENTOS.index(s_): self._ref_log_directo(fuente, SEGMENTOS.index(s_)) - e_peq
-                           for s_ in ("MICROEMPRESA", "PEQUENA")}
+        self.techo_cima = {
+            SEGMENTOS.index(s_): self._ref_log_directo(fuente, SEGMENTOS.index(s_)) - e_peq
+            for s_ in ("MICROEMPRESA", "PEQUENA")
+        }
         self.cima_grupo = gg
-        return {"e_peq": round(e_peq, 4), "empresas_con_ambos": int(len(comun)),
-                "techo": {SEGMENTOS[k]: round(float(np.exp(v_)), 2) for k, v_ in self.techo_cima.items()}}
+        return {
+            "e_peq": round(e_peq, 4),
+            "empresas_con_ambos": int(len(comun)),
+            "techo": {SEGMENTOS[k]: round(float(np.exp(v_)), 2) for k, v_ in self.techo_cima.items()},
+        }
 
     def _ref_log_directo(self, i, k_seg):
         """Centro en log de una celda directa, con el ajuste de tamano del producto (D-063/D-079)."""
         mu = float(self.m[i])
-        if k_seg is not None and getattr(self, "tamano_estandar", False) and getattr(self, "delta_tam", None) is not None:
+        if (
+            k_seg is not None
+            and getattr(self, "tamano_estandar", False)
+            and getattr(self, "delta_tam", None) is not None
+        ):
             if getattr(self, "ajuste_tam", None) is not None:
                 mu += float(self.ajuste_tam[i])
             dg = getattr(self, "delta_tam_g", None)
             lv = self.nivel[i]
-            mu += (float(dg[i, k_seg]) if dg is not None and np.isfinite(dg[i, k_seg])
-                   else (float(self.delta_tam[int(lv), k_seg]) if np.isfinite(lv) else 0.0))
+            mu += (
+                float(dg[i, k_seg])
+                if dg is not None and np.isfinite(dg[i, k_seg])
+                else (float(self.delta_tam[int(lv), k_seg]) if np.isfinite(lv) else 0.0)
+            )
         return mu
 
     def cima_estructura(self, marco, col="cargo_norm", titulo="GERENTE GENERAL", placebo=False, semilla=20):
@@ -1867,15 +2147,14 @@ class BaseReferencia:
         den = float(t2["k"]) + float(s2["k"]) / v.to_numpy(float)
         celdas = np.flatnonzero(self.grupo == gg)
         for nombre in ("m", "bandas", "bandas_per", "W", "emp", "personas"):
-            setattr(self, nombre, np.array(getattr(self, nombre)))      # las cargadas de un .npz son de solo lectura
+            setattr(self, nombre, np.array(getattr(self, nombre)))  # las cargadas de un .npz son de solo lectura
         self.m[celdas] += d_centro
         self.bandas[celdas] = np.array([q[c] for c in CUANTILES], dtype=float)
         self.bandas_per[celdas] = np.array([qp[c] for c in CUANTILES], dtype=float)
         self.W[celdas] = float((1.0 / den).sum())
         self.emp[celdas] = len(quedan)
         self.personas[celdas] = len(xs)
-        return {"empresas_antes": len(todas), "empresas_despues": len(quedan),
-                "corrimiento_centro": round(d_centro, 4)}
+        return {"empresas_antes": len(todas), "empresas_despues": len(quedan), "corrimiento_centro": round(d_centro, 4)}
 
     def cima_orden(self, marco, col="cargo_norm", titulo="GERENTE GENERAL", placebo=False, semilla=21):
         """D-077: m_GG := max(m_GG, max_area + e_cima). `max_area` = el centro mas alto de los grupos de nivel 5
@@ -1916,6 +2195,7 @@ class BaseReferencia:
         corre su centro a `(n*m + n0*m_grande) / (n + n0)`; su banda se corre igual. `placebo` (solo para medir):
         cada grupo chico se acerca a un grupo grande AL AZAR del mismo nivel (>= 10 empresas). Devuelve un resumen."""
         from src.domain.sinonimos import grupo_de
+
         padre = {}
 
         def raiz(g):
@@ -1923,6 +2203,7 @@ class BaseReferencia:
                 padre[g] = padre.get(padre[g], padre[g])
                 g = padre[g]
             return g
+
         for a, b in pares:
             ga, gb = grupo_de(self, a), grupo_de(self, b)
             if ga is None or gb is None or ga == gb:
@@ -1941,8 +2222,10 @@ class BaseReferencia:
         rng = np.random.default_rng(semilla)
         if placebo:
             niv = self.nivel[rep.to_numpy()]
-            grandes = {lv: [g for g, n_, e in zip(rep.index, niv, self.emp[rep.to_numpy()]) if n_ == lv and e >= 10]
-                       for lv in range(1, 6)}
+            grandes = {
+                lv: [g for g, n_, e in zip(rep.index, niv, self.emp[rep.to_numpy()]) if n_ == lv and e >= 10]
+                for lv in range(1, 6)
+            }
         movidos, dif = 0, []
         for gs in comps.values():
             if len(gs) < 2:
@@ -1966,11 +2249,25 @@ class BaseReferencia:
                 self.bandas_per[ii] += d
                 movidos += 1
                 dif.append(d)
-        return {"componentes": sum(len(g) > 1 for g in comps.values()), "grupos_movidos": movidos,
-                "corrimiento_mediano_abs": float(np.median(np.abs(dif))) if dif else 0.0}
+        return {
+            "componentes": sum(len(g) > 1 for g in comps.values()),
+            "grupos_movidos": movidos,
+            "corrimiento_mediano_abs": float(np.median(np.abs(dif))) if dif else 0.0,
+        }
 
-    def estandarizar_tamano(self, marco, col="cargo_norm", vueltas=3, min_emp=3, min_votos=30, min_grupo=5,
-                            placebo=False, por_cargo=False, k0=20.0, placebo_cargo=False):
+    def estandarizar_tamano(
+        self,
+        marco,
+        col="cargo_norm",
+        vueltas=3,
+        min_emp=3,
+        min_votos=30,
+        min_grupo=5,
+        placebo=False,
+        por_cargo=False,
+        k0=20.0,
+        placebo_cargo=False,
+    ):
         """D-063: el efecto del tamano de empresa POR NIVEL del cargo, y el centro de cada grupo estandarizado.
 
         Votos = mediana de `y` por (grupo, empresa), solo empresas con segmento. Se alterna
@@ -1986,8 +2283,11 @@ class BaseReferencia:
         d["k"] = d["segmento"].map(lambda v: SEGMENTOS.index(_norm_segmento(v)) if _norm_segmento(v) else -1)
         d = d[d["i"].notna() & (d["k"] >= 0)]
         d["g"] = self.grupo[d["i"].astype(int).to_numpy()]
-        v = d.groupby(["g", "empresa_ruc"], sort=False).agg(voto=("y", "median"), k=("k", "first"),
-                                                           i=("i", "first")).reset_index()
+        v = (
+            d.groupby(["g", "empresa_ruc"], sort=False)
+            .agg(voto=("y", "median"), k=("k", "first"), i=("i", "first"))
+            .reset_index()
+        )
         niv = self.nivel[v["i"].astype(int).to_numpy()]
         v = v[np.isfinite(niv)].copy()
         v["L"] = niv[np.isfinite(niv)].astype(int)
@@ -2039,29 +2339,34 @@ class BaseReferencia:
                 base_l = delta[int(lv), int(k_)] if np.isfinite(lv) else 0.0
                 dg[ii, int(k_)] = (n_ * med + k0 * base_l) / (n_ + k0)
             self.delta_tam_g = dg
-        return {"votos": len(v), "grupos_corridos": int(len(corr)),
-                "corrimiento_mediano_abs": float(np.median(np.abs(corr))) if len(corr) else 0.0,
-                "delta": {lv: dict(zip(SEGMENTOS, np.round(delta[lv], 3))) for lv in range(1, 6)}}
+        return {
+            "votos": len(v),
+            "grupos_corridos": int(len(corr)),
+            "corrimiento_mediano_abs": float(np.median(np.abs(corr))) if len(corr) else 0.0,
+            "delta": {lv: dict(zip(SEGMENTOS, np.round(delta[lv], 3))) for lv in range(1, 6)},
+        }
 
     def coherencia_seniority(self, n0=10.0, min_familia=10, placebo=False, semilla=15, prima=None):
         """D-059: corre el centro y la banda de los grupos senior (y junior) hacia `base + prima tipica`,
         con peso `n0` empresas frente a sus `n` empresas. `prima` ({1: e_SR, -1: e_JR}, D-061) reemplaza la
         prima estimada entre empresas por la medida dentro de la empresa (D-060). Devuelve un resumen."""
         from src.domain.nivel import _PATRON_SEN
-        d = pd.DataFrame({"t": self.celdas, "g": self.grupo, "m": self.m, "emp": self.emp,
-                          "w": np.asarray(self.personas, float)})
+
+        d = pd.DataFrame(
+            {"t": self.celdas, "g": self.grupo, "m": self.m, "emp": self.emp, "w": np.asarray(self.personas, float)}
+        )
         d["fam"] = [re.sub(r"\s+", " ", _PATRON_SEN.sub(" ", t)).strip(" -/") for t in d["t"]]
         d["s"] = [seniority_lexica(t) for t in d["t"]]
-        rep = (d[d["s"].isin([-1, 0, 1])].sort_values("w").groupby(["fam", "s"]).tail(1)
-               .set_index(["fam", "s"]))
+        rep = d[d["s"].isin([-1, 0, 1])].sort_values("w").groupby(["fam", "s"]).tail(1).set_index(["fam", "s"])
         pares = {}
         for sv in (1, -1):
             for fam in rep.index.get_level_values(0).unique():
                 if (fam, 0) in rep.index and (fam, sv) in rep.index:
                     b_, x_ = rep.loc[(fam, 0)], rep.loc[(fam, sv)]
                     if int(b_["g"]) != int(x_["g"]):
-                        pares.setdefault(sv, []).append((int(b_["g"]), float(b_["m"]), int(b_["emp"]),
-                                                         int(x_["g"]), float(x_["m"]), int(x_["emp"])))
+                        pares.setdefault(sv, []).append(
+                            (int(b_["g"]), float(b_["m"]), int(b_["emp"]), int(x_["g"]), float(x_["m"]), int(x_["emp"]))
+                        )
         out, delta = {}, {}
         rng = np.random.default_rng(semilla)
         for sv, ps in pares.items():
@@ -2075,7 +2380,7 @@ class BaseReferencia:
                     continue
                 pi = float(np.median(ok))
             bases = [(x[1], x[2]) for x in ps]
-            if placebo:                                   # la base de OTRA familia, al azar
+            if placebo:  # la base de OTRA familia, al azar
                 bases = [bases[i] for i in rng.permutation(len(bases))]
             n_mov = 0
             for (gb, mb_, eb_, gx, mx, ex), (mb, eb) in zip(ps, bases):
@@ -2107,8 +2412,7 @@ class BaseReferencia:
         mejor = p.argmax(axis=1)
         return [int(kc[i]) if p[r, i] >= P_NIVEL_CLF else None for r, i in enumerate(mejor)]
 
-    def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None,
-                    rubro=None, ruc=None, ciiu=None):
+    def referenciar(self, titulos, X_por_etiqueta, anio=None, segmento=None, rubro=None, ruc=None, ciiu=None):
         """Una fila por titulo: referencia, intervalo, confianza y en que se basa.
 
         `segmento` es el tamano de la empresa del CLIENTE —`GRANDE`, `MEDIANA`,
@@ -2159,17 +2463,26 @@ class BaseReferencia:
         La alternativa —guardar el numero de personas por empresa y celda— no compraba
         nada.
         """
-        if ((getattr(self, "head_jefe", False) or getattr(self, "quitar_sufijo", False))
-                and not getattr(self, "_sin_sufijo_hecho", False)):
+        if (getattr(self, "head_jefe", False) or getattr(self, "quitar_sufijo", False)) and not getattr(
+            self, "_sin_sufijo_hecho", False
+        ):
             # D-087: el titulo en ingles se busca sin el sufijo de unidad (`- CONSULTING`), si esta embebido
             from src.domain.idioma import sin_sufijo
+
             alias = {t: sin_sufijo(t) for t in set(titulos) if t}
             alias = {t: a for t, a in alias.items() if a != t and a in X_por_etiqueta}
             if alias:
                 self._sin_sufijo_hecho = True
                 try:
-                    out = self.referenciar([alias.get(t, t) for t in titulos], X_por_etiqueta, anio=anio,
-                                           segmento=segmento, rubro=rubro, ruc=ruc, ciiu=ciiu)
+                    out = self.referenciar(
+                        [alias.get(t, t) for t in titulos],
+                        X_por_etiqueta,
+                        anio=anio,
+                        segmento=segmento,
+                        rubro=rubro,
+                        ruc=ruc,
+                        ciiu=ciiu,
+                    )
                 finally:
                     self._sin_sufijo_hecho = False
                 out["cargo"] = list(titulos)
@@ -2186,17 +2499,30 @@ class BaseReferencia:
         unicos = sorted(set(titulos) - vacios)
         faltan = [t for t in unicos if t not in X_por_etiqueta]
         if faltan:
-            raise KeyError(f"sin embedding para {len(faltan)} titulo(s), p.ej. "
-                           f"{faltan[:3]}. Hay que embeberlos antes de referenciar.")
+            raise KeyError(
+                f"sin embedding para {len(faltan)} titulo(s), p.ej. "
+                f"{faltan[:3]}. Hay que embeberlos antes de referenciar."
+            )
         if not unicos:
-            fila_vacia = {"referencia_log": np.nan, "sd": np.nan, "confianza": "BAJA",
-                          "base": "sin cargo", "ancho_rel": np.nan,
-                          "incert_centro": np.nan, "segmento": "", "rubro": "",
-                          "brecha_grafia": "", "empresas": 0, "personas": 0,
-                          "rubro_nivel": "",
-                          **_cols_sector(None),
-                          "tu_empresa": False, "tu_influencia": np.nan,
-                          "p_juez": np.nan, "similitud": 0.0}
+            fila_vacia = {
+                "referencia_log": np.nan,
+                "sd": np.nan,
+                "confianza": "BAJA",
+                "base": "sin cargo",
+                "ancho_rel": np.nan,
+                "incert_centro": np.nan,
+                "segmento": "",
+                "rubro": "",
+                "brecha_grafia": "",
+                "empresas": 0,
+                "personas": 0,
+                "rubro_nivel": "",
+                **_cols_sector(None),
+                "tu_empresa": False,
+                "tu_influencia": np.nan,
+                "p_juez": np.nan,
+                "similitud": 0.0,
+            }
             for q in CUANTILES:
                 for suf in ("_log", "per_log"):
                     fila_vacia[f"p{int(q * 100)}{suf}"] = np.nan
@@ -2209,11 +2535,15 @@ class BaseReferencia:
         nivel_fijo = {}
         if getattr(self, "head_jefe", False):
             from src.domain.idioma import es_ingles
+
             heads = [t for t in unicos if str(t).upper().startswith("HEAD ")]
             if getattr(self, "head_jefe_placebo", False):
                 otros = sorted(t for t in unicos if es_ingles(t) and not str(t).upper().startswith("HEAD "))
-                elegidos = (list(np.random.default_rng(25).choice(otros, min(len(heads), len(otros)), replace=False))
-                            if otros else [])
+                elegidos = (
+                    list(np.random.default_rng(25).choice(otros, min(len(heads), len(otros)), replace=False))
+                    if otros
+                    else []
+                )
                 nivel_fijo = {t: 4 for t in elegidos}
             else:
                 nivel_fijo = {t: 4 for t in heads}
@@ -2223,8 +2553,9 @@ class BaseReferencia:
         niv_consulta = self._nivel_consulta(buscados, Q)
         if nivel_fijo:
             niv_consulta = [nivel_fijo.get(t, n) for t, n in zip(unicos, niv_consulta)]
-        asignado = (self._asignar_con_juez(buscados, vec, sim, niv_consulta)
-                    if getattr(self, "juez", None) is not None else {})
+        asignado = (
+            self._asignar_con_juez(buscados, vec, sim, niv_consulta) if getattr(self, "juez", None) is not None else {}
+        )
         # `_asignar_con_juez` devuelve por texto buscado; se vuelve al titulo preguntado
         asignado = {t: asignado[b] for t, b in zip(unicos, buscados) if b in asignado}
         idioma = self.resolver_idioma(unicos, X_por_etiqueta)
@@ -2238,19 +2569,22 @@ class BaseReferencia:
             # Un rubro que la base no conoce no es un error del cliente: puede ser un
             # CIIU sin ninguna celda que aguante el suelo. Se avisa y se sigue en global,
             # que es mejor que devolver un informe vacio sin decir por que.
-            warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; "
-                          f"todo el informe cae al mercado entero")
+            warnings.warn(f"rubro {rub!r} sin datos suficientes en la base; " f"todo el informe cae al mercado entero")
 
         dir_ingles = set()
         if getattr(self, "prima_direccion", None):
             # D-092: los cargos de direccion en ingles; `prima_direccion_placebo` (solo para medir): el mismo numero
             # de titulos en ingles al azar que NO son de direccion
             from src.domain.idioma import es_direccion, es_ingles
+
             dir_ingles = {t for t in unicos if es_direccion(t)}
             if getattr(self, "prima_direccion_placebo", False):
                 otros = sorted(t for t in unicos if es_ingles(t) and t not in dir_ingles)
-                dir_ingles = (set(np.random.default_rng(27).choice(otros, min(len(dir_ingles), len(otros)),
-                                                                   replace=False)) if otros else set())
+                dir_ingles = (
+                    set(np.random.default_rng(27).choice(otros, min(len(dir_ingles), len(otros)), replace=False))
+                    if otros
+                    else set()
+                )
         filas = {}
         for k, t in enumerate(unicos):
             propio = self.idx.get(t)
@@ -2269,6 +2603,7 @@ class BaseReferencia:
                 # D-070: reglas de palabras del autor (RRHH, TALENTO HUMANO -> RECURSOS HUMANOS; TI -> SISTEMAS;
                 # CONDUCTOR -> CHOFER) antes de buscar
                 from src.domain.sinonimos import canonico
+
                 tc = canonico(t)
                 if tc != t:
                     jc = self.idx.get(tc)
@@ -2279,8 +2614,11 @@ class BaseReferencia:
             if propio is None and getattr(self, "tipeo", False):
                 # D-068 (a): un error de tipeo (`CONTDOR GENERL`) se corrige contra el vocabulario de la base, y
                 # solo se usa si el titulo corregido es un cargo de la base (tal cual o por la capa 0)
-                tc = (self._corrector().placebo(t) if getattr(self, "tipeo_placebo", False)
-                      else self._corrector().titulo(t))
+                tc = (
+                    self._corrector().placebo(t)
+                    if getattr(self, "tipeo_placebo", False)
+                    else self._corrector().titulo(t)
+                )
                 if tc:
                     jc = self.idx.get(tc)
                     if jc is None and self.capa0 is not None:
@@ -2300,10 +2638,17 @@ class BaseReferencia:
                 # D-055: sin datos directos propios, la banda del equivalente en espanol mas la prima
                 ex = self.idx.get(t)
                 jt = idioma[t][0]
-                siempre_prima = getattr(self, "idioma_sueldo", False) == "siempre_prima"     # D-083
-                if ((siempre_prima or not (ex is not None and self.emp[ex] >= MIN_EMPRESAS
-                                           and self.personas[ex] >= self.min_personas))
-                        and self.emp[jt] >= MIN_EMPRESAS and self.personas[jt] >= self.min_personas):
+                siempre_prima = getattr(self, "idioma_sueldo", False) == "siempre_prima"  # D-083
+                if (
+                    (
+                        siempre_prima
+                        or not (
+                            ex is not None and self.emp[ex] >= MIN_EMPRESAS and self.personas[ex] >= self.min_personas
+                        )
+                    )
+                    and self.emp[jt] >= MIN_EMPRESAS
+                    and self.personas[jt] >= self.min_personas
+                ):
                     propio, traduccion = jt, idioma[t][3]
                     lv = niv_consulta[k] or (self.nivel[jt] if np.isfinite(self.nivel[jt]) else None)
                     prima_t = self.idioma_prima.get(int(lv) if lv else -1, self.idioma_prima["global"])
@@ -2314,12 +2659,16 @@ class BaseReferencia:
                 # `idioma_sueldo == "siempre"` (2026-10-07, decision de producto del autor): el mismo
                 # cargo da la misma banda en ingles y en espanol, aunque el titulo en ingles tenga datos
                 if getattr(self, "idioma_sueldo", False) in ("siempre", "siempre_prima") or not (
-                        ex is not None and self.emp[ex] >= MIN_EMPRESAS
-                        and self.personas[ex] >= self.min_personas):
+                    ex is not None and self.emp[ex] >= MIN_EMPRESAS and self.personas[ex] >= self.min_personas
+                ):
                     propio, _, p_juez, traduccion = idioma[t]
-                    if (getattr(self, "prima_direccion", None) and t in dir_ingles
-                            and self.emp[propio] >= MIN_EMPRESAS and self.personas[propio] >= self.min_personas):
-                        prima_t = self.prima_direccion          # D-092: direccion en ingles, mercado en ingles
+                    if (
+                        getattr(self, "prima_direccion", None)
+                        and t in dir_ingles
+                        and self.emp[propio] >= MIN_EMPRESAS
+                        and self.personas[propio] >= self.min_personas
+                    ):
+                        prima_t = self.prima_direccion  # D-092: direccion en ingles, mercado en ingles
             fam_d, fam_emp = 0.0, None
             fam = getattr(self, "familia_ingles", None)
             if fam and t in idioma and fam.get(int(self.grupo[idioma[t][0]])):
@@ -2336,9 +2685,9 @@ class BaseReferencia:
                 cargo_base = self.celdas[propio]
             mi_grupo = int(self.grupo[propio]) if propio is not None else -1
             banda = banda_per = None
-            directo = (propio is not None
-                       and self.emp[propio] >= MIN_EMPRESAS
-                       and self.personas[propio] >= self.min_personas)
+            directo = (
+                propio is not None and self.emp[propio] >= MIN_EMPRESAS and self.personas[propio] >= self.min_personas
+            )
             if directo:
                 # .HAY RUBRO PARA ESTE CARGO? El fallback es por cargo: un cliente de
                 # manufactura tendra rubro en `CONTADOR` y mercado entero en
@@ -2346,8 +2695,7 @@ class BaseReferencia:
                 # EL RUBRO SE ELIGE POR CARGO, no por informe. Un cliente puede
                 # tener respaldo de su clase en `VENDEDOR` —donde hay cientos de
                 # empresas— y solo de su seccion en `JEFE DE SEGURIDAD PATRIMONIAL`.
-                rub_v, niv_v = (self.rubro_del_veredicto(propio, c6_cliente, rub)
-                                if rub else (None, ""))
+                rub_v, niv_v = self.rubro_del_veredicto(propio, c6_cliente, rub) if rub else (None, "")
                 fr = self.rub.get((propio, rub_v)) if rub_v else None
                 if fr is not None:
                     # Centro y banda salen de los MISMOS votos —los del rubro— o el
@@ -2361,10 +2709,16 @@ class BaseReferencia:
                     mu = self.m[propio]
                     W_i = float(self.W[propio])
                     n_emp, n_per = int(self.emp[propio]), int(self.personas[propio])
-                    q = (self.bandas[propio] if self.emp[propio] >= MIN_EMPRESAS_BANDA
-                         else np.full(len(CUANTILES), np.nan))
-                    qp = (self.bandas_per[propio] if self.emp[propio] >= MIN_EMPRESAS_BANDA
-                          else np.full(len(CUANTILES), np.nan))
+                    q = (
+                        self.bandas[propio]
+                        if self.emp[propio] >= MIN_EMPRESAS_BANDA
+                        else np.full(len(CUANTILES), np.nan)
+                    )
+                    qp = (
+                        self.bandas_per[propio]
+                        if self.emp[propio] >= MIN_EMPRESAS_BANDA
+                        else np.full(len(CUANTILES), np.nan)
+                    )
                     base, usado, nivel_usado = "datos directos", "", ""
                 # `tau_c` y `sigma_c` son SIEMPRE los de la celda entera, tambien con
                 # rubro: con 10-90 empresas se estimarian pesimo y ya vienen encogidas.
@@ -2393,8 +2747,11 @@ class BaseReferencia:
                 if fam_emp is not None:
                     n_emp = fam_emp
                 niv_tam = self.nivel[propio]
-                if (getattr(self, "tamano_estandar", False) and getattr(self, "ajuste_tam", None) is not None
-                        and (k_seg is not None or getattr(self, "tamano_sin_segmento", False))):
+                if (
+                    getattr(self, "tamano_estandar", False)
+                    and getattr(self, "ajuste_tam", None) is not None
+                    and (k_seg is not None or getattr(self, "tamano_sin_segmento", False))
+                ):
                     # D-063: el centro de un mercado de composicion promedio; la banda se corre igual. Solo con el
                     # tamano del cliente: sin el (C0) empeora el pinball y no se adopto
                     a_t = float(self.ajuste_tam[propio])
@@ -2426,7 +2783,7 @@ class BaseReferencia:
                     if getattr(self, "vecinos_por_grupo_placebo", False):
                         # solo para medir: se quitan tantos vecinos AL AZAR como duplicados habia
                         n_dup = min(len(j), VECINOS) - len(prim[prim < VECINOS])
-                        rng_g = np.random.default_rng(abs(hash(t)) % (2 ** 32))
+                        rng_g = np.random.default_rng(abs(hash(t)) % (2**32))
                         cab = np.arange(min(len(j), VECINOS + n_dup))
                         prim = np.sort(rng_g.choice(cab, len(cab) - n_dup, replace=False)) if n_dup > 0 else cab
                     j, s = j[prim], s[prim]
@@ -2436,7 +2793,7 @@ class BaseReferencia:
                     queda = pv >= P_JUEZ
                     if getattr(self, "juez_vecinos_placebo", False):
                         # PLACEBO: se queda la MISMA cantidad de vecinos, pero al azar
-                        rng_v = np.random.default_rng(abs(hash(t)) % (2 ** 32))
+                        rng_v = np.random.default_rng(abs(hash(t)) % (2**32))
                         queda = np.zeros(len(j), bool)
                         queda[rng_v.choice(len(j), int((pv >= P_JUEZ).sum()), replace=False)] = True
                     if queda.sum() >= MIN_VECINOS_JUEZ:
@@ -2454,8 +2811,11 @@ class BaseReferencia:
                     if mi_niv is not None and np.isfinite(mi_niv):
                         lam_i = self.lam_nivel.get(int(mi_niv))
                     if lam_i is None:
-                        vecinos_lam = [self.lam_nivel[int(nj)] for nj in self.nivel[j]
-                                       if np.isfinite(nj) and int(nj) in self.lam_nivel]
+                        vecinos_lam = [
+                            self.lam_nivel[int(nj)]
+                            for nj in self.nivel[j]
+                            if np.isfinite(nj) and int(nj) in self.lam_nivel
+                        ]
                         if vecinos_lam:
                             lam_i = float(np.mean(vecinos_lam))
                 dist = (self.lam if lam_i is None else lam_i) * (1.0 - s)
@@ -2475,8 +2835,9 @@ class BaseReferencia:
                 mi = self.nivel[propio] if propio is not None else niv_consulta[k]
                 if mi is not None and np.isfinite(mi) and self.efecto:
                     ei = self.efecto.get(int(mi), 0.0)
-                    aj = np.array([ei - self.efecto.get(int(nj), ei)
-                                   if np.isfinite(nj) else 0.0 for nj in self.nivel[j]])
+                    aj = np.array(
+                        [ei - self.efecto.get(int(nj), ei) if np.isfinite(nj) else 0.0 for nj in self.nivel[j]]
+                    )
                     penal_nivel = 0.0
                 else:
                     # No se sabe el escalon del puesto preguntado, asi que no se puede
@@ -2490,9 +2851,9 @@ class BaseReferencia:
                     # sobra. Aqui se usa la dispersion de los niveles QUE HAY EN SU
                     # VECINDARIO: homogeneo -> penalizacion pequena; de auxiliar a gerente
                     # -> grande, que ahi si la merece.
-                    ef_vec = np.array([self.efecto.get(int(nj), np.nan)
-                                       if np.isfinite(nj) else np.nan
-                                       for nj in self.nivel[j]])
+                    ef_vec = np.array(
+                        [self.efecto.get(int(nj), np.nan) if np.isfinite(nj) else np.nan for nj in self.nivel[j]]
+                    )
                     hay = np.isfinite(ef_vec)
                     if hay.sum() >= 2:
                         pv = peso[hay] / peso[hay].sum()
@@ -2505,16 +2866,19 @@ class BaseReferencia:
                     # D-060: el escalon de seniority (medido dentro de la empresa), aparte del de nivel
                     s_q = seniority_lexica(buscados[k])
                     if getattr(self, "efecto_sen_placebo", False):
-                        rng_s = np.random.default_rng(abs(hash(t)) % (2 ** 32))
+                        rng_s = np.random.default_rng(abs(hash(t)) % (2**32))
                         marcas, frec = zip(*self.frec_sen.items())
                         s_v = rng_s.choice(marcas, len(j), p=np.array(frec) / sum(frec))
                     else:
                         s_v = [seniority_lexica(str(self.celdas[x])) for x in j]
                     if s_q in ef_sen:
                         aj = aj + np.array([ef_sen[s_q] - ef_sen[sv] if sv in ef_sen else 0.0 for sv in s_v])
-                if (getattr(self, "tamano_estandar", False) and getattr(self, "ajuste_tam", None) is not None
-                        and (k_seg is not None or getattr(self, "tamano_sin_segmento", False))):
-                    aj = aj + self.ajuste_tam[j]           # D-063: vecinos ya estandarizados por tamano
+                if (
+                    getattr(self, "tamano_estandar", False)
+                    and getattr(self, "ajuste_tam", None) is not None
+                    and (k_seg is not None or getattr(self, "tamano_sin_segmento", False))
+                ):
+                    aj = aj + self.ajuste_tam[j]  # D-063: vecinos ya estandarizados por tamano
                 niv_tam = mi
                 mu = float((peso * (self.m[j] + aj)).sum())
                 # Las dos partes NO se promedian igual. El error de medicion de cada
@@ -2526,10 +2890,7 @@ class BaseReferencia:
                 # `tau_c` se hereda del vecindario: un puesto desconocido rodeado de
                 # gerencias dispersa como una gerencia, y uno rodeado de auxiliares no.
                 tau2_v = float((peso * self.tau2_c[j]).sum())
-                var = (tau2_v
-                       + float((peso ** 2 / self.W[j]).sum())
-                       + float((peso * dist).sum())
-                       + penal_nivel)
+                var = tau2_v + float((peso**2 / self.W[j]).sum()) + float((peso * dist).sum()) + penal_nivel
                 # Todo lo que NO es dispersion del mercado es incertidumbre nuestra: el
                 # ruido de medicion de los vecinos, el castigo por no ser exactamente ese
                 # puesto, y lo que no se sabe de su escalon.
@@ -2558,7 +2919,8 @@ class BaseReferencia:
             if banda is None:
                 banda_de = "modelo"
                 k_b = (getattr(self, "escala_banda", None) or {}).get(
-                    "analogia" if base == "por analogia" else "directo", 1.0)
+                    "analogia" if base == "por analogia" else "directo", 1.0
+                )
                 banda = {q: mu + Z_NORMAL[q] * sd_modelo * k_b for q in CUANTILES}
             if banda_per is None:
                 sdp = float(np.sqrt(var_per))
@@ -2567,25 +2929,28 @@ class BaseReferencia:
             if prima_t is not None:
                 # D-055: se corre por la prima y se ensancha por su incertidumbre
                 pi_, var_pi = prima_t
-                ref_equiv, prima_aplicada = mu, pi_          # D-067: para mostrarla aparte
+                ref_equiv, prima_aplicada = mu, pi_  # D-067: para mostrarla aparte
                 sd_b = (banda[0.75] - banda[0.25]) / (2.0 * 0.6745)
                 sd_bp = (banda_per[0.75] - banda_per[0.25]) / (2.0 * 0.6745)
                 mu += pi_
-                banda = {q: mu + Z_NORMAL[q] * np.sqrt(sd_b ** 2 + var_pi) for q in CUANTILES}
-                banda_per = {q: mu + Z_NORMAL[q] * np.sqrt(sd_bp ** 2 + var_pi) for q in CUANTILES}
+                banda = {q: mu + Z_NORMAL[q] * np.sqrt(sd_b**2 + var_pi) for q in CUANTILES}
+                banda_per = {q: mu + Z_NORMAL[q] * np.sqrt(sd_bp**2 + var_pi) for q in CUANTILES}
                 var_centro += var_pi
                 base, banda_de = "por traduccion", "modelo"
             # DESPLAZAMIENTO POR TAMANO. Mueve el centro y la banda entera; no reestima
             # la anchura, que esta medido que no mejora. Cero fuera de los cargos altos.
-            if (k_seg is not None and getattr(self, "tamano_estandar", False)
-                    and getattr(self, "delta_tam", None) is not None):
+            if (
+                k_seg is not None
+                and getattr(self, "tamano_estandar", False)
+                and getattr(self, "delta_tam", None) is not None
+            ):
                 # D-063: el efecto del tamano del cliente segun el NIVEL del cargo; reemplaza a `ajuste_seg`
-                aj_seg = (float(self.delta_tam[int(niv_tam), k_seg])
-                          if niv_tam is not None and np.isfinite(niv_tam) else 0.0)
+                aj_seg = (
+                    float(self.delta_tam[int(niv_tam), k_seg]) if niv_tam is not None and np.isfinite(niv_tam) else 0.0
+                )
                 dg = getattr(self, "delta_tam_g", None)
-                if (dg is not None and base != "por analogia" and propio is not None
-                        and np.isfinite(dg[propio, k_seg])):
-                    aj_seg = float(dg[propio, k_seg])     # D-079: el efecto propio del cargo, encogido
+                if dg is not None and base != "por analogia" and propio is not None and np.isfinite(dg[propio, k_seg]):
+                    aj_seg = float(dg[propio, k_seg])  # D-079: el efecto propio del cargo, encogido
                 if aj_seg:
                     mu += aj_seg
                     banda = {q: v + aj_seg for q, v in banda.items()}
@@ -2598,21 +2963,31 @@ class BaseReferencia:
                     banda_per = {q: v + aj_seg for q, v in banda_per.items()}
 
             techo = getattr(self, "techo_cima", None)
-            niv_res = (self.nivel[propio] if (propio is not None and base != "por analogia") else niv_tam)
-            todos_niveles = getattr(self, "techo_todos_niveles", False)          # D-084
-            if (techo and k_seg in techo
-                    and (todos_niveles or (niv_res is not None and np.isfinite(niv_res) and int(niv_res) == 5))
-                    and not (propio is not None and base != "por analogia"
-                             and int(self.grupo[propio]) == getattr(self, "cima_grupo", -2))
-                    and mu > techo[k_seg]):
+            niv_res = self.nivel[propio] if (propio is not None and base != "por analogia") else niv_tam
+            todos_niveles = getattr(self, "techo_todos_niveles", False)  # D-084
+            if (
+                techo
+                and k_seg in techo
+                and (todos_niveles or (niv_res is not None and np.isfinite(niv_res) and int(niv_res) == 5))
+                and not (
+                    propio is not None
+                    and base != "por analogia"
+                    and int(self.grupo[propio]) == getattr(self, "cima_grupo", -2)
+                )
+                and mu > techo[k_seg]
+            ):
                 # D-082: en MICRO y PEQUENA, ningun cargo de nivel 5 queda sobre el GG de ese tamano
                 baja = techo[k_seg] - mu
                 mu += baja
                 banda = {q: v + baja for q, v in banda.items()}
                 banda_per = {q: v + baja for q, v in banda_per.items()}
             piso = getattr(self, "cima_piso", None)
-            if (piso and propio is not None and int(self.grupo[propio]) == getattr(self, "cima_grupo", -2)
-                    and (k_seg if k_seg is not None else -1) in piso):
+            if (
+                piso
+                and propio is not None
+                and int(self.grupo[propio]) == getattr(self, "cima_grupo", -2)
+                and (k_seg if k_seg is not None else -1) in piso
+            ):
                 # D-081: el GG no queda bajo sus gerentes de area en el mismo tamano
                 sube = piso[k_seg if k_seg is not None else -1] - mu
                 if sube > 0:
@@ -2629,64 +3004,85 @@ class BaseReferencia:
                     conf = "BAJA"
                 elif not (conf == "ALTA" and r_ancho <= CONF_ANCHO_ALTA):
                     conf = "MEDIA"
-            ancho = float(np.exp(0.6745 * sd) - 1.0)      # el de la banda entregada
-            filas[t] = {"referencia_log": mu, "sd": sd,
-                        "p10_log": banda[0.10], "p25_log": banda[0.25],
-                        "p75_log": banda[0.75], "p90_log": banda[0.90],
-                        "p10per_log": banda_per[0.10], "p25per_log": banda_per[0.25],
-                        "p75per_log": banda_per[0.75], "p90per_log": banda_per[0.90],
-                        "confianza": conf, "base": base, "ancho_rel": round(ancho, 3),
-                        # D-051: si la banda sale de los cuantiles de las empresas o del modelo
-                        "banda_de": banda_de, "sd_modelo": sd_modelo,
-                        # Con que titulo de la base se emparejo, cuando fue solo por el
-                        # grado (D-037). Vacio si el titulo estaba tal cual.
-                        "cargo_base": cargo_base,
-                        # D-050: la traduccion con que se resolvio un titulo en ingles
-                        "traduccion": traduccion,
-                        "equivalente": equivalente,
-                        # D-068 (a): el titulo con el error de tipeo corregido, si se corrigio
-                        "corregido": corregido,
-                        # D-067: la referencia del equivalente en espanol (sin prima) y la prima del ingles aplicada
-                        "referencia_equivalente_log": ref_equiv, "prima_idioma_log": prima_aplicada,
-                        # D-048: P del juez cuando el grupo lo asigno el juez; vacio si no
-                        "p_juez": round(float(p_juez), 3) if np.isfinite(p_juez) else np.nan,
-                        "incert_centro": round(incert, 4),
-                        "segmento": seg or "", "rubro": usado,
-                        # A QUE NIVEL se comparo: el front tiene que poder decir
-                        # "contra tu division" y no "contra tu rubro" a secas.
-                        "rubro_nivel": nivel_usado,
-                        # Diferencia que habia entre la grafia femenina y la masculina
-                        # antes de unirlas. Vacio donde no hubo fusion de genero.
-                        "brecha_grafia": (round(float(np.exp(self.brecha_gen[propio]) - 1), 4)
-                                          if propio is not None
-                                          and np.isfinite(self.brecha_gen[propio]) else ""),
-                        "empresas": n_emp, "personas": n_per,
-                        # POR QUE el veredicto usa el nivel que usa. Vacio cuando ya
-                        # baja al mas fino del cliente. Ver `sector_mas_fino`.
-                        **_cols_sector(self.sector_mas_fino(propio, c6_cliente, usado)),
-                        # .esta el cliente DENTRO del mercado con que se le compara?
-                        # `1/n_emp` como influencia: medido que aproxima el peso real
-                        # con 0,3%-4% de error. Ver el docstring y D-027.
-                        "tu_empresa": (propio is not None
-                                       and int(self.grupo[propio]) in mis_grupos),
-                        "tu_influencia": (round(1.0 / n_emp, 4)
-                                          if (propio is not None and n_emp > 0
-                                              and int(self.grupo[propio]) in mis_grupos)
-                                          else np.nan),
-                        "similitud": round(mejor, 3),
-                        "reconocido": True}
+            ancho = float(np.exp(0.6745 * sd) - 1.0)  # el de la banda entregada
+            filas[t] = {
+                "referencia_log": mu,
+                "sd": sd,
+                "p10_log": banda[0.10],
+                "p25_log": banda[0.25],
+                "p75_log": banda[0.75],
+                "p90_log": banda[0.90],
+                "p10per_log": banda_per[0.10],
+                "p25per_log": banda_per[0.25],
+                "p75per_log": banda_per[0.75],
+                "p90per_log": banda_per[0.90],
+                "confianza": conf,
+                "base": base,
+                "ancho_rel": round(ancho, 3),
+                # D-051: si la banda sale de los cuantiles de las empresas o del modelo
+                "banda_de": banda_de,
+                "sd_modelo": sd_modelo,
+                # Con que titulo de la base se emparejo, cuando fue solo por el
+                # grado (D-037). Vacio si el titulo estaba tal cual.
+                "cargo_base": cargo_base,
+                # D-050: la traduccion con que se resolvio un titulo en ingles
+                "traduccion": traduccion,
+                "equivalente": equivalente,
+                # D-068 (a): el titulo con el error de tipeo corregido, si se corrigio
+                "corregido": corregido,
+                # D-067: la referencia del equivalente en espanol (sin prima) y la prima del ingles aplicada
+                "referencia_equivalente_log": ref_equiv,
+                "prima_idioma_log": prima_aplicada,
+                # D-048: P del juez cuando el grupo lo asigno el juez; vacio si no
+                "p_juez": round(float(p_juez), 3) if np.isfinite(p_juez) else np.nan,
+                "incert_centro": round(incert, 4),
+                "segmento": seg or "",
+                "rubro": usado,
+                # A QUE NIVEL se comparo: el front tiene que poder decir
+                # "contra tu division" y no "contra tu rubro" a secas.
+                "rubro_nivel": nivel_usado,
+                # Diferencia que habia entre la grafia femenina y la masculina
+                # antes de unirlas. Vacio donde no hubo fusion de genero.
+                "brecha_grafia": (
+                    round(float(np.exp(self.brecha_gen[propio]) - 1), 4)
+                    if propio is not None and np.isfinite(self.brecha_gen[propio])
+                    else ""
+                ),
+                "empresas": n_emp,
+                "personas": n_per,
+                # POR QUE el veredicto usa el nivel que usa. Vacio cuando ya
+                # baja al mas fino del cliente. Ver `sector_mas_fino`.
+                **_cols_sector(self.sector_mas_fino(propio, c6_cliente, usado)),
+                # .esta el cliente DENTRO del mercado con que se le compara?
+                # `1/n_emp` como influencia: medido que aproxima el peso real
+                # con 0,3%-4% de error. Ver el docstring y D-027.
+                "tu_empresa": (propio is not None and int(self.grupo[propio]) in mis_grupos),
+                "tu_influencia": (
+                    round(1.0 / n_emp, 4)
+                    if (propio is not None and n_emp > 0 and int(self.grupo[propio]) in mis_grupos)
+                    else np.nan
+                ),
+                "similitud": round(mejor, 3),
+                "reconocido": True,
+            }
             clf_c = getattr(self, "clf_cargo", None)
-            if base == "por analogia" and getattr(self, "filtro_cargo", False) and (
+            if (
+                base == "por analogia"
+                and getattr(self, "filtro_cargo", False)
+                and (
                     (clf_c is not None and self._p_no_cargo(Q[k]) >= clf_c[2])
-                    or (clf_c is None and not self._parece_cargo(buscados[k]) and mejor < FILTRO_SIMILITUD)):
+                    or (clf_c is None and not self._parece_cargo(buscados[k]) and mejor < FILTRO_SIMILITUD)
+                )
+            ):
                 # D-075: no se encontro por ninguna via y el clasificador dice que no es un cargo (`ASDFGH QWERTY`,
                 # `ASTRONAUTA`): no se reconoce y NO se da cifra. Sin clasificador, la regla de D-073 (no adoptada)
                 fl = filas[t]
                 for c_ in list(fl):
                     if c_.endswith("_log") or c_ in ("sd", "sd_modelo", "ancho_rel", "incert_centro"):
                         fl[c_] = np.nan
-                fl.update({"base": "no reconocido", "confianza": "BAJA", "empresas": 0, "personas": 0,
-                           "reconocido": False})
+                fl.update(
+                    {"base": "no reconocido", "confianza": "BAJA", "empresas": 0, "personas": 0, "reconocido": False}
+                )
 
         # las filas con el cargo en blanco se abstienen, con las MISMAS claves que las
         # demas para que el DataFrame no invente columnas a medias
@@ -2696,12 +3092,15 @@ class BaseReferencia:
                 # `bool` ANTES que `int`, que en Python es su superclase: sin esta
                 # rama `tu_empresa` salia 0 en las filas sin cargo y `false` en las
                 # demas, y el front tendria que aceptar los dos tipos.
-                filas[t] = {k: (False if isinstance(v, bool) else
-                                "" if isinstance(v, str) else
-                                0 if isinstance(v, (int, np.integer)) else np.nan)
-                            for k, v in molde.items()}
-                filas[t].update({"confianza": "BAJA", "base": "sin cargo",
-                                 "similitud": 0.0})
+                filas[t] = {
+                    k: (
+                        False
+                        if isinstance(v, bool)
+                        else "" if isinstance(v, str) else 0 if isinstance(v, (int, np.integer)) else np.nan
+                    )
+                    for k, v in molde.items()
+                }
+                filas[t].update({"confianza": "BAJA", "base": "sin cargo", "similitud": 0.0})
 
         out = pd.DataFrame([filas[t] for t in titulos])
         out.insert(0, "cargo", titulos)
@@ -2709,11 +3108,18 @@ class BaseReferencia:
             f = float(self.sbu(int(anio)))
             if "prima_idioma_log" in out:
                 out["prima_idioma"] = (np.exp(out["prima_idioma_log"]) - 1).round(3)
-            for col, nueva in (("referencia_log", "referencia"), ("referencia_equivalente_log", "referencia_equivalente"),
-                               ("p10_log", "p10_emp"), ("p25_log", "p25_emp"),
-                               ("p75_log", "p75_emp"), ("p90_log", "p90_emp"),
-                               ("p10per_log", "p10_per"), ("p25per_log", "p25_per"),
-                               ("p75per_log", "p75_per"), ("p90per_log", "p90_per")):
+            for col, nueva in (
+                ("referencia_log", "referencia"),
+                ("referencia_equivalente_log", "referencia_equivalente"),
+                ("p10_log", "p10_emp"),
+                ("p25_log", "p25_emp"),
+                ("p75_log", "p75_emp"),
+                ("p90_log", "p90_emp"),
+                ("p10per_log", "p10_per"),
+                ("p25per_log", "p25_per"),
+                ("p75per_log", "p75_per"),
+                ("p90per_log", "p90_per"),
+            ):
                 out[nueva] = (np.exp(out[col]) * f).round(2)
             # 2026-10-07, decision del autor: la banda de MERCADO es la de empresas (cada empresa
             # cuenta una vez; es la validada con pinball, D-051). `p10`..`p90` son esa banda; la
@@ -2749,8 +3155,9 @@ class _CandadoGrado:
 
     def une(self, superviviente, absorbido):
         if self.activo:
-            self.g[int(superviviente)] = (self.g.get(int(superviviente), frozenset())
-                                          | self.g.pop(int(absorbido), frozenset()))
+            self.g[int(superviviente)] = self.g.get(int(superviviente), frozenset()) | self.g.pop(
+                int(absorbido), frozenset()
+            )
 
 
 def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None, grados=None):
@@ -2781,7 +3188,7 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None, gr
     for i in range(n):
         for j, s in zip(vec[i], sim[i]):
             if s < umbral:
-                break                       # `sim` viene ordenada de mayor a menor
+                break  # `sim` viene ordenada de mayor a menor
             j = int(j)
             if j == i:
                 continue
@@ -2810,10 +3217,9 @@ def _fusionar(Z, niveles, umbral=UMBRAL_FUSION, tope=TOPE_GRUPO, senior=None, gr
         niv = np.unique(np.concatenate([niveles[A], niveles[B]]))
         if len(niv[np.isfinite(niv)]) > 1:
             continue
-        if senior is not None and len(np.unique(np.concatenate(
-                [np.asarray(senior)[A], np.asarray(senior)[B]]))) > 1:
+        if senior is not None and len(np.unique(np.concatenate([np.asarray(senior)[A], np.asarray(senior)[B]]))) > 1:
             continue
-        if float((Z[A] @ Z[B].T).min()) < umbral:      # el par PEOR manda
+        if float((Z[A] @ Z[B].T).min()) < umbral:  # el par PEOR manda
             continue
         miembros[gi] = A + B
         miembros.pop(gj, None)
@@ -2845,8 +3251,13 @@ def _distancia1(a, b, transposicion=False):
         dif = [i for i in range(la) if a[i] != b[i]]
         if len(dif) == 1:
             return True
-        if (transposicion and len(dif) == 2 and dif[1] == dif[0] + 1
-                and a[dif[0]] == b[dif[1]] and a[dif[1]] == b[dif[0]]):
+        if (
+            transposicion
+            and len(dif) == 2
+            and dif[1] == dif[0] + 1
+            and a[dif[0]] == b[dif[1]]
+            and a[dif[1]] == b[dif[0]]
+        ):
             return True
         return False
     if la > lb:
@@ -2854,7 +3265,7 @@ def _distancia1(a, b, transposicion=False):
     i = 0
     while i < la and a[i] == b[i]:
         i += 1
-    return a[i:] == b[i + 1:]
+    return a[i:] == b[i + 1 :]
 
 
 def _es_errata(a, b, palabra_min=0):
@@ -2877,11 +3288,11 @@ def _es_errata(a, b, palabra_min=0):
             if len(dif) == 1 and min(len(dif[0][0]), len(dif[0][1])) < palabra_min:
                 return False
     if _DIGITO_ERR.search(a) or _DIGITO_ERR.search(b):
-        return False                                    # OPERARIO 1 / OPERARIO 2
+        return False  # OPERARIO 1 / OPERARIO 2
     if set(_ROMANO_ERR.findall(a)) != set(_ROMANO_ERR.findall(b)):
-        return False                                    # OPERARIO I / OPERARIO II
+        return False  # OPERARIO I / OPERARIO II
     if any(t in a or t in b for t in ("/A", "(A)")):
-        return False                                    # forma inclusiva: TRABAJADOR/A
+        return False  # forma inclusiva: TRABAJADOR/A
     # donde y como difieren
     if len(a) == len(b):
         i = next(k for k in range(len(a)) if a[k] != b[k])
@@ -2894,7 +3305,7 @@ def _es_errata(a, b, palabra_min=0):
         # ULTIMA del titulo, y por eso `ENFERMERAS`/`ENFERMEROS` se colaba como errata:
         # la O/A va seguida de la S del plural.
         if {a[i], b[i]} == {"O", "A"} and _fin_de_palabra(a, i):
-            return False                                # OPERARIO/OPERARIA, ENFERMER-AS/OS
+            return False  # OPERARIO/OPERARIA, ENFERMER-AS/OS
         return True
     corta, larga = (a, b) if len(a) < len(b) else (b, a)
     i = 0
@@ -2902,13 +3313,13 @@ def _es_errata(a, b, palabra_min=0):
         i += 1
     c = larga[i]
     if c == "A" and _fin_de_palabra(larga, i) and i > 0 and corta[i - 1] in "RNL":
-        return False                                    # VENDEDOR / VENDEDORA
+        return False  # VENDEDOR / VENDEDORA
     return True
 
 
 def _fin_de_palabra(s, i):
     """El caracter `i` cierra su palabra, admitiendo una `S` de plural detras."""
-    resto = s[i + 1:]
+    resto = s[i + 1 :]
     j = 0
     while j < len(resto) and resto[j] == "S":
         j += 1
@@ -2924,11 +3335,20 @@ def _letra_suelta(s, i):
     return antes and despues
 
 
-def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
-                      min_largo=MIN_LARGO_ERRATA, max_raro=MAX_EMPRESAS_ERRATA,
-                      min_comun=MIN_EMPRESAS_ABSORBE, transposicion=True,
-                      largo_en_comun=True, pasadas=PASADAS_ERRATA, grados=None,
-                      palabra_min=0):
+def _fusionar_erratas(
+    celdas,
+    grupo,
+    niveles,
+    emp_por_grupo,
+    min_largo=MIN_LARGO_ERRATA,
+    max_raro=MAX_EMPRESAS_ERRATA,
+    min_comun=MIN_EMPRESAS_ABSORBE,
+    transposicion=True,
+    largo_en_comun=True,
+    pasadas=PASADAS_ERRATA,
+    grados=None,
+    palabra_min=0,
+):
     """Absorbe los grupos-dedazo dentro del grupo comun del que son errata.
 
     Segunda pasada, DESPUES de la fusion semantica y por separado: asi no altera nada de
@@ -2986,17 +3406,37 @@ def _fusionar_erratas(celdas, grupo, niveles, emp_por_grupo,
     grupo = np.asarray(grupo)
     for _ in range(max(1, int(pasadas))):
         grupo, n_paso = _una_pasada_erratas(
-            celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro, min_comun,
-            transposicion, largo_en_comun, grados, palabra_min)
+            celdas,
+            grupo,
+            niveles,
+            emp_por_grupo,
+            min_largo,
+            max_raro,
+            min_comun,
+            transposicion,
+            largo_en_comun,
+            grados,
+            palabra_min,
+        )
         total += n_paso
         if not n_paso:
             break
     return grupo, total
 
 
-def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_raro,
-                        min_comun, transposicion, largo_en_comun, grados=None,
-                        palabra_min=0):
+def _una_pasada_erratas(
+    celdas,
+    grupo,
+    niveles,
+    emp_por_grupo,
+    min_largo,
+    max_raro,
+    min_comun,
+    transposicion,
+    largo_en_comun,
+    grados=None,
+    palabra_min=0,
+):
     """Una vuelta de absorcion. La separa de `_fusionar_erratas` para poder repetirla."""
     n = len(celdas)
     candado = _CandadoGrado(grados, grupo)
@@ -3012,7 +3452,7 @@ def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_ra
             continue
         idx[c].append(i)
         for k in range(len(c)):
-            idx[c[:k] + c[k + 1:]].append(i)
+            idx[c[:k] + c[k + 1 :]].append(i)
 
     destino, vistos, fusiones = {}, set(), 0
     for lista in idx.values():
@@ -3032,8 +3472,7 @@ def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_ra
                 if np.isfinite(ni) and np.isfinite(nj) and ni != nj:
                     continue
                 a, b = celdas[par[0]], celdas[par[1]]
-                if (not _distancia1(a, b, transposicion)
-                        or not _es_errata(a, b, palabra_min)):
+                if not _distancia1(a, b, transposicion) or not _es_errata(a, b, palabra_min):
                     continue
                 ei, ej = emp_por_grupo.get(gi, 0), emp_por_grupo.get(gj, 0)
                 raro, comun = (gi, gj) if ei <= ej else (gj, gi)
@@ -3045,7 +3484,7 @@ def _una_pasada_erratas(celdas, grupo, niveles, emp_por_grupo, min_largo, max_ra
                     continue
                 if emp_por_grupo.get(comun, 0) < min_comun:
                     continue
-                if raro in destino:            # ya absorbido por otro comun
+                if raro in destino:  # ya absorbido por otro comun
                     continue
                 if candado.choca(raro, comun):
                     continue
@@ -3115,7 +3554,7 @@ def _fusionar_genero(celdas, grupo, niveles, emp_por_grupo, grados=None):
             continue
         idx[c].append(i)
         for k in range(len(c)):
-            idx[c[:k] + c[k + 1:]].append(i)
+            idx[c[:k] + c[k + 1 :]].append(i)
 
     padre = {}
 
@@ -3252,8 +3691,7 @@ def _fusionar_grado(celdas, grupo, niveles, emp_por_grupo):
     return np.array([raiz(int(g)) for g in grupo], dtype=np.int64), uniones
 
 
-def _brecha_por_grafia(marco, col, celdas, antes, pares_fem_masc, despues,
-                       min_emp=MIN_EMPRESAS_BANDA):
+def _brecha_por_grafia(marco, col, celdas, antes, pares_fem_masc, despues, min_emp=MIN_EMPRESAS_BANDA):
     """Diferencia en log entre la grafia femenina y la masculina de cada celda fusionada.
 
     `pares_fem_masc` son los (grupo_femenino, grupo_masculino) que `_fusionar_genero`
@@ -3278,13 +3716,11 @@ def _brecha_por_grafia(marco, col, celdas, antes, pares_fem_masc, despues,
         return salida
     g_antes = marco[col].astype(str).map(dict(zip(celdas, antes)))
     md = marco.assign(_ga=g_antes).dropna(subset=["y"])
-    v = (md.groupby(["_ga", "empresa_ruc"], sort=False)["y"].median()
-           .groupby(level=0).median())
+    v = md.groupby(["_ga", "empresa_ruc"], sort=False)["y"].median().groupby(level=0).median()
     n_emp = md.groupby("_ga")["empresa_ruc"].nunique()
     for gf, gm in pares_fem_masc:
-        if (gf in v.index and gm in v.index
-                and n_emp.get(gf, 0) >= min_emp and n_emp.get(gm, 0) >= min_emp):
-            salida[despues == despues[np.flatnonzero(antes == gf)[0]]] =                 float(v[gf] - v[gm])
+        if gf in v.index and gm in v.index and n_emp.get(gf, 0) >= min_emp and n_emp.get(gm, 0) >= min_emp:
+            salida[despues == despues[np.flatnonzero(antes == gf)[0]]] = float(v[gf] - v[gm])
     return salida
 
 
@@ -3371,9 +3807,13 @@ def _padron(marco, colg, celdas, grupo, scvs=None):
         fuente = f.drop_duplicates("_r").set_index("_r")
     elif any(c in marco.columns for c in ("n_empleados", "ciiu_n6", "segmento")):
         cols = [c for c in ("n_empleados", "ciiu_n6", "segmento") if c in marco.columns]
-        fuente = (marco[["empresa_ruc"] + cols].dropna(subset=["empresa_ruc"])
-                  .assign(_r=lambda x: x["empresa_ruc"].astype(str))
-                  .groupby("_r")[cols].first())
+        fuente = (
+            marco[["empresa_ruc"] + cols]
+            .dropna(subset=["empresa_ruc"])
+            .assign(_r=lambda x: x["empresa_ruc"].astype(str))
+            .groupby("_r")[cols]
+            .first()
+        )
     if fuente is not None:
         cols = fuente.columns
         for r, fila in fuente.iterrows():
@@ -3381,12 +3821,9 @@ def _padron(marco, colg, celdas, grupo, scvs=None):
             # como suyo; `G476` no le dice nada. La seccion y los niveles intermedios
             # se sacan cortando, que es barato; lo que no se puede es recuperar lo que
             # se tiro al guardar.
-            g4 = (str(fila["ciiu_n6"])
-                  if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]) else "")
-            ne = (int(fila["n_empleados"])
-                  if "n_empleados" in cols and pd.notna(fila["n_empleados"]) else -1)
-            sg = ((_norm_segmento(fila["segmento"]) or "")
-                  if "segmento" in cols and pd.notna(fila["segmento"]) else "")
+            g4 = str(fila["ciiu_n6"]) if "ciiu_n6" in cols and pd.notna(fila["ciiu_n6"]) else ""
+            ne = int(fila["n_empleados"]) if "n_empleados" in cols and pd.notna(fila["n_empleados"]) else -1
+            sg = (_norm_segmento(fila["segmento"]) or "") if "segmento" in cols and pd.notna(fila["segmento"]) else ""
             meta_ruc[r] = (g4, ne, sg)
             # `tam` y `ciiu` solo describen a las empresas DEL MERCADO —alimentan la
             # tarjeta de tamanos del informe—, asi que solo se llenan para las que estan
@@ -3396,23 +3833,22 @@ def _padron(marco, colg, celdas, grupo, scvs=None):
                 if ne > 0:
                     tam[i] = ne
                 if g4:
-                    ciiu[i] = g4[:4]      # la tarjeta de industria agrupa a nivel grupo
+                    ciiu[i] = g4[:4]  # la tarjeta de industria agrupa a nivel grupo
 
-    pares = (d.assign(_e=d["empresa_ruc"].astype(str).map(pos_ruc))
-              .drop_duplicates([colg, "_e"]))
+    pares = d.assign(_e=d["empresa_ruc"].astype(str).map(pos_ruc)).drop_duplicates([colg, "_e"])
     clave = pares[colg].astype(str)
     orden = np.argsort(clave.to_numpy(), kind="stable")
     clave, valores = clave.to_numpy()[orden], pares["_e"].to_numpy()[orden]
     claves_unicas, ini = np.unique(clave, return_index=True)
     indptr = np.append(ini, len(valores)).astype(np.int64)
-    return (indptr, valores.astype(np.int32), tam, ciiu, list(claves_unicas),
-            meta_ruc, pos_ruc)
+    return (indptr, valores.astype(np.int32), tam, ciiu, list(claves_unicas), meta_ruc, pos_ruc)
 
 
 def _sin_falso(base, a, b):
     """D-089: el candado de falsos amigos con la palabra configurada (`candado_seguridad`: True -> SEGURIDAD; o la
     palabra del placebo)."""
     from src.domain.capa0 import sin_falso_amigo
+
     w = base.candado_seguridad
     return sin_falso_amigo(a, b, "SEGURIDAD" if w is True else str(w))
 
@@ -3430,7 +3866,7 @@ def _vecinos(Q, B, k, excluir_propio):
     sim = np.zeros((Q.shape[0], k), dtype=float)
     paso = 512
     for i0 in range(0, Q.shape[0], paso):
-        S = Q[i0:i0 + paso] @ B.T
+        S = Q[i0 : i0 + paso] @ B.T
         for r in range(S.shape[0]):
             fila = S[r]
             if excluir_propio:

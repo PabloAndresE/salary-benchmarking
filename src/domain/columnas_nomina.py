@@ -4,10 +4,9 @@ Los nombres que se aceptan sin que el cliente tenga que decirlos. La construccio
 base desde BigQuery y el flujo del CLI (`referenciar`) no son del servicio: siguen en la
 rama `main`.
 """
-_POSIBLES = ("cargo", "cargo_norm", "puesto", "denominacion", "descripcion_cargo",
-             "nombre_cargo", "titulo")
-_POSIBLES_SUELDO = ("sueldo", "salario", "remuneracion", "sueldo_base",
-                    "salario_base", "sueldo_mensual", "basico")
+
+_POSIBLES = ("cargo", "cargo_norm", "puesto", "denominacion", "descripcion_cargo", "nombre_cargo", "titulo")
+_POSIBLES_SUELDO = ("sueldo", "salario", "remuneracion", "sueldo_base", "salario_base", "sueldo_mensual", "basico")
 
 
 def _buscar_sueldo(df, col_sueldo):

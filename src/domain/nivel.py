@@ -23,6 +23,7 @@ trivial: el modelo solo tiene que leer la palabra de vuelta. La prueba util es o
 Si aparece la escalera, el clasificador encontro jerarquia real en textos donde nadie la
 escribio. Y no es circular: el salario no entra en ninguna etapa del entrenamiento.
 """
+
 import re
 
 import numpy as np
@@ -44,21 +45,39 @@ import pandas as pd
 # El nivel de cada palabra se decide por lo que SIGNIFICA, nunca por lo que cobra: usar el
 # sueldo para asignar el escalon seria la circularidad que todo el proyecto evita.
 RANGOS = {
-    "PASANTE": 1, "PRACTICANTE": 1,
-    "AYUDANTE": 1, "AUXILIAR": 1, "OPERARIO": 1, "OPERADOR": 1, "OBRERO": 1,
+    "PASANTE": 1,
+    "PRACTICANTE": 1,
+    "AYUDANTE": 1,
+    "AUXILIAR": 1,
+    "OPERARIO": 1,
+    "OPERADOR": 1,
+    "OBRERO": 1,
     "ASISTENTE": 1,
-    "TECNICO": 2, "ANALISTA": 2,
-    "SUPERVISOR": 3, "COORDINADOR": 3, "ESPECIALISTA": 3,
-    "JEFE": 4, "SUBGERENTE": 4,
-    "GERENTE": 5, "DIRECTOR": 5, "VICEPRESIDENTE": 5, "PRESIDENTE": 5,
+    "TECNICO": 2,
+    "ANALISTA": 2,
+    "SUPERVISOR": 3,
+    "COORDINADOR": 3,
+    "ESPECIALISTA": 3,
+    "JEFE": 4,
+    "SUBGERENTE": 4,
+    "GERENTE": 5,
+    "DIRECTOR": 5,
+    "VICEPRESIDENTE": 5,
+    "PRESIDENTE": 5,
     # 2026-10-06, decision del autor: los equivalentes en INGLES de las mismas palabras, y
     # REPRESENTANTE / REPRESENTATIVE en el nivel 1 (como ASESOR y EJECUTIVO). Sin ellos, un
     # `SALES DEVELOPMENT REPRESENTATIVE` no tenia nivel y su analogia no podia descontar a los
     # `SALES MANAGER` y `SALES DIRECTOR` vecinos. HEAD, LEAD y OFFICER no entran: ambiguas.
-    "REPRESENTANTE": 1, "REPRESENTATIVE": 1, "ASSISTANT": 1, "INTERN": 1,
-    "ANALYST": 2, "TECHNICIAN": 2,
-    "COORDINATOR": 3, "SPECIALIST": 3,
-    "MANAGER": 5, "PRESIDENT": 5,
+    "REPRESENTANTE": 1,
+    "REPRESENTATIVE": 1,
+    "ASSISTANT": 1,
+    "INTERN": 1,
+    "ANALYST": 2,
+    "TECHNICIAN": 2,
+    "COORDINATOR": 3,
+    "SPECIALIST": 3,
+    "MANAGER": 5,
+    "PRESIDENT": 5,
 }
 NIVELES = (1, 2, 3, 4, 5)
 
@@ -94,14 +113,21 @@ _PATRON = re.compile(r"\b(" + _ALTERNATIVAS + r")(?:ES|S)?\b")
 # y las letras tampoco: `TECNICO MECANICO A` y `TECNICO MECANICO I` son el mismo, y
 # de los escalones por digito ya se ocupa `_es_errata`.
 SENIORIDAD = {
-    "TRAINEE": -2, "SOUS": -1, "JR": -1, "JUNIOR": -1,
+    "TRAINEE": -2,
+    "SOUS": -1,
+    "JR": -1,
+    "JUNIOR": -1,
     # D-040, criterio C: SEMISENIOR es una marca propia, entre la falta de marca y SR.
-    "SEMISENIOR": 0.5, "SEMI SENIOR": 0.5, "SEMI-SENIOR": 0.5, "SSR": 0.5,
-    "SR": 1, "SENIOR": 1,
-    "CORPORATIVO": 2, "CORPORATIVA": 2,
+    "SEMISENIOR": 0.5,
+    "SEMI SENIOR": 0.5,
+    "SEMI-SENIOR": 0.5,
+    "SSR": 0.5,
+    "SR": 1,
+    "SENIOR": 1,
+    "CORPORATIVO": 2,
+    "CORPORATIVA": 2,
 }
-_PATRON_SEN = re.compile(
-    r"\b(" + "|".join(sorted(SENIORIDAD, key=len, reverse=True)) + r")\b\.?")
+_PATRON_SEN = re.compile(r"\b(" + "|".join(sorted(SENIORIDAD, key=len, reverse=True)) + r")\b\.?")
 
 
 def seniority_lexica(etiqueta):
@@ -123,7 +149,7 @@ def nivel_lexico(etiqueta):
     error va en la direccion del ruido, no del sesgo.
     """
     hallados = _PATRON.findall(str(etiqueta).upper())
-    if "ASSISTANT" in hallados and "MANAGER" in hallados:      # como en la rubrica
+    if "ASSISTANT" in hallados and "MANAGER" in hallados:  # como en la rubrica
         return 4
     return max((RANGOS[h] for h in hallados), default=None)
 
@@ -141,8 +167,8 @@ def nivel_lexico(etiqueta):
 # regla junta, la guarda no excluye ninguno.
 ROMANOS_GRADO = ("I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
 ANTES_DE_GRADO = {"NIVEL", "LEVEL", "GRADO", "CATEGORIA", "CAT"}
-NO_LETRA_GRADO = {"E", "Y", "O", "U"}               # conectores, no grados
-NO_GRADO_DESPUES = {"LICENCIA", "TIPO"}             # `LICENCIA C` es un tipo, no un grado
+NO_LETRA_GRADO = {"E", "Y", "O", "U"}  # conectores, no grados
+NO_GRADO_DESPUES = {"LICENCIA", "TIPO"}  # `LICENCIA C` es un tipo, no un grado
 CONECTORES = {"DE", "DEL", "Y", "E", "EN", "EL", "LA", "LOS", "LAS", "A", "AL"}
 
 
@@ -159,8 +185,13 @@ def _letras_de_grado(toks):
         m = re.fullmatch(r"\(?([A-ZÑ])\)?", tk)
         junto_amp = (i > 0 and toks[i - 1] == "&") or (i + 1 < len(toks) and toks[i + 1] == "&")
         tras_tipo = i > 0 and toks[i - 1] in NO_GRADO_DESPUES
-        if (m and m.group(1) not in NO_LETRA_GRADO and not junto_amp and not tras_tipo
-                and (m.group(1) != "A" or i == len(toks) - 1)):
+        if (
+            m
+            and m.group(1) not in NO_LETRA_GRADO
+            and not junto_amp
+            and not tras_tipo
+            and (m.group(1) != "A" or i == len(toks) - 1)
+        ):
             fuera.add(i)
             if i > 0 and toks[i - 1] in ANTES_DE_GRADO:
                 fuera.add(i - 1)
@@ -171,7 +202,7 @@ def _palabras_grado(etiqueta):
     toks = str(etiqueta).upper().split()
     letras = _letras_de_grado(toks)
     t = " ".join(tk for i, tk in enumerate(toks) if i not in letras)
-    t = re.sub(r"([A-ZÁÉÍÓÚÑ])([1-9])\b", r"\1 \2", t)       # CONTABLE1 -> CONTABLE 1
+    t = re.sub(r"([A-ZÁÉÍÓÚÑ])([1-9])\b", r"\1 \2", t)  # CONTABLE1 -> CONTABLE 1
     return re.findall(r"[A-ZÁÉÍÓÚÑÜ0-9]+", t), bool(letras)
 
 
@@ -183,9 +214,11 @@ def quitar_grado(etiqueta):
     """Las palabras del titulo sin el grado (numero 1-9, romano I-X, letra suelta, y el
     `NIVEL`/`GRADO`/`CATEGORIA` que los precede). Los numeros de dos cifras se quedan."""
     ws, _ = _palabras_grado(etiqueta)
-    return [w for i, w in enumerate(ws)
-            if not _es_grado(w)
-            and not (w in ANTES_DE_GRADO and i + 1 < len(ws) and _es_grado(ws[i + 1]))]
+    return [
+        w
+        for i, w in enumerate(ws)
+        if not _es_grado(w) and not (w in ANTES_DE_GRADO and i + 1 < len(ws) and _es_grado(ws[i + 1]))
+    ]
 
 
 def tiene_grado(etiqueta):
@@ -221,25 +254,36 @@ def mismo_salvo_grado(a, b):
 #   - TECNICO y ESPECIALISTA solo son rango si abren el titulo (`AUXILIAR TECNICO` es un
 #     auxiliar).
 RANGOS_RUBRICA = dict(RANGOS) | {
-    "ASESOR": 1, "EJECUTIVO": 1, "ASSISTANT": 1,
-    "ADMINISTRADOR": 2, "CONTROLLER": 2, "CONSULTOR": 2,
-    "ENCARGADO": 3, "SUBJEFE": 3,
+    "ASESOR": 1,
+    "EJECUTIVO": 1,
+    "ASSISTANT": 1,
+    "ADMINISTRADOR": 2,
+    "CONTROLLER": 2,
+    "CONSULTOR": 2,
+    "ENCARGADO": 3,
+    "SUBJEFE": 3,
     "MANAGER": 5,
     # 2026-10-06: los equivalentes en ingles de la tabla (ver RANGOS)
-    "EXECUTIVE": 1, "ADVISOR": 1, "CONSULTANT": 2,
+    "EXECUTIVE": 1,
+    "ADVISOR": 1,
+    "CONSULTANT": 2,
 }
 _SOLO_AL_INICIO = {"TECNICO", "ESPECIALISTA"}
 
 
 def _raiz_rango(w):
     """`COORDINADORA`, `ASISTENTES`, `JEFA`, `GERENTES` -> la palabra de la tabla."""
-    for c in (w, w[:-2] if w.endswith("ES") else None, w[:-1] if w.endswith("S") else None,
-              "JEFE" if w in ("JEFA", "JEFAS") else None):
+    for c in (
+        w,
+        w[:-2] if w.endswith("ES") else None,
+        w[:-1] if w.endswith("S") else None,
+        "JEFE" if w in ("JEFA", "JEFAS") else None,
+    ):
         if c and c in RANGOS_RUBRICA:
             return c
     if w.endswith("A") and w[:-1] + "O" in RANGOS_RUBRICA:
         return w[:-1] + "O"
-    if w.endswith("A") and w[:-1] in RANGOS_RUBRICA:          # COORDINADORA, SUPERVISORA
+    if w.endswith("A") and w[:-1] in RANGOS_RUBRICA:  # COORDINADORA, SUPERVISORA
         return w[:-1]
     if w.endswith("AS") and w[:-2] in RANGOS_RUBRICA:
         return w[:-2]
@@ -301,8 +345,8 @@ class ClasificadorNivel:
 
     def entrenar(self, X, y, semilla=20260805):
         from sklearn.linear_model import LogisticRegression
-        self.modelo = LogisticRegression(max_iter=2000, C=1.0, random_state=semilla,
-                                         class_weight="balanced")
+
+        self.modelo = LogisticRegression(max_iter=2000, C=1.0, random_state=semilla, class_weight="balanced")
         self.modelo.fit(np.asarray(X, dtype=float), np.asarray(y, dtype=int))
         return self
 
@@ -340,8 +384,7 @@ def escalera_salarial(niveles, y):
     return g, recorrido, monotona
 
 
-def efecto_nivel(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc",
-                 estimador="media"):
+def efecto_nivel(marco, col="cargo_norm", col_y="y", col_empresa="empresa_ruc", estimador="media"):
     """Cuanto paga cada escalon, en log, DENTRO de la misma area enmascarada.
 
     Medido asi porque es el unico contraste sin confusion: `PUESTO DE CAJA` existe como

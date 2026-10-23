@@ -3,7 +3,7 @@
 Lo que se fija sobre todo es que NO es una resta: restar el primer ingreso a la fecha de
 corte le regala a la persona los anios que estuvo fuera.
 """
-import numpy as np
+
 import pandas as pd
 
 from src.domain.antiguedad import antiguedad_anios, columnas_de_fecha, tramo
@@ -16,26 +16,33 @@ def test_sin_salidas_es_la_resta_simple():
 
 def test_los_anios_FUERA_no_cuentan():
     # entra 2010, sale 2015, vuelve 2020: 5 + 6 = 11 anios, no 16.
-    df = pd.DataFrame({"Fecha de primer ingreso": ["01/01/2010"],
-                       "Fecha de salida 1": ["01/01/2015"],
-                       "Fecha de reingreso 1": ["01/01/2020"]})
+    df = pd.DataFrame(
+        {
+            "Fecha de primer ingreso": ["01/01/2010"],
+            "Fecha de salida 1": ["01/01/2015"],
+            "Fecha de reingreso 1": ["01/01/2020"],
+        }
+    )
     a = antiguedad_anios(df, 2025).iloc[0]
     assert abs(a - 11.0) < 0.05, f"dio {a}: le esta regalando los anios fuera"
 
 
 def test_dos_salidas_y_dos_reingresos():
-    df = pd.DataFrame({"Fecha de primer ingreso": ["01/01/2000"],
-                       "Fecha de salida 1": ["01/01/2002"],
-                       "Fecha de reingreso 1": ["01/01/2010"],
-                       "Fecha de salida 2": ["01/01/2012"],
-                       "Fecha de reingreso 2": ["01/01/2020"]})
-    a = antiguedad_anios(df, 2025).iloc[0]      # 2 + 2 + 6
+    df = pd.DataFrame(
+        {
+            "Fecha de primer ingreso": ["01/01/2000"],
+            "Fecha de salida 1": ["01/01/2002"],
+            "Fecha de reingreso 1": ["01/01/2010"],
+            "Fecha de salida 2": ["01/01/2012"],
+            "Fecha de reingreso 2": ["01/01/2020"],
+        }
+    )
+    a = antiguedad_anios(df, 2025).iloc[0]  # 2 + 2 + 6
     assert abs(a - 10.0) < 0.05, f"dio {a}"
 
 
 def test_quien_se_fue_y_no_volvio_deja_de_sumar():
-    df = pd.DataFrame({"Fecha de primer ingreso": ["01/01/2010"],
-                       "Fecha de salida 1": ["01/01/2015"]})
+    df = pd.DataFrame({"Fecha de primer ingreso": ["01/01/2010"], "Fecha de salida 1": ["01/01/2015"]})
     assert abs(antiguedad_anios(df, 2025).iloc[0] - 5.0) < 0.05
 
 
@@ -66,9 +73,16 @@ def test_sin_columna_de_ingreso_no_revienta():
 
 
 def test_detecta_las_columnas_de_la_plantilla_real():
-    cols = ["Nombres", "Fecha de primer ingreso", "Fecha de \nsalida 1",
-            "Fecha de \nreingreso 1", "Fecha de \nsalida 2", "Fecha de \nreingreso 2",
-            "Fecha de \nsalida 3", "Fecha de nacimiento"]
+    cols = [
+        "Nombres",
+        "Fecha de primer ingreso",
+        "Fecha de \nsalida 1",
+        "Fecha de \nreingreso 1",
+        "Fecha de \nsalida 2",
+        "Fecha de \nreingreso 2",
+        "Fecha de \nsalida 3",
+        "Fecha de nacimiento",
+    ]
     ing, sal, rei = columnas_de_fecha(pd.DataFrame(columns=cols))
     assert ing == "Fecha de primer ingreso"
     assert len(sal) == 3 and len(rei) == 2
@@ -78,8 +92,7 @@ def test_detecta_las_columnas_de_la_plantilla_real():
 
 def test_los_tramos_para_el_filtro():
     t = tramo([0.5, 2, 4, 7, 15, 30, None])
-    assert list(t[:6]) == ["menos de 1", "1 a 3", "3 a 5", "5 a 10", "10 a 20",
-                           "mas de 20"]
+    assert list(t[:6]) == ["menos de 1", "1 a 3", "3 a 5", "5 a 10", "10 a 20", "mas de 20"]
     assert t.iloc[6] is None
 
 
@@ -99,9 +112,12 @@ def test_un_tramo_ABIERTO_se_cuenta_UNA_sola_vez():
 def test_mas_columnas_de_salida_no_cambian_el_resultado():
     base = {"Fecha de primer ingreso": ["01/01/2020"]}
     a1 = antiguedad_anios(pd.DataFrame(base), 2025).iloc[0]
-    a2 = antiguedad_anios(pd.DataFrame({**base, "Fecha de salida 1": [None],
-                                        "Fecha de salida 2": [None],
-                                        "Fecha de reingreso 1": [None]}), 2025).iloc[0]
+    a2 = antiguedad_anios(
+        pd.DataFrame(
+            {**base, "Fecha de salida 1": [None], "Fecha de salida 2": [None], "Fecha de reingreso 1": [None]}
+        ),
+        2025,
+    ).iloc[0]
     assert abs(a1 - a2) < 1e-9
 
 
@@ -116,6 +132,7 @@ def test_detecta_el_nombre_CANONICO_con_guion_bajo():
 
 
 # --- el parseo de fechas ISO, que estaba roto -------------------------------------
+
 
 def test_una_fecha_ISO_NO_se_lee_con_el_dia_y_el_mes_cambiados():
     # EL DEFECTO, medido sobre una nomina real de 303 filas: 195 se quedaron SIN
@@ -148,6 +165,7 @@ def test_da_lo_MISMO_como_venga_escrita_la_misma_fecha():
     # La antiguedad decide indemnizaciones. No puede depender de si RR.HH. exporto el
     # Excel con fechas de verdad, con texto ISO o con texto latino.
     import datetime as dt
+
     formas = {
         "ISO": ["2004-09-06"],
         "ISO con hora": ["2004-09-06 00:00:00"],
@@ -156,8 +174,7 @@ def test_da_lo_MISMO_como_venga_escrita_la_misma_fecha():
         "latino con guiones": ["06-09-2004"],
         "fecha de Excel": [dt.date(2004, 9, 6)],
     }
-    salidas = {n: float(antiguedad_anios(pd.DataFrame({"fecha_ingreso": v}), 2026).iloc[0])
-               for n, v in formas.items()}
+    salidas = {n: float(antiguedad_anios(pd.DataFrame({"fecha_ingreso": v}), 2026).iloc[0]) for n, v in formas.items()}
     assert len(set(round(v, 4) for v in salidas.values())) == 1, salidas
     assert abs(next(iter(salidas.values())) - 22.32) < 0.01
 
@@ -165,8 +182,7 @@ def test_da_lo_MISMO_como_venga_escrita_la_misma_fecha():
 def test_una_fila_no_le_impone_su_formato_a_las_demas():
     # El nucleo del defecto: pandas deducia el formato de la PRIMERA fila. Mezclando
     # estilos, cada celda tiene que resolverse sola.
-    df = pd.DataFrame({"fecha_ingreso": ["2004-09-06", "20/06/2025", "2020/10/10",
-                                         "03-04-2020"]})
+    df = pd.DataFrame({"fecha_ingreso": ["2004-09-06", "20/06/2025", "2020/10/10", "03-04-2020"]})
     a = antiguedad_anios(df, 2026)
     assert a.notna().all(), f"alguna se perdio: {a.tolist()}"
     assert abs(a.iloc[0] - 22.32) < 0.01 and abs(a.iloc[1] - 1.53) < 0.01

@@ -1,4 +1,5 @@
 """El contrato de entrada. Lo que mas se prueba es lo que RECHAZA."""
+
 import pandas as pd
 import pytest
 
@@ -18,8 +19,7 @@ def test_sin_cargo_no_hay_informe():
 
 def test_se_perdonan_mayusculas_tildes_y_espacios_pero_nada_mas():
     # Un caracter invisible no es ambiguedad; un nombre distinto si lo es.
-    out, _ = validar(pd.DataFrame({"Cargo ": ["X"], " FECHA INGRESO": ["01/01/2020"],
-                                   "Centro Costo": ["A"]}))
+    out, _ = validar(pd.DataFrame({"Cargo ": ["X"], " FECHA INGRESO": ["01/01/2020"], "Centro Costo": ["A"]}))
     assert set(out.columns) == {"cargo", "fecha_ingreso", "centro_costo"}
     _, inf = validar(pd.DataFrame({"cargo": ["X"], "puesto_2": ["Y"]}))
     assert inf["columnas_desconocidas"] == ["puesto_2"], "no se adivina"
@@ -50,8 +50,7 @@ def test_las_columnas_de_mas_no_rompen_pero_se_declaran():
 
 
 def test_el_sexo_se_normaliza_y_lo_raro_se_cuenta():
-    out, inf = validar(pd.DataFrame({"cargo": list("abcde"),
-                                     "sexo": ["M", "femenino", "Mujer", "X", ""]}))
+    out, inf = validar(pd.DataFrame({"cargo": list("abcde"), "sexo": ["M", "femenino", "Mujer", "X", ""]}))
     assert list(out["sexo"][:3]) == ["M", "F", "F"]
     assert out["sexo"].iloc[3] is None, "lo no reconocido no se cuela como categoria"
     assert inf["sexo_no_reconocido"] == 1
@@ -67,7 +66,6 @@ def test_avisa_si_los_sueldos_parecen_no_ser_sueldos():
 
 
 def test_avisa_de_las_fechas_ilegibles():
-    _, inf = validar(pd.DataFrame({"cargo": ["a", "b", "c"],
-                                   "fecha_ingreso": ["01/01/2020", "ayer", None]}))
+    _, inf = validar(pd.DataFrame({"cargo": ["a", "b", "c"], "fecha_ingreso": ["01/01/2020", "ayer", None]}))
     assert inf["fechas_ilegibles"] == 1
     assert any("dd/mm/aaaa" in a for a in inf["avisos"])

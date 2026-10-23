@@ -5,11 +5,12 @@ heterogeneos que ya tenian datos propios). Lo que si resuelven es ENCONTRAR el c
 `CONDUCTOR` en el formulario tiene que sugerir `CHOFER`, y el parecido por embedding no lo hace
 (`CHOFER` / `CONDUCTOR` esta en el puesto 1.312 de los vecinos de Vertex).
 """
+
 import csv
 import pathlib
 
 DATOS = pathlib.Path(__file__).resolve().parent / "datos"
-VERSION = "v2"   # 2026-10-10: rondas 1 y 2 aprobadas por el autor (D-070: solo buscador)
+VERSION = "v2"  # 2026-10-10: rondas 1 y 2 aprobadas por el autor (D-070: solo buscador)
 
 
 def cargar_pares(version=VERSION, base=DATOS):
@@ -47,8 +48,11 @@ def cargar_consulta(version=VERSION, base=DATOS):
     if not f.exists():
         return []
     with open(f, encoding="utf-8") as fh:
-        return [(r["escrito"].strip().upper(), r["cargo_base"].strip().upper())
-                for r in csv.DictReader(fh) if r.get("escrito") and r.get("cargo_base")]
+        return [
+            (r["escrito"].strip().upper(), r["cargo_base"].strip().upper())
+            for r in csv.DictReader(fh)
+            if r.get("escrito") and r.get("cargo_base")
+        ]
 
 
 def de_consulta(base, pares):
@@ -80,6 +84,7 @@ REGLAS_PALABRAS = (
 def canonico(titulo):
     """El titulo con las reglas de palabras de D-070 aplicadas (o el mismo)."""
     import re
+
     t = str(titulo).upper()
     for pat, rep in REGLAS_PALABRAS:
         t = re.sub(pat, rep, t)

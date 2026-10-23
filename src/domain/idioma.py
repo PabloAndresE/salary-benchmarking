@@ -12,6 +12,7 @@ ordena el resto. Sin el, `collections` salia `colecciones`. Va en `datos/glosari
 
 Sin `transformers` o sin los pesos, el traductor no se carga y el producto sigue sin la capa.
 """
+
 import pathlib
 import re
 import unicodedata
@@ -65,12 +66,16 @@ GLOSARIO = pathlib.Path(__file__).resolve().parent / "datos" / "glosario_v1" / "
 def cargar_glosario(ruta=GLOSARIO):
     """{termino en ingles: forma en espanol}, o {} si no hay archivo."""
     import csv
+
     ruta = pathlib.Path(ruta)
     if not ruta.exists():
         return {}
     with open(ruta, encoding="utf-8-sig", newline="") as f:
-        return {r["termino"].strip().upper(): normalizar(r["es"]) for r in csv.DictReader(f)
-                if r.get("termino", "").strip() and r.get("es", "").strip()}
+        return {
+            r["termino"].strip().upper(): normalizar(r["es"])
+            for r in csv.DictReader(f)
+            if r.get("termino", "").strip() and r.get("es", "").strip()
+        }
 
 
 def aplicar_glosario(t, glosario):
@@ -88,7 +93,7 @@ def invertir_rangos(t):
     resuelven despues, con el glosario."""
     t = sin_sufijo(str(t).upper().strip())
     if not es_ingles(t) or re.search(r"GENERAL MANAGER|MANAGING", t) or es_direccion(t):
-        return t                         # la direccion (CEO, COUNTRY MANAGER...) la resuelve el glosario
+        return t  # la direccion (CEO, COUNTRY MANAGER...) la resuelve el glosario
     t = re.sub(r"(?<![A-Z])MANAGERS?(?![A-Z])", "CHIEF", t)
     m = re.match(r"HEAD OF (.+)$", t)
     return (m.group(1) + " MANAGER") if m else t
@@ -100,13 +105,14 @@ class Traductor:
     def __init__(self, ruta, lote=64, glosario=None):
         import torch
         from transformers import MarianMTModel, MarianTokenizer
+
         self.torch = torch
         self.tok = MarianTokenizer.from_pretrained(ruta)
         self.m = MarianMTModel.from_pretrained(ruta).eval()
         self.lote = lote
         self.cache = {}
         self.glosario = cargar_glosario() if glosario is None else glosario
-        self.invertir = False            # D-091: MANAGER = jefe, HEAD = gerente (la API lo activa)
+        self.invertir = False  # D-091: MANAGER = jefe, HEAD = gerente (la API lo activa)
 
     def _limpiar(self, s):
         s = re.sub(r"^\s*(trabaja|trabajo|el trabaja|ella trabaja)\s+(como|de)\s+(un |una )?", "", s, flags=re.I)
@@ -116,9 +122,13 @@ class Traductor:
         """dict titulo -> traduccion normalizada (MAYUSCULAS, sin tildes)."""
         falta = [t for t in dict.fromkeys(titulos) if t not in self.cache]
         for i in range(0, len(falta), self.lote):
-            parte = falta[i:i + self.lote]
-            frases = [self.PLANTILLA.format(aplicar_glosario(invertir_rangos(t) if self.invertir else t,
-                                                             self.glosario).lower().strip()) for t in parte]
+            parte = falta[i : i + self.lote]
+            frases = [
+                self.PLANTILLA.format(
+                    aplicar_glosario(invertir_rangos(t) if self.invertir else t, self.glosario).lower().strip()
+                )
+                for t in parte
+            ]
             with self.torch.no_grad():
                 x = self.tok(frases, return_tensors="pt", padding=True, truncation=True, max_length=64)
                 o = self.m.generate(**x, num_beams=4, max_new_tokens=48)
@@ -133,7 +143,7 @@ def cargar(ruta):
         if not (pathlib.Path(ruta) / "config.json").exists():
             return None
         return Traductor(ruta)
-    except Exception as e:                                   # noqa: BLE001 - se informa y se sigue
+    except Exception as e:  # noqa: BLE001 - se informa y se sigue
         print("[idioma] no se pudo cargar {}: {!r}".format(ruta, e), flush=True)
         return None
 
@@ -148,12 +158,17 @@ def sin_sufijo(t):
     return base if base != t and len(base.split()) >= 2 else t
 
 
-_DIRECCION = re.compile(r"^(CEO|CFO|COO|CTO|CIO|CMO|CHRO|CHIEF\b.*\bOFFICER|MANAGING DIRECTOR|COUNTRY MANAGER|"
-                        r"GENERAL MANAGER|PRESIDENT|VICE PRESIDENT|VP)(?![A-Z])")
+_DIRECCION = re.compile(
+    r"^(CEO|CFO|COO|CTO|CIO|CMO|CHRO|CHIEF\b.*\bOFFICER|MANAGING DIRECTOR|COUNTRY MANAGER|"
+    r"GENERAL MANAGER|PRESIDENT|VICE PRESIDENT|VP)(?![A-Z])"
+)
 
 
 def es_direccion(t):
     """D-092: un cargo de direccion en ingles (CEO, CFO, CHIEF ... OFFICER, MANAGING DIRECTOR...), sin asistentes."""
     t = str(t).upper().strip()
-    return (es_ingles(t) and bool(_DIRECCION.match(t))
-            and not re.search(r"(?<![A-Z])(ASSISTANT|ASST|SECRETARY)(?![A-Z])", t))
+    return (
+        es_ingles(t)
+        and bool(_DIRECCION.match(t))
+        and not re.search(r"(?<![A-Z])(ASSISTANT|ASST|SECRETARY)(?![A-Z])", t)
+    )

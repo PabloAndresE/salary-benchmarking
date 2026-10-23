@@ -16,13 +16,14 @@ jerarquia**. Pares que solo se diferencian en el rango puntuan 0,857 y pares que
 diferencian en el area, 0,764 — un gerente y un auxiliar del mismo area se parecen mas que
 dos jefes de areas distintas. El nivel tiene que venir de otra senal.
 """
+
 import io
 import os
 
 import numpy as np
 
-LOTE = 250              # limite practico de la API por peticion
-TAREA = "CLUSTERING"    # el uso real es agrupar, no buscar ni comparar pares
+LOTE = 250  # limite practico de la API por peticion
+TAREA = "CLUSTERING"  # el uso real es agrupar, no buscar ni comparar pares
 
 
 class CacheMemoriaEmb:
@@ -64,6 +65,7 @@ class CacheArchivo:
     def _leer_bytes(self):
         if self.ruta.startswith("gs://"):
             from google.cloud import storage
+
             bucket, _, nombre = self.ruta[5:].partition("/")
             blob = storage.Client().bucket(bucket).blob(nombre)
             return blob.download_as_bytes() if blob.exists() else None
@@ -89,9 +91,11 @@ class CacheArchivo:
         datos = buf.getvalue()
         if self.ruta.startswith("gs://"):
             from google.cloud import storage
+
             bucket, _, nombre = self.ruta[5:].partition("/")
             storage.Client().bucket(bucket).blob(nombre).upload_from_string(
-                datos, content_type="application/octet-stream")
+                datos, content_type="application/octet-stream"
+            )
         else:
             os.makedirs(os.path.dirname(os.path.abspath(self.ruta)) or ".", exist_ok=True)
             with open(self.ruta, "wb") as fh:
@@ -122,7 +126,7 @@ def embeber(textos, cliente, modelo, cache=None, lote=LOTE, tarea=TAREA):
             vectores[t] = np.asarray(v, dtype=float)
 
     for i in range(0, len(pendientes), lote):
-        trozo = pendientes[i:i + lote]
+        trozo = pendientes[i : i + lote]
         for t, emb in zip(trozo, cliente.get_embeddings(trozo)):
             v = np.asarray(emb.values, dtype=float)
             vectores[t] = v
@@ -151,7 +155,6 @@ def cliente_vertex(modelo, proyecto, location, tarea=TAREA):
 
     class _Cliente:
         def get_embeddings(self, textos):
-            return modelo_vertex.get_embeddings(
-                [TextEmbeddingInput(t, tarea) for t in textos])
+            return modelo_vertex.get_embeddings([TextEmbeddingInput(t, tarea) for t in textos])
 
     return _Cliente()

@@ -1,19 +1,22 @@
-# Mantener la imagen chica y sin data/secretos.
+# La imagen lleva el codigo y las dependencias; los modelos y la base se bajan de GCS al
+# arrancar. Nada de entornos (un .venv de Windows mete binarios incompatibles), tests,
+# docs, datos ni secretos.
 .venv/
 .git/
 .github/
+.claude/
 docs/
-research/
 tests/
-.superpowers/
-notebooks/
-*.xlsx
-*.csv
-*.parquet
-*.json
-!src/benchmarking/config/*.yaml
-data/
+artefactos/
+modelos/
 __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+*.xlsx
+*.csv
+!src/domain/datos/**/*.csv
+*.parquet
+*.npz
+.env
+*.log

@@ -1,88 +1,37 @@
-# Entornos virtuales
+# Entornos y caches
 .venv/
-.venv-texto/
-.venv-gemini/
-.venv-llm/
-venv/
-env/
-
-# Python
 __pycache__/
 *.py[cod]
-*.egg-info/
-.ipynb_checkpoints/
-
-# Datos reales — NUNCA al repo (regla de privacidad LOPDP del handoff)
-*.xlsx
-*.csv
-*.parquet
-# Listados de RUC extraidos del registro. Son dato publico, pero un extracto de 221.794
-# empresas en el repo es un fichero de datos, no codigo, y aqui no pinta nada.
-demo/rucs_*.txt
-data/
-clean/
-cuarentena/
-
-# Secretos / credenciales
-.env
-*.json
-# intermedios de experimentos (Zref y compania): centenares de MB
-*.npy
-# ...pero el catalogo CIIU SI se versiona: es estandar publico, 49 KB, y el servicio no
-# arranca sin el. Con `*.json` a secas se quedaba fuera y rompia en cualquier otra
-# maquina sin que nadie lo notara aqui.
-!src/benchmarking/datos/*.json
-# los diccionarios aprobados de la capa 0 (D-040) se versionan: son datos del producto
-!src/benchmarking/producto/datos/capa0_*/*.csv
-# el glosario de terminos de RR. HH. en ingles (2026-10-08): terminos genericos, no datos de clientes
-!src/benchmarking/producto/datos/glosario_*/*.csv
-# los sinonimos aprobados por el autor (D-047): datos del producto, solo titulos de cargo (2026-10-08)
-!src/benchmarking/producto/datos/sinonimos_*/*.csv
-# log del uvicorn local
-uvicorn.log
-!**/esquema_plantilla.yaml
-
-# SO
-Thumbs.db
-.DS_Store
-
-# artefactos de build (pip wheel / setuptools)
+.pytest_cache/
+.ruff_cache/
 build/
 dist/
 *.egg-info/
 
-# log de la corrida local del universo
-corrida_universo*.log
-
-# descargas sueltas de investigacion
-*.html
-.gstack/
-
-# caches de embeddings: 150 MB de vectores derivados, se regeneran solos
+# Datos reales: NUNCA al repo (LOPDP). Nominas, extractos y bases serializadas.
+*.xlsx
+*.csv
+*.parquet
 *.npz
+*.npy
+data/
+# ...salvo los datos versionados del producto: diccionarios de capa 0 (D-040), glosario
+# de RR. HH. en ingles, sinonimos aprobados (D-047) y el catalogo CIIU. Son titulos de
+# cargo y estandares publicos, no datos de clientes, y el servicio no arranca sin ellos.
+!src/domain/datos/**/*.csv
 
-# intermedios de LaTeX. El .tex y el .pdf si se versionan —el pdf es lo que se
-# entrega y lo que se lee sin tener MiKTeX— pero el .aux/.log/.toc se regeneran
-# en cada compilacion y solo generan ruido en el diff.
-*.aux
-*.log
-*.toc
-*.out
-*.nav
-*.snm
-*.vrb
-*.synctex.gz
-# renders png para revisar laminas a ojo; scratch
-docs/tesis/.rev/
-# logs de las corridas locales de la base
-demo/log_*.txt
+# Secretos y credenciales
+.env
+*.json
+!src/domain/datos/ciiu.json
 
-# modelos descargados de Hugging Face para entrenar el cross (D-036)
+# Modelos y base: viven en GCS (gs://act-cicd-stage-prueba-benchmarking/benchmarking/<version>/)
+artefactos/
 modelos/
-# pesos del cross entrenado (~1 GB cada uno); resultados.json se commitea con -f
-research/experimentos/e2_nivel/salidas/22_modelos/
-research/experimentos/e2_nivel/salidas/22_modelos_v2/
-research/experimentos/e2_nivel/salidas/22_modelos_v3/
-research/experimentos/e2_nivel/salidas/*.jsonl
-research/experimentos/e2_nivel/salidas/48_bi_encoder/
-research/experimentos/e2_nivel/salidas/48_bi_encoder_*/
+
+# Logs
+*.log
+
+# SO
+Thumbs.db
+.DS_Store

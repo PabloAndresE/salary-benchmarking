@@ -26,11 +26,12 @@ De el sale TODO lo que este modulo hace, sin un solo hiperparametro elegido a ma
 Este modulo NO decide cuando abstenerse: eso es `aplicar_abstencion`, funcion pura sobre
 la tabla que devuelve `predecir`. Asi la curva barre el umbral sin recalcular.
 """
+
 import numpy as np
 import pandas as pd
 
-SUELO_EMPRESAS = 3      # identificabilidad de tau2 + confidencialidad (precedente QCEW)
-SUELO_SHARE = 0.80      # regla de dominancia (precedente QCEW). Ver D-011.
+SUELO_EMPRESAS = 3  # identificabilidad de tau2 + confidencialidad (precedente QCEW)
+SUELO_SHARE = 0.80  # regla de dominancia (precedente QCEW). Ver D-011.
 
 
 def _agregados_grupo(d, col_celda):
@@ -41,8 +42,11 @@ def _agregados_grupo(d, col_celda):
     la identidad suma(y^2) - suma(y)^2/n, que es una sola pasada vectorizada.
     """
     t = d.assign(_y2=d["y"].astype(float) ** 2)
-    g = (t.groupby([col_celda, "empresa_ruc"], sort=False)
-           .agg(n=("y", "size"), suma=("y", "sum"), suma2=("_y2", "sum")).reset_index())
+    g = (
+        t.groupby([col_celda, "empresa_ruc"], sort=False)
+        .agg(n=("y", "size"), suma=("y", "sum"), suma2=("_y2", "sum"))
+        .reset_index()
+    )
     g["media"] = g["suma"] / g["n"]
     g["ssw"] = (g["suma2"] - g["suma"] ** 2 / g["n"]).clip(lower=0.0)
     return g
@@ -72,8 +76,7 @@ def componentes_varianza(train, col_celda):
 
     g["_wn"] = g["n"] * g["media"]
     g["_n2"] = g["n"].astype(float) ** 2
-    porc = g.groupby(col_celda, sort=False).agg(N_c=("n", "sum"), s=("_wn", "sum"),
-                                                sn2=("_n2", "sum"))
+    porc = g.groupby(col_celda, sort=False).agg(N_c=("n", "sum"), s=("_wn", "sum"), sn2=("_n2", "sum"))
     porc["media_c"] = porc["s"] / porc["N_c"]
     g = g.join(porc["media_c"], on=col_celda)
     ssb = float((g["n"] * (g["media"] - g["media_c"]) ** 2).sum())
@@ -118,8 +121,7 @@ def sigma2_por_celda(train, col_celda, sigma2_global=None):
         return pd.Series(dtype=float), float(sigma2_global)
 
     g = _agregados_grupo(d, col_celda)
-    porc = g.groupby(col_celda, sort=False).agg(ssw=("ssw", "sum"), N=("n", "sum"),
-                                                G=("n", "size"))
+    porc = g.groupby(col_celda, sort=False).agg(ssw=("ssw", "sum"), N=("n", "sum"), G=("n", "size"))
     porc["df"] = porc["N"] - porc["G"]
 
     utiles = porc[(porc["df"] >= 1) & (porc["ssw"] > 0)].copy()
@@ -170,8 +172,8 @@ def tau2_por_celda(train, col_celda, sigma2_celda, tau2_global=None, min_empresa
     g["_m2n"] = g["suma"] ** 2 / g["n"]
     g["_n2"] = g["n"].astype(float) ** 2
     p = g.groupby(col_celda, sort=False).agg(
-        N=("n", "sum"), F=("n", "size"), S=("suma", "sum"),
-        Q=("_m2n", "sum"), N2=("_n2", "sum"))
+        N=("n", "sum"), F=("n", "size"), S=("suma", "sum"), Q=("_m2n", "sum"), N2=("_n2", "sum")
+    )
     with np.errstate(invalid="ignore", divide="ignore"):
         # cuadrado medio ENTRE empresas, y tamano efectivo de grupo
         msb = (p["Q"] - p["S"] ** 2 / p["N"]) / (p["F"] - 1)
@@ -211,8 +213,7 @@ def cuantiles_de_empresa(train, col_celda, tau2_celda, sigma2_celda, cuantiles):
     d = train[[col_celda, "empresa_ruc", "y"]].dropna(subset=["y"])
     if d.empty:
         return pd.DataFrame(columns=list(cuantiles), dtype=float)
-    v = (d.groupby([col_celda, "empresa_ruc"], sort=False)["y"]
-           .agg(voto="median", n="size").reset_index())
+    v = d.groupby([col_celda, "empresa_ruc"], sort=False)["y"].agg(voto="median", n="size").reset_index()
     t2 = pd.Series(tau2_celda).reindex(v[col_celda]).to_numpy(float)
     s2 = pd.Series(sigma2_celda).reindex(v[col_celda]).to_numpy(float)
     # Misma guarda que `tabla_votos`: sin varianza estimada el peso inverso es 1/0. Es
@@ -226,9 +227,7 @@ def cuantiles_de_empresa(train, col_celda, tau2_celda, sigma2_celda, cuantiles):
     cod = cod[o]
     val = v["voto"].to_numpy(float)[o]
     w = v["w"].to_numpy(float)[o]
-    return pd.DataFrame(
-        {q: _cuantil_por_grupo(cod, val, w, len(celdas), q=q) for q in cuantiles},
-        index=celdas)
+    return pd.DataFrame({q: _cuantil_por_grupo(cod, val, w, len(celdas), q=q) for q in cuantiles}, index=celdas)
 
 
 def cuantiles_de_persona(train, col_celda, tau2_celda, sigma2_celda, cuantiles):
@@ -262,17 +261,14 @@ def cuantiles_de_persona(train, col_celda, tau2_celda, sigma2_celda, cuantiles):
     den = t2 + s2 / n_f
     w_emp = np.where(den > 0, 1.0 / np.where(den > 0, den, 1.0), 1.0)
 
-    x = pd.DataFrame({"c": d[col_celda].to_numpy(), "y": d["y"].to_numpy(float),
-                      "w": w_emp / n_f})
+    x = pd.DataFrame({"c": d[col_celda].to_numpy(), "y": d["y"].to_numpy(float), "w": w_emp / n_f})
     x = x.sort_values(["c", "y"], kind="mergesort")
     cod, celdas = pd.factorize(x["c"], sort=True)
     o = np.argsort(cod, kind="stable")
     cod = cod[o]
     val = x["y"].to_numpy(float)[o]
     w = x["w"].to_numpy(float)[o]
-    return pd.DataFrame(
-        {q: _cuantil_por_grupo(cod, val, w, len(celdas), q=q) for q in cuantiles},
-        index=celdas)
+    return pd.DataFrame({q: _cuantil_por_grupo(cod, val, w, len(celdas), q=q) for q in cuantiles}, index=celdas)
 
 
 def pesos_empresa(n, tau2, sigma2):
@@ -298,8 +294,7 @@ def cuantil_ponderado(valores, pesos, q=0.5):
     return float(np.interp(q, acum, v))
 
 
-def tabla_votos(train, col_celda, tau2=None, sigma2=None, sigma2_celda=None,
-                tau2_celda=None):
+def tabla_votos(train, col_celda, tau2=None, sigma2=None, sigma2_celda=None, tau2_celda=None):
     """El voto de cada empresa en cada celda, con su peso. Es el insumo de `predecir`.
 
     Se expone aparte porque **el bootstrap remuestrea votos, no filas**. Remuestrear una
@@ -312,15 +307,17 @@ def tabla_votos(train, col_celda, tau2=None, sigma2=None, sigma2_celda=None,
     if sigma2_celda is None:
         sigma2_celda, _ = sigma2_por_celda(train, col_celda, sigma2_global=sigma2)
 
-    v = (tr.groupby([col_celda, "empresa_ruc"], sort=False)["y"]
-           .agg(voto="median", n="size").reset_index())
+    v = tr.groupby([col_celda, "empresa_ruc"], sort=False)["y"].agg(voto="median", n="size").reset_index()
     # sigma2 DE LA CELDA, no el global: es lo que hace que `sd_pred` sea una varianza
     # condicional y no el conteo de donantes disfrazado. Ver `sigma2_por_celda`.
     v["s2"] = v[col_celda].map(sigma2_celda).fillna(float(sigma2)).astype(float)
     # `tau2` DE LA CELDA cuando se conoce: varia 8,3x entre cargos y con uno solo el peso
     # de cada empresa queda igual para un gerente que para un auxiliar. Ver `tau2_por_celda`.
-    t2 = (v[col_celda].map(tau2_celda).fillna(float(tau2)).astype(float).to_numpy(float)
-          if tau2_celda is not None else float(tau2))
+    t2 = (
+        v[col_celda].map(tau2_celda).fillna(float(tau2)).astype(float).to_numpy(float)
+        if tau2_celda is not None
+        else float(tau2)
+    )
     denom = t2 + v["s2"].to_numpy(float) / v["n"].to_numpy(float)
     # Caso degenerado: sin varianza estimada el peso inverso-varianza es 1/0. Pasa cuando
     # todos los donantes valen lo mismo — imposible en datos reales, trivial en tests.
@@ -383,16 +380,19 @@ def _resumen_por_celda(votos, col_celda, tau2):
     with np.errstate(invalid="ignore", divide="ignore"):
         sd = np.sqrt(float(tau2) + s2[primeros] + 1.0 / suma_w)
         share = np.where(suma_n > 0, max_n / np.where(suma_n > 0, suma_n, 1.0), np.nan)
-    return pd.DataFrame({"y_ref_bruto": _cuantil_por_grupo(codigos, vv, ww, k),
-                         "sd_pred": sd,
-                         "n_donantes": suma_n.astype(int),
-                         "n_empresas_donantes": n_emp.astype(int),
-                         "share_max_empresa": share},
-                        index=pd.Index(celdas, name=col_celda))
+    return pd.DataFrame(
+        {
+            "y_ref_bruto": _cuantil_por_grupo(codigos, vv, ww, k),
+            "sd_pred": sd,
+            "n_donantes": suma_n.astype(int),
+            "n_empresas_donantes": n_emp.astype(int),
+            "share_max_empresa": share,
+        },
+        index=pd.Index(celdas, name=col_celda),
+    )
 
 
-_COLS = ["y_ref_bruto", "sd_pred", "n_donantes", "n_empresas_donantes",
-         "share_max_empresa"]
+_COLS = ["y_ref_bruto", "sd_pred", "n_donantes", "n_empresas_donantes", "share_max_empresa"]
 
 
 def predecir_desde_votos(votos, test, col_celda, tau2=None, loco=True):
@@ -405,8 +405,7 @@ def predecir_desde_votos(votos, test, col_celda, tau2=None, loco=True):
     if tau2 is None:
         tau2 = votos.attrs.get("tau2", 0.0)
     if votos.empty:
-        return pd.DataFrame({c: np.nan for c in _COLS}, index=test.index).assign(
-            n_donantes=0, n_empresas_donantes=0)
+        return pd.DataFrame({c: np.nan for c in _COLS}, index=test.index).assign(n_donantes=0, n_empresas_donantes=0)
 
     resumen = _resumen_por_celda(votos, col_celda, tau2)
     salida = resumen.reindex(test[col_celda].to_numpy())
@@ -442,9 +441,11 @@ def predecir_desde_votos(votos, test, col_celda, tau2=None, loco=True):
                 n = g["n"].to_numpy(float)
                 cache[clave] = (
                     cuantil_ponderado(g["voto"], g["w"]),
-                    float(np.sqrt(float(tau2) + float(g["s2"].iloc[0])
-                                  + 1.0 / g["w"].sum())),
-                    int(n.sum()), int(len(g)), float(n.max() / n.sum()))
+                    float(np.sqrt(float(tau2) + float(g["s2"].iloc[0]) + 1.0 / g["w"].sum())),
+                    int(n.sum()),
+                    int(len(g)),
+                    float(n.max() / n.sum()),
+                )
         salida.iloc[i] = cache[clave]
     return salida.astype({"n_donantes": int, "n_empresas_donantes": int})
 
@@ -466,13 +467,11 @@ def predecir(train, test, col_celda, tau2=None, sigma2=None, sigma2_celda=None):
     """
     if tau2 is None or sigma2 is None:
         tau2, sigma2 = componentes_varianza(train, col_celda)
-    votos = tabla_votos(train, col_celda, tau2=tau2, sigma2=sigma2,
-                        sigma2_celda=sigma2_celda)
+    votos = tabla_votos(train, col_celda, tau2=tau2, sigma2=sigma2, sigma2_celda=sigma2_celda)
     return predecir_desde_votos(votos, test, col_celda, tau2=tau2)
 
 
-def aplicar_abstencion(pred, max_sd=None, min_empresas=SUELO_EMPRESAS,
-                       share_max=SUELO_SHARE):
+def aplicar_abstencion(pred, max_sd=None, min_empresas=SUELO_EMPRESAS, share_max=SUELO_SHARE):
     """`y_ref` con NaN donde el metodo se abstiene. Funcion pura: no recalcula nada.
 
     Tres reglas, y sirven para cosas distintas — el pre-registro las declara por separado:

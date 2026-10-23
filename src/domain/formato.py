@@ -29,22 +29,22 @@ LA ANTIGUEDAD SALE DE `fecha_ingreso` SOLA. Decision de producto: sin historial 
 salidas y reingresos, quien se fue y volvio sale con mas antiguedad de la que tiene. Se
 acepta a cambio de un formato de una sola fecha.
 """
+
 from __future__ import annotations
 
 import re
 import unicodedata
 
-import numpy as np
 import pandas as pd
 
 OBLIGATORIAS = ("cargo",)
-OPCIONALES = ("sueldo", "id_empleado", "nombre", "sexo", "fecha_ingreso",
-              "centro_costo")
+OPCIONALES = ("sueldo", "id_empleado", "nombre", "sexo", "fecha_ingreso", "centro_costo")
 CANONICAS = OBLIGATORIAS + OPCIONALES
 
 # Se rechazan por privacidad, no por sintaxis. Ver el docstring.
-_PROHIBIDAS = re.compile(r"^(cedula|identificacion|documento|dni|ruc|pasaporte|"
-                         r"num.?identificacion|nro.?documento)$")
+_PROHIBIDAS = re.compile(
+    r"^(cedula|identificacion|documento|dni|ruc|pasaporte|" r"num.?identificacion|nro.?documento)$"
+)
 
 
 def _norm(c) -> str:
@@ -82,11 +82,11 @@ def validar(df) -> tuple[pd.DataFrame, dict]:
     if prohibidas:
         problemas.append(
             f"el formato NO acepta identificadores personales y llegaron {prohibidas}. "
-            f"Usa `id_empleado`, que es tuyo y sirve igual para casar las filas")
+            f"Usa `id_empleado`, que es tuyo y sirve igual para casar las filas"
+        )
     faltan = [c for c in OBLIGATORIAS if c not in mapa.values()]
     if faltan:
-        problemas.append(f"faltan columnas obligatorias: {faltan}. "
-                         f"Recibidas: {[str(c) for c in df.columns]}")
+        problemas.append(f"faltan columnas obligatorias: {faltan}. " f"Recibidas: {[str(c) for c in df.columns]}")
     repes = [c for c in CANONICAS if list(mapa.values()).count(c) > 1]
     if repes:
         problemas.append(f"columnas duplicadas tras normalizar: {repes}")
@@ -96,12 +96,16 @@ def validar(df) -> tuple[pd.DataFrame, dict]:
     out = df.rename(columns=mapa)
     avisos = []
     if desconocidas:
-        avisos.append(f"{len(desconocidas)} columna(s) fuera del formato se ignoran "
-                      f"para el calculo y se devuelven tal cual: {desconocidas[:6]}"
-                      + (" ..." if len(desconocidas) > 6 else ""))
+        avisos.append(
+            f"{len(desconocidas)} columna(s) fuera del formato se ignoran "
+            f"para el calculo y se devuelven tal cual: {desconocidas[:6]}" + (" ..." if len(desconocidas) > 6 else "")
+        )
 
-    informe = {"columnas_reconocidas": sorted(set(mapa.values())),
-               "columnas_desconocidas": desconocidas, "avisos": avisos}
+    informe = {
+        "columnas_reconocidas": sorted(set(mapa.values())),
+        "columnas_desconocidas": desconocidas,
+        "avisos": avisos,
+    }
 
     if "sexo" in out.columns:
         out["sexo"], raros = _normalizar_sexo(out["sexo"])
@@ -115,12 +119,15 @@ def validar(df) -> tuple[pd.DataFrame, dict]:
         # columna vacia, y el cliente recibe un informe sin antiguedad y un informe de
         # formato diciendo que todo estaba bien.
         from src.domain.antiguedad import _fechas
+
         f = _fechas(out["fecha_ingreso"])
         malas = int(f.isna().sum() - out["fecha_ingreso"].isna().sum())
         if malas > 0:
-            avisos.append(f"{malas} `fecha_ingreso` no se pudieron leer como fecha "
-                          f"(dd/mm/aaaa, o aaaa-mm-dd si el ano va primero); esas filas "
-                          f"quedan sin antiguedad")
+            avisos.append(
+                f"{malas} `fecha_ingreso` no se pudieron leer como fecha "
+                f"(dd/mm/aaaa, o aaaa-mm-dd si el ano va primero); esas filas "
+                f"quedan sin antiguedad"
+            )
         informe["fechas_ilegibles"] = malas
 
     if "sueldo" in out.columns:
@@ -131,18 +138,25 @@ def validar(df) -> tuple[pd.DataFrame, dict]:
 def _normalizar_sexo(s: pd.Series):
     """A `M` / `F`. Lo que no se reconoce queda vacio y se cuenta, en vez de colarse
     como una categoria mas en el filtro del front."""
-    equiv = {"m": "M", "masculino": "M", "hombre": "M", "h": "M", "male": "M",
-             "f": "F", "femenino": "F", "mujer": "F", "female": "F"}
+    equiv = {
+        "m": "M",
+        "masculino": "M",
+        "hombre": "M",
+        "h": "M",
+        "male": "M",
+        "f": "F",
+        "femenino": "F",
+        "mujer": "F",
+        "female": "F",
+    }
     bruto = s.astype(str).str.strip().str.lower()
     out = bruto.map(equiv)
-    raros = sorted({b for b, o in zip(bruto, out)
-                    if pd.isna(o) and b not in ("", "nan", "none")})
+    raros = sorted({b for b, o in zip(bruto, out) if pd.isna(o) and b not in ("", "nan", "none")})
     # `dtype=object` NO es decorativo. Con el dtype `str` nuevo de pandas 3, una lista
     # de textos y `None` se infiere como `str` y los None vuelven a salir NaN — la misma
     # trampa que ya esta anotada en `a_numero`. El front tendria que comprobar las dos
     # cosas para saber si el sexo falta.
-    return pd.Series([o if isinstance(o, str) else None for o in out],
-                     index=s.index, dtype=object), raros
+    return pd.Series([o if isinstance(o, str) else None for o in out], index=s.index, dtype=object), raros
 
 
 def _revisar_sueldo(s: pd.Series, avisos: list) -> dict:
@@ -154,6 +168,7 @@ def _revisar_sueldo(s: pd.Series, avisos: list) -> dict:
     un 95% bajo mercado seria un disparate con banda y etiqueta de confianza.
     """
     from src.domain.comparacion import a_numero
+
     v = a_numero(s)
     validos = v.dropna()
     info = {"sueldos_ilegibles": int(v.isna().sum() - s.isna().sum())}
@@ -166,5 +181,6 @@ def _revisar_sueldo(s: pd.Series, avisos: list) -> dict:
         avisos.append(
             f"la mediana de `sueldo` es {med:,.2f}, muy por debajo del salario basico "
             f"del Ecuador. .Son pensiones, valores por hora, o otra columna? El informe "
-            f"se emite igual, pero las lecturas no van a significar nada")
+            f"se emite igual, pero las lecturas no van a significar nada"
+        )
     return info

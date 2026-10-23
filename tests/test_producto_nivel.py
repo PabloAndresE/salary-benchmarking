@@ -1,8 +1,15 @@
 import numpy as np
 import pandas as pd
-from src.domain.nivel import (ClasificadorNivel, escalera_salarial,
-                                         etiquetar, mismo_salvo_grado, nivel_lexico,
-                                         quitar_grado, seniority_lexica, tiene_grado)
+from src.domain.nivel import (
+    ClasificadorNivel,
+    escalera_salarial,
+    etiquetar,
+    mismo_salvo_grado,
+    nivel_lexico,
+    quitar_grado,
+    seniority_lexica,
+    tiene_grado,
+)
 
 
 def test_lee_el_rango_del_titulo():
@@ -73,20 +80,21 @@ def test_el_nivel_esperado_es_continuo_y_ordena():
 def test_la_escalera_detecta_orden_monotono():
     # LA prueba del producto: .el nivel predicho ordena el salario?
     niveles = np.repeat([1, 2, 3, 4, 5], 20)
-    y = np.repeat([0.0, 0.3, 0.6, 1.0, 1.5], 20) + np.random.default_rng(1).normal(0, .05, 100)
+    y = np.repeat([0.0, 0.3, 0.6, 1.0, 1.5], 20) + np.random.default_rng(1).normal(0, 0.05, 100)
     g, recorrido, monotona = escalera_salarial(niveles, y)
     assert monotona and abs(recorrido - np.exp(1.5)) < 0.3
 
 
 def test_la_escalera_no_se_inventa_orden_donde_no_lo_hay():
     niveles = np.repeat([1, 2, 3, 4, 5], 20)
-    y = np.random.default_rng(2).normal(0, .5, 100)
+    y = np.random.default_rng(2).normal(0, 0.5, 100)
     _, _, monotona = escalera_salarial(niveles, y)
     assert not monotona
 
 
 def test_enmascarar_quita_el_rango_y_deja_el_resto():
     from src.domain.nivel import enmascarar
+
     assert enmascarar("AUXILIAR DE BODEGA") == "PUESTO DE BODEGA"
     assert enmascarar("JEFE DE BODEGA") == "PUESTO DE BODEGA"
     assert enmascarar("GERENTE GENERAL") == "PUESTO GENERAL"
@@ -96,11 +104,13 @@ def test_dos_titulos_de_distinto_rango_e_igual_area_quedan_iguales():
     # ESA es la razon de existir del enmascarado: el modelo no puede distinguirlos por la
     # palabra, tiene que inferir el nivel del resto — o admitir que no sabe.
     from src.domain.nivel import enmascarar
+
     assert enmascarar("AUXILIAR DE CAJA") == enmascarar("SUPERVISOR DE CAJA")
 
 
 def test_un_titulo_sin_rango_no_se_toca():
     from src.domain.nivel import enmascarar
+
     assert enmascarar("CONTADOR") == "CONTADOR"
     assert enmascarar("trabajador agricola") == "TRABAJADOR AGRICOLA"
 
@@ -109,12 +119,12 @@ def test_el_efecto_de_nivel_se_mide_dentro_del_area():
     # Contraste sin confusion: la misma area con dos rangos. Si se midiera ENTRE areas se
     # mezclaria "los jefes cobran mas" con "contabilidad paga mas que bodega".
     from src.domain.nivel import efecto_nivel
+
     filas = []
-    for area, base in (("BODEGA", 0.0), ("CONTABLE", 1.0)):   # areas con niveles distintos
+    for area, base in (("BODEGA", 0.0), ("CONTABLE", 1.0)):  # areas con niveles distintos
         for nivel, palabra, extra in ((1, "AUXILIAR", 0.0), (4, "JEFE", 0.6)):
             for e in range(20):
-                filas.append({"cargo_norm": f"{palabra} DE {area}", "empresa_ruc": f"E{e}",
-                              "y": base + extra})
+                filas.append({"cargo_norm": f"{palabra} DE {area}", "empresa_ruc": f"E{e}", "y": base + extra})
     ef = efecto_nivel(pd.DataFrame(filas))
     assert set(ef) == {1, 4}
     assert ef[4] - ef[1] > 0.5, "debe recuperar los 0,6 de diferencia por escalon"
@@ -123,8 +133,8 @@ def test_el_efecto_de_nivel_se_mide_dentro_del_area():
 def test_el_efecto_de_nivel_ignora_las_areas_de_un_solo_rango():
     # Un area donde solo hay auxiliares no dice nada sobre cuanto vale ser jefe.
     from src.domain.nivel import efecto_nivel
-    filas = [{"cargo_norm": "AUXILIAR DE X", "empresa_ruc": f"E{e}", "y": 0.0}
-             for e in range(20)]
+
+    filas = [{"cargo_norm": "AUXILIAR DE X", "empresa_ruc": f"E{e}", "y": 0.0} for e in range(20)]
     assert efecto_nivel(pd.DataFrame(filas)) == {}
 
 
@@ -151,6 +161,7 @@ def test_las_ocupaciones_sin_rango_siguen_sin_nivel():
 # la banda 0,93-0,97 juzgados a mano: caza 5 de los 12 `no` sin romper ninguno de
 # los 36 `si`. Ver `research/experimentos/e2_nivel/13a`.
 
+
 def test_la_seniority_no_cambia_el_escalon():
     # `SUPERVISOR DE CALIDAD SR` sigue siendo un supervisor. Si `SR` entrara en
     # `RANGOS` romperia la escalera, que esta medida sobre cinco escalones.
@@ -167,22 +178,24 @@ def test_lee_la_marca_de_seniority():
 
 def test_separa_lo_que_un_humano_separa():
     # Los cinco pares que el candado existe para cazar, de los 48 juzgados.
-    for a, b in (("SUPERVISOR CALIDAD", "SUPERVISOR DE CALIDAD SR"),
-                 ("CHEF DE COCINA", "SOUS CHEF DE COCINA"),
-                 ("ANALISTA INTELIGENCIA DE NEGOCIOS",
-                  "ANALISTA JUNIOR - INTELIGENCIA DE NEGOCIOS"),
-                 ("GERENTE DE INGENIERIA INDUSTRIAL",
-                  "GERENTE CORPORATIVO DE INGENIERIA")):
+    for a, b in (
+        ("SUPERVISOR CALIDAD", "SUPERVISOR DE CALIDAD SR"),
+        ("CHEF DE COCINA", "SOUS CHEF DE COCINA"),
+        ("ANALISTA INTELIGENCIA DE NEGOCIOS", "ANALISTA JUNIOR - INTELIGENCIA DE NEGOCIOS"),
+        ("GERENTE DE INGENIERIA INDUSTRIAL", "GERENTE CORPORATIVO DE INGENIERIA"),
+    ):
         assert seniority_lexica(a) != seniority_lexica(b), (a, b)
 
 
 def test_no_separa_lo_que_un_humano_junta():
     # `GENERAL` y los numeros se probaron y se dejaron FUERA: con ellos dentro,
     # estos pares se romperian y estan juzgados como el mismo puesto.
-    for a, b in (("SUPERVISOR DE ETIQUETADO", "SUPERVISOR GENERAL DE ETIQUETADO"),
-                 ("TECNICO MECANICO A", "TECNICO MECANICO I"),
-                 ("JEFE SERVICIOS", "JEFE DE SERVICIOS GENERAL"),
-                 ("ASISTENTE DE TESORERIA JR.", "ASISTENTE DE TESORERIA JUNIOR")):
+    for a, b in (
+        ("SUPERVISOR DE ETIQUETADO", "SUPERVISOR GENERAL DE ETIQUETADO"),
+        ("TECNICO MECANICO A", "TECNICO MECANICO I"),
+        ("JEFE SERVICIOS", "JEFE DE SERVICIOS GENERAL"),
+        ("ASISTENTE DE TESORERIA JR.", "ASISTENTE DE TESORERIA JUNIOR"),
+    ):
         assert seniority_lexica(a) == seniority_lexica(b), (a, b)
 
 
@@ -197,27 +210,31 @@ def test_no_confunde_subcadenas_de_seniority():
 
 def test_el_grado_no_hace_distinto_el_puesto():
     # D-037 (Enmienda 5 de D-036): numero, romano, letra suelta y NIVEL/CATEGORIA delante
-    for a, b in [("AUXILIAR 1 DE COCINA", "AUXILIAR 2 DE COCINA"),
-                 ("LABORATORISTA I", "LABORATORISTA II"),
-                 ("SOLDADOR A", "SOLDADOR I"),
-                 ("AYUDANTE B DE MANTENIMIENTO", "AYUDANTE C DE MANTENIMIENTO"),
-                 ("OPERARIO CATEGORIA B", "OPERARIO CATEGORIA C"),
-                 ("TECNICO NIVEL 2", "TECNICO NIVEL 4"),
-                 ("OPERARIO 2 DE EMPAQUE", "OPERARIO DE EMPAQUE"),
-                 ("PLANIFICADOR", "PLANIFICADOR (R)"),
-                 ("ASISTENTE CONTABLE1", "ASISTENTE CONTABLE 2")]:
+    for a, b in [
+        ("AUXILIAR 1 DE COCINA", "AUXILIAR 2 DE COCINA"),
+        ("LABORATORISTA I", "LABORATORISTA II"),
+        ("SOLDADOR A", "SOLDADOR I"),
+        ("AYUDANTE B DE MANTENIMIENTO", "AYUDANTE C DE MANTENIMIENTO"),
+        ("OPERARIO CATEGORIA B", "OPERARIO CATEGORIA C"),
+        ("TECNICO NIVEL 2", "TECNICO NIVEL 4"),
+        ("OPERARIO 2 DE EMPAQUE", "OPERARIO DE EMPAQUE"),
+        ("PLANIFICADOR", "PLANIFICADOR (R)"),
+        ("ASISTENTE CONTABLE1", "ASISTENTE CONTABLE 2"),
+    ]:
         assert mismo_salvo_grado(a, b), (a, b)
 
 
 def test_lo_que_no_es_grado():
-    for a, b in [("COORDINADOR M & R", "COORDINADOR M&P"),     # siglas
-                 ("T.A BOMBERO", "T/A BOMBERO"),               # letra pegada a . o /
-                 ("COORDINADOR", "COORDINADOR/A"),             # forma inclusiva
-                 ("CHOFER LICENCIA C", "CHOFER LICENCIA E"),   # tipo, no grado
-                 ("ASISTENTE A GERENCIA", "ASISTENTE DE GERENCIA"),  # `A` preposicion
-                 ("GERENTE ASISTENTE 1", "ASISTENTE GERENTE 2"),     # otra palabra de puesto
-                 ("MAQUINISTA # 10", "MAQUINISTA # 11"),       # dos cifras: no se toca
-                 ("JEFE DE VENTAS", "JEFE DE COMPRAS 1")]:
+    for a, b in [
+        ("COORDINADOR M & R", "COORDINADOR M&P"),  # siglas
+        ("T.A BOMBERO", "T/A BOMBERO"),  # letra pegada a . o /
+        ("COORDINADOR", "COORDINADOR/A"),  # forma inclusiva
+        ("CHOFER LICENCIA C", "CHOFER LICENCIA E"),  # tipo, no grado
+        ("ASISTENTE A GERENCIA", "ASISTENTE DE GERENCIA"),  # `A` preposicion
+        ("GERENTE ASISTENTE 1", "ASISTENTE GERENTE 2"),  # otra palabra de puesto
+        ("MAQUINISTA # 10", "MAQUINISTA # 11"),  # dos cifras: no se toca
+        ("JEFE DE VENTAS", "JEFE DE COMPRAS 1"),
+    ]:
         assert not mismo_salvo_grado(a, b), (a, b)
     assert not tiene_grado("JEFE DE VENTAS Y MARKETING")
     assert quitar_grado("OPERARIO CATEGORIA B DE PLANTA") == ["OPERARIO", "DE", "PLANTA"]

@@ -29,6 +29,7 @@ es una decision de arquitectura y de contrato, no un detalle de implementacion.
 LO QUE NO TRAE, y hay que decirlo antes de exponerlo: autenticacion, cuotas,
 multi-tenencia y trazabilidad de accesos. Detras de una puerta, no en internet abierto.
 """
+
 from __future__ import annotations
 
 import datetime as _dt
@@ -54,16 +55,15 @@ from src.domain.antiguedad import antiguedad_anios, tramo
 from src.domain import idioma as idioma_mod
 from src.infrastructure.modelos import juez as juez_mod
 from src.domain import sinonimos
-from src.domain.base_referencia import (ruta_base_mas_nueva, MIN_EMPRESAS_VEREDICTO, SEGMENTOS,
-                                        BaseReferencia, _vecinos)
+from src.domain.base_referencia import ruta_base_mas_nueva, MIN_EMPRESAS_VEREDICTO, SEGMENTOS, BaseReferencia, _vecinos
 from src.domain.formato import CANONICAS, FormatoInvalido, OBLIGATORIAS
 from src.domain.formato import validar as validar_formato
 from src.domain.comparacion import comparar, texto_resumen
-from src.domain.columnas_nomina import _POSIBLES, _POSIBLES_SUELDO, _buscar_sueldo
+from src.domain.columnas_nomina import _POSIBLES, _buscar_sueldo
 from src.services import registro_nomina_service as registro_nominas
 
 ESQUEMA = "1.0"
-TTL_SEGUNDOS = 60 * 60          # el informe caduca en una hora: no es un almacen
+TTL_SEGUNDOS = 60 * 60  # el informe caduca en una hora: no es un almacen
 TOPE_EMBEDDINGS_NUEVOS = 50_000
 
 # POR ENCIMA DE ESTO, EL PARECIDO SIGNIFICA ALGO. Medido sobre la base de 65.181 titulos:
@@ -89,23 +89,29 @@ UMBRAL_RUIDO = 0.85  # techo del cache caliente de titulos no vistos
 UNIDADES = {
     "sueldo_actual": {"unidad": "usd", "formato": "$#,##0.00"},
     "referencia": {"unidad": "usd", "formato": "$#,##0.00"},
-    "p10": {"unidad": "usd"}, "p25": {"unidad": "usd"},
-    "p75": {"unidad": "usd"}, "p90": {"unidad": "usd"},
+    "p10": {"unidad": "usd"},
+    "p25": {"unidad": "usd"},
+    "p75": {"unidad": "usd"},
+    "p90": {"unidad": "usd"},
     # 2026-10-07: `p10`..`p90` son la banda de EMPRESAS (el mercado); la de personas, aparte
-    "p10_per": {"unidad": "usd"}, "p25_per": {"unidad": "usd"},
-    "p75_per": {"unidad": "usd"}, "p90_per": {"unidad": "usd"},
+    "p10_per": {"unidad": "usd"},
+    "p25_per": {"unidad": "usd"},
+    "p75_per": {"unidad": "usd"},
+    "p90_per": {"unidad": "usd"},
     "posicion_mercado": {"unidad": "percentil", "rango": [10, 90]},
     "referencia_equivalente": {"unidad": "usd", "formato": "$#,##0.00"},
     "prima_idioma": {"unidad": "fraccion", "formato": "0%"},
     # el rango de mercado que se MUESTRA: p25-p75 de la banda de empresas
-    "rango_desde": {"unidad": "usd"}, "rango_hasta": {"unidad": "usd"},
+    "rango_desde": {"unidad": "usd"},
+    "rango_hasta": {"unidad": "usd"},
     "vs_mercado": {"unidad": "ratio", "formato": "+0.0%"},
     "vs_politica_interna": {"unidad": "ratio", "formato": "+0.0%"},
     "brecha_grafia": {"unidad": "ratio", "formato": "+0.0%"},
     "incert_centro": {"unidad": "ratio", "formato": "0.0%"},
     "ancho_rel": {"unidad": "ratio"},
     "similitud": {"unidad": "coseno", "rango": [0, 1]},
-    "empresas": {"unidad": "conteo"}, "personas": {"unidad": "conteo"},
+    "empresas": {"unidad": "conteo"},
+    "personas": {"unidad": "conteo"},
     # La masa salarial: dolares al mes, y su diferencia como ratio. Va aqui para que el
     # front no la formatee como porcentaje ni al reves — que es exactamente el fallo que
     # `UNIDADES` existe para evitar.
@@ -134,8 +140,7 @@ UNIDADES = {
 # la cascada el informe se compara contra divisiones y clases —`G47`, `G4761`— y esas no
 # tenian nombre. La `nota` de `industria` lo confesaba: "su descripcion en palabras
 # necesita la tabla CIIU del INEC, que no esta en la base". Ya esta.
-_CIIU = json.loads((pathlib.Path(__file__).parent / "domain" / "datos" / "ciiu.json")
-                   .read_text(encoding="utf-8"))
+_CIIU = json.loads((pathlib.Path(__file__).parent / "domain" / "datos" / "ciiu.json").read_text(encoding="utf-8"))
 
 
 def nombre_ciiu(codigo: str) -> str:
@@ -204,15 +209,39 @@ SALIDA_MODELO = (
     # `cargo` es lo que escribio el cliente, fila por fila. `cargo_normalizado` es la
     # clave con la que se agrupo `por_puesto`: sin ella el front no puede unir las dos
     # tablas, porque la etiqueta de un puesto es UNA grafia y el detalle trae todas.
-    "fila", "cargo", "cargo_normalizado", "estado", "antiguedad_anios",
+    "fila",
+    "cargo",
+    "cargo_normalizado",
+    "estado",
+    "antiguedad_anios",
     "antiguedad_tramo",
-    "referencia", "sueldo_actual",
-    "vs_mercado", "vs_politica_interna", "lectura_mercado", "lectura_interna",
-    "posicion_mercado", "equivalente", "rango_desde", "rango_hasta",
+    "referencia",
+    "sueldo_actual",
+    "vs_mercado",
+    "vs_politica_interna",
+    "lectura_mercado",
+    "lectura_interna",
+    "posicion_mercado",
+    "equivalente",
+    "rango_desde",
+    "rango_hasta",
     # D-067: la referencia del equivalente en espanol y la prima del ingles aplicada; D-068: el tipeo corregido
-    "referencia_equivalente", "prima_idioma", "corregido",
-    "p10", "p25", "p75", "p90", "confianza", "incert_centro", "ancho_rel",
-    "base", "empresas", "personas", "similitud", "segmento", "rubro",
+    "referencia_equivalente",
+    "prima_idioma",
+    "corregido",
+    "p10",
+    "p25",
+    "p75",
+    "p90",
+    "confianza",
+    "incert_centro",
+    "ancho_rel",
+    "base",
+    "empresas",
+    "personas",
+    "similitud",
+    "segmento",
+    "rubro",
     # A QUE NIVEL se comparo ese cargo. Sin esto, `rubro: "G47"` obliga al front a
     # deducir del largo del codigo si eso es una division o una clase.
     "rubro_nivel",
@@ -274,12 +303,11 @@ def _estado(fila) -> str:
     if str(fila.get("base", "") or "") == "sin cargo":
         return "cargo_vacio"
     if str(fila.get("base", "") or "") == "no reconocido":
-        return "cargo_no_reconocido"          # D-075: lo escrito no es un cargo; sin cifra
+        return "cargo_no_reconocido"  # D-075: lo escrito no es un cargo; sin cifra
     lect = str(fila.get("lectura_mercado", "") or "")
     if lect == "sueldo ilegible":
         return "sueldo_ilegible"
-    if lect == "sin referencia" or not np.isfinite(
-            pd.to_numeric(fila.get("referencia"), errors="coerce")):
+    if lect == "sin referencia" or not np.isfinite(pd.to_numeric(fila.get("referencia"), errors="coerce")):
         return "sin_referencia"
     base = str(fila.get("base", "") or "")
     if base.startswith("rubro"):
@@ -287,7 +315,7 @@ def _estado(fila) -> str:
     if base == "datos directos":
         return "directa"
     if base == "por traduccion":
-        return "traduccion"                   # D-067: equivalente en espanol + prima del ingles
+        return "traduccion"  # D-067: equivalente en espanol + prima del ingles
     return "analogia"
 
 
@@ -335,25 +363,31 @@ class Almacen:
 #
 # Cada entrada es (nombre, como se comprueba, que se pierde si falta).
 CAPACIDADES = (
-    ("padron",
-     lambda b: len(b.pad_idx) > 0,
-     "`empresas_analizadas` no es calculable y no se detecta si el cliente esta "
-     "dentro de su propio mercado"),
-    ("ruc_a_industria",
-     lambda b: len(b.meta_ruc) > 0,
-     "el RUC no resuelve ni el rubro ni el segmento: el informe cae al mercado "
-     "entero sin decir por que"),
-    ("rubro_multinivel",
-     lambda b: any(len(str(r)) > 1 for r in b.rubros),
-     "el veredicto no puede bajar al sector del cliente; se compara todo contra la "
-     "seccion"),
-    ("segmento_del_ruc",
-     lambda b: any(v[2] for v in b.meta_ruc.values()),
-     "el tamano de la empresa hay que pedirlo a mano o no se corrige el sesgo de "
-     "los cargos altos"),
-    ("brecha_grafia",
-     lambda b: bool(np.isfinite(b.brecha_gen).any()),
-     "no se reporta la diferencia entre grafias femenina y masculina"),
+    (
+        "padron",
+        lambda b: len(b.pad_idx) > 0,
+        "`empresas_analizadas` no es calculable y no se detecta si el cliente esta " "dentro de su propio mercado",
+    ),
+    (
+        "ruc_a_industria",
+        lambda b: len(b.meta_ruc) > 0,
+        "el RUC no resuelve ni el rubro ni el segmento: el informe cae al mercado " "entero sin decir por que",
+    ),
+    (
+        "rubro_multinivel",
+        lambda b: any(len(str(r)) > 1 for r in b.rubros),
+        "el veredicto no puede bajar al sector del cliente; se compara todo contra la " "seccion",
+    ),
+    (
+        "segmento_del_ruc",
+        lambda b: any(v[2] for v in b.meta_ruc.values()),
+        "el tamano de la empresa hay que pedirlo a mano o no se corrige el sesgo de " "los cargos altos",
+    ),
+    (
+        "brecha_grafia",
+        lambda b: bool(np.isfinite(b.brecha_gen).any()),
+        "no se reporta la diferencia entre grafias femenina y masculina",
+    ),
 )
 
 
@@ -363,7 +397,7 @@ def capacidades_de(base) -> dict:
     for nombre, prueba, _ in CAPACIDADES:
         try:
             out[nombre] = bool(prueba(base))
-        except Exception:                                    # noqa: BLE001
+        except Exception:  # noqa: BLE001
             out[nombre] = False
     return out
 
@@ -404,13 +438,15 @@ class Motor:
         self.n_grafias = {g: len(v) for g, v in porgrupo.items()}
         # D-046/D-047: los sinonimos aprobados no tocan la base; sirven al buscador de cargos
         # D-070/D-072: los pares aprobados (rondas 1 y 2) mas las reglas de palabras del autor
-        self.sinonimos = sinonimos.por_grupo(self.base, sinonimos.cargar_pares() + sinonimos.pares_por_reglas(
-            [str(c) for c in self.base.celdas]))
+        self.sinonimos = sinonimos.por_grupo(
+            self.base, sinonimos.cargar_pares() + sinonimos.pares_por_reglas([str(c) for c in self.base.celdas])
+        )
         self.sinonimos_consulta = sinonimos.de_consulta(self.base, sinonimos.cargar_consulta())
         # Las palabras que aparecen en algun titulo de la base. Ante una palabra desconocida
         # (`DESTISTA`, `ODONTOLGO`) el juez extrapola y da P altas a cualquier cosa: ahi no se le cree.
         from src.domain.capa0 import limpiar
         from src.shared.utils.texto import _norm
+
         self.vocabulario = {w for c in self.base.celdas for w in limpiar(_norm(str(c))).split()}
         # D-048: el juez v3 para los titulos nuevos. `JUEZ` = carpeta con los pesos; `JUEZ=no` lo
         # apaga. Sin pesos o sin torch, el servicio sigue sin el (por analogia, como antes).
@@ -458,28 +494,45 @@ class Motor:
         self.base.candado_seguridad = os.environ.get("CANDADO_SEGURIDAD", "si").lower() != "no"
         # D-075: lo que no es un cargo (`ASDFGH`, `ASTRONAUTA`) se responde `no reconocido`, sin cifra. Necesita una
         # base con el clasificador (v28 o mas nueva). `FILTRO_CARGO=no` lo apaga.
-        self.base.filtro_cargo = (os.environ.get("FILTRO_CARGO", "si").lower() != "no"
-                                  and getattr(self.base, "clf_cargo", None) is not None)
+        self.base.filtro_cargo = (
+            os.environ.get("FILTRO_CARGO", "si").lower() != "no" and getattr(self.base, "clf_cargo", None) is not None
+        )
         # D-063: con el tamano del cliente (`segmento`, o el del RUC), el efecto del tamano segun el NIVEL del
         # cargo, para todos los cargos y tambien en la analogia; reemplaza a `ajuste_seg` (D-018). Sin tamano, la
         # referencia no cambia. `TAMANO=no` vuelve a D-018. Necesita una base con `ajuste_tam` (v26 o mas nueva).
-        self.base.tamano_estandar = (os.environ.get("TAMANO", "si").lower() != "no"
-                                     and getattr(self.base, "ajuste_tam", None) is not None)
+        self.base.tamano_estandar = (
+            os.environ.get("TAMANO", "si").lower() != "no" and getattr(self.base, "ajuste_tam", None) is not None
+        )
         # D-064: en el candado de idioma, `CHIEF EXECUTIVE OFFICER` se lee como `GENERAL MANAGER` (glosario) y no
         # como un ejecutivo de nivel 1: el mismo cargo que `CEO`. `CANDADO_GLOSARIO=no` lo apaga.
         self.base.candado_glosario = os.environ.get("CANDADO_GLOSARIO", "si").lower() != "no"
-        if (self.base.traductor is None or self.base.idioma_sueldo == "siempre"
-                or os.environ.get("IDIOMA_PRIMA", "si").lower() == "no"):
+        if (
+            self.base.traductor is None
+            or self.base.idioma_sueldo == "siempre"
+            or os.environ.get("IDIOMA_PRIMA", "si").lower() == "no"
+        ):
             self.base.idioma_prima = None
-        print("[idioma] " + ("traductor " + ruta_tr if self.base.traductor is not None
-                             else "sin traductor: los titulos en ingles se buscan tal cual"), flush=True)
-        print("[juez] " + ("{} en {}".format(self.base.juez.nombre, self.base.juez.dispositivo)
-                           if self.base.juez is not None else "sin juez: titulos nuevos por analogia"),
-              flush=True)
+        print(
+            "[idioma] "
+            + (
+                "traductor " + ruta_tr
+                if self.base.traductor is not None
+                else "sin traductor: los titulos en ingles se buscan tal cual"
+            ),
+            flush=True,
+        )
+        print(
+            "[juez] "
+            + (
+                "{} en {}".format(self.base.juez.nombre, self.base.juez.dispositivo)
+                if self.base.juez is not None
+                else "sin juez: titulos nuevos por analogia"
+            ),
+            flush=True,
+        )
         self.capacidades = capacidades_de(self.base)
         faltan = [(n, p) for n, _, p in CAPACIDADES if not self.capacidades[n]]
-        print(f"[base] {ruta_base}  {len(self.base.celdas):,} puestos  "
-              f"{self.carga_s}s", flush=True)
+        print(f"[base] {ruta_base}  {len(self.base.celdas):,} puestos  " f"{self.carga_s}s", flush=True)
         for n, porque in faltan:
             # EN VOZ ALTA. Una base a la que le falta algo contesta igual que una
             # completa, solo que peor, y eso no se nota mirando una respuesta.
@@ -487,14 +540,18 @@ class Motor:
         # D-092: los cargos de direccion en ingles (CEO, CFO, MANAGING DIRECTOR, COUNTRY MANAGER...) toman la banda de
         # su equivalente en espanol por la prima del mercado que titula en ingles, estimada con los pares de direccion
         # de la base. `PRIMA_DIRECCION=no` la apaga (vuelve a todo a espanol sin excepcion).
-        if (os.environ.get("PRIMA_DIRECCION", "si").lower() != "no" and self.base.traductor is not None
-                and self.base.idioma_sueldo == "siempre"):
+        if (
+            os.environ.get("PRIMA_DIRECCION", "si").lower() != "no"
+            and self.base.traductor is not None
+            and self.base.idioma_sueldo == "siempre"
+        ):
             try:
-                dirs = [c for c in self.base.celdas if idioma_mod.es_direccion(c)
-                        and self.base.emp[self.base.idx[c]] >= 3]
+                dirs = [
+                    c for c in self.base.celdas if idioma_mod.es_direccion(c) and self.base.emp[self.base.idx[c]] >= 3
+                ]
                 self.asegurar(dirs)
                 print(f"[direccion] prima {self.base.estimar_prima_direccion(self.emb)}", flush=True)
-            except Exception as e:                           # noqa: BLE001 - se informa y se sigue
+            except Exception as e:  # noqa: BLE001 - se informa y se sigue
                 self.base.prima_direccion = None
                 print(f"[direccion] sin prima ({e!r})", flush=True)
         # CALENTAMIENTO (2026-10-12, medido): la primera consulta con un titulo nuevo tardaba 29,6 s —cliente de
@@ -507,14 +564,14 @@ class Motor:
                 self.asegurar(prueba)
                 self.base.referenciar(prueba, self.emb)
                 print(f"[calentamiento] {time.time() - t0:.1f}s", flush=True)
-            except Exception as e:                           # noqa: BLE001 - se informa y se sigue
+            except Exception as e:  # noqa: BLE001 - se informa y se sigue
                 print(f"[calentamiento] no se pudo ({e!r}); la primera consulta sera lenta", flush=True)
 
     def _vertex(self):
         if self._cli is None:
             self._cli = embeddings.cliente_vertex(
-                self.settings.vertex_embedding_model, self.settings.bq_project,
-                self.settings.vertex_location)
+                self.settings.vertex_embedding_model, self.settings.bq_project, self.settings.vertex_location
+            )
         return self._cli
 
     def asegurar(self, titulos) -> int:
@@ -525,21 +582,22 @@ class Motor:
         """
         # D-050: tambien las traducciones de los titulos en ingles, que se buscan por ellas
         # D-087: tambien el titulo en ingles sin su sufijo de unidad (`HEAD OF X - CONSULTING` -> `HEAD OF X`)
-        sufijos = ([idioma_mod.sin_sufijo(t) for t in titulos if t]
-                   if getattr(self.base, "quitar_sufijo", False) or getattr(self.base, "head_jefe", False) else [])
+        sufijos = (
+            [idioma_mod.sin_sufijo(t) for t in titulos if t]
+            if getattr(self.base, "quitar_sufijo", False) or getattr(self.base, "head_jefe", False)
+            else []
+        )
         titulos = list(titulos) + [x for x in sufijos if x not in titulos]
         titulos = list(titulos) + self.base.traducciones_a_embeber([t for t in titulos if t])
         faltan = sorted({t for t in titulos if t and t not in self.emb})
         if not faltan:
             return 0
-        X = embeddings.embeber(faltan, self._vertex(),
-                               self.settings.vertex_embedding_model)
+        X = embeddings.embeber(faltan, self._vertex(), self.settings.vertex_embedding_model)
         with self._lock:
             if len(self.emb) - len(self.base.celdas) > TOPE_EMBEDDINGS_NUEVOS:
                 # Se tira el cache caliente entero antes que crecer sin limite. Es un
                 # servicio de larga vida y los titulos nuevos no dejan de llegar.
-                self.emb = {c: self.base.Z[i]
-                            for i, c in enumerate(self.base.celdas)}
+                self.emb = {c: self.base.Z[i] for i, c in enumerate(self.base.celdas)}
             self.emb.update(dict(zip(faltan, X)))
         return len(faltan)
 
@@ -555,24 +613,24 @@ def leer_nomina_bytes(contenido: bytes, nombre: str, col_cargo: str | None = Non
     """
     buf = io.BytesIO(contenido)
     try:
-        df = (pd.read_csv(buf, dtype=str) if nombre.lower().endswith(".csv")
-              else pd.read_excel(buf, dtype=str))
-    except Exception as e:                                   # noqa: BLE001
+        df = pd.read_csv(buf, dtype=str) if nombre.lower().endswith(".csv") else pd.read_excel(buf, dtype=str)
+    except Exception as e:  # noqa: BLE001
         raise ValueError(f"no se pudo leer el archivo: {e}") from e
     if df.empty:
         raise ValueError("el archivo no tiene filas")
     if col_cargo:
         real = _col(df, col_cargo)
         if real is None:
-            raise ValueError(f"la columna '{col_cargo}' no esta en el archivo. "
-                             f"Columnas: {list(df.columns)}")
+            raise ValueError(f"la columna '{col_cargo}' no esta en el archivo. " f"Columnas: {list(df.columns)}")
         return df, real
     normal = {c.strip().lower().replace(" ", "_"): c for c in df.columns}
     for cand in _POSIBLES:
         if cand in normal:
             return df, normal[cand]
-    raise ValueError(f"no encuentro la columna de cargo. Columnas: {list(df.columns)}. "
-                     f"Indicala con el parametro `columna_cargo`.")
+    raise ValueError(
+        f"no encuentro la columna de cargo. Columnas: {list(df.columns)}. "
+        f"Indicala con el parametro `columna_cargo`."
+    )
 
 
 def _leer_mapeo(crudo: str | None, n_filas: int) -> dict[int, str]:
@@ -595,13 +653,12 @@ def _leer_mapeo(crudo: str | None, n_filas: int) -> dict[int, str]:
     except json.JSONDecodeError as e:
         raise HTTPException(400, f"`mapeo` no es JSON valido: {e}") from e
     if not isinstance(d, dict):
-        raise HTTPException(400, '`mapeo` tiene que ser un objeto {"fila": "cargo"}, '
-                                 f'y llego {type(d).__name__}')
+        raise HTTPException(400, '`mapeo` tiene que ser un objeto {"fila": "cargo"}, ' f"y llego {type(d).__name__}")
     out, malas = {}, []
     for k, v in d.items():
         try:
             i = int(k)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             malas.append(f"clave {k!r} no es un numero de fila")
             continue
         if not 0 <= i < n_filas:
@@ -637,10 +694,12 @@ def _representante(grafias, frec) -> str:
 
     Es presentacion pura y no toca ningun calculo.
     """
+
     def clave(t):
         palabras = t.split()
         raro = min((frec.get(w, 0) for w in palabras), default=0)
         return (-raro, sum(1 for c in t if not (c.isalnum() or c == " ")), len(t), t)
+
     return min(grafias, key=clave)
 
 
@@ -659,23 +718,35 @@ def _anidar_sector(filas: list) -> list:
     for f in filas:
         g = {k: v for k, v in f.items() if not k.startswith("sector_")}
         cod = f.get("sector_codigo") or ""
-        g["sector_mas_fino"] = ({"codigo": cod,
-                                 "nivel": f.get("sector_nivel") or "",
-                                 "empresas": int(f.get("sector_empresas") or 0),
-                                 "umbral": MIN_EMPRESAS_VEREDICTO}
-                                if cod else None)
+        g["sector_mas_fino"] = (
+            {
+                "codigo": cod,
+                "nivel": f.get("sector_nivel") or "",
+                "empresas": int(f.get("sector_empresas") or 0),
+                "umbral": MIN_EMPRESAS_VEREDICTO,
+            }
+            if cod
+            else None
+        )
         out.append(g)
     return out
 
 
-def procesar(motor: Motor, df, col_cargo: str, anio: int,
-             segmento: str | None, rubro: str | None,
-             col_sueldo: str | None, columnas_extra: list[str] | None = None,
-             columnas_originales: bool = True,
-             informe_formato: dict | None = None,
-             ruc: str | None = None,
-             ciiu: str | None = None,
-             mapeo: dict[int, str] | None = None) -> tuple[dict, bytes, pd.DataFrame]:
+def procesar(
+    motor: Motor,
+    df,
+    col_cargo: str,
+    anio: int,
+    segmento: str | None,
+    rubro: str | None,
+    col_sueldo: str | None,
+    columnas_extra: list[str] | None = None,
+    columnas_originales: bool = True,
+    informe_formato: dict | None = None,
+    ruc: str | None = None,
+    ciiu: str | None = None,
+    mapeo: dict[int, str] | None = None,
+) -> tuple[dict, bytes, pd.DataFrame]:
     """El informe completo. Es la misma cadena que el CLI, sin tocar el disco.
 
     Devuelve tambien la homologacion cruda (`ref`), fila por fila: el registro de
@@ -690,17 +761,15 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
     titulos = df[col_cargo].fillna("").astype(str).str.strip().str.upper()
     nuevos = motor.asegurar(titulos.tolist())
 
-    ref = motor.base.referenciar(titulos.tolist(), motor.emb, anio=anio,
-                                 segmento=segmento, rubro=rubro, ruc=ruc,
-                                 ciiu=ciiu)
-    salida = pd.concat([df.reset_index(drop=True),
-                        ref.drop(columns=["cargo"]).reset_index(drop=True)], axis=1)
+    ref = motor.base.referenciar(
+        titulos.tolist(), motor.emb, anio=anio, segmento=segmento, rubro=rubro, ruc=ruc, ciiu=ciiu
+    )
+    salida = pd.concat([df.reset_index(drop=True), ref.drop(columns=["cargo"]).reset_index(drop=True)], axis=1)
 
     cs = _buscar_sueldo(df, col_sueldo)
     por_puesto = resumen = None
     if cs:
-        salida, por_puesto, resumen = comparar(salida, cs, col_cargo, ref,
-                                               motor.settings.get_sbu, anio)
+        salida, por_puesto, resumen = comparar(salida, cs, col_cargo, ref, motor.settings.get_sbu, anio)
     salida["estado"] = [_estado(f) for _, f in salida.iterrows()]
     # ANTIGUEDAD, para el filtro del front y para explicar por que alguien cobra lo que
     # cobra. Se calcula descontando los periodos fuera: ver `producto/antiguedad.py`.
@@ -708,9 +777,9 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
     salida["antiguedad_tramo"] = tramo(salida["antiguedad_anios"]).to_numpy()
     # La hoja del cliente no lleva escala logaritmica ni la banda de empresas: esa va en
     # `por_puesto`, que es donde la unidad coincide. Mismo criterio que el CLI.
-    salida = salida.drop(columns=[c for c in salida.columns
-                                  if c.endswith("_log") or c.endswith("_emp")
-                                  or c == "sd"], errors="ignore")
+    salida = salida.drop(
+        columns=[c for c in salida.columns if c.endswith("_log") or c.endswith("_emp") or c == "sd"], errors="ignore"
+    )
 
     # EL EXCEL LLEVA TODO —es el entregable humano— y el JSON solo lo del modelo.
     xls = io.BytesIO()
@@ -719,8 +788,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         if por_puesto is not None:
             por_puesto.to_excel(w, sheet_name="por_puesto", index=False)
 
-    limpio = lambda d: [{str(k): _py(v) for k, v in fila.items()}
-                        for fila in d.to_dict("records")]
+    limpio = lambda d: [{str(k): _py(v) for k, v in fila.items()} for fila in d.to_dict("records")]
 
     json_det = salida.copy()
     json_det.insert(0, "fila", range(len(json_det)))
@@ -729,8 +797,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
     if columnas_originales:
         quedan += [c for c in json_det.columns if c not in quedan]
     else:
-        quedan += [c for c in (columnas_extra or []) if c in json_det.columns
-                   and c not in quedan]
+        quedan += [c for c in (columnas_extra or []) if c in json_det.columns and c not in quedan]
     json_det = json_det[quedan]
 
     # ---- TARJETAS DE CABECERA -------------------------------------------------
@@ -759,9 +826,11 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         r = usa_rubro.get(t, "")
         if r:
             n_sectoriales += 1
-            del_celda = [e for e in del_celda.tolist()
-                         if e < len(motor.base.pad_ciiu)
-                         and str(motor.base.pad_ciiu[e] or "").startswith(r)]
+            del_celda = [
+                e
+                for e in del_celda.tolist()
+                if e < len(motor.base.pad_ciiu) and str(motor.base.pad_ciiu[e] or "").startswith(r)
+            ]
         empresas.update(int(e) for e in del_celda)
     con_padron = len(motor.base.pad_idx) > 0
 
@@ -773,17 +842,24 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         "cargos_comparados_contra_su_rubro": n_sectoriales,
         "trabajadores_analizados": trabajadores,
         "empresas_analizadas": len(empresas) if con_padron else None,
-        "tamano_de_las_empresas": ({"minimo": min(tallas), "maximo": max(tallas),
-                                    "mediana": int(np.median(tallas)),
-                                    "con_dato": len(tallas),
-                                    "sin_dato": len(empresas) - len(tallas)}
-                                   if tallas else None),
+        "tamano_de_las_empresas": (
+            {
+                "minimo": min(tallas),
+                "maximo": max(tallas),
+                "mediana": int(np.median(tallas)),
+                "con_dato": len(tallas),
+                "sin_dato": len(empresas) - len(tallas),
+            }
+            if tallas
+            else None
+        ),
     }
     if rubro and n_sectoriales < len(vistos):
         mercado["nota_rubro"] = (
             f"{n_sectoriales} de {len(vistos)} cargos se comparan contra empresas de "
             f"{rubro}; el resto no llega al suelo de respaldo en ese sector y se compara "
-            f"contra el mercado entero. El fallback es por cargo.")
+            f"contra el mercado entero. El fallback es por cargo."
+        )
     # .CUANTO SE ESTA MIRANDO EL CLIENTE AL ESPEJO? Si su empresa participo en los
     # estudios, su propio sueldo entra en la mediana que le sirve de referencia. NO se le
     # quita —de una mediana ponderada no se resta un voto sin guardar los votos, que
@@ -805,19 +881,24 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
                 f"{len(finos)} el mercado es tan estrecho que tu propio sueldo pesa lo "
                 f"suyo dentro de la referencia — en {peor['cargo']}, un "
                 f"{100 * float(peor['tu_influencia']):.0f}%. Esas lecturas no son "
-                f"independientes: mira `tu_influencia` en `por_puesto`.")
+                f"independientes: mira `tu_influencia` en `por_puesto`."
+            )
         elif len(dentro):
             mercado["nota_espejo"] = (
                 f"Tu empresa respalda {len(dentro)} de los cargos que comparas, todos "
                 f"con 10 o mas empresas detras. Medido, quitarte moveria la referencia "
-                f"un 0,4%: la comparacion se sostiene.")
+                f"un 0,4%: la comparacion se sostiene."
+            )
     if not con_padron:
-        mercado["nota"] = ("Esta base se construyo sin padron de empresas: "
-                           "`empresas_analizadas` no es calculable. Reconstruyela.")
+        mercado["nota"] = (
+            "Esta base se construyo sin padron de empresas: " "`empresas_analizadas` no es calculable. Reconstruyela."
+        )
     elif tallas and len(tallas) < len(empresas):
-        mercado["nota_tamano"] = (f"{len(empresas) - len(tallas)} de {len(empresas)} "
-                                  f"empresas no tienen tamano registrado y quedan fuera "
-                                  f"del rango.")
+        mercado["nota_tamano"] = (
+            f"{len(empresas) - len(tallas)} de {len(empresas)} "
+            f"empresas no tienen tamano registrado y quedan fuera "
+            f"del rango."
+        )
 
     industria = None
     if rubro:
@@ -859,16 +940,14 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
             "nivel": niv_pre,
             "nombre": nombre_ciiu(cod_pre),
             "cargos_en_ese_nivel": n_pre,
-            "niveles": [{"codigo": c, "nivel": n, "cargos": v, "nombre": nombre_ciiu(c)}
-                        for (c, n), v in orden],
+            "niveles": [{"codigo": c, "nivel": n, "cargos": v, "nombre": nombre_ciiu(c)} for (c, n), v in orden],
             # LA SECCION, y solo la seccion. Lo que el front rotula como "el mercado"
             # es `nombre` —el nivel mas fino al que llego la cascada—; esto se queda
             # aparte y con su nombre honesto, para que dentro de seis meses nadie lea
             # "nombre_seccion" y reciba una division.
             "ciiu_seccion": rubro,
             "nombre_seccion": nombre_ciiu(rubro),
-            "grupos_ciiu": [{"codigo": c, "empresas": n, "nombre": nombre_ciiu(c)}
-                            for c, n in top],
+            "grupos_ciiu": [{"codigo": c, "empresas": n, "nombre": nombre_ciiu(c)} for c, n in top],
         }
 
     cuerpo = {
@@ -882,8 +961,10 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
         "mercado": mercado,
         "industria": industria,
         "meta": {
-            "anio": anio, "sbu": motor.settings.get_sbu(anio),
-            "segmento": segmento, "rubro": rubro,
+            "anio": anio,
+            "sbu": motor.settings.get_sbu(anio),
+            "segmento": segmento,
+            "rubro": rubro,
             # ACUSE DE RECIBO. Sin esto el front no puede distinguir "se aplico" de "se
             # ignoro": FastAPI descarta EN SILENCIO un campo de formulario que no esta
             # declarado, asi que mandar `mapeo` a una version que no lo entiende devuelve
@@ -893,28 +974,29 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
             "puestos_en_la_base": len(motor.base.celdas),
             "tau": round(float(np.sqrt(motor.base.tau2)), 4),
             "sigma": round(float(np.sqrt(motor.base.sigma2)), 4),
-            "columnas_omitidas": ([] if columnas_originales else
-                                  [c for c in salida.columns
-                                   if c not in SALIDA_MODELO
-                                   and c not in (columnas_extra or [])]),
-            "nota_detalle": ("Cada fila trae lo del modelo primero y despues tus propias "
-                             "columnas. `fila` es el indice 0-based del archivo que "
-                             "subiste." if columnas_originales else
-                             "Solo viajan las columnas del modelo: usa `fila` para casar "
-                             "con tu copia del archivo."),
+            "columnas_omitidas": (
+                []
+                if columnas_originales
+                else [c for c in salida.columns if c not in SALIDA_MODELO and c not in (columnas_extra or [])]
+            ),
+            "nota_detalle": (
+                "Cada fila trae lo del modelo primero y despues tus propias "
+                "columnas. `fila` es el indice 0-based del archivo que "
+                "subiste."
+                if columnas_originales
+                else "Solo viajan las columnas del modelo: usa `fila` para casar " "con tu copia del archivo."
+            ),
             "aviso": "La brecha_grafia compara dos GRAFIAS de titulo escritas por "
-                     "empresas distintas, sin control por empresa, sector ni "
-                     "antiguedad. NO es una brecha salarial medida.",
+            "empresas distintas, sin control por empresa, sector ni "
+            "antiguedad. NO es una brecha salarial medida.",
         },
         "formato": informe_formato,
-        "reparto_estado": {str(k): int(v) for k, v
-                           in salida["estado"].value_counts().items()},
-        "reparto_confianza": ({str(k): int(v) for k, v
-                               in ref["confianza"].value_counts().items()}
-                              if "confianza" in ref else {}),
+        "reparto_estado": {str(k): int(v) for k, v in salida["estado"].value_counts().items()},
+        "reparto_confianza": (
+            {str(k): int(v) for k, v in ref["confianza"].value_counts().items()} if "confianza" in ref else {}
+        ),
         "detalle": limpio(json_det),
-        "por_puesto": (_anidar_sector(limpio(por_puesto))
-                       if por_puesto is not None else []),
+        "por_puesto": (_anidar_sector(limpio(por_puesto)) if por_puesto is not None else []),
         "resumen": {k: _py(v) for k, v in (resumen or {}).items()},
         "texto": texto_resumen(resumen, por_puesto) if resumen is not None else "",
     }
@@ -925,8 +1007,7 @@ def procesar(motor: Motor, df, col_cargo: str, anio: int,
 from contextlib import asynccontextmanager  # noqa: E402
 
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
-from fastapi import (BackgroundTasks, Depends, FastAPI, File, Form,  # noqa: E402
-                     HTTPException, UploadFile)
+from fastapi import BackgroundTasks, Depends, FastAPI, File, Form, HTTPException, UploadFile  # noqa: E402
 from fastapi.responses import Response  # noqa: E402
 
 _estado_app: dict[str, Any] = {}
@@ -936,13 +1017,19 @@ ALMACEN = Almacen()
 @asynccontextmanager
 async def ciclo(app: FastAPI):
     import os
+
     s = cargar_settings()
-    _estado_app["motor"] = Motor(
-        os.environ.get("BASE_REFERENCIA") or _ruta_base_por_defecto(), s)
+    _estado_app["motor"] = Motor(os.environ.get("BASE_REFERENCIA") or _ruta_base_por_defecto(), s)
     # que quede en el log de arranque a donde van las nominas, o que no van
-    print("[nominas] " + (f"se guardan en {registro_nominas.dataset_destino()}"
-                          if registro_nominas.activo() else "NO se guardan (GUARDAR_NOMINAS=no)"),
-          flush=True)
+    print(
+        "[nominas] "
+        + (
+            f"se guardan en {registro_nominas.dataset_destino()}"
+            if registro_nominas.activo()
+            else "NO se guardan (GUARDAR_NOMINAS=no)"
+        ),
+        flush=True,
+    )
     yield
     _estado_app.clear()
 
@@ -957,13 +1044,18 @@ app = FastAPI(title="Referenciador salarial", version=ESQUEMA, lifespan=ciclo)
 # de compensacion a quien pase por ahi. Los origenes por defecto son los puertos tipicos
 # de desarrollo en la propia maquina; para cualquier otra cosa, `CORS_ORIGINS` con la
 # lista explicita. El docstring del modulo ya lo dice: detras de una puerta.
-_ORIGENES = [o.strip() for o in os.environ.get(
-    "CORS_ORIGINS",
-    "http://localhost:3000,http://localhost:5173,http://localhost:4200,"
-    "http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173"
-).split(",") if o.strip()]
-app.add_middleware(CORSMiddleware, allow_origins=_ORIGENES,
-                   allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+_ORIGENES = [
+    o.strip()
+    for o in os.environ.get(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:5173,http://localhost:4200,"
+        "http://localhost:8080,http://127.0.0.1:3000,http://127.0.0.1:5173",
+    ).split(",")
+    if o.strip()
+]
+app.add_middleware(
+    CORSMiddleware, allow_origins=_ORIGENES, allow_credentials=True, allow_methods=["*"], allow_headers=["*"]
+)
 
 
 def motor() -> Motor:
@@ -980,71 +1072,93 @@ def salud(m: Motor = Depends(motor)):
     # pantalla de correccion se esconde en vez de fingir que funciona.
     caps = dict(m.capacidades, mapeo=True, puestos=True)
     faltan = [n for n, ok in m.capacidades.items() if not ok]
-    return {"ok": True, "esquema": ESQUEMA,
-            "puestos": len(m.base.celdas), "carga_s": m.carga_s,
-            "anios_con_sbu": sorted(m.settings.sbu),
-            # QUE SABE HACER ESTA BASE. Un front que reciba `ruc_a_industria: false`
-            # sabe que no tiene sentido pedir el RUC; sin esto, lo pide y no pasa nada.
-            "base": m.ruta_base,
-            "capacidades": caps,
-            "degradado": faltan or None,
-            "aviso": (None if not faltan else
-                      f"esta base no soporta {faltan}; el servicio responde igual pero "
-                      f"con menos. Reconstruyela o apunta BASE_REFERENCIA a una nueva")}
+    return {
+        "ok": True,
+        "esquema": ESQUEMA,
+        "puestos": len(m.base.celdas),
+        "carga_s": m.carga_s,
+        "anios_con_sbu": sorted(m.settings.sbu),
+        # QUE SABE HACER ESTA BASE. Un front que reciba `ruc_a_industria: false`
+        # sabe que no tiene sentido pedir el RUC; sin esto, lo pide y no pasa nada.
+        "base": m.ruta_base,
+        "capacidades": caps,
+        "degradado": faltan or None,
+        "aviso": (
+            None
+            if not faltan
+            else f"esta base no soporta {faltan}; el servicio responde igual pero "
+            f"con menos. Reconstruyela o apunta BASE_REFERENCIA a una nueva"
+        ),
+    }
 
 
 @app.post("/informes", status_code=202)
-def crear(tareas: BackgroundTasks,
-          archivo: UploadFile = File(..., description="Excel o CSV. Primera hoja, "
-                                                      "encabezados en la fila 1."),
-          anio: int | None = Form(
-              None, description="Ano del SBU con el que se dolariza. Por defecto EL "
-                                "ACTUAL: un informe es del ano en que se emite, y "
-                                "fijarlo a mano es como se acaba entregando dolares del "
-                                "ano pasado sin que nadie lo note. Solo se pasa para "
-                                "rehacer un informe viejo."),
-          mapeo: str | None = Form(
-              None, description='JSON {"<fila>": "<cargo>"} con las correcciones del '
-                                'usuario, SOLO las filas corregidas. Ej: {"7": '
-                                '"ODONTOLOGA"}. La clave es el indice 0-based de la fila '
-                                'del archivo —el mismo `fila` del detalle—, no el texto '
-                                'del cargo: el usuario corrige PERSONAS, no cadenas. La '
-                                'respuesta trae `meta.mapeo_aplicado` con cuantas se '
-                                'cambiaron.'),
-          ruc: str | None = Form(
-              None, description="RUC de la empresa del cliente. Con el se resuelve su "
-                                "industria (CIIU) y su tamano sin que tenga que "
-                                "saberselos, y se detecta si su propia empresa esta en "
-                                "la base."),
-          segmento: str | None = Form(
-              None, description="OPCIONAL. Tamano de la empresa del cliente: "
-                                "MICROEMPRESA, PEQUENA, MEDIANA o GRANDE. Corrige el "
-                                "sesgo de los cargos altos (D-018)."),
-          rubro: str | None = Form(
-              None, description="OPCIONAL. CIIU de primer nivel (una letra). Compara "
-                                "solo contra ese sector donde haya respaldo. NO mejora "
-                                "la precision: estrecha el respaldo (D-023)."),
-          formato_libre: bool = Form(
-              False, description="Por defecto se exige el FORMATO del producto: "
-                                 "columna `cargo` obligatoria, y opcionales `sueldo`, "
-                                 "`id_empleado`, `nombre`, `sexo`, `fecha_ingreso`, "
-                                 "`centro_costo`. No se aceptan cedulas. Ponlo en true "
-                                 "para subir un archivo cualquiera indicando las "
-                                 "columnas a mano."),
-          columna_cargo: str | None = Form(
-              None, description="Solo con formato_libre=true."),
-          columna_sueldo: str | None = Form(
-              None, description="OPCIONAL. Solo si la columna no se autodetecta."),
-          columnas_originales: bool = Form(
-              True, description="Por defecto el JSON devuelve TUS columnas —nombre, "
-                                "antiguedad, sexo, centro de costos— junto a los "
-                                "resultados. Ponlo en false si el front ya tiene el "
-                                "archivo y solo quiere los numeros."),
-          columnas_extra: str | None = Form(
-              None, description="OPCIONAL. Solo se usa con columnas_originales=false: "
-                                "que columnas tuyas rescatar igualmente, separadas por "
-                                "coma."),
-          m: Motor = Depends(motor)):
+def crear(
+    tareas: BackgroundTasks,
+    archivo: UploadFile = File(..., description="Excel o CSV. Primera hoja, " "encabezados en la fila 1."),
+    anio: int | None = Form(
+        None,
+        description="Ano del SBU con el que se dolariza. Por defecto EL "
+        "ACTUAL: un informe es del ano en que se emite, y "
+        "fijarlo a mano es como se acaba entregando dolares del "
+        "ano pasado sin que nadie lo note. Solo se pasa para "
+        "rehacer un informe viejo.",
+    ),
+    mapeo: str | None = Form(
+        None,
+        description='JSON {"<fila>": "<cargo>"} con las correcciones del '
+        'usuario, SOLO las filas corregidas. Ej: {"7": '
+        '"ODONTOLOGA"}. La clave es el indice 0-based de la fila '
+        "del archivo —el mismo `fila` del detalle—, no el texto "
+        "del cargo: el usuario corrige PERSONAS, no cadenas. La "
+        "respuesta trae `meta.mapeo_aplicado` con cuantas se "
+        "cambiaron.",
+    ),
+    ruc: str | None = Form(
+        None,
+        description="RUC de la empresa del cliente. Con el se resuelve su "
+        "industria (CIIU) y su tamano sin que tenga que "
+        "saberselos, y se detecta si su propia empresa esta en "
+        "la base.",
+    ),
+    segmento: str | None = Form(
+        None,
+        description="OPCIONAL. Tamano de la empresa del cliente: "
+        "MICROEMPRESA, PEQUENA, MEDIANA o GRANDE. Corrige el "
+        "sesgo de los cargos altos (D-018).",
+    ),
+    rubro: str | None = Form(
+        None,
+        description="OPCIONAL. CIIU de primer nivel (una letra). Compara "
+        "solo contra ese sector donde haya respaldo. NO mejora "
+        "la precision: estrecha el respaldo (D-023).",
+    ),
+    formato_libre: bool = Form(
+        False,
+        description="Por defecto se exige el FORMATO del producto: "
+        "columna `cargo` obligatoria, y opcionales `sueldo`, "
+        "`id_empleado`, `nombre`, `sexo`, `fecha_ingreso`, "
+        "`centro_costo`. No se aceptan cedulas. Ponlo en true "
+        "para subir un archivo cualquiera indicando las "
+        "columnas a mano.",
+    ),
+    columna_cargo: str | None = Form(None, description="Solo con formato_libre=true."),
+    columna_sueldo: str | None = Form(None, description="OPCIONAL. Solo si la columna no se autodetecta."),
+    columnas_originales: bool = Form(
+        True,
+        description="Por defecto el JSON devuelve TUS columnas —nombre, "
+        "antiguedad, sexo, centro de costos— junto a los "
+        "resultados. Ponlo en false si el front ya tiene el "
+        "archivo y solo quiere los numeros.",
+    ),
+    columnas_extra: str | None = Form(
+        None,
+        description="OPCIONAL. Solo se usa con columnas_originales=false: "
+        "que columnas tuyas rescatar igualmente, separadas por "
+        "coma.",
+    ),
+    m: Motor = Depends(motor),
+):
     """Sube una nomina. Devuelve 202 y un id: el trabajo corre por detras.
 
     Se valida ANTES de encolar todo lo que se puede validar barato —el SBU del ano, el
@@ -1069,13 +1183,16 @@ def crear(tareas: BackgroundTasks,
         # cuando el marco trae las columnas de SCVS, asi que con una base construida sin
         # ellas se le decia a una empresa que no esta cuando si esta. El padron lleva a
         # TODAS las empresas que aportaron datos, que es justo la pregunta.
-        ficha = {"ruc": ruc.strip(), "en_la_base": ruc.strip() in m.base.pad_ruc,
-                 # COMPLETO. `ciiu_grupo` se queda por compatibilidad, pero lo que el
-                 # cliente reconoce como suyo es `ciiu` entero: `G4761.03`, no `G476`.
-                 "ciiu": g6 or None,
-                 "ciiu_grupo": (g6[:4] if g6 else None),
-                 "ciiu_seccion": (g6[:1] if g6 else None),
-                 "n_empleados": tam_emp if tam_emp > 0 else None}
+        ficha = {
+            "ruc": ruc.strip(),
+            "en_la_base": ruc.strip() in m.base.pad_ruc,
+            # COMPLETO. `ciiu_grupo` se queda por compatibilidad, pero lo que el
+            # cliente reconoce como suyo es `ciiu` entero: `G4761.03`, no `G476`.
+            "ciiu": g6 or None,
+            "ciiu_grupo": (g6[:4] if g6 else None),
+            "ciiu_seccion": (g6[:1] if g6 else None),
+            "n_empleados": tam_emp if tam_emp > 0 else None,
+        }
         # EL CIIU COMPLETO VIAJA AL MODELO, no solo su primera letra. De el sale el
         # nivel al que se compara cada cargo: sin esto `rubro_del_veredicto` no tiene
         # con que bajar y todo se compara contra la seccion — o sea que la cascada
@@ -1092,8 +1209,7 @@ def crear(tareas: BackgroundTasks,
             else:
                 ficha["rubro_sin_respaldo"] = g6[:1]
         elif g6 and rubro and rubro.upper() != g6[:1]:
-            ficha["aviso"] = (f"pediste rubro {rubro.upper()} y el RUC dice {g6[:1]}; "
-                              f"manda el que pediste")
+            ficha["aviso"] = f"pediste rubro {rubro.upper()} y el RUC dice {g6[:1]}; " f"manda el que pediste"
 
         # EL SEGMENTO TAMBIEN SALE DEL RUC, y con la misma regla que el rubro: el
         # explicito manda y se avisa si no coinciden. A diferencia del rubro, este SI
@@ -1109,28 +1225,26 @@ def crear(tareas: BackgroundTasks,
             ficha["segmento_derivado"] = segmento
         elif seg_ruc and segmento and segmento.upper() != seg_ruc:
             ficha["aviso_segmento"] = (
-                f"pediste segmento {segmento.upper()} y el RUC dice {seg_ruc}; "
-                f"manda el que pediste")
-    extra_pedidas = [t.strip() for t in (_opt(columnas_extra) or "").split(",")
-                     if t.strip()]
+                f"pediste segmento {segmento.upper()} y el RUC dice {seg_ruc}; " f"manda el que pediste"
+            )
+    extra_pedidas = [t.strip() for t in (_opt(columnas_extra) or "").split(",") if t.strip()]
     try:
         m.settings.get_sbu(int(anio), estricto=True)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
     if segmento and segmento.upper() not in SEGMENTOS:
-        raise HTTPException(400, f"segmento invalido: {segmento}. "
-                                 f"Validos: {list(SEGMENTOS)}")
+        raise HTTPException(400, f"segmento invalido: {segmento}. " f"Validos: {list(SEGMENTOS)}")
     # El rubro se valida igual que el segmento. Antes solo avisaba por `warnings` y caia
     # al global: el cliente recibia un informe entero creyendo que era sectorial.
     if rubro and rubro.upper() not in m.base.rubros:
-        raise HTTPException(400, f"rubro sin datos suficientes: {rubro}. "
-                                 f"Con respaldo en esta base: {list(m.base.rubros)}")
+        raise HTTPException(
+            400, f"rubro sin datos suficientes: {rubro}. " f"Con respaldo en esta base: {list(m.base.rubros)}"
+        )
     contenido = archivo.file.read()
     if not contenido:
         raise HTTPException(400, "el archivo llego vacio")
     try:
-        df, col = leer_nomina_bytes(contenido, archivo.filename or "n.xlsx",
-                                    columna_cargo if formato_libre else None)
+        df, col = leer_nomina_bytes(contenido, archivo.filename or "n.xlsx", columna_cargo if formato_libre else None)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
     # FORMATO ESTRICTO por defecto: nombres canonicos, sin cedulas, y todos los
@@ -1141,10 +1255,15 @@ def crear(tareas: BackgroundTasks,
         try:
             df, informe_formato = validar_formato(df)
         except FormatoInvalido as e:
-            raise HTTPException(400, {"formato": "estricto",
-                                      "problemas": e.problemas,
-                                      "obligatorias": list(OBLIGATORIAS),
-                                      "aceptadas": list(CANONICAS)}) from e
+            raise HTTPException(
+                400,
+                {
+                    "formato": "estricto",
+                    "problemas": e.problemas,
+                    "obligatorias": list(OBLIGATORIAS),
+                    "aceptadas": list(CANONICAS),
+                },
+            ) from e
         col = "cargo"
         columna_sueldo = "sueldo" if "sueldo" in df.columns else None
     # Si el cliente NOMBRA la columna de sueldo, tiene que existir. Ignorarla en silencio
@@ -1152,8 +1271,9 @@ def crear(tareas: BackgroundTasks,
     if columna_sueldo and formato_libre:
         real = _col(df, columna_sueldo)
         if real is None:
-            raise HTTPException(400, f"la columna de sueldo '{columna_sueldo}' no esta "
-                                     f"en el archivo. Columnas: {list(df.columns)}")
+            raise HTTPException(
+                400, f"la columna de sueldo '{columna_sueldo}' no esta " f"en el archivo. Columnas: {list(df.columns)}"
+            )
         columna_sueldo = real
 
     # se casan ahora, con el archivo ya leido, para poder avisar de las que no existen
@@ -1162,8 +1282,9 @@ def crear(tareas: BackgroundTasks,
         real = _col(df, c)
         (extra if real else no_estan).append(real or c)
     if no_estan:
-        raise HTTPException(400, f"columnas_extra que no estan en el archivo: "
-                                 f"{no_estan}. Columnas: {list(df.columns)}")
+        raise HTTPException(
+            400, f"columnas_extra que no estan en el archivo: " f"{no_estan}. Columnas: {list(df.columns)}"
+        )
 
     correcciones = _leer_mapeo(_opt(mapeo), len(df))
 
@@ -1172,14 +1293,23 @@ def crear(tareas: BackgroundTasks,
     def correr():
         t.estado = "procesando"
         try:
-            t.resultado, t.excel, ref = procesar(m, df, col, int(anio),
-                                            segmento.upper() if segmento else None,
-                                            rubro.upper() if rubro else None,
-                                            columna_sueldo, extra,
-                                            columnas_originales, informe_formato,
-                                            ruc, ciiu_cliente, correcciones)
+            t.resultado, t.excel, ref = procesar(
+                m,
+                df,
+                col,
+                int(anio),
+                segmento.upper() if segmento else None,
+                rubro.upper() if rubro else None,
+                columna_sueldo,
+                extra,
+                columnas_originales,
+                informe_formato,
+                ruc,
+                ciiu_cliente,
+                correcciones,
+            )
             t.estado = "listo"
-        except Exception as e:                               # noqa: BLE001
+        except Exception as e:  # noqa: BLE001
             t.estado, t.error = "error", f"{type(e).__name__}: {e}"
             return
         # LA NOMINA SE GUARDA DESPUES DEL INFORME, y si falla no lo tumba: el cliente ya
@@ -1187,24 +1317,39 @@ def crear(tareas: BackgroundTasks,
         if registro_nominas.activo():
             try:
                 tablas = registro_nominas.registro(
-                    df, col, _buscar_sueldo(df, columna_sueldo), t.resultado["detalle"], ref,
-                    id_carga=t.id, carga_hash=registro_nominas.hash_carga(contenido),
-                    anio=int(anio), ruc=ruc, ciiu=ciiu_cliente,
+                    df,
+                    col,
+                    _buscar_sueldo(df, columna_sueldo),
+                    t.resultado["detalle"],
+                    ref,
+                    id_carga=t.id,
+                    carga_hash=registro_nominas.hash_carga(contenido),
+                    anio=int(anio),
+                    ruc=ruc,
+                    ciiu=ciiu_cliente,
                     segmento=segmento.upper() if segmento else None,
-                    rubro=rubro.upper() if rubro else None, correcciones=correcciones,
+                    rubro=rubro.upper() if rubro else None,
+                    correcciones=correcciones,
                     version_api=os.environ.get("VERSION_API") or f"esquema {ESQUEMA}",
-                    version_base=registro_nominas.version_base(m.ruta_base))
+                    version_base=registro_nominas.version_base(m.ruta_base),
+                )
                 registro_nominas.guardar(tablas, registro_nominas.dataset_destino())
-                print(f"[nominas] {len(tablas['nomina_filas'])} filas guardadas "
-                      f"(carga {t.id})", flush=True)
-            except Exception as e:                           # noqa: BLE001
+                print(f"[nominas] {len(tablas['nomina_filas'])} filas guardadas " f"(carga {t.id})", flush=True)
+            except Exception as e:  # noqa: BLE001
                 print(f"[nominas] NO se pudo guardar la carga {t.id}: {e!r}", flush=True)
 
     tareas.add_task(correr)
-    return {"id": t.id, "estado": t.estado, "filas": len(df), "columna_cargo": col,
-            "anio": anio, "empresa": ficha,
-            # tambien en el 202: el front sabe que se acepto sin esperar al informe
-            "mapeo_aplicado": len(correcciones), "caduca_en_s": TTL_SEGUNDOS}
+    return {
+        "id": t.id,
+        "estado": t.estado,
+        "filas": len(df),
+        "columna_cargo": col,
+        "anio": anio,
+        "empresa": ficha,
+        # tambien en el 202: el front sabe que se acepto sin esperar al informe
+        "mapeo_aplicado": len(correcciones),
+        "caduca_en_s": TTL_SEGUNDOS,
+    }
 
 
 @app.get("/informes/{tid}")
@@ -1227,13 +1372,14 @@ def excel(tid: str):
     return Response(
         t.excel,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="informe_{tid[:8]}.xlsx"'})
+        headers={"Content-Disposition": f'attachment; filename="informe_{tid[:8]}.xlsx"'},
+    )
 
 
-N_REORDENAR = 50          # cuantos puestos reordena el juez en /puestos (D-048)
-P_MIN_SUGERENCIA = 0.5    # bajo esto el juez dice "no es el mismo cargo": no se sugiere (decision del autor)
-N_RESPALDO = 3            # si nada llega a `p_min`, las N mas probables, marcadas `seguro: false`
-P_SEGURO = 0.9            # desde aqui, entre sugerencias manda el parecido
+N_REORDENAR = 50  # cuantos puestos reordena el juez en /puestos (D-048)
+P_MIN_SUGERENCIA = 0.5  # bajo esto el juez dice "no es el mismo cargo": no se sugiere (decision del autor)
+N_RESPALDO = 3  # si nada llega a `p_min`, las N mas probables, marcadas `seguro: false`
+P_SEGURO = 0.9  # desde aqui, entre sugerencias manda el parecido
 
 
 @app.get("/puestos")
@@ -1265,8 +1411,9 @@ def puestos(q: str, limite: int = 12, p_min: float = P_MIN_SUGERENCIA, m: Motor 
     Q = np.vstack([m.emb[t]]).astype(float)
     Q /= np.linalg.norm(Q, axis=1, keepdims=True)
     # con juez se piden mas vecinos: el juez reordena los N_REORDENAR primeros PUESTOS (no grafias)
-    vec, sim = _vecinos(Q, m.base.Z, min(max(limite * 6, 300 if m.base.juez else 0),
-                                         len(m.base.celdas)), excluir_propio=False)
+    vec, sim = _vecinos(
+        Q, m.base.Z, min(max(limite * 6, 300 if m.base.juez else 0), len(m.base.celdas)), excluir_propio=False
+    )
     # UNA FILA POR PUESTO, NO POR GRAFIA. La base guarda 65.181 titulos que son 50.420
     # puestos: `VENDEDOR`, `VENDEDOR.`, `VENDEDORA`, `VEENDEDOR` y `VENDERDOR` son el
     # mismo, y la fusion ya lo sabe. Sin colapsar, buscar `VENDEDOR` devolvia ocho
@@ -1282,24 +1429,30 @@ def puestos(q: str, limite: int = 12, p_min: float = P_MIN_SUGERENCIA, m: Motor 
         g = int(m.base.grupo[j])
         prev = por_grupo.get(g)
         if prev is None:
-            por_grupo[g] = {"grafias": [str(m.base.celdas[j])],
-                            "empresas": int(m.base.emp[j]),
-                            "personas": int(m.base.personas[j]),
-                            "similitud": sj}
+            por_grupo[g] = {
+                "grafias": [str(m.base.celdas[j])],
+                "empresas": int(m.base.emp[j]),
+                "personas": int(m.base.personas[j]),
+                "similitud": sj,
+            }
         else:
             prev["grafias"].append(str(m.base.celdas[j]))
             prev["similitud"] = max(prev["similitud"], sj)
     out = []
     for g, d in por_grupo.items():
-        out.append({"cargo": m.etiqueta.get(g, d["grafias"][0]),
-                    # TODAS las del grupo, no solo las que entraron en esta busqueda:
-                    # antes el numero cambiaba con el `limite` de la consulta.
-                    "grafias": m.n_grafias.get(g, len(d["grafias"])),
-                    "empresas": d["empresas"],
-                    "personas": d["personas"],
-                    "similitud": round(d["similitud"], 3),
-                    # .esta el parecido por encima del ruido del modelo? Ver UMBRAL_RUIDO
-                    "sobre_el_ruido": d["similitud"] >= UMBRAL_RUIDO})
+        out.append(
+            {
+                "cargo": m.etiqueta.get(g, d["grafias"][0]),
+                # TODAS las del grupo, no solo las que entraron en esta busqueda:
+                # antes el numero cambiaba con el `limite` de la consulta.
+                "grafias": m.n_grafias.get(g, len(d["grafias"])),
+                "empresas": d["empresas"],
+                "personas": d["personas"],
+                "similitud": round(d["similitud"], 3),
+                # .esta el parecido por encima del ruido del modelo? Ver UMBRAL_RUIDO
+                "sobre_el_ruido": d["similitud"] >= UMBRAL_RUIDO,
+            }
+        )
     # ORDEN POR PARECIDO, a secas. Lo de arriba es lo mas parecido.
     #
     # HUBO UN INTENTO de ordenar el bloque de ruido POR RESPALDO, con el argumento de que
@@ -1344,10 +1497,18 @@ def puestos(q: str, limite: int = 12, p_min: float = P_MIN_SUGERENCIA, m: Motor 
             cargo = m.etiqueta.get(g, str(m.base.celdas[i]))
             if cargo in ya:
                 continue
-            extra.append({"cargo": cargo, "grafias": m.n_grafias.get(g, 1),
-                          "empresas": int(m.base.emp[i]), "personas": int(m.base.personas[i]),
-                          "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
-                          "sobre_el_ruido": False, "sinonimo": True, "p_juez": None})
+            extra.append(
+                {
+                    "cargo": cargo,
+                    "grafias": m.n_grafias.get(g, 1),
+                    "empresas": int(m.base.emp[i]),
+                    "personas": int(m.base.personas[i]),
+                    "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
+                    "sobre_el_ruido": False,
+                    "sinonimo": True,
+                    "p_juez": None,
+                }
+            )
         pos = next((k + 1 for k, r in enumerate(out) if r["cargo"] == m.etiqueta.get(g0)), 0)
         out = out[:pos] + extra + out[pos:]
     # SINONIMOS DE CONSULTA (`consulta.csv`): un titulo que no existe en la base y no se parece por
@@ -1357,10 +1518,19 @@ def puestos(q: str, limite: int = 12, p_min: float = P_MIN_SUGERENCIA, m: Motor 
         i = int(np.flatnonzero(np.asarray(m.base.grupo) == gq)[0])
         cargo = m.etiqueta.get(gq, str(m.base.celdas[i]))
         out = [r for r in out if r["cargo"] != cargo]
-        out.insert(0, {"cargo": cargo, "grafias": m.n_grafias.get(gq, 1),
-                       "empresas": int(m.base.emp[i]), "personas": int(m.base.personas[i]),
-                       "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
-                       "sobre_el_ruido": False, "sinonimo": True, "p_juez": None})
+        out.insert(
+            0,
+            {
+                "cargo": cargo,
+                "grafias": m.n_grafias.get(gq, 1),
+                "empresas": int(m.base.emp[i]),
+                "personas": int(m.base.personas[i]),
+                "similitud": round(float(Q[0] @ m.base.Z[i] / np.linalg.norm(m.base.Z[i])), 3),
+                "sobre_el_ruido": False,
+                "sinonimo": True,
+                "p_juez": None,
+            },
+        )
     # EQUIVALENTE EN ESPANOL (D-050, solo para mostrar). Un titulo en ingles se traduce y se
     # resuelve en la base (tal cual, capa 0 o juez, con candados); ese cargo va PRIMERO.
     for r in out:
@@ -1372,11 +1542,21 @@ def puestos(q: str, limite: int = 12, p_min: float = P_MIN_SUGERENCIA, m: Motor 
             g = int(m.base.grupo[j])
             cargo = m.etiqueta.get(g, str(m.base.celdas[j]))
             out = [r for r in out if r["cargo"] != cargo]
-            out.insert(0, {"cargo": cargo, "grafias": m.n_grafias.get(g, 1),
-                           "empresas": int(m.base.emp[j]), "personas": int(m.base.personas[j]),
-                           "similitud": round(float(Q[0] @ m.base.Z[j] / np.linalg.norm(m.base.Z[j])), 3),
-                           "sobre_el_ruido": False, "sinonimo": False, "p_juez": None,
-                           "equivalente": True, "traduccion": tt})
+            out.insert(
+                0,
+                {
+                    "cargo": cargo,
+                    "grafias": m.n_grafias.get(g, 1),
+                    "empresas": int(m.base.emp[j]),
+                    "personas": int(m.base.personas[j]),
+                    "similitud": round(float(Q[0] @ m.base.Z[j] / np.linalg.norm(m.base.Z[j])), 3),
+                    "sobre_el_ruido": False,
+                    "sinonimo": False,
+                    "p_juez": None,
+                    "equivalente": True,
+                    "traduccion": tt,
+                },
+            )
     out = _filtrar_por_juez(out, t, p_min, m)
     return _agrupar_grados(out)[:limite]
 
@@ -1394,11 +1574,16 @@ def _filtrar_por_juez(out, t, p_min, m):
     para que el front sugiera revisar la ortografia."""
     from src.domain.capa0 import limpiar
     from src.shared.utils.texto import _norm
+
     desconocidas = [w for w in limpiar(_norm(t)).split() if w not in m.vocabulario]
     for r in out:
         r["palabras_desconocidas"] = desconocidas
-        r["seguro"] = bool(r["sinonimo"] or r.get("equivalente") or r["similitud"] >= 0.999
-                           or (not desconocidas and r["p_juez"] is not None and r["p_juez"] >= p_min))
+        r["seguro"] = bool(
+            r["sinonimo"]
+            or r.get("equivalente")
+            or r["similitud"] >= 0.999
+            or (not desconocidas and r["p_juez"] is not None and r["p_juez"] >= p_min)
+        )
     if m.base.juez is None:
         return out
     seguros = [r for r in out if r["seguro"]]
@@ -1414,6 +1599,7 @@ def _agrupar_grados(out):
     el grado es un escalon de ~7 %): solo se juntan para MOSTRAR. Principal: la version sin grado
     si esta; si no, la mejor ubicada. Solo el numero de grado al FINAL del titulo."""
     from src.domain.capa0 import grado_numerico, quitar_grado_final
+
     grupos, orden = {}, []
     for r in out:
         clave = quitar_grado_final(r["cargo"]) if grado_numerico(r["cargo"]) else r["cargo"]
@@ -1429,9 +1615,15 @@ def _agrupar_grados(out):
         principal["cargo_sin_grado"] = clave
         con_grado = [r for r in filas if grado_numerico(r["cargo"])]
         principal["grados"] = [
-            {"grado": sorted(grado_numerico(r["cargo"]))[0], "cargo": r["cargo"],
-             "empresas": r["empresas"], "personas": r["personas"], "p_juez": r["p_juez"]}
-            for r in sorted(con_grado, key=lambda r: sorted(grado_numerico(r["cargo"]))[0])]
+            {
+                "grado": sorted(grado_numerico(r["cargo"]))[0],
+                "cargo": r["cargo"],
+                "empresas": r["empresas"],
+                "personas": r["personas"],
+                "p_juez": r["p_juez"],
+            }
+            for r in sorted(con_grado, key=lambda r: sorted(grado_numerico(r["cargo"]))[0])
+        ]
         res.append(principal)
     return res
 
@@ -1451,10 +1643,18 @@ def _sinonimo_principal(m, t, fila, anio, segmento, rubro):
     i = int(np.flatnonzero(np.asarray(m.base.grupo) == mejor)[0])
     cargo = m.etiqueta.get(mejor, str(m.base.celdas[i]))
     r = m.base.referenciar([cargo], m.emb, anio=anio, segmento=segmento, rubro=rubro).iloc[0]
-    return {"cargo": cargo, "referencia": _py(r["referencia"]), "rango_desde": _py(r["rango_desde"]),
-            "rango_hasta": _py(r["rango_hasta"]), "empresas": _py(r["empresas"]), "confianza": r["confianza"],
-            "aviso": (f"{cargo} es el mismo cargo y tiene mas empresas detras ({_py(r['empresas'])}); "
-                      f"su referencia puede ser mas representativa.")}
+    return {
+        "cargo": cargo,
+        "referencia": _py(r["referencia"]),
+        "rango_desde": _py(r["rango_desde"]),
+        "rango_hasta": _py(r["rango_hasta"]),
+        "empresas": _py(r["empresas"]),
+        "confianza": r["confianza"],
+        "aviso": (
+            f"{cargo} es el mismo cargo y tiene mas empresas detras ({_py(r['empresas'])}); "
+            f"su referencia puede ser mas representativa."
+        ),
+    }
 
 
 def _empresas_de_grupo(m, g):
@@ -1468,8 +1668,14 @@ def _personas_de_grupo(m, g):
 
 
 @app.get("/referencia")
-def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
-               rubro: str | None = None, ruc: str | None = None, m: Motor = Depends(motor)):
+def referencia(
+    cargo: str,
+    anio: int | None = None,
+    segmento: str | None = None,
+    rubro: str | None = None,
+    ruc: str | None = None,
+    m: Motor = Depends(motor),
+):
     """Un titulo suelto, para explorar. NO es el producto.
 
     Sin la nomina completa no hay ancla de empresa, y sin ancla no hay lectura de equidad
@@ -1485,8 +1691,7 @@ def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
         raise HTTPException(400, str(e)) from e
     segmento, rubro, ruc = _opt(segmento), _opt(rubro), _opt(ruc)
     if rubro and rubro.upper() not in m.base.rubros:
-        raise HTTPException(400, f"rubro sin datos suficientes: {rubro}. "
-                                 f"Con respaldo: {list(m.base.rubros)}")
+        raise HTTPException(400, f"rubro sin datos suficientes: {rubro}. " f"Con respaldo: {list(m.base.rubros)}")
     # D-063: el tamano del cliente sale de su RUC (padron de la Superintendencia), como en /informes; el que se
     # pida a mano manda, y si no coinciden se avisa
     seg_ruc = (m.base.meta_ruc.get(ruc.strip(), ("", -1, ""))[2] or "") if ruc else ""
@@ -1503,13 +1708,13 @@ def referencia(cargo: str, anio: int | None = None, segmento: str | None = None,
     if not t:
         raise HTTPException(400, "cargo vacio")
     m.asegurar([t])
-    fila = m.base.referenciar([t], m.emb, anio=anio, segmento=segmento,
-                              rubro=rubro).iloc[0]
-    d = {str(k): _py(v) for k, v in fila.items()
-         if not str(k).endswith("_log") and k != "sd"}
+    fila = m.base.referenciar([t], m.emb, anio=anio, segmento=segmento, rubro=rubro).iloc[0]
+    d = {str(k): _py(v) for k, v in fila.items() if not str(k).endswith("_log") and k != "sd"}
     d["unidades"] = UNIDADES
-    d["aviso"] = ("Sin la nomina completa no hay ancla de empresa: falta la lectura de "
-                  "equidad interna. Para el informe completo, POST /informes.")
+    d["aviso"] = (
+        "Sin la nomina completa no hay ancla de empresa: falta la lectura de "
+        "equidad interna. Para el informe completo, POST /informes."
+    )
     principal = _sinonimo_principal(m, t, fila, anio, segmento, rubro)
     if principal:
         d["sinonimo_principal"] = principal

@@ -5,6 +5,7 @@ distancia de Damerau-Levenshtein (transposiciones de adyacentes): <= 1 con 5-7 l
 UNICA a esa distancia, o si la mas frecuente (por personas) tiene al menos el doble que la siguiente. Las palabras
 de rango y las siglas de <= 4 letras no se tocan. Indice de borrados (al estilo SymSpell): sin librerias.
 """
+
 import re
 import zlib
 from itertools import combinations
@@ -91,5 +92,6 @@ class Corrector:
                 return w
             pool = self.por_largo.get(len(w)) or [w]
             return pool[int(rng.integers(len(pool)))]
+
         nuevo = re.sub(r"[A-Z]+", f, t)
         return nuevo if nuevo != t else None
