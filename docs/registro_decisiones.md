@@ -9240,3 +9240,21 @@ Laya da el nivel, e5 da los vecinos) estima bandas mejor que el núcleo del prod
 pequeña en términos absolutos, como anticipaban T-017 y T-018: casi todo el error de la banda está fuera del alcance
 del título. Avisos (exposición transductiva a títulos sin sueldos, la mirada previa de D-014, reglas de v1.1–v1.3 fuera
 del núcleo) en el registro de T-023.
+
+## T-024 — Análisis de errores del open set (descriptivo). Categorías fijadas antes de mirar los errores
+
+**Qué:** los errores del sistema propuesto (Qwen + cross-encoder reentrenado, P ≥ 0,90) con la verdad del LLM, en las
+858 consultas con clase de T-010b (calibra + prueba; el umbral ya está fijo) más las nuevas de T-019. Es descriptivo:
+no hay criterio de adopción.
+
+**Tipos de error:** (1) **reconoce mal**: cargo con equivalente, reconocido con un par juzgado «no»; (2) **no
+reconoce**: cargo con equivalente, P < 0,90; (3) **falso reconocido**: cargo nuevo, reconocido.
+
+**Categorías del título consultado (automáticas, solo texto; un título puede tener varias):** inglés (`idioma.es_ingles`);
+abreviatura (palabra terminada en punto o de 1 a 3 letras que no es conector); número o código (algún dígito); doble
+(`/`); largo (6 palabras o más); grado o seniority (`nivel.seniority_lexica` no vacía). Del par elegido: **nivel
+distinto** (`nivel_rubrica` de los dos títulos, ambos con dato y distintos). Además, la P del elegido: cerca del umbral
+(0,80–0,95) o confiada (≥ 0,98).
+
+**Medida:** tasa de cada tipo de error por categoría frente al resto, con IC 95 % por bootstrap de consultas, y la
+mezcla de categorías dentro de los errores. Los ejemplos con títulos van a un archivo fuera del repo.
