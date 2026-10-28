@@ -9016,3 +9016,54 @@ Y aparece un hallazgo por sí mismo: **aun quitando la familia de equivalentes c
 teniendo otro equivalente en la base**. En nóminas reales, un cargo **nuevo de verdad es raro**: el problema práctico
 del open set es sobre todo **encontrar el equivalente**, no detectar lo nuevo. Por eso las clases quedan desbalanceadas
 y la evidencia sobre «nuevas» sigue siendo de decenas, no de cientos.
+
+## T-020 — Baselines léxicos: TF-IDF, BM25 y coincidencia aproximada. Registrado antes de medir
+
+**Por qué:** un jurado pedirá el piso sin aprendizaje: ¿cuánto del trabajo semántico lo resuelve ya comparar letras y
+palabras? Sirve además para responder si Qwen-8B hace falta para **buscar** candidatos (T-014 dejó abierto sacarlo).
+
+**Texto:** el título en minúsculas, sin tildes y con los signos cambiados por espacios. Tres métodos:
+
+- **TF-IDF de n-gramas de caracteres** (3 a 5, dentro de cada palabra con sus bordes; `char_wb`), coseno.
+- **BM25 sobre palabras** (k1 1,2; b 0,75; IDF de la base `base_v31`).
+- **Coincidencia aproximada:** `token_set_ratio` de rapidfuzz, dividido por 100.
+
+**Parte A · recuperación (protocolo de T-001, las mismas 2.090 consultas):** ranking por grupo (máximo de sus títulos),
+grupo propio excluido. Como los puntajes léxicos empatan a menudo, **un empate cuenta al rango medio** (1 + los grupos
+con más puntaje + la mitad de los demás empatados). r@1, r@10 y MRR; diferencia de r@10 frente a Vertex y frente a Qwen
+con descripción, IC 95 % por bootstrap de pares (2.000).
+
+**Parte B · open set (protocolo de T-010b, las mismas 858 consultas, misma partición calibra / prueba, mismas clases):**
+se usa **el método léxico con mejor r@10 en la parte A** (regla fijada ahora). Dos sistemas:
+
+- **L (piso léxico):** el título léxico más parecido (sin el grupo propio ni los bloqueados, como `t10.candidatos`);
+  «reconocido» si su puntaje ≥ u, con u ∈ {0,30; 0,32; …; 0,98} elegido en calibra.
+- **L + CE:** los 10 candidatos léxicos y decide el cross-encoder reentrenado (máxima P; umbral elegido en calibra en la
+  rejilla de T-010b). Es el sistema propuesto (A) con el buscador léxico en vez de Qwen.
+
+La verdad de los pares elegidos que no estén en el pool juzgado se etiqueta con Qwen3.5-122B (misma rúbrica v7, las dos
+direcciones; incoherente = sin verdad, como en T-010b). Las clases de cada consulta quedan las de T-010b.
+
+**Criterios** (bootstrap de consultas de prueba, 2.000): **«el sistema propuesto supera al piso léxico»** si el IC de
+A − L queda entero sobre cero. **«Qwen hace falta para buscar»** si el IC de A − (L + CE) queda entero sobre cero; si
+no se distingue, el buscador léxico queda como candidato para sacar a Qwen-8B del sistema.
+
+## T-021 — Pruebas de equivalencia con margen para T-013 y T-012b. Registrado antes de calcular
+
+**Por qué:** T-013 y T-012b dieron «no se distingue», que no es lo mismo que «es equivalente». Para afirmar
+equivalencia hace falta un margen fijado de antemano y una prueba de dos lados (TOST: el IC 90 % de la diferencia
+entero dentro de ± margen).
+
+**Transparencia:** los IC 95 % de los dos ya se conocen (T-013: +0,21 % [−0,32 %, +0,72 %]; T-012b: −0,072
+[−0,190, +0,047]). Por eso los márgenes se anclan en una referencia **externa** a esas diferencias: **un tercio de la
+brecha que ya probamos que importa** en cada tarea.
+
+- **T-013 (nivel):** Laya con ajuste completo − regresión sobre Qwen, exactitud. La brecha Qwen − Vertex (3,0 puntos)
+  sí movió la banda (T-014: Laya − Vertex −0,0024). **Margen ± 1,0 punto.** IC 90 % por bootstrap de grupos (2.000,
+  semilla 20261019), con las predicciones guardadas de T-013.
+- **T-012b (open set):** Laya T-012b − sistema propuesto, exactitud balanceada en la prueba de T-010b. La brecha
+  propuesto − producto fue +0,139 (T-010b). **Margen ± 0,05.** IC 90 % por bootstrap de consultas (2.000), con las
+  decisiones guardadas de T-012b (umbral u = 0,1).
+
+**Criterio:** «equivalente» si el IC 90 % queda entero dentro de ± margen. Se reporta también, como descriptivo, el
+margen más chico con el que se habría declarado equivalencia.
