@@ -9119,3 +9119,38 @@ por construcción se parecen poco en las letras. Pasa a la parte B el TF-IDF de 
 exactitud baja de 0,784 a 0,727 y el IC no permite distinguirlos (tampoco afirmar equivalencia: el IC llega a +0,15).
 Las dos mitades apuntan a lo mismo que T-017: buscar mejor (r@10 de 9 % a 22 %) importa menos de lo que parece cuando
 un buen juez decide. Queda como candidato para sacar a Qwen-8B del sistema, con una prueba más grande de cargos nuevos.
+
+## T-022 — Oro humano a ciegas con dos anotadores. Registrado antes de armar la muestra
+
+**Por qué:** la verdad de T-010b, T-012b, T-019 y T-020 la dio un LLM (Qwen3.5-122B). Un jurado preguntará quién juzga
+al juez. Hace falta un oro humano, independiente, a ciegas y con acuerdo medido.
+
+**Rúbrica:** la v7 (`rubrica_mismo_cargo_v7.md`), la misma que sigue el LLM; respuesta `si` / `no`, y `duda` en la
+nota si hace falta.
+
+**Muestra (semilla 20261028), pares únicos, de la prueba y la calibración de T-010b y de T-019:**
+
+- **E1 · reconocidos (150):** 75 al azar entre los pares que **reconoce el sistema propuesto** (Qwen + cross-encoder
+  reentrenado, P ≥ 0,90) y 75 al azar entre los que **reconoce el producto** (Vertex ≥ 0,90 y P ≥ 0,5). Un par elegido
+  por los dos cuenta para los dos.
+- **E2 · nuevas (hasta 80):** de cada consulta que el LLM dejó como «nueva» (T-010b y T-019), el candidato más probable
+  del sistema propuesto. Si el humano dice `no`, el cargo nuevo queda confirmado.
+- **E3 · juez (80):** pares al azar del pool de T-010b según el juicio del LLM: 30 `si`, 30 `no`, 20 incoherentes.
+
+**Ciego:** cada anotador recibe su propia hoja, con los pares en otro orden y A / B intercambiados al azar, sin
+estrato, sistema ni puntaje. Los anotadores no ven los juicios del otro ni los del LLM. La llave queda aparte, fuera
+del repo.
+
+**Oro:** el par en que los dos coinciden. Los desacuerdos se resuelven conversando entre los dos, sin ver los modelos,
+y se reporta cuántos fueron.
+
+**Medidas:**
+
+1. **Acuerdo entre anotadores:** kappa de Cohen (IC 95 % por bootstrap de pares). Se considera aceptable con κ ≥ 0,60.
+2. **Juez LLM frente al oro:** kappa y exactitud en los pares con juicio coherente del LLM (E1 a E3).
+3. **Precisión del reconocimiento frente al oro:** propuesto y producto, cada uno en su propia muestra de E1, con la
+   diferencia y su IC por bootstrap.
+4. **Cargos nuevos confirmados:** la parte de E2 que el oro deja en `no`.
+
+**Criterio:** si κ(LLM, oro) ≥ 0,60, los resultados con la verdad del LLM se sostienen. Si la precisión del propuesto
+supera a la del producto con el IC entero sobre cero, se confirma con humanos la ventaja de T-010b en el reconocimiento.
