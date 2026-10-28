@@ -1,0 +1,14 @@
+T-020 · PARTE A · recuperacion de sinonimos con metodos lexicos (protocolo T-001)
+consultas 2,090 (1045 pares); empates al rango medio
+  Vertex                   r@1 3.3%  r@10 16.7%  MRR 0.079
+  Qwen titulo+desc         r@1 4.1%  r@10 22.2%  MRR 0.101
+  TF-IDF caracteres        r@1 1.3%  r@10 9.4%  MRR 0.042
+  BM25                     r@1 1.2%  r@10 6.9%  MRR 0.035
+  coincidencia aproximada  r@1 0.3%  r@10 9.1%  MRR 0.035
+  TF-IDF caracteres - Vertex: -7.3 pts [-8.6, -6.0] -> PEOR
+  TF-IDF caracteres - Qwen titulo+desc: -12.9 pts [-14.3, -11.3] -> PEOR
+  BM25 - Vertex: -9.8 pts [-11.2, -8.4] -> PEOR
+  BM25 - Qwen titulo+desc: -15.4 pts [-16.8, -13.9] -> PEOR
+  coincidencia aproximada - Vertex: -7.6 pts [-8.9, -6.2] -> PEOR
+  coincidencia aproximada - Qwen titulo+desc: -13.1 pts [-14.6, -11.6] -> PEOR
+metodo lexico para la parte B (mejor r@10): TF-IDF caracteres

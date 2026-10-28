@@ -1,0 +1,9 @@
+T-021 · equivalencia con margen (TOST: IC 90 % entero dentro de +- margen)
+
+T-013 · nivel: Laya ajuste completo 91.27% - regresion sobre Qwen 91.06% (prueba 12,801 titulos, 7,720 grupos)
+  +0.0021  IC 90 % [-0.0024, +0.0064]  (IC 95 % [-0.0032, +0.0072])  margen +-0.010 -> EQUIVALENTE
+    margen mas chico con el que seria equivalente: +-0.0064
+
+T-012b · open set: Laya T-012b - sistema propuesto, exactitud balanceada (prueba 413 con equivalente, 23 nuevas)
+  -0.0715  IC 90 % [-0.1678, +0.0288]  (IC 95 % [-0.1881, +0.0523])  margen +-0.050 -> no se puede afirmar equivalencia
+    margen mas chico con el que seria equivalente: +-0.1678
