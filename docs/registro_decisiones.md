@@ -9216,3 +9216,27 @@ IC 95 % por bootstrap en dos vías empresa × cargo, 400 réplicas).
 
 **Una sola corrida.** Si una corrida se cae por un error de código, se corrige solo ese error y se vuelve a correr, sin
 haber visto resultados; se anota. Ninguna otra variante se mide en el test.
+
+### T-023, resultado: el sistema propuesto mejora al producto en el test intocado (2026-10-28)
+
+Una sola corrida; las tres verificaron el sha256 del test (entrenamiento 5.770 empresas, test 952). 23.429 votos del
+test; Laya entrenado con las 51.529 celdas de la base de entrenamiento (validación 91,9 %, T 1,10); escala `k` de la
+partición interna: analogía 0,800, directo 0,927.
+
+| Comparación (unión: 10.122 votos, 709 empresas, 9.468 cargos) | Pinball | IC 95 % (dos vías) |
+|---|---|---|
+| **Propuesto − producto** | **−0,00282** | **[−0,00519, −0,00059]** |
+| Placebo − producto | +0,07545 | [+0,06640, +0,08410] |
+| Propuesto − placebo | −0,07827 | [−0,08760, −0,06870] |
+
+- **CUMPLE «mejora confirmada en el test»:** los dos IC quedan enteros bajo cero.
+- En los votos donde los sistemas difieren, el pinball baja de 0,1407 a 0,1379 (**−2,0 %**); en todos los votos del
+  test, de 0,1270 a 0,1258 (−1,0 %). Media por empresa: −0,0015.
+- El tamaño coincide con lo medido en validación (T-015: −0,0032 [−0,0055, −0,0011]): la mejora **no era un efecto
+  de haber elegido sobre la validación**.
+
+**Lectura:** en empresas que ningún sistema vio, el sistema 100 % local de la tesis (Qwen busca, cross-encoder decide,
+Laya da el nivel, e5 da los vecinos) estima bandas mejor que el núcleo del producto, con significancia. La mejora es
+pequeña en términos absolutos, como anticipaban T-017 y T-018: casi todo el error de la banda está fuera del alcance
+del título. Avisos (exposición transductiva a títulos sin sueldos, la mirada previa de D-014, reglas de v1.1–v1.3 fuera
+del núcleo) en el registro de T-023.
