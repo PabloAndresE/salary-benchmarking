@@ -216,6 +216,10 @@ UMBRAL_T005 = [0.7041]
 
 
 def una_variante(nom, clusters):
+    # T-025: ablacion del sistema final; `abl_<pieza>` corre `qwen_laya_e5` sin esa pieza
+    nom_salida, ABL = nom, (nom[4:] if nom.startswith("abl_") else "")
+    if ABL:
+        nom = "qwen_laya_e5"
     e41 = cargar("e41", "41_base_v16.py")
     mk = e41.cargar_marco()
     mk = mk[[c for c in ("cargo_norm", "empresa_ruc", "y", "segmento", "ciiu_n1", "id_hash",
@@ -274,6 +278,10 @@ def una_variante(nom, clusters):
             if nom == "qwen_laya_e5_placebo":           # solo la analogia, permutada entre titulos
                 E5 = E5[np.random.default_rng(15).permutation(len(E5))]
             emb_analogia = emb_analogia_consulta = {str(c): z for c, z in zip(b31["celdas"], E5)}
+    if ABL == "sin_e5":                                   # T-025: la analogia vuelve a Vertex
+        emb_analogia = emb_analogia_consulta = dict(emb_vertex)
+    if ABL == "sin_qwen":                                 # T-025: busqueda y consulta en Vertex
+        emb, emb_consulta = dict(emb_vertex), None
     if nom in ("e5", "e5_placebo", "e5_sin_ajustar"):   # D-057: los vectores de e5 (de todos los titulos)
         b22 = np.load(RAIZ / "demo" / "base_v22.npz", allow_pickle=True)
         E = np.load(SAL / ("e5_sin_ajustar_base_v22.npy" if nom == "e5_sin_ajustar" else "e5B_base_v22.npy"))
@@ -385,6 +393,15 @@ def una_variante(nom, clusters):
                 base.juez = cargar_juez(RAIZ / "research/experimentos/e2_nivel/salidas/t09_modelos/elegido")
                 assert base.juez is not None, "no se pudo cargar el cross-encoder de T-009"
                 base.juez_placebo = nom == "qwen_juez9_placebo"
+    if ABL:                              # T-025: la pieza quitada, tambien en las bases de la particion interna
+        _preparar0 = preparar
+
+        def preparar(base):
+            _preparar0(base)
+            if ABL == "sin_qwen":
+                base.cos_juez = 0.90              # el umbral del producto con Vertex
+            if ABL == "sin_juez":
+                base.cos_juez, base.juez_vecinos = 1.01, False
     preparar(base)
     v_ref = None
     if nom in CON_ATIPICOS:              # D-065: se marcan con la base armada y se vuelve a armar sin ellos
@@ -456,8 +473,12 @@ def una_variante(nom, clusters):
             base.escala_banda = k
         sys.path.insert(0, str(RAIZ / "research" / "tesis"))
         import t14_laya_base
-        base.nivel_externo = t14_laya_base.niveles_laya(base.celdas, base.nivel, base.grupo,
-                                                        sorted(set(v["cargo_norm"])), placebo=nom.endswith("placebo"))
+        if ABL != "sin_laya":            # T-025 sin Laya: queda la regresion sobre el espacio de Qwen (T-006)
+            base.nivel_externo = t14_laya_base.niveles_laya(base.celdas, base.nivel, base.grupo,
+                                                            sorted(set(v["cargo_norm"])), placebo=nom.endswith("placebo"))
+        if ABL:
+            preparar(base)               # el umbral de la pieza quitada, despues del 0,82 de arriba
+            print("T-025 {}: cos_juez {}, juez_vecinos {}".format(ABL, base.cos_juez, base.juez_vecinos), flush=True)
     elif nom in con_calibra:             # D-051: k por particion interna del entrenamiento
         f_u = RAIZ / "research" / "tesis" / "salidas" / (
             "t06_umbral.json" if nom.startswith("qwen_inverso") else
@@ -586,7 +607,7 @@ def una_variante(nom, clusters):
     directa = (out["base"].reindex(v["cargo_norm"]) == "datos directos").to_numpy()
     p_juez = (out["p_juez"].reindex(v["cargo_norm"]).to_numpy(float) if "p_juez" in out
               else np.full(len(v), np.nan))
-    sufijo = nom if nom in ("v15", "v16") else "{}_{}".format(nom, pathlib.Path(clusters).stem)
+    sufijo = nom if nom in ("v15", "v16") else "{}_{}".format(nom_salida, pathlib.Path(clusters).stem)
     if ENTORNO:
         sufijo += "_" + ENTORNO
     if EXAMEN:
@@ -641,7 +662,8 @@ def juntar():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--variante", choices=["v15", "v16", "clusters", "placebo", "juez", "juez_placebo",
+    ap.add_argument("--variante", choices=["abl_sin_qwen", "abl_sin_juez", "abl_sin_laya", "abl_sin_e5",
+                                           "v15", "v16", "clusters", "placebo", "juez", "juez_placebo",
                                            "juez_tabla", "juez_vecinos", "juez_vecinos_placebo",
                                            "nivel_v1", "nivel_v1_placebo", "nivel_v2", "nivel_v2_placebo",
                                            "idioma", "idioma_placebo", "idioma_consulta",
