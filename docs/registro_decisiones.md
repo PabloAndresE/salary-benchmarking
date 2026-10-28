@@ -9294,3 +9294,31 @@ con equivalente y 89 nuevas (49 de T-010b + 40 de T-019; las de T-019 son los mi
 **Para la tesis:** el reconocimiento falla poco por exceso (3,4 %) y mucho por prudencia (18,4 %); bajar el umbral o
 normalizar el ruido del título (abreviaturas, códigos, idioma) antes de preguntarle al cross-encoder es el trabajo futuro
 más directo.
+
+## T-025 — Ablación del sistema final en la banda. Registrado antes de medir
+
+**Por qué:** un jurado de IA espera saber cuánto aporta cada pieza. Hasta ahora cada pieza se midió frente a la anterior
+(una cadena). Aquí se hacen las dos lecturas clásicas, en **validación** (las 1.442 empresas apartadas de siempre; el
+test intocado ya se usó en T-023 y no se vuelve a tocar).
+
+**1. Ablación «quitando una pieza» (leave-one-out) desde el sistema final** (`qwen_laya_e5`, T-015). Cuatro corridas
+nuevas, cada una con la escala `k` reestimada por la partición interna, igual que el sistema final:
+
+| Corrida | Qué se quita | Qué la reemplaza |
+|---|---|---|
+| `abl_sin_qwen` | Qwen como espacio de búsqueda y consulta | Vertex (umbral del cross-encoder 0,90, el del producto con Vertex) |
+| `abl_sin_juez` | el cross-encoder en la banda | nada: no asigna títulos (umbral 1,01) ni filtra los vecinos de la analogía |
+| `abl_sin_laya` | Laya en el nivel | la regresión logística sobre el espacio de Qwen (la de T-006) |
+| `abl_sin_e5` | e5 en los vecinos de la analogía | Vertex |
+
+**Medida:** pinball de cada corrida − sistema final, unión de votos, IC 95 % por bootstrap en dos vías (como
+`77_comparar_v2.py`). **«La pieza aporta»** si el IC queda entero sobre cero (quitarla empeora); «no se distingue» si
+toca el cero; «estorba» si queda entero bajo cero.
+
+**2. Ablación acumulativa (del producto al sistema final)**, con las corridas que ya existen: `nivel_v3` → `qwen_inverso`
+(+Qwen y su nivel, T-006) → `qwen_laya` (+Laya, T-014) → `qwen_laya_e5` (+e5, T-015). Se recalcula cada paso y cada
+corrida frente al producto, en la misma tabla.
+
+**Aviso de diseño:** el cross-encoder del sistema final en la banda es el **del producto** (umbral 0,82): T-009 mostró
+que el reentrenado no mejora la banda. El reentrenado decide el **open set** (reconocimiento), que se ablaciona aparte
+con lo que ya existe (T-010b y T-020: sin cross-encoder = solo coseno; sin Qwen = TF-IDF).
