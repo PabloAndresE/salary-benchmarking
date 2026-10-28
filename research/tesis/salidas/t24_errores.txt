@@ -1,0 +1,41 @@
+T-024 · errores del open set del sistema propuesto (Qwen + cross-encoder reentrenado, P >= 0,90)
+consultas con verdad: 732 con equivalente, 89 nuevas (T-010b 781; nuevas de T-019 40)
+
+RESULTADOS
+  con equivalente: acierto 572 (78.1%); no reconoce 135 (18.4%); reconoce mal 25 (3.4%)
+  nueva: acierto 72 (80.9%); falso reconocido 17 (19.1%)
+
+P DEL ELEGIDO EN LOS ERRORES DE RECONOCIMIENTO
+  reconoce mal (n = 25): cerca del umbral (0,90-0,95) 40%; confiada (>= 0,98) 0%
+  falso reconocido (n = 17): cerca del umbral 35%; confiada 0%
+  no reconoce (n = 135): P entre 0,80 y 0,90 40%; P < 0,50 31%
+
+TASA DE ERROR POR CATEGORIA DEL TITULO (con la categoria - sin ella; IC 95 %)
+  no reconoce (entre 732 consultas con equivalente):
+    ingles                         n =  69: 15.9% frente a 18.7%  dif -2.8% [-11.1%, +6.5%]
+    abreviatura                    n = 162: 22.8% frente a 17.2%  dif +5.6% [-1.4%, +13.0%]
+    numero o codigo                n =  33: 18.2% frente a 18.5%  dif -0.3% [-12.8%, +14.4%]
+    doble (/)                      n =  32: 15.6% frente a 18.6%  dif -2.9% [-14.6%, +10.7%]
+    largo (6+ palabras)            n =  97: 21.6% frente a 18.0%  dif +3.7% [-5.0%, +13.0%]
+    grado o seniority              n =  37: 24.3% frente a 18.1%  dif +6.2% [-7.8%, +20.4%]
+  reconoce mal (entre 732 consultas con equivalente):
+    ingles                         n =  69: 2.9% frente a 3.5%  dif -0.6% [-4.1%, +4.1%]
+    abreviatura                    n = 162: 1.9% frente a 3.9%  dif -2.0% [-4.5%, +0.7%]
+    numero o codigo                n =  33: 0.0% frente a 3.6%  dif -3.6% [-4.9%, -2.3%]  <- MENOS ERROR
+    doble (/)                      n =  32: 6.2% frente a 3.3%  dif +3.0% [-3.9%, +12.6%]
+    largo (6+ palabras)            n =  97: 0.0% frente a 3.9%  dif -3.9% [-5.5%, -2.5%]  <- MENOS ERROR
+    grado o seniority              n =  37: 2.7% frente a 3.5%  dif -0.8% [-4.5%, +5.4%]
+    nivel distinto (par elegido)   n =   0: muy pocos
+  falso reconocido (entre 89 consultas nuevas):
+    ingles                         n =   8: 25.0% frente a 18.5%  dif +6.5% [-21.0%, +38.9%]
+    abreviatura                    n =  25: 8.0% frente a 23.4%  dif -15.4% [-29.7%, +0.4%]
+    numero o codigo                n =   4: muy pocos
+    doble (/)                      n =   2: muy pocos
+    largo (6+ palabras)            n =  10: 0.0% frente a 21.5%  dif -21.5% [-30.4%, -13.9%]  <- MENOS ERROR
+    grado o seniority              n =  12: 16.7% frente a 19.5%  dif -2.8% [-23.4%, +22.9%]
+    nivel distinto (par elegido)   n =   0: muy pocos
+
+MEZCLA DE CATEGORIAS DENTRO DE LOS ERRORES (frente a los aciertos de la misma clase)
+  no reconoce (n = 135): ingles 8% (10%); abreviatura 27% (21%); numero o codigo 4% (5%); doble (/) 4% (4%); largo (6+ palabras) 16% (13%); grado o seniority 7% (5%); nivel distinto (par elegido) 0% (0%)
+  reconoce mal (n = 25): ingles 8% (10%); abreviatura 12% (21%); numero o codigo 0% (5%); doble (/) 8% (4%); largo (6+ palabras) 0% (13%); grado o seniority 4% (5%); nivel distinto (par elegido) 0% (0%)
+  falso reconocido (n = 17): ingles 12% (8%); abreviatura 12% (32%); numero o codigo 6% (4%); doble (/) 0% (3%); largo (6+ palabras) 0% (14%); grado o seniority 12% (14%); nivel distinto (par elegido) 0% (0%)

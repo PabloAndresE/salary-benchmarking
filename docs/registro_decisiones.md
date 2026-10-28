@@ -9258,3 +9258,39 @@ distinto** (`nivel_rubrica` de los dos títulos, ambos con dato y distintos). Ad
 
 **Medida:** tasa de cada tipo de error por categoría frente al resto, con IC 95 % por bootstrap de consultas, y la
 mezcla de categorías dentro de los errores. Los ejemplos con títulos van a un archivo fuera del repo.
+
+### T-024, resultado: el sistema se equivoca sobre todo por prudencia, cerca del umbral, y ninguna forma del título explica los errores (2026-10-28)
+
+`t24_errores.txt` (agregados); los ejemplos con títulos quedan en `t24_ejemplos.txt`, fuera del repo. 732 consultas
+con equivalente y 89 nuevas (49 de T-010b + 40 de T-019; las de T-019 son los mismos títulos con otros candidatos).
+
+| Clase | Acierto | Error | Tipo de error |
+|---|---|---|---|
+| Con equivalente (732) | 78,1 % | **18,4 %** | **no reconoce** (P < 0,90) |
+| | | 3,4 % | reconoce mal (elige un par «no») |
+| Nueva (89) | 80,9 % | 19,1 % | falso reconocido |
+
+- **El error dominante es no reconocer** (135 de 160 errores con equivalente): el sistema es conservador. El 40 % de
+  esos casos queda con P entre 0,80 y 0,90, justo bajo el umbral; el 31 % tiene P < 0,50.
+- **Cuando reconoce mal, lo hace sin mucha confianza:** el 40 % de los «reconoce mal» y el 35 % de los «falso
+  reconocido» tienen P entre 0,90 y 0,95; ninguno ≥ 0,98. Subir el umbral cambia estos errores por más «no reconoce»:
+  es una elección de punto de operación, no un defecto aislado.
+- **Ninguna categoría del título explica más error con significancia** (inglés, abreviatura, código, doble, grado). Los
+  títulos largos (6+ palabras) y con números tienen **menos** «reconoce mal» (0 de 97 y 0 de 33; IC degenerados con
+  cero errores, débil). «Nivel distinto» no aparece nunca: el candado de nivel ya descarta esos candidatos.
+
+**Lectura cualitativa (a posteriori, del archivo de ejemplos; sin criterio):**
+
+1. **Reconoce mal / falso reconocido:** casi siempre el mismo núcleo del cargo con **otra especialidad o subárea**
+   (la misma jefatura en otra línea de producción; el mismo técnico en otra especialidad), o un **matiz de nivel que el
+   candado no ve** (líder / principal / ingeniero frente a ejecutivo / técnico), o títulos que **no nombran un puesto**
+   (solo un área o actividad), que la rúbrica v7 manda a `no`.
+2. **No reconoce:** muchos parecen equivalentes **con ruido**: abreviaturas fuertes, traducción al inglés, códigos
+   internos, texto en otro alfabeto, o el nombre de un proyecto o una marca pegado al título. Hay también casos con P
+   muy baja donde el «sí» del LLM es discutible (dos gerencias distintas, dos subgerencias distintas).
+3. **Parte de los «errores» puede ser del juez LLM, no del sistema.** El oro humano (T-022) lo va a medir: el estrato E3
+   y los «no reconoce» con P baja son los candidatos.
+
+**Para la tesis:** el reconocimiento falla poco por exceso (3,4 %) y mucho por prudencia (18,4 %); bajar el umbral o
+normalizar el ruido del título (abreviaturas, códigos, idioma) antes de preguntarle al cross-encoder es el trabajo futuro
+más directo.
