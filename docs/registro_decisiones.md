@@ -9067,3 +9067,18 @@ brecha que ya probamos que importa** en cada tarea.
 
 **Criterio:** «equivalente» si el IC 90 % queda entero dentro de ± margen. Se reporta también, como descriptivo, el
 margen más chico con el que se habría declarado equivalencia.
+
+### T-021, resultado: en el nivel, Laya es equivalente a Qwen; en el open set no se puede afirmar equivalencia (2026-10-28)
+
+`t21_equivalencia.txt` (`t21_equivalencia.py`, con las predicciones guardadas; los números puntuales coinciden con T-013
+y T-012b).
+
+| Comparación | Diferencia | IC 90 % | Margen | Resultado | Margen mínimo que daría equivalencia |
+|---|---|---|---|---|---|
+| **T-013 · nivel:** Laya − regresión sobre Qwen (exactitud) | +0,21 pts | [−0,24, +0,64] pts | ± 1,0 pt | **Equivalente** | ± 0,64 pts |
+| **T-012b · open set:** Laya − propuesto (exactitud balanceada) | −0,072 | [−0,168, +0,029] | ± 0,05 | **No se puede afirmar** | ± 0,168 |
+
+**Lectura:** para el nivel ya no es solo «no se distingue»: un modelo de decisión de 322M es **equivalente** a la
+regresión sobre Qwen-8B dentro de un punto de exactitud (lo que respalda el reemplazo de T-014). En el open set, con 23
+cargos nuevos en la prueba, el IC es demasiado ancho: no se puede decir que Laya sea peor ni que sea equivalente; la
+decisión de quedarse con el cross-encoder se apoya en la curva de umbral de T-012b, no en esta prueba.
