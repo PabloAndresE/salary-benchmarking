@@ -9154,3 +9154,12 @@ y se reporta cuántos fueron.
 
 **Criterio:** si κ(LLM, oro) ≥ 0,60, los resultados con la verdad del LLM se sostienen. Si la precisión del propuesto
 supera a la del producto con el IC entero sobre cero, se confirma con humanos la ventaja de T-010b en el reconocimiento.
+
+### Decisión del autor sobre T-014 / T-015: el sistema final usa e5 para los vecinos de la analogía (2026-10-28)
+
+El sistema final de la tesis es **100 % local**: Qwen3-Embedding-8B busca candidatos, el cross-encoder reentrenado
+decide el reconocimiento (open set, P ≥ 0,90), Laya da el nivel y **e5 ajustado da los vecinos de la analogía**
+(`qwen_laya_e5`). Razones: frente al producto mejora más que con Vertex (−0,0032 frente a −0,0024), ningún título de
+cliente sale del servidor, ~20 ms frente a ~370 ms por título, sin costo de API y con pesos propios (reproducible).
+Se reporta tal cual que T-015 **no cumplió** el margen de no inferioridad frente a T-014 (extremo +0,00141 > +0,001):
+la medición no alcanza para garantizar que e5 no empeore más de 0,001 frente a Vertex.
