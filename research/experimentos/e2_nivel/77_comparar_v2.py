@@ -72,5 +72,7 @@ def main(ref, var, pla, producto, sin_duenos=False):
 
 
 if __name__ == "__main__":
+    if "--examen" in sys.argv:          # T-023: las corridas en el test intocado
+        SUF = SUF.replace(".parquet", "_examen.parquet")
     a = [x for x in sys.argv[1:] if not x.startswith("--")]
     main(a[0], a[1], a[2], "--producto" in sys.argv, "--sin-duenos" in sys.argv)

@@ -9163,3 +9163,56 @@ decide el reconocimiento (open set, P ≥ 0,90), Laya da el nivel y **e5 ajustad
 cliente sale del servidor, ~20 ms frente a ~370 ms por título, sin costo de API y con pesos propios (reproducible).
 Se reporta tal cual que T-015 **no cumplió** el margen de no inferioridad frente a T-014 (extremo +0,00141 > +0,001):
 la medición no alcanza para garantizar que e5 no empeore más de 0,001 frente a Vertex.
+
+## T-023 — Examen final en el test intocado: el sistema propuesto frente al producto. Registrado antes de medir
+
+**Por qué:** todas las mediciones de banda (T-005 a T-017) se hicieron en empresas apartadas de **validación**, dentro
+del 80 % de entrenamiento, donde también se eligieron umbrales y variantes durante semanas. El 20 % de test se apartó
+desde el principio para el examen final (spec §9). Se usa **una sola vez**.
+
+**El test, congelado antes de medir (2026-10-28):** `splits.empresas_test` (semilla 20260805, por empresa,
+estratificado por `segmento|ciiu_n1`). Lista en `research/tesis/salidas/t23_empresas_test.json` (fuera del repo):
+**952 empresas, 136.834 filas; sha256 `169177f7ef0b70bc87a25062141e1051c892b23b33e15e583a318df1caa642da`**. El
+entrenamiento son las 5.770 empresas de siempre (4.328 + 1.442 de los logs de `54_pinball`). Las 1.987 empresas sin
+segmento ni CIIU nunca entran al sorteo (su estrato es nulo y `groupby` lo descarta): el test es el 20 % de las 4.735
+con segmento y CIIU, y las demás quedan siempre en entrenamiento. Se declara, no se cambia.
+
+**Qué se compara (arnés `54_pinball.py --examen`):** la base se construye con **todo el 80 %** (5.770 empresas) y se
+evalúa contra los votos de las 952 empresas del test (mediana de su gente por cargo; pinball p25–p75).
+
+- **Producto (referencia):** `nivel_v3`, el núcleo del producto en el arnés: Vertex, el cross-encoder del producto con
+  `juez_vecinos`, niveles de Qwen-LLM por grupo y clasificador de nivel sobre Vertex.
+- **Sistema propuesto:** `qwen_laya_e5`: Qwen3-Embedding-8B busca, el cross-encoder decide (0,82, el de T-006), Laya da
+  el nivel (entrenado dentro de la medición solo con la base de entrenamiento) y e5 ajustado da los vecinos de la
+  analogía.
+- **Placebo:** `qwen_laya_e5_placebo` (los vectores e5 de la analogía permutados entre títulos).
+- Escala `k` y lo demás, por la partición interna del entrenamiento, como siempre.
+
+**Lo que NO entra, y por qué:** las reglas de producto de v1.1 a v1.3 (techo de la cima por tamaño, votos de dueño,
+todo a español, prima de dirección en inglés, glosario COO / MANAGER / HEAD, filtro «¿es un cargo?», candado de
+seguridad) son capas que se aplican **igual encima de los dos sistemas** y no están completas en el arnés. Se compara
+el **núcleo** de cada uno. No se puede usar `base_v31` del producto directamente: se construyó con todas las empresas,
+test incluido.
+
+**Avisos que se declaran en la tesis:**
+
+1. **Exposición transductiva a los títulos del test (sin sueldos):** los vectores de Qwen, e5 y Vertex, los grupos del
+   clustering, los niveles por LLM, el bi-encoder e5 y el cross-encoder reentrenado se calcularon sobre los títulos
+   de toda la base (65.181), incluidos los del test. Ninguno usa sueldos. Afecta por igual a producto y propuesto.
+2. **Una mirada previa al test, para otra pregunta:** `e1_premisa/06_anclaje_a_la_empresa.py` midió en el test el
+   error absoluto del anclaje a la empresa (D-0xx, «−12,8 % MAE»). No midió bandas ni ninguno de estos sistemas.
+3. **Reproducibilidad:** el marco se lee de BigQuery en cada corrida; el hash garantiza que el test es el mismo. Si el
+   hash no coincide, la corrida se detiene.
+
+**Medición:** `77_comparar_v2.py nivel_v3 qwen_laya_e5 qwen_laya_e5_placebo --examen` (protocolo v2: unión de votos,
+IC 95 % por bootstrap en dos vías empresa × cargo, 400 réplicas).
+
+**Criterios (no se cambian después de medir):**
+
+- **«Mejora confirmada en el test»:** el IC de propuesto − producto queda entero bajo cero **y** el de propuesto −
+  placebo también.
+- **«No inferior»:** el extremo superior frente al producto < +0,001.
+- Si no cumple ninguno, se reporta así en la tesis, tal cual.
+
+**Una sola corrida.** Si una corrida se cae por un error de código, se corrige solo ese error y se vuelve a correr, sin
+haber visto resultados; se anota. Ninguna otra variante se mide en el test.

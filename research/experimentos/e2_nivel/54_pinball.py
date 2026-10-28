@@ -44,6 +44,9 @@ SEM, N_REPLICAS = 20260917, 400          # los de `10`
 # NO se pueden emparejar (lo comprobado: 324 de 1.343 empresas en comun). `--entorno` marca el
 # archivo para comparar solo corridas del mismo entorno.
 ENTORNO = ""
+# T-023: examen final en el test intocado (entrena con todo el 80 %, mide en las empresas del test congelado)
+EXAMEN = False
+SHA_TEST = "169177f7ef0b70bc87a25062141e1051c892b23b33e15e583a318df1caa642da"
 NIVEL_IDIOMA = "v2"          # el nivel del producto sobre el que se mide la capa de idioma (D-050)
 
 
@@ -218,12 +221,23 @@ def una_variante(nom, clusters):
     mk = mk[[c for c in ("cargo_norm", "empresa_ruc", "y", "segmento", "ciiu_n1", "id_hash",
                          "n_empleados", "ciiu_n6") if c in mk.columns]].copy()
     mk["cargo_norm"] = mk["cargo_norm"].astype(str)
-    train, _ = splits.partir(mk, splits.empresas_test(mk))
-    rng = np.random.default_rng(SEM)
-    emp0 = np.array(sorted(train["empresa_ruc"].unique()))
-    val = set(rng.choice(emp0, len(emp0) // 4, replace=False))
-    tr = train[~train["empresa_ruc"].isin(val)].copy()
-    ts = train[train["empresa_ruc"].isin(val)].copy()
+    if EXAMEN:
+        import hashlib
+        congelada = splits.cargar(RAIZ / "research/tesis/salidas/t23_empresas_test.json")
+        sha = hashlib.sha256("\n".join(sorted(congelada)).encode("utf-8")).hexdigest()
+        hoy = {str(e) for e in splits.empresas_test(mk)}
+        assert sha == SHA_TEST and hoy == congelada, "el test no es el congelado en T-023"
+        en = mk["empresa_ruc"].astype(str).isin(congelada)
+        tr, ts = mk[~en].copy(), mk[en].copy()
+        print("EXAMEN: entrenamiento {:,} empresas; test {:,} (sha verificado)".format(
+            tr["empresa_ruc"].nunique(), ts["empresa_ruc"].nunique()))
+    else:
+        train, _ = splits.partir(mk, splits.empresas_test(mk))
+        rng = np.random.default_rng(SEM)
+        emp0 = np.array(sorted(train["empresa_ruc"].unique()))
+        val = set(rng.choice(emp0, len(emp0) // 4, replace=False))
+        tr = train[~train["empresa_ruc"].isin(val)].copy()
+        ts = train[train["empresa_ruc"].isin(val)].copy()
     v = (ts.dropna(subset=["y"]).groupby(["cargo_norm", "empresa_ruc"], sort=False)["y"]
            .median().reset_index().rename(columns={"y": "voto"}))
     b15 = np.load(RAIZ / "demo" / "base_v15.npz", allow_pickle=True)
@@ -575,6 +589,8 @@ def una_variante(nom, clusters):
     sufijo = nom if nom in ("v15", "v16") else "{}_{}".format(nom, pathlib.Path(clusters).stem)
     if ENTORNO:
         sufijo += "_" + ENTORNO
+    if EXAMEN:
+        sufijo += "_examen"
     print("{}: el juez asigno {:,} titulos de {:,}".format(
         sufijo, int(np.isfinite(out["p_juez"].to_numpy(float)).sum()) if "p_juez" in out else 0, len(cargos)))
     pd.DataFrame({"empresa": v["empresa_ruc"].to_numpy(), "cargo": v["cargo_norm"].to_numpy(),
@@ -645,6 +661,7 @@ if __name__ == "__main__":
     ap.add_argument("--clusters")
     ap.add_argument("--juntar", action="store_true")
     ap.add_argument("--entorno", default="", help="marca del entorno (p. ej. venv)")
+    ap.add_argument("--examen", action="store_true", help="T-023: test intocado (una sola vez)")
     a = ap.parse_args()
-    ENTORNO = a.entorno
+    ENTORNO, EXAMEN = a.entorno, a.examen
     juntar() if a.juntar else una_variante(a.variante, a.clusters)
