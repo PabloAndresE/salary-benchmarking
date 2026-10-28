@@ -88,3 +88,6 @@ research/experimentos/e2_nivel/salidas/48_bi_encoder/
 research/experimentos/e2_nivel/salidas/48_bi_encoder_*/
 .libs_tesis/
 research/experimentos/e2_nivel/salidas/t09_modelos/
+
+# T-024: ejemplos con titulos de clientes
+research/tesis/salidas/t24_ejemplos.txt
