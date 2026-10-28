@@ -1,0 +1,12 @@
+T-025 · ablacion del sistema final en la banda (validacion: empresas apartadas del 80 %)
+
+1. QUITANDO UNA PIEZA DEL SISTEMA FINAL (corrida - final; > 0 = quitarla empeora)
+  sin Qwen (busqueda y consulta en Vertex)     votos 20,667  +0.00102 [+0.00033, +0.00188] -> APORTA           | todos los votos +0.00055 [+0.00014, +0.00098]
+  sin cross-encoder en la banda                votos 20,678  -0.00065 [-0.00155, +0.00013] -> no se distingue  | todos los votos -0.00035 [-0.00076, +0.00012]
+  sin Laya (nivel por regresion sobre Qwen)    votos  3,575  +0.00408 [+0.00015, +0.00819] -> APORTA           | todos los votos +0.00038 [-0.00005, +0.00079]
+  sin e5 (vecinos de la analogia en Vertex)    votos 18,205  +0.00096 [-0.00088, +0.00332] -> no se distingue  | todos los votos +0.00046 [-0.00055, +0.00142]
+
+2. ACUMULATIVA (cada paso frente al anterior y frente al producto; < 0 = mejora)
+  + Qwen y su nivel (T-006)                paso (votos 19,180) -0.00197 [-0.00304, -0.00083] MEJORA           | todos los votos: paso -0.00098 [-0.00156, -0.00044], frente al producto -0.00098 [-0.00156, -0.00044]
+  + Laya en el nivel (T-014)               paso (votos 3,357) -0.00350 [-0.00789, +0.00012] no se distingue  | todos los votos: paso -0.00031 [-0.00064, +0.00006], frente al producto -0.00129 [-0.00198, -0.00069]
+  + e5 en la analogia (T-015) = final      paso (votos 17,848) -0.00090 [-0.00305, +0.00129] no se distingue  | todos los votos: paso -0.00042 [-0.00143, +0.00060], frente al producto -0.00170 [-0.00285, -0.00059]

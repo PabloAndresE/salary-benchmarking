@@ -9322,3 +9322,36 @@ corrida frente al producto, en la misma tabla.
 **Aviso de diseño:** el cross-encoder del sistema final en la banda es el **del producto** (umbral 0,82): T-009 mostró
 que el reentrenado no mejora la banda. El reentrenado decide el **open set** (reconocimiento), que se ablaciona aparte
 con lo que ya existe (T-010b y T-020: sin cross-encoder = solo coseno; sin Qwen = TF-IDF).
+
+### T-025 — Resultado (2026-10-28)
+
+Las cuatro corridas terminaron sin errores, con 38.450 votos de las 1.442 empresas apartadas. Cada log confirma su
+configuración: `sin_qwen` usa cos_juez 0,90; `sin_juez` usa cos_juez 1,01 y no filtra vecinos; las otras dos usan 0,82
+y filtran vecinos. Script: `research/tesis/t25_ablacion.py`. Salida: `salidas/t25_ablacion.txt`.
+
+**1. Quitando una pieza** (corrida − final; un valor > 0 significa que quitarla empeora el pinball)
+
+| Se quita | Votos que cambian | Δ en la unión [IC 95 %] | Lectura | Δ en todos los votos [IC 95 %] |
+|---|---|---|---|---|
+| Qwen (se usa Vertex) | 20.667 | +0,00102 [+0,00033, +0,00188] | **APORTA** | +0,00055 [+0,00014, +0,00098] |
+| cross-encoder en la banda | 20.678 | −0,00065 [−0,00155, +0,00013] | no se distingue | −0,00035 [−0,00076, +0,00012] |
+| Laya (se usa la regresión de T-006) | 3.575 | +0,00408 [+0,00015, +0,00819] | **APORTA** | +0,00038 [−0,00005, +0,00079] |
+| e5 (se usa Vertex) | 18.205 | +0,00096 [−0,00088, +0,00332] | no se distingue | +0,00046 [−0,00055, +0,00142] |
+
+**2. Acumulativa** (todos los votos; un valor < 0 significa que el paso mejora)
+
+| Paso | Δ del paso [IC 95 %] | Acumulado frente al producto [IC 95 %] |
+|---|---|---|
+| + Qwen y su nivel | −0,00098 [−0,00156, −0,00044] | −0,00098 [−0,00156, −0,00044] |
+| + Laya | −0,00031 [−0,00064, +0,00006] | −0,00129 [−0,00198, −0,00069] |
+| + e5 = final | −0,00042 [−0,00143, +0,00060] | −0,00170 [−0,00285, −0,00059] |
+
+**Lectura**
+- **Qwen es la pieza que sostiene la mejora.** Aporta en las dos ablaciones y explica el 58 % de la mejora acumulada.
+- **Laya aporta en el sistema final,** pero en pocos votos (3.575). Sobre todos los votos el efecto no se distingue, y
+  en la cadena el paso quedó al borde. Es un efecto chico y localizado en los votos donde cambia el nivel.
+- **e5 no se distingue en la banda** en ninguna de las dos lecturas. Su justificación es otra: es local, 25 veces más
+  chico y equivalente en la banda.
+- **El cross-encoder no aporta a la banda** cuando Qwen ya es el espacio de búsqueda. La estimación puntual hasta
+  favorece quitarlo, aunque sin distinguirse. Su papel en la tesis es el open set (T-010b, T-020), no la banda. Se
+  declara tal cual; no se cambia el sistema final, que ya pasó el test intocado (T-023).
