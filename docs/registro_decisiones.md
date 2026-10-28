@@ -9200,7 +9200,7 @@ test incluido.
    clustering, los niveles por LLM, el bi-encoder e5 y el cross-encoder reentrenado se calcularon sobre los títulos
    de toda la base (65.181), incluidos los del test. Ninguno usa sueldos. Afecta por igual a producto y propuesto.
 2. **Una mirada previa al test, para otra pregunta:** `e1_premisa/06_anclaje_a_la_empresa.py` midió en el test el
-   error absoluto del anclaje a la empresa (D-0xx, «−12,8 % MAE»). No midió bandas ni ninguno de estos sistemas.
+   error absoluto del anclaje a la empresa (D-014, «−12,8 % de MAE»). No midió bandas ni ninguno de estos sistemas.
 3. **Reproducibilidad:** el marco se lee de BigQuery en cada corrida; el hash garantiza que el test es el mismo. Si el
    hash no coincide, la corrida se detiene.
 
