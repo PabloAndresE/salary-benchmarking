@@ -9082,3 +9082,40 @@ y T-012b).
 regresión sobre Qwen-8B dentro de un punto de exactitud (lo que respalda el reemplazo de T-014). En el open set, con 23
 cargos nuevos en la prueba, el IC es demasiado ancho: no se puede decir que Laya sea peor ni que sea equivalente; la
 decisión de quedarse con el cross-encoder se apoya en la curva de umbral de T-012b, no en esta prueba.
+
+### T-020, resultado: lo léxico es un piso bajo; pero con el cross-encoder decidiendo, el buscador léxico no se distingue de Qwen (2026-10-28)
+
+**Parte A** (`t20_recuperacion.txt`, 2.090 consultas, empates al rango medio):
+
+| Buscador | r@1 | r@10 | MRR |
+|---|---|---|---|
+| Qwen título + descripción | 4,1 % | **22,2 %** | 0,101 |
+| Vertex | 3,3 % | 16,7 % | 0,079 |
+| TF-IDF de caracteres | 1,3 % | 9,4 % | 0,042 |
+| Coincidencia aproximada | 0,3 % | 9,1 % | 0,035 |
+| BM25 | 1,2 % | 6,9 % | 0,035 |
+
+Los tres léxicos son **peores que Vertex** (r@10: −7,3 a −9,8 pts, IC enteros bajo cero) y que Qwen (−12,9 a −15,4).
+Este oro son sinónimos que la base tiene en **grupos distintos**, es decir, pares que el agrupamiento por texto no unió:
+por construcción se parecen poco en las letras. Pasa a la parte B el TF-IDF de caracteres.
+
+**Parte B** (`t20_open_set.txt`; 547 pares elegidos sin juicio, etiquetados con Qwen3.5-122B: 82,6 % coherentes, 41,8 %
+«sí»). Prueba de T-010b (413 con equivalente, 23 nuevas):
+
+| Sistema | Umbral (calibra) | Exactitud balanceada | Con equivalente: reconoce bien | Nuevas: «desconocido» |
+|---|---|---|---|---|
+| **Qwen + cross-encoder reentrenado (propuesto)** | 0,90 | **0,784** | 78,5 % | 78,3 % |
+| TF-IDF + cross-encoder reentrenado | 0,90 | 0,727 | 75,8 % | 69,6 % |
+| Piso léxico: TF-IDF solo | 0,90 | 0,538 | 7,6 % | 100,0 % |
+
+- **Propuesto − piso léxico: +0,246 [+0,150, +0,326] → el sistema propuesto supera al piso léxico.** El TF-IDF solo
+  no tiene un umbral útil: en calibra gana casi no reconocer nada.
+- **Propuesto − (TF-IDF + cross-encoder): +0,057 [−0,028, +0,150] → no se distingue.** No se cumple «Qwen hace falta
+  para buscar».
+- 3 cargos «nuevos» de T-010b tienen un equivalente que solo encontró el TF-IDF (juzgado «sí»); su clase se dejó la de
+  T-010b, como se registró.
+
+**Lectura:** el trabajo lo hace el **cross-encoder reentrenado**, no el buscador: con candidatos léxicos baratos, la
+exactitud baja de 0,784 a 0,727 y el IC no permite distinguirlos (tampoco afirmar equivalencia: el IC llega a +0,15).
+Las dos mitades apuntan a lo mismo que T-017: buscar mejor (r@10 de 9 % a 22 %) importa menos de lo que parece cuando
+un buen juez decide. Queda como candidato para sacar a Qwen-8B del sistema, con una prueba más grande de cargos nuevos.

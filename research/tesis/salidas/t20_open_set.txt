@@ -1,0 +1,10 @@
+T-020 · PARTE B · open set con el buscador lexico (TF-IDF caracteres), protocolo T-010b
+umbrales (calibra): A 0.9; L 0.9; LCE 0.9
+nuevas de T-010b en las que el lexico encontro un par juzgado si: 3
+
+PRUEBA (413 con equivalente, 23 nuevas)
+  A    Qwen + cross-encoder reentrenado (propuesto)   exactitud balanceada 0.7838  con equivalente: reconoce bien 78.5%  nuevas: desconocido 78.3%  (sin verdad 41)
+  L    piso lexico: TF-IDF caracteres                 exactitud balanceada 0.5380  con equivalente: reconoce bien 7.6%  nuevas: desconocido 100.0%  (sin verdad 5)
+  LCE  TF-IDF caracteres + cross-encoder reentrenado  exactitud balanceada 0.7269  con equivalente: reconoce bien 75.8%  nuevas: desconocido 69.6%  (sin verdad 41)
+A - L: +0.2458 [+0.1498, +0.3259] -> A MEJOR
+A - LCE: +0.0569 [-0.0284, +0.1495] -> no se distingue
