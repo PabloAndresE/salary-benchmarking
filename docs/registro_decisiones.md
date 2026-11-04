@@ -9355,3 +9355,124 @@ y filtran vecinos. Script: `research/tesis/t25_ablacion.py`. Salida: `salidas/t2
 - **El cross-encoder no aporta a la banda** cuando Qwen ya es el espacio de búsqueda. La estimación puntual hasta
   favorece quitarlo, aunque sin distinguirse. Su papel en la tesis es el open set (T-010b, T-020), no la banda. Se
   declara tal cual; no se cambia el sistema final, que ya pasó el test intocado (T-023).
+
+## T-026 — El efecto de cada pieza por régimen de estimación (directo frente a analogía). Registrado antes de medir
+
+**Fecha:** 2026-11-02
+**Tipo:** **exploratorio** (ver «Honestidad del alcance» más abajo). No confirmatorio.
+
+### Contexto
+
+T-025 midió el aporte de cada pieza del sistema final sobre la validación completa y concluyó que el
+cross-encoder «no aporta a la banda» y que e5 «no se distingue». Esa medición promedia dos regímenes de
+estimación que el propio estimador trata de forma distinta:
+
+- **directo** (`directa = True`): la celda tiene respaldo propio suficiente (≥ 10 empresas y ≥ 10 personas) y la
+  banda sale de cuantiles empíricos de esa celda. **El reconocimiento no puede cambiar la banda**: los datos ya
+  están ahí.
+- **analogía** (`directa = False`): no hay respaldo propio y la banda se toma prestada de un vecindario. Aquí, y
+  solo aquí, importa a qué grupo se asigna el título.
+
+Medido sobre `54_qwen_laya_e5`: **21.738 votos directos** (pinball medio 0,1179) y **16.712 por analogía**
+(0,1507). El régimen de analogía carga un **28 % más de error** y es donde vive la cola larga del catálogo
+(el 78 % de los puestos tiene una sola empresa detrás).
+
+La conjetura es que el efecto de las piezas de reconocimiento queda diluido en T-025 por promediarlo sobre
+votos donde la intervención no opera.
+
+### Hipótesis, escritas antes de correr el script
+
+- **H1** — Quitar el cross-encoder de la banda empeora más en `directa = False` que en `directa = True`.
+- **H2** — Quitar Qwen empeora más en `directa = False`.
+- **H3** — En `directa = True` ninguna de las cuatro piezas se distingue de cero.
+
+Si H1 y H2 fallan —es decir, si el reconocimiento tampoco aporta donde sí puede actuar— el resultado **refuerza**
+el desacople de T-017 en vez de debilitarlo, y así se reportará.
+
+### Procedimiento
+
+Idéntico a T-025 (diferencia `variante − final` sobre la unión de votos que cambian, |Δ| > 1e-6; IC 95 % por
+bootstrap en dos vías empresa × cargo, 400 réplicas, semilla 11, con `77_comparar_v2.dos_vias`), **estratificando
+por régimen**. Dos precisiones que fijan el método:
+
+1. **El estrato lo define el sistema final** (`54_qwen_laya_e5`), no cada variante. Una variante puede mover una
+   celda de analogía a directa; si el estrato cambiara con la variante, el contraste dejaría de ser pareado.
+2. La unión de votos que cambian se calcula **dentro de cada estrato**, no globalmente.
+
+Las cuatro piezas son las mismas de T-025: `abl_sin_qwen`, `abl_sin_juez`, `abl_sin_laya`, `abl_sin_e5`. No se
+regenera ninguna corrida: es reanálisis de los parquets existentes.
+
+Script: `research/tesis/t26_regimen.py`. Salida: `salidas/t26_regimen.txt`.
+
+### Criterio
+
+**Descriptivo.** No se adopta ni se retira ninguna pieza con este análisis, ni se modifica el sistema final, que
+ya pasó el test intocado (T-023). Sirve para interpretar T-025 y para el capítulo del techo (T-017, T-018).
+
+### Honestidad del alcance
+
+**El corte directo/analogía se eligió después de conocer el resultado de T-025.** Por eso este análisis se declara
+exploratorio y no confirmatorio: no puede usarse para afirmar que una pieza «cumple» un criterio, ni para revertir
+una lectura ya registrada. Se reportan los **cuatro contrastes en los dos estratos**, completos y salga lo que
+salga, con las hipótesis de arriba escritas antes de ejecutar.
+
+### Reversibilidad
+
+Total. No toca datos, corridas ni el sistema final.
+
+---
+
+## T-027 — Baseline LLM zero-shot como decisor de «mismo cargo». Registrado antes de medir
+
+**Fecha:** 2026-11-02
+**Estado:** registrado; pendiente de cómputo (requiere servir el modelo).
+
+### Contexto
+
+`Qwen3.5-122B` se usa en este proyecto como **fuente de verdad**: etiquetó los 9.305 pares con que se entrenó el
+cross-encoder v9 (T-009) y puso la verdad del open set (T-010b, T-019). **Nunca se evaluó como competidor.**
+
+La comparación que falta es la más informativa que queda: **¿el cross-encoder destilado de 280 M alcanza al LLM
+de 122 B del que aprendió, a una fracción del costo?** Un modelo chico que iguala a su profesor es un resultado
+de IA; uno que no lo alcanza marca el límite del método y también se reporta. Hoy, sin este brazo, la respuesta a
+«¿por qué no usar directamente el LLM?» es que no se midió.
+
+Además, `LLM4Jobs` —citado en el estado del arte como el diseño que el etiquetado con LLM debería imitar— se
+evalúa contra un baseline clásico **y** contra un LLM zero-shot. Aquí falta esa mitad.
+
+### Procedimiento
+
+Sobre los **mismos conjuntos** que T-009 y T-016, sin tocar ningún otro:
+
+- **lejos**: `52`, 100 pares (33 `sí`), con el juicio ciego del autor como verdad.
+- **cerca**: `prueba` + `prueba 2`, 991 pares (790 `sí`).
+
+El LLM responde **par a par**, temperatura 0, salida JSON guiada, **en los dos órdenes** (A⊑B y B⊑A, igual que el
+cross-encoder), con la **rúbrica v7** sin ejemplos de los conjuntos evaluados. La decisión es el producto de las
+dos direcciones, como en el sistema propuesto. No ve sueldos.
+
+Comparadores ya medidos, sin recalcular: cross-encoder v9 (reentrenado), cross-encoder v3 (del producto), coseno,
+ESCO (T-016) y el piso léxico (T-020).
+
+### Métrica y criterios (no se cambian después de medir)
+
+Métrica primaria: **exactitud balanceada**; secundaria: AUC. IC 95 % por bootstrap pareado por par, 10.000
+réplicas.
+
+- **Equivalencia**: si el IC 95 % de (v9 − LLM) en exactitud balanceada queda **dentro de ±0,05**, se declara
+  equivalencia y se reporta la razón de costo y latencia.
+- **Superioridad de v9**: IC entero **sobre** cero.
+- **Inferioridad de v9**: IC entero **bajo** cero. Se reporta como límite del método, y la tesis lo declara en
+  Limitaciones.
+
+Se reporta además el costo por 1.000 pares y la latencia de ambos, que es la mitad del argumento.
+
+### Riesgo declarado
+
+El LLM que se evalúa es el mismo que generó las etiquetas de entrenamiento de v9. En el conjunto `cerca` eso
+**favorece a v9** si v9 aprendió el sesgo del profesor, y en `lejos` la verdad es el juicio ciego del autor, que
+es independiente de ambos. La lectura principal se hace sobre `lejos` por ese motivo, y se dice así.
+
+### Reversibilidad
+
+Total. Es un brazo de evaluación añadido; no modifica el sistema ni ninguna decisión previa.
