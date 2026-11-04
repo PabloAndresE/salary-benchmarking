@@ -9530,3 +9530,90 @@ Reanálisis de las corridas de T-025, estratificado por `directa` del sistema fi
 
 **Alcance.** Exploratorio y descriptivo, como se registró. No se adopta ni se retira ninguna pieza, no se modifica
 el sistema final y no se revierte ninguna lectura previa: T-025 queda como está, y T-026 lo interpreta.
+
+### T-027, resultado: el LLM de 122 B no gana al cross-encoder de 280 M, y en `lejos` no se resuelve (2026-11-04)
+
+Ejecución del brazo preregistrado en `## T-027`, sin cambios de criterio, conjunto ni métrica. Script:
+`research/tesis/t27_llm_decisor.py` (dos fases: `etiquetar` con vLLM, `medir` con el juez del producto).
+Salidas: `salidas/t27_llm_decisor.txt`, `salidas/t27_llm_lejos.parquet`, `salidas/t27_llm_cerca.parquet`,
+`salidas/t27_tiempos.json`.
+
+**Cómo se corrió.** Qwen3.5-122B local, vLLM con TP = 2 (GPU 0 y 1 del H200), `max_model_len` 8192,
+`gpu_memory_utilization` 0,85, semilla 20261005, `enable_thinking: False`, temperatura 0, JSON guiado con el
+`ESQUEMA` de `51_etiquetador_local.py` y la rúbrica v7 (sha `e7528ea9c996`, la misma de T-009). 2.182 prompts
+= 1.091 pares × 2 direcciones. La decisión es el producto de las dos direcciones (`sí` solo si A⊑B y B⊑A dicen
+`sí`), igual que el cross-encoder. El LLM no ve sueldos. Los números del cross-encoder reproducen exactamente
+los ya publicados (AUC v3 0,5721 / v9 0,7322 en `lejos`; 0,9292 / 0,9376 en `cerca`, T-009 etapa 1; balanceada
+0,497 / 0,652 y 0,864 / 0,863, T-016 parte B), lo que confirma que no se recalculó nada distinto.
+
+**Exactitud balanceada y AUC:**
+
+| Conjunto | Método | Balanceada | AUC | `sí` juntos | `no` separados |
+|---|---|---|---|---|---|
+| **lejos** (n = 100, 33 `sí`) | **Qwen3.5-122B zero-shot** | **0,606** | **0,7232** | 21,2 % | 100,0 % |
+| lejos | cross-encoder reentrenado (v9) | 0,652 | 0,7322 | 42,4 % | 88,1 % |
+| lejos | cross-encoder del producto (v3) | 0,497 | 0,5721 | 60,6 % | 38,8 % |
+| **cerca** (n = 991, 790 `sí`) | **Qwen3.5-122B zero-shot** | **0,831** | **0,8604** | 80,1 % | 86,1 % |
+| cerca | cross-encoder reentrenado (v9) | 0,863 | 0,9376 | 94,4 % | 78,1 % |
+| cerca | cross-encoder del producto (v3) | 0,864 | 0,9292 | 94,2 % | 78,6 % |
+
+El LLM no da un puntaje continuo: su AUC se calcula sobre el acuerdo de las dos direcciones (0, 0,5, 1), que es
+un puntaje de tres niveles. Es la lectura más favorable disponible para él y conviene decirlo.
+
+**Diferencias pareadas** (IC 95 %, bootstrap pareado por par, 10.000 réplicas, estratificado por clase, el mismo
+esquema de remuestreo de T-009 y T-016; semilla 20261102). Positivo = favorece al cross-encoder:
+
+| Conjunto | Comparación | Balanceada, Δ [IC 95 %] | AUC, Δ [IC 95 %] | Criterio preregistrado |
+|---|---|---|---|---|
+| **lejos** | **v9 − LLM** | **+0,046 [−0,044, +0,137]** | +0,009 [−0,086, +0,102] | **ninguno de los tres se cumple** |
+| lejos | v3 − LLM | −0,109 [−0,222, −0,003] | −0,151 [−0,291, −0,014] | inferioridad de v3 |
+| **cerca** | **v9 − LLM** | **+0,032 [+0,003, +0,060]** | +0,077 [+0,055, +0,100] | **superioridad de v9** |
+| cerca | v3 − LLM | +0,033 [+0,004, +0,062] | +0,069 [+0,042, +0,095] | superioridad de v3 |
+
+**Cuál de los tres criterios se cumple.**
+
+- **En `lejos`, la lectura principal: ninguno.** El IC de (v9 − LLM) en balanceada es [−0,044; +0,137]: cruza
+  cero, así que no hay superioridad ni inferioridad, y el extremo superior (+0,137) sale de la banda de ±0,05,
+  así que tampoco se puede declarar equivalencia. **El resultado es no concluyente con n = 100.** Se reporta
+  así, sin elegir el criterio que más convenga: el preregistro definió tres salidas y los datos no caen en
+  ninguna. Para declarar equivalencia a ±0,05 en este conjunto haría falta un `lejos` bastante mayor.
+- **En `cerca`: superioridad del cross-encoder**, +0,032 [+0,003; +0,060] en balanceada y +0,077 [+0,055;
+  +0,100] en AUC. **Pero este es justamente el brazo con el riesgo declarado en el preregistro:** el LLM
+  evaluado es el que generó las etiquetas de entrenamiento de v9, y aquí la verdad es juicio humano sobre pares
+  cercanos, donde v9 pudo heredar el criterio del profesor. La superioridad en `cerca` **no** se usa como
+  evidencia fuerte, y v3 —que no se destiló de este LLM— gana por el mismo margen, lo que sugiere que el efecto
+  es del formato cross-encoder y no de la destilación.
+
+**Costo y latencia** (medidos en este servidor; el LLM con 2 GPU, el cross-encoder con 1):
+
+| | Latencia por par | Por 1.000 pares |
+|---|---|---|
+| Qwen3.5-122B zero-shot | 0,079 s (2 direcciones) | 0,044 GPU-hora ≈ 0,13 USD |
+| cross-encoder v9 (280 M) | 0,0010 s | 0,0003 GPU-hora ≈ 0,001 USD |
+
+**82× más rápido y 164× más barato** a favor del cross-encoder, y eso **sin contar los 500 s de carga del
+modelo de 122 B**, que el cross-encoder no paga. La cifra del LLM es rendimiento amortizado con el lote
+completo en vLLM, es decir, el caso que más lo favorece; par a par en línea sería peor. El USD supone 3,00 USD
+por H200-hora, que es un supuesto declarado; las GPU-hora sí están medidas.
+
+**Lectura**
+
+1. **El modelo chico no queda por debajo de su profesor donde la verdad es independiente.** En `lejos` —el único
+   conjunto cuya verdad (juicio ciego del autor) no depende ni del LLM ni del cross-encoder— v9 está +0,046 por
+   encima del LLM, pero el intervalo no resuelve el signo. Lo honesto es: **no hay evidencia de que el LLM de
+   122 B sea mejor decisor que el cross-encoder de 280 M, ni evidencia suficiente para declararlos
+   equivalentes.** Lo que sí queda claro es que el LLM no lo supera.
+2. **Los dos fallan distinto.** En `lejos` el LLM separa los `no` perfectamente (100 %) pero recupera solo el
+   21,2 % de los `sí`: es muy conservador bajo la rúbrica v7. v9 es más equilibrado (42,4 % / 88,1 %). Esa
+   asimetría explica por qué sus AUC casi coinciden (0,7232 contra 0,7322) mientras sus perfiles de error no se
+   parecen en nada.
+3. **El argumento de costo es el que no admite discusión.** Aun en el escenario más favorable al LLM, el
+   cross-encoder es dos órdenes de magnitud más barato por el mismo nivel de acierto. Esa es la mitad del
+   argumento que pedía el preregistro, y es la que queda firme.
+4. **Queda contestada la pregunta «¿por qué no usar directamente el LLM?»**: porque no se midió mejor en el
+   único conjunto con verdad independiente y cuesta 164 veces más. No porque sea peor con certeza.
+5. **Para Limitaciones:** el brazo de `lejos` quedó no concluyente por tamaño de muestra, no por diseño. Es una
+   limitación real de este trabajo y se declara como tal.
+
+**Alcance.** Es un brazo de evaluación. **No se adopta, retira ni modifica ninguna pieza del sistema**, no se
+revierte ninguna lectura previa y no se toca ningún umbral. T-009, T-016, T-025 y T-026 quedan como están.

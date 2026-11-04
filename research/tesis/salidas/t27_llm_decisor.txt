@@ -1,0 +1,44 @@
+T-027 · Qwen3.5-122B zero-shot como DECISOR de «mismo cargo», frente al cross-encoder destilado
+Preregistro: docs/registro_decisiones.md, bloque `## T-027`. Metrica primaria: exactitud balanceada;
+secundaria: AUC. IC 95 % por bootstrap PAREADO por par. 10.000 replicas. estratificado por clase
+(mismo esquema de remuestreo que T-009 etapa 1 y T-016 parte B). Semilla 20261102.
+
+lejos (52, autor ciego) · n=100, `si` 33 (33%)
+  coherencia del LLM entre las dos direcciones: 76.0%  (JSON invalido en alguna direccion: 3)
+
+  metodo                             balanceada      AUC   `si` juntos  `no` separados
+  Qwen3.5-122B zero-shot                  0.606   0.7232        21.2%         100.0%
+  cross-encoder del producto (v3)         0.497   0.5721        60.6%          38.8%
+  cross-encoder reentrenado (v9)          0.652   0.7322        42.4%          88.1%
+
+  balanceada, v9 - LLM: +0.046 [-0.044, +0.137] -> no concluyente (el IC cruza cero y sale de la banda)
+  AUC,        v9 - LLM: +0.009 [-0.086, +0.102] -> no se distingue
+  balanceada, v3 - LLM: -0.109 [-0.222, -0.003] -> INFERIORIDAD del cross-encoder
+  AUC,        v3 - LLM: -0.151 [-0.291, -0.014] -> cross-encoder PEOR
+
+cerca (prueba + prueba 2) · n=991, `si` 790 (80%)
+  coherencia del LLM entre las dos direcciones: 90.1%  (JSON invalido en alguna direccion: 8)
+
+  metodo                             balanceada      AUC   `si` juntos  `no` separados
+  Qwen3.5-122B zero-shot                  0.831   0.8604        80.1%          86.1%
+  cross-encoder del producto (v3)         0.864   0.9292        94.2%          78.6%
+  cross-encoder reentrenado (v9)          0.863   0.9376        94.4%          78.1%
+
+  balanceada, v9 - LLM: +0.032 [+0.003, +0.060] -> SUPERIORIDAD del cross-encoder
+  AUC,        v9 - LLM: +0.077 [+0.055, +0.100] -> cross-encoder MEJOR
+  balanceada, v3 - LLM: +0.033 [+0.004, +0.062] -> SUPERIORIDAD del cross-encoder
+  AUC,        v3 - LLM: +0.069 [+0.042, +0.095] -> cross-encoder MEJOR
+
+COSTO Y LATENCIA (medido en este mismo servidor, H200; el LLM con TP=2, el cross-encoder en 1 GPU)
+  Qwen3.5-122B zero-shot : 0.079 s/par (2182 prompts, 2 direcciones), carga del modelo 500 s aparte
+  cross-encoder v9 (280 M): 0.0010 s/par
+  razon de latencia: el cross-encoder es 82x mas rapido por par
+  por 1.000 pares: LLM 0.044 GPU-hora  (0.13 USD)   cross-encoder 0.0003 GPU-hora  (0.001 USD)
+  razon de costo: 164x a favor del cross-encoder
+  (SUPUESTO declarado para el USD: 3.00 USD por H200-hora. Las GPU-hora si son medidas.)
+
+COMPARADORES YA MEDIDOS, no recalculados aqui:
+  ESCO (JobBERT), T-016 parte B: balanceada 0,576 en `lejos` y 0,542 en `cerca`.
+  AUC del cross-encoder, T-009 etapa 1: v3 0,5721 / v9 0,7322 en `lejos`; v3 0,9292 / v9 0,9376 en `cerca`.
+  Coseno (T-019) y piso lexico TF-IDF (T-020) estan medidos sobre el open set, con su propio protocolo;
+  no existen como decisores par a par en estos dos conjuntos y no se recalculan.
