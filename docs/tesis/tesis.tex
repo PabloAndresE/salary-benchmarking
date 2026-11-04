@@ -40,13 +40,109 @@
 \newcommand{\tref}[1]{\textbf{T-#1}}
 \newcommand{\cargo}[1]{\texttt{#1}}
 
-\title{\bfseries Equivalencia ocupacional en vocabulario de nómina:\\
-       un juez neuronal, y por qué reconocer mejor no es pagar mejor}
-\author{Pablo Andrés Encalada}
-\date{Maestría en Inteligencia Artificial --- USFQ\\[1ex]\today}
+% --- datos de portada: completar y verificar contra la guía de la MIA --------
+\newcommand{\elTitulo}{Equivalencia ocupacional en vocabulario de nómina:\\
+  un juez neuronal, y por qué reconocer mejor no es pagar mejor}
+\newcommand{\elAutor}{Pablo Andrés Encalada Andrade}
+\newcommand{\elPrograma}{Maestría en Inteligencia Artificial}
+\newcommand{\elColegio}{Colegio de Ciencias e Ingenierías}
+\newcommand{\elDirector}{\pend{nombre y grado del director}}
+\newcommand{\elCodigo}{\pend{código de la maestría}}
+\newcommand{\laCedula}{\pend{cédula}}
+\newcommand{\laFecha}{Quito, \pend{fecha}}
 
 \begin{document}
-\maketitle
+
+% ============================================================================
+%  PÁGINAS PRELIMINARES  (formato USFQ)
+%  OJO: tomado del reglamento de trabajo de fin de carrera de PREGRADO.
+%  Verificar cada pieza contra la guía oficial de la MIA antes de entregar.
+% ============================================================================
+
+\begin{titlepage}
+\centering
+{\large\bfseries UNIVERSIDAD SAN FRANCISCO DE QUITO USFQ\par}
+\vspace{0.6cm}
+{\large \elColegio\par}
+\vspace{2.2cm}
+{\LARGE\bfseries \elTitulo\par}
+\vspace{2.2cm}
+{\large \elAutor\par}
+\vspace{0.6cm}
+{\large \elPrograma\par}
+\vfill
+{Trabajo de titulación presentado como requisito\\
+para la obtención del título de\\[0.4cm]
+\textbf{Magíster en Inteligencia Artificial}\par}
+\vspace{1.5cm}
+{\laFecha\par}
+\end{titlepage}
+
+\thispagestyle{empty}
+\begin{center}
+{\large\bfseries UNIVERSIDAD SAN FRANCISCO DE QUITO USFQ\par}
+\vspace{0.4cm}
+{\large \elColegio\par}
+\vspace{1.6cm}
+{\large\bfseries HOJA DE CALIFICACIÓN DE TRABAJO DE TITULACIÓN\par}
+\vspace{1.6cm}
+{\large \elTitulo\par}
+\vspace{1.6cm}
+{\large \elAutor\par}
+\vfill
+\begin{flushleft}
+Director de trabajo de titulación:\\[0.3cm]
+\elDirector
+\end{flushleft}
+\vspace{1.2cm}
+{\laFecha\par}
+\end{center}
+\clearpage
+
+\thispagestyle{empty}
+\section*{\centering © DERECHOS DE AUTOR}
+\noindent
+Por medio del presente documento certifico que he leído todas las Políticas y Manuales
+de la Universidad San Francisco de Quito USFQ, incluyendo la Política de Propiedad
+Intelectual USFQ, y estoy de acuerdo con su contenido, por lo que los derechos de
+propiedad intelectual del presente trabajo quedan sujetos a lo dispuesto en esas
+Políticas. Asimismo, autorizo a la USFQ para que realice la digitalización y publicación
+de este trabajo en el repositorio virtual, de conformidad a lo dispuesto en la Ley
+Orgánica de Educación Superior del Ecuador.
+
+\vspace{1cm}
+\noindent Nombres y apellidos: \textbf{\elAutor}
+
+\vspace{0.4cm}
+\noindent Código: \elCodigo
+
+\vspace{0.4cm}
+\noindent Cédula de identidad: \laCedula
+
+\vspace{0.4cm}
+\noindent Lugar y fecha: \laFecha
+\clearpage
+
+\thispagestyle{empty}
+\section*{\centering ACLARACIÓN PARA PUBLICACIÓN}
+\noindent
+\textbf{Nota:} El presente trabajo, en su totalidad o cualquiera de sus partes, no debe
+ser considerado como una publicación, incluso a pesar de estar disponible sin
+restricciones a través de un repositorio institucional. Esta declaración se alinea con
+las prácticas y recomendaciones presentadas por el \emph{Committee on Publication Ethics}
+(COPE) descritas por Barbour et al. (2017) \emph{Discussion document on best practice for
+issues around theses publishing}.
+
+\vspace{1.2cm}
+\section*{\centering UNPUBLISHED DOCUMENT}
+\noindent
+\textbf{Note:} The following project is available through Universidad San Francisco de
+Quito USFQ institutional repository. Nonetheless, this project --- in whole or in part
+--- should not be considered a publication. This statement follows the recommendations
+presented by the \emph{Committee on Publication Ethics} (COPE) described by Barbour
+et al. (2017) \emph{Discussion document on best practice for issues around theses
+publishing}.
+\clearpage
 
 % ============================================================================
 \chapter*{Resumen}
@@ -85,13 +181,52 @@ Reconocer el cargo y estimar el sueldo son, en estos datos, problemas desacoplad
 afirmación ---sostenida por tres mediciones independientes--- es la contribución
 principal, y el protocolo que la hizo visible es parte del aporte.
 
-\tableofcontents
+\vspace{0.6cm}
+\noindent\textbf{Palabras clave:} equivalencia ocupacional, benchmarking salarial,
+\emph{cross-encoder}, destilación de conocimiento, reconocimiento de conjunto abierto,
+ESCO, nóminas, Ecuador.
 
 % ============================================================================
-\chapter{El problema}
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+A salary benchmark answers a simple question: what does the market pay for this role? The
+difficulty lies not in the computation but in the denominator ---deciding which roles are
+comparable. When the only available description is the free-text job title column of a
+payroll file, written by whoever processes salaries, that decision is a recognition
+problem rather than a statistical one.
+
+This work does two things. First, it builds and evaluates a neural judge of occupational
+equivalence: a cross-encoder distilled from a large language model that decides whether
+two job titles denote the same work. Measured against the standard occupational taxonomy
+---ESCO--- on close pairs from the same vocabulary, the judge reaches a balanced accuracy
+of $0.863$ versus $0.542$, a difference of $-0.321$ with interval $[-0.371,\ -0.271]$, and
+it also outperforms JobBERT-v3, the domain-specific model, at synonym retrieval.
+
+Second, and this is the result that names the work: that advantage does not transfer to
+the salary benchmark ---and not because of model quality. A recognition oracle, the
+absolute upper bound, does not improve the estimated band: it degrades it, by $+0.00261$
+with interval $[+0.00051,\ +0.00441]$. A variance decomposition places roughly $43\,\%$ of
+salary variation beyond the reach of any title-based method, and the real recognizer adds
+nothing even in the single estimation regime where it could.
+
+Recognizing the role and estimating its pay are, in this data, decoupled problems. That
+claim ---supported by three independent measurements--- is the main contribution, and the
+protocol that made it visible is part of it.
+
+\vspace{0.6cm}
+\noindent\textbf{Key words:} occupational equivalence, salary benchmarking, cross-encoder,
+knowledge distillation, open set recognition, ESCO, payroll, Ecuador.
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+% ============================================================================
+\chapter{Introducción}
 \label{cap:problema}
 
-\section{Qué es un benchmark salarial y por qué el denominador es el problema}
+\section{El problema: el benchmark y su denominador}
 
 Una empresa que quiere saber si paga bien necesita comparar el sueldo de cada persona
 contra lo que el mercado paga por \emph{ese mismo puesto}. El cálculo es trivial: una
@@ -102,6 +237,14 @@ mapea su nómina a mano. Ese mapeo es caro, es lento y es donde se pierde la inf
 porque dos empresas mapean el mismo puesto a categorías distintas según quién haga el
 ejercicio. La alternativa natural es usar la etiqueta que la empresa ya escribió. El
 problema es que esa etiqueta es texto libre.
+
+\section{Motivación y relevancia}
+
+\pend{media página. Tres ejes: (i) el mercado ecuatoriano no tiene referencia salarial
+pública por cargo y las encuestas de compensación son caras y lentas; (ii) la etiqueta de
+cargo del catálogo del IESS colapsa roles distintos bajo una misma denominación, lo que
+invalida la comparación directa; (iii) decidir equivalencia ocupacional sobre texto
+ruidoso es un problema abierto de IA, no un detalle de implementación.}
 
 \section{El vocabulario de nómina ecuatoriano}
 
@@ -160,41 +303,72 @@ El capítulo~\ref{cap:estandar} desarrolla esa medición. Aquí basta como motiv
 taxonomía internacional no distingue estos puestos, hay que aprender la equivalencia de
 los datos.
 
-\section{Preguntas de investigación y contribuciones}
+\section{Objetivos de la investigación}
+
+\subsection*{Objetivo general}
+
+Diseñar, evaluar y acotar un método de reconocimiento de equivalencia ocupacional sobre
+vocabulario de nómina ecuatoriano, y determinar en qué medida ese reconocimiento mejora la
+estimación de bandas salariales de mercado.
+
+\subsection*{Objetivos específicos}
+
+\begin{enumerate}[nosep,leftmargin=2em]
+  \item Construir un juez de equivalencia ocupacional mediante destilación de un modelo de
+    lenguaje grande hacia un \emph{cross-encoder}, con control de simetría y calibración.
+  \item Evaluarlo contra la taxonomía ocupacional estándar (ESCO), un modelo especializado
+    del dominio (JobBERT-v3) y baselines léxicos, sobre conjuntos con verdad independiente.
+  \item Dotar al sistema de reconocimiento de conjunto abierto, de modo que pueda declarar
+    que un título corresponde a un cargo no visto en lugar de forzar un emparejamiento.
+  \item Cuantificar el techo de lo que el título puede aportar a la estimación salarial,
+    mediante oráculos y descomposición de varianza.
+  \item Establecer un protocolo de evaluación con criterio preregistrado, placebo
+    obligatorio y conjunto de prueba congelado, y aplicarlo una sola vez al final.
+\end{enumerate}
+
+\section{Preguntas de investigación}
 
 \begin{description}[leftmargin=2.2em,style=nextline]
   \item[P1] ¿Puede un modelo neuronal decidir «mismo cargo» mejor que la taxonomía
     ocupacional estándar en un vocabulario de nómina latinoamericano?
-  \item[P2] ¿Puede además declarar que un título es un cargo nuevo, en lugar de forzar
-    un emparejamiento?
+  \item[P2] ¿Puede además declarar que un título es un cargo nuevo, en lugar de forzar un
+    emparejamiento?
   \item[P3] ¿Reconocer mejor el cargo mejora la estimación del sueldo de mercado?
 \end{description}
 
 Las respuestas son sí, sí y \textbf{no}. P1 y P2 existen para que P3 sea creíble: solo se
 puede afirmar que el techo es estructural después de demostrar que el reconocedor es bueno.
 
-Contribuciones:
+\section{Aportes de la investigación}
 
-\begin{enumerate}[nosep,leftmargin=2em]
-  \item Un juez neuronal de equivalencia ocupacional destilado de un LLM, con control de
-    simetría y calibración, evaluado contra ESCO, JobBERT-v3 y baselines léxicos.
-  \item La medición del límite de ESCO/ISCO para decidir equivalencia en nóminas
-    latinoamericanas.
-  \item Reconocimiento de conjunto abierto aplicado a títulos de puesto, con análisis de
-    errores de categorías fijadas antes de mirar.
-  \item \textbf{La medición del techo}: el desacople entre reconocer el cargo y estimar
-    el sueldo, cuantificado con oráculos y con descomposición de varianza.
-  \item Un protocolo de evaluación reutilizable: partición por empresa, placebo
-    obligatorio, bootstrap en dos vías y test congelado por hash.
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Un juez neuronal de equivalencia ocupacional} destilado de un modelo de
+    lenguaje grande, con control de simetría y calibración, evaluado contra ESCO,
+    JobBERT-v3 y baselines léxicos.
+  \item \textbf{La medición del límite de ESCO/ISCO} para decidir equivalencia en nóminas
+    latinoamericanas, con su cobertura real sobre el vocabulario.
+  \item \textbf{Reconocimiento de conjunto abierto} aplicado a títulos de puesto, con
+    análisis de errores de categorías fijadas antes de mirar.
+  \item \textbf{La medición del techo:} el desacople entre reconocer el cargo y estimar el
+    sueldo, cuantificado con oráculos y con descomposición de varianza.
+  \item \textbf{Un protocolo de evaluación reutilizable}: partición por empresa, placebo
+    obligatorio, bootstrap en dos vías y conjunto de prueba congelado por hash.
 \end{enumerate}
 
 % ============================================================================
-\chapter{Trabajos relacionados}
+\chapter{Estado del arte}
 \label{cap:relacionados}
 
-\pend{capítulo completo. No existe en ningún borrador previo. Es la corrección 5 del
-panel de jueces, abierta desde 2026-08-07. Material de partida: \texttt{docs/estado\_del\_arte.md},
-pero su §9 ---la literatura de este eje--- está sin verificar contra la fuente.}
+\pend{capítulo completo. No existe en ningún borrador previo. Es la corrección 5 del panel
+de jueces, abierta desde 2026-08-07. Material de partida:
+\texttt{docs/estado\_del\_arte.md}, pero su §9 ---la literatura de este eje--- está sin
+verificar contra la fuente.}
+
+\section{Términos relevantes}
+\pend{glosario operativo, como en el trabajo de fin de carrera de pregrado. Definir con
+precisión: \emph{voto} (par cargo $\times$ empresa), \emph{celda}, régimen \emph{directo}
+frente a \emph{analogía}, pérdida \emph{pinball}, \emph{placebo}, \emph{open set},
+equivalencia frente a identidad de cargo.}
 
 \section{Entity matching neuronal}
 \pend{bi-encoder frente a cross-encoder; el patrón blocking $\to$ ranking $\to$ decisión,
@@ -635,28 +809,31 @@ de datos propietarios.}
 
 % ============================================================================
 \begin{thebibliography}{99}
+\addcontentsline{toc}{chapter}{Referencias bibliográficas}
 
 \bibitem{zhang2019job2vec}
-Zhang, D., Liu, J., Zhu, H., Liu, Y., Wang, L., Wang, P. \& Xiong, H. (2019).
-\emph{Job2Vec: Job Title Benchmarking with Collective Multi-View Representation Learning.}
-CIKM '19, pp. 2763--2771.
+D. Zhang, J. Liu, H. Zhu, Y. Liu, L. Wang, P. Wang y H. Xiong,
+``Job2Vec: Job Title Benchmarking with Collective Multi-View Representation Learning,''
+en \emph{Proc. CIKM '19}, 2019, pp. 2763--2771.
 
 \bibitem{djumalieva2018}
-Djumalieva, J., Lima, A. \& Sleeman, C. (2018).
-\emph{Classifying Occupations According to Their Skill Requirements in Job Advertisements.}
-ESCoE Discussion Paper DP-2018-04.
+J. Djumalieva, A. Lima y C. Sleeman,
+``Classifying Occupations According to Their Skill Requirements in Job Advertisements,''
+ESCoE Discussion Paper DP-2018-04, 2018.
 
 \bibitem{twice2026}
-Bakirov, A., Del Prato, F. \& Zacchia, P. (2026).
-\emph{TWICE: Tree-based Wage Inference with Clustering and Estimation.} arXiv:2601.00776.
+A. Bakirov, F. Del Prato y P. Zacchia,
+``TWICE: Tree-based Wage Inference with Clustering and Estimation,''
+arXiv:2601.00776, 2026.
 
 \bibitem{delpozo2025}
-Del Pozo-Villafuerte \& Villacís-Miranda (2025).
-\emph{Enhancing Labor Market Intelligence in Ecuador.} Computational Economics 67:2107--2149.
+Del Pozo-Villafuerte y Villacís-Miranda,
+``Enhancing Labor Market Intelligence in Ecuador,''
+\emph{Computational Economics}, vol. 67, pp. 2107--2149, 2025.
 
 \bibitem{mdt2019}
-Ministerio del Trabajo del Ecuador. Acuerdo MDT-2019-395 y catálogo de códigos sectoriales
-del IESS.
+Ministerio del Trabajo del Ecuador,
+``Acuerdo MDT-2019-395 y catálogo de códigos sectoriales del IESS,'' 2019.
 
 % \pend{faltan las referencias del eje actual: JobBERT-v3, LLM4Jobs, TalentCLEF, ESCO,
 %  Massing et al. 2019, Wan et al. 2023, la literatura de OSR y la de LLM-as-judge.
