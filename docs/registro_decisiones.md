@@ -9476,3 +9476,57 @@ es independiente de ambos. La lectura principal se hace sobre `lejos` por ese mo
 ### Reversibilidad
 
 Total. Es un brazo de evaluación añadido; no modifica el sistema ni ninguna decisión previa.
+
+### T-026, resultado: el efecto de Qwen vive entero en la analogía; el cross-encoder no aporta ni siquiera ahí (2026-11-02)
+
+Reanálisis de las corridas de T-025, estratificado por `directa` del sistema final. Script:
+`research/tesis/t26_regimen.py`. Salida: `salidas/t26_regimen.txt`.
+
+**Los dos regímenes** (validación, 1.442 empresas apartadas, 38.450 votos):
+
+| Régimen | Votos | Pinball medio |
+|---|---|---|
+| Analogía (`directa = False`) | 16.712 | **0,15068** |
+| Directo (`directa = True`) | 21.738 | 0,11789 |
+
+**Quitando una pieza** (corrida − final; > 0 = quitarla empeora). La unión se calcula dentro de cada estrato:
+
+| Se quita | Régimen | Votos | Δ [IC 95 %] | Lectura |
+|---|---|---|---|---|
+| **Qwen** | **analogía** | 16.712 | **+0,00129 [+0,00032, +0,00220]** | **APORTA** |
+| Qwen | directo | 3.955 | −0,00014 [−0,00064, +0,00003] | no se distingue |
+| **cross-encoder** | **analogía** | 16.712 | **−0,00079 [−0,00186, +0,00018]** | **no se distingue** |
+| cross-encoder | directo | 3.966 | −0,00006 [−0,00032, +0,00015] | no se distingue |
+| Laya | analogía | 2.082 | +0,00701 [−0,00070, +0,01477] | no se distingue (todo el estrato: +0,00087 [+0,00002, +0,00188]) |
+| Laya | directo | 1.493 | +0,00001 [−0,00002, +0,00004] | no se distingue |
+| e5 | analogía | 16.712 | +0,00105 [−0,00147, +0,00314] | no se distingue |
+| e5 | directo | 1.493 | +0,00001 [−0,00002, +0,00004] | no se distingue |
+
+**Las hipótesis, evaluadas tal como quedaron escritas:**
+
+- **H1 — NO se cumple.** Quitar el cross-encoder no empeora la banda en analogía: −0,00079 [−0,00186, +0,00018], y
+  la estimación puntual **sigue favoreciendo quitarlo**, igual que en T-025. El juez no aporta a la banda ni
+  siquiera en el único régimen donde podría hacerlo.
+- **H2 — se cumple.** Quitar Qwen empeora en analogía (+0,00129 [+0,00032, +0,00220]) y no se distingue en directo
+  (−0,00014 [−0,00064, +0,00003]).
+- **H3 — se cumple para las cuatro piezas.** En el régimen directo ninguna se distingue de cero, con magnitudes del
+  orden de 1e-5. El estrato directo es inerte, como exige el diseño del estimador: donde la celda tiene cuantiles
+  empíricos propios, el reconocimiento no puede mover la banda.
+
+**Lectura**
+
+1. **El efecto de Qwen vive entero en la analogía.** El +0,00102 de T-025 era un promedio diluido sobre 21.738
+   votos donde la pieza no puede actuar; medido donde actúa es +0,00129. Más importante que la magnitud: el efecto
+   **aparece exactamente donde la teoría del estimador dice que debe aparecer y desaparece donde dice que debe
+   desaparecer.** Es evidencia de mecanismo, no solo de efecto.
+2. **El resultado negativo del cross-encoder se fortalece.** La objeción natural a T-025 era que el juez se medía
+   promediado sobre votos inertes. Al medirlo solo donde puede actuar, sigue sin aportar. Queda cerrado: su papel
+   en este trabajo es el open set (T-010b, T-019, T-020), no la banda.
+3. **Refuerza T-017.** El oráculo de reconocimiento —techo absoluto— ya empeoraba la banda (+0,00261 [+0,00051,
+   +0,00441]). Que un reconocedor real tampoco aporte en el régimen de analogía es la misma conclusión por otra
+   vía: **reconocer el cargo y estimar el sueldo son problemas desacoplados.**
+4. **Laya pierde significancia al estratificar** (2.082 votos en analogía), aunque sobre todo el estrato el efecto
+   se mantiene sobre cero (+0,00087 [+0,00002, +0,00188]). Es un efecto chico y localizado, como ya decía T-025.
+
+**Alcance.** Exploratorio y descriptivo, como se registró. No se adopta ni se retira ninguna pieza, no se modifica
+el sistema final y no se revierte ninguna lectura previa: T-025 queda como está, y T-026 lo interpreta.

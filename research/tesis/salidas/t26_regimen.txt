@@ -1,0 +1,24 @@
+T-026 - aporte de cada pieza por regimen de estimacion (validacion, 1.442 empresas apartadas)
+EXPLORATORIO: el corte se eligio despues de conocer T-025. Descriptivo, no adopta ni retira nada.
+
+  ANALOGIA  (directa=False)  votos  16,712   pinball medio 0.15068
+  DIRECTO   (directa=True)   votos  21,738   pinball medio 0.11789
+
+QUITANDO UNA PIEZA (corrida - final; > 0 = quitarla empeora). Union calculada DENTRO de cada estrato.
+
+  sin Qwen (busqueda y consulta en Vertex)
+     ANALOGIA  (directa=False)  votos 16,712  +0.00129 [+0.00032, +0.00220] -> APORTA           | todos los del estrato +0.00129 [+0.00032, +0.00220]
+     DIRECTO   (directa=True)   votos  3,955  -0.00014 [-0.00064, +0.00003] -> no se distingue  | todos los del estrato -0.00003 [-0.00013, +0.00001]
+
+  sin cross-encoder en la banda
+     ANALOGIA  (directa=False)  votos 16,712  -0.00079 [-0.00186, +0.00018] -> no se distingue  | todos los del estrato -0.00079 [-0.00186, +0.00018]
+     DIRECTO   (directa=True)   votos  3,966  -0.00006 [-0.00032, +0.00015] -> no se distingue  | todos los del estrato -0.00001 [-0.00006, +0.00003]
+
+  sin Laya (nivel por regresion sobre Qwen)
+     ANALOGIA  (directa=False)  votos  2,082  +0.00701 [-0.00070, +0.01477] -> no se distingue  | todos los del estrato +0.00087 [+0.00002, +0.00188]
+     DIRECTO   (directa=True)   votos  1,493  +0.00001 [-0.00002, +0.00004] -> no se distingue  | todos los del estrato +0.00000 [-0.00000, +0.00000]
+
+  sin e5 (vecinos de la analogia en Vertex)
+     ANALOGIA  (directa=False)  votos 16,712  +0.00105 [-0.00147, +0.00314] -> no se distingue  | todos los del estrato +0.00105 [-0.00147, +0.00314]
+     DIRECTO   (directa=True)   votos  1,493  +0.00001 [-0.00002, +0.00004] -> no se distingue  | todos los del estrato +0.00000 [-0.00000, +0.00000]
+
