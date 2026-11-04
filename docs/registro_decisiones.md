@@ -9358,7 +9358,7 @@ y filtran vecinos. Script: `research/tesis/t25_ablacion.py`. Salida: `salidas/t2
 
 ## T-026 — El efecto de cada pieza por régimen de estimación (directo frente a analogía). Registrado antes de medir
 
-**Fecha:** 2026-11-02
+**Fecha:** 2026-11-04
 **Tipo:** **exploratorio** (ver «Honestidad del alcance» más abajo). No confirmatorio.
 
 ### Contexto
@@ -9424,7 +9424,7 @@ Total. No toca datos, corridas ni el sistema final.
 
 ## T-027 — Baseline LLM zero-shot como decisor de «mismo cargo». Registrado antes de medir
 
-**Fecha:** 2026-11-02
+**Fecha:** 2026-11-04
 **Estado:** registrado; pendiente de cómputo (requiere servir el modelo).
 
 ### Contexto
@@ -9477,7 +9477,7 @@ es independiente de ambos. La lectura principal se hace sobre `lejos` por ese mo
 
 Total. Es un brazo de evaluación añadido; no modifica el sistema ni ninguna decisión previa.
 
-### T-026, resultado: el efecto de Qwen vive entero en la analogía; el cross-encoder no aporta ni siquiera ahí (2026-11-02)
+### T-026, resultado: el efecto de Qwen vive entero en la analogía; el cross-encoder no aporta ni siquiera ahí (2026-11-04)
 
 Reanálisis de las corridas de T-025, estratificado por `directa` del sistema final. Script:
 `research/tesis/t26_regimen.py`. Salida: `salidas/t26_regimen.txt`.
