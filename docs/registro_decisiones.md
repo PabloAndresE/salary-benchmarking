@@ -9617,3 +9617,100 @@ por H200-hora, que es un supuesto declarado; las GPU-hora sí están medidas.
 
 **Alcance.** Es un brazo de evaluación. **No se adopta, retira ni modifica ninguna pieza del sistema**, no se
 revierte ninguna lectura previa y no se toca ningún umbral. T-009, T-016, T-025 y T-026 quedan como están.
+
+## T-028 — Ampliar el oro humano del conjunto lejano para resolver T-027. Registrado antes de armar la muestra
+
+**Fecha:** 2026-11-04
+**Estado:** registrado; pendiente de ejecución (requiere anotación humana).
+
+### Contexto
+
+T-027 comparó a Qwen3.5-122B zero-shot con el cross-encoder destilado de 280 M. En `cerca` el
+cross-encoder gana, pero ese brazo tiene el sesgo que el propio T-027 declaró: el LLM generó las
+etiquetas de entrenamiento de la v9. La lectura principal es `lejos` (`52`, 100 pares, juicio ciego
+del autor), cuya verdad es independiente de los dos. Y ahí **ninguno de los tres criterios
+preregistrados se cumplió**:
+
+| Comparación en `lejos` | Punto | IC 95 % | Lectura |
+|---|---|---|---|
+| balanceada, v9 − LLM | +0,046 | [−0,044, +0,137] | no concluyente |
+| AUC, v9 − LLM | +0,009 | [−0,086, +0,102] | no se distingue |
+
+El intervalo cruza cero (no hay superioridad) y su extremo sale de la banda de ±0,05 (no se puede
+declarar equivalencia). La causa es el tamaño: con n = 100 el semiancho del IC es 0,0905.
+
+### Qué se puede y qué no se puede alcanzar con más datos
+
+El IC se estrecha como $1/\sqrt{n}$. Partiendo del semiancho observado:
+
+| n total | Semiancho | IC si el efecto real se mantiene en +0,046 |
+|---|---|---|
+| 100 (hoy) | 0,0905 | [−0,044, +0,137] |
+| 200 | 0,0640 | [−0,018, +0,110] |
+| 300 | 0,0523 | [−0,006, +0,098] |
+| **400** | **0,0452** | **[+0,001, +0,091]** |
+| 500 | 0,0405 | [+0,006, +0,086] |
+
+**La equivalencia dentro de ±0,05 deja de ser alcanzable y se retira como criterio.** Con el punto
+estimado en +0,046, pegado al margen, el IC tendría que medir ±0,004, lo que exige n ≈ 51.000. No se
+persigue.
+
+**El objetivo pasa a ser superioridad del cross-encoder** (IC de v9 − LLM entero sobre cero). Pares
+nuevos necesarios según el efecto real:
+
+| Efecto real | n total | Pares nuevos |
+|---|---|---|
+| +0,060 | 228 | 128 |
+| +0,050 | 328 | 228 |
+| +0,046 (el observado) | 388 | 288 |
+| +0,040 | 512 | 412 |
+
+**Se fija n = 400 pares en total, es decir 300 pares nuevos.**
+
+### Sesgo declarado del dimensionamiento
+
+Dimensionar con el efecto observado en el piloto lo sobreestima: un efecto que sale grande por azar
+en n = 100 tiende a encogerse al ampliar (*winner's curse*). Si el efecto real es menor que +0,046,
+n = 400 no alcanzará y el resultado volverá a ser no concluyente. **Eso se reportará como tal**, con
+el semiancho alcanzado y la tabla de arriba, y no se ampliará una segunda vez persiguiendo el
+umbral: una muestra que crece hasta que el intervalo cruza el criterio no mide nada.
+
+### Procedimiento
+
+1. **Muestra.** 300 pares nuevos con el mismo criterio de muestreo de `52`, de la misma población y
+   con la misma banda de similitud, semilla 20261104. Ningún par puede repetirse con los 100 ya
+   juzgados ni con la muestra de \tref{022}; la intersección se verifica y se reporta.
+2. **Anotación.** Los **dos anotadores de \tref{022}**, con el mismo aparato: hoja propia, orden
+   distinto, A / B intercambiados al azar, sin estrato, sin sistema, sin puntaje, sin ver el juicio
+   del otro ni el del LLM. La llave queda fuera del repo. Rúbrica v7, la misma que sigue el LLM.
+3. **Oro.** El par en que los dos coinciden. Los desacuerdos se resuelven conversando entre los dos
+   sin ver los modelos, y se reporta cuántos fueron. Se reporta κ de Cohen entre anotadores con su
+   IC; si κ < 0,60 el conjunto ampliado **no se usa** y T-027 queda como está.
+4. **Análisis.** Se repite exactamente el de T-027 (`research/tesis/t27_llm_decisor.py`, fase
+   `medir`) sobre los 400 pares. Mismos métodos, misma métrica, mismo bootstrap pareado de 10.000
+   réplicas. No se reentrena nada ni se cambia ningún umbral.
+
+Los 100 pares originales los juzgó un solo anotador (el autor); los 300 nuevos llevan dos. Esa
+diferencia se declara en el reporte y se incluye como análisis de sensibilidad el resultado
+**solo sobre los 300 nuevos**, además del de los 400.
+
+### Criterio (no se cambia después de medir)
+
+- **Superioridad del cross-encoder:** IC 95 % de (v9 − LLM) en exactitud balanceada entero sobre
+  cero, sobre los 400 pares.
+- **Inferioridad:** IC entero bajo cero. Se reporta como límite del método y va a Limitaciones.
+- **Cualquier otro resultado es no concluyente**, y se reporta con el semiancho alcanzado.
+
+La equivalencia no se evalúa, por lo dicho arriba.
+
+### Costo y decisión de alcance
+
+300 pares × 2 anotadores = **600 juicios adicionales**, sobre los ~620 que ya pide \tref{022}. Si ese
+costo no cabe en el calendario, la alternativa legítima es **no ejecutar T-028** y reportar T-027
+como no concluyente junto con la tabla de potencia de este bloque: el tamaño necesario para resolver
+la pregunta es, en sí mismo, un resultado reportable. Preregistrar no obliga a ejecutar.
+
+### Reversibilidad
+
+Total. Es un brazo de evaluación ampliado; no toca el sistema, ni el entrenamiento, ni ninguna
+decisión adoptada.
