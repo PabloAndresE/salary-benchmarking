@@ -706,6 +706,23 @@ sueldo de una empresa para un cargo, es decir el par (cargo $\times$ empresa). U
 recurre entre años y una empresa aporta cientos de personas; tratarlas como independientes
 produciría intervalos falsamente estrechos.
 
+El objetivo que se modela sobre esa unidad es
+
+\begin{equation}
+y = \log\!\left(\frac{\text{sueldo base}}{\text{SBU}_{\text{año}}}\right),
+\label{eq:objetivo}
+\end{equation}
+
+normalizado por el Salario Básico Unificado del año para que 2024 y 2025 sean comparables.
+Se usa \textbf{sueldo base} y no remuneración total de forma deliberada: la remuneración
+total solo está bien definida donde la empresa reporta la composición del pago, y un
+objetivo que cambia de definición entre filas no es comparable. La decisión tiene además
+una consecuencia metodológica que conviene declarar: hace que el experimento sobre
+composición del pago del capítulo~\ref{cap:techo} no sea circular, porque la composición
+no es parte del objetivo que se intenta explicar. Si el objetivo fuera la remuneración
+total, la composición lo explicaría por construcción, al ser literalmente uno de sus
+sumandos.
+
 La métrica es la \textbf{pérdida pinball} en los cuantiles $0{,}25$ y $0{,}75$ sobre la
 banda de empresas. Mide la calidad de un intervalo, no de un punto, que es lo que el
 sistema entrega.
@@ -1141,9 +1158,23 @@ se mantiene en la banda aunque la estimación puntual favorezca quitarlo.}
     \tref{010b}, 40 en \tref{019}, 100 pares en los brazos «lejos».}
   \item \pend{El examen final compara núcleos, no productos: las reglas de producto
     posteriores quedan fuera del arnés por diseño.}
+  \item \textbf{El benchmark mide sueldo base, no ingreso.} Por la
+    ecuación~\eqref{eq:objetivo}, la banda no refleja comisiones, horas extras ni otros
+    rubros variables, y el sesgo no es uniforme entre cargos. Medido sobre la base
+    completa, pasar el objetivo a remuneración total mueve el centro entre $+9{,}9\,\%$ y
+    $+19{,}4\,\%$ según el cargo, con los puestos operativos —donde pesan las horas
+    extras— más afectados que los gerenciales. No existe un factor constante que convierta
+    una banda en la otra.
+    % [exp/objetivo-remuneracion, 2026-11-10] base_objC frente a base_v31, misma muestra,
+    % CIIU G4649.22: Asistente Administrativo +9,9 %; Gerente de Operaciones +11,2 %;
+    % Jefe de Bodega +15,7 %; Auxiliar de Bodega +18,1 %; Auxiliar de Farmacia +19,4 %.
+  \item \textbf{Hay personas que el benchmark no puede ver.} 101.188 filas del marco
+    (el 10,1\,\%) tienen remuneración válida pero sueldo base nulo o no evaluable
+    —comisionistas puros y nóminas que cargan todo en rubros variables— y quedan fuera de
+    toda banda. Aportan 2.864 títulos que ni siquiera entran al catálogo.
+    % [exp/objetivo-remuneracion, 2026-11-10]
   \item \pend{La mejora final es de un 1,0\,\% del pinball. Decirlo junto al techo del
     capítulo~\ref{cap:techo}, donde deja de ser una decepción.}
-  \item \pend{CoVoST... (no aplica). Revisar que no queden restos del borrador anterior.}
 \end{itemize}
 
 % ============================================================================
