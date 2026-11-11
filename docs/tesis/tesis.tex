@@ -359,48 +359,321 @@ puede afirmar que el techo es estructural después de demostrar que el reconoced
 \chapter{Estado del arte}
 \label{cap:relacionados}
 
-\pend{capítulo completo. No existe en ningún borrador previo. Es la corrección 5 del panel
-de jueces, abierta desde 2026-08-07. Material de partida:
-\texttt{docs/estado\_del\_arte.md}, pero su §9 ---la literatura de este eje--- está sin
-verificar contra la fuente.}
+Este capítulo ubica el problema en tres literaturas que rara vez se citan entre sí: la de
+las taxonomías ocupacionales, que define qué cuenta como «el mismo cargo»; la de
+emparejamiento de entidades y recuperación neuronal, que aporta los métodos; y la de
+descomposición salarial, que define contra qué se mide el éxito. La tesis vive en el
+cruce, y el vacío que ocupa (sección~\ref{sec:vacio}) aparece precisamente porque las tres
+se han desarrollado por separado.
 
+% ---------------------------------------------------------------------
 \section{Términos relevantes}
-\pend{glosario operativo, como en el trabajo de fin de carrera de pregrado. Definir con
-precisión: \emph{voto} (par cargo $\times$ empresa), \emph{celda}, régimen \emph{directo}
-frente a \emph{analogía}, pérdida \emph{pinball}, \emph{placebo}, \emph{open set},
-equivalencia frente a identidad de cargo.}
+\label{sec:terminos}
 
-\section{Entity matching neuronal}
-\pend{bi-encoder frente a cross-encoder; el patrón blocking $\to$ ranking $\to$ decisión,
-que es exactamente la arquitectura de los capítulos 4 y 5.}
+\begin{description}
 
-\section{Normalización de títulos de puesto}
-\pend{JobBERT, JobBERT-v3 (TechWolf), LLM4Jobs, Carotene, TalentCLEF 2025 ---que tiene
-pista en español y es el benchmark público del problema.}
+  \item[Título de cargo] La cadena de texto con que una empresa nombra un puesto en su
+  nómina (\textsc{asistente administrativo}, \textsc{aux. de bodega}). No está
+  normalizada: en el catálogo de esta tesis \textsc{asistente administrativo} aparece con
+  81 grafías distintas.
 
-\section{Codificación ocupacional y su fiabilidad}
-\pend{ISCO-08, ESCO, CASCOT, OccCANINE. Massing et al. (2019): $\kappa \approx 0{,}5$
-entre agencias humanas profesionales a 4 dígitos, pero $0{,}82$--$0{,}90$ para los
-constructos agregados. Wan et al. (2023): 17,7--26,0\,\% de acuerdo exacto entre
-codificadores automáticos. Los dos fijan la expectativa realista.}
+  \item[Equivalencia ocupacional] La relación «$A$ y $B$ son el mismo cargo a efectos de
+  comparación salarial». No es sinonimia léxica ni identidad de tareas: es una relación
+  definida por una rúbrica explícita (capítulo~\ref{cap:juez}) y verificable por
+  anotadores humanos.
 
-\section{Reconocimiento de conjunto abierto}
-\pend{hoy no hay una sola cita de OSR en todo el expediente, y el capítulo 6 es OSR.
-Scheirer et al., Bendale \& Boult, Vaze et al.}
+  \item[Conjunto abierto (\emph{open set})] Régimen de evaluación en el que el sistema
+  recibe en prueba categorías que no vio en entrenamiento y debe poder abstenerse. Se
+  opone al conjunto cerrado, donde toda consulta tiene respuesta válida en el
+  catálogo~\cite{geng2021openset}.
 
-\section{LLM como juez y destilación de etiquetas}
-\pend{es el método del capítulo 4 y no está enmarcado. Incluir el control de simetría
-como la práctica que la literatura de LLM-as-judge suele omitir.}
+  \item[Banda salarial] El par de cuantiles $(p_{25}, p_{75})$ del salario de mercado para
+  un cargo en un contexto dado. En esta tesis se estima sobre
+  $y = \log(\text{sueldo base} / \text{SBU}_{\text{año}})$, no sobre remuneración total:
+  \texttt{total} solo está bien definido donde la empresa reporta composición, y un
+  objetivo que cambia de definición entre filas no es comparable.
 
-\section{Benchmarking salarial y agrupamiento ocupacional}
-\pend{Job2Vec (Zhang et al., CIKM 2019), Djumalieva et al. (ESCoE 2018), TWICE (Bakirov
-et al., 2026). Los tres usan el salario para construir el agrupamiento o el nivel.}
+  \item[Régimen directo y régimen de analogía] El primero aplica cuando la celda tiene
+  respaldo suficiente ($\geq 10$ empresas y $\geq 10$ personas) y la banda sale de sus
+  propios cuantiles; el segundo, cuando no lo tiene y la banda se presta de un vecindario.
+  La distinción es central: el 82\,\% de las celdas vive en analogía aunque solo
+  represente el 7,7\,\% de las personas.
+  % [base_v31, verificado 2026-11-10: 65.181 celdas, 18,0% con >=10 empresas -> 92,3% de personas]
 
-\section{El hueco}
-\pend{reformular la frase de contribución. La vigente ---«familia de rol $\times$ nivel
-inducida sin usar el salario»--- describe el sistema abandonado en T-008.}
+  \item[Efecto empleador] La parte de la varianza salarial atribuible a la empresa y no al
+  trabajador ni al cargo. Se denota $\tau^2$ en el modelo de dos componentes del
+  capítulo~\ref{cap:protocolo}.
 
-% ============================================================================
+  \item[SBU] Salario Básico Unificado del Ecuador, fijado anualmente por Acuerdo
+  Ministerial. Se usa como numerario para hacer comparables años distintos:
+  USD~460 (2024), USD~470 (2025), USD~482 (2026, Acuerdo MDT-2025-195).
+
+\end{description}
+
+% ---------------------------------------------------------------------
+\section{Taxonomías ocupacionales: qué resuelven y dónde se rompen}
+\label{sec:taxonomias}
+
+La respuesta institucional a la equivalencia ocupacional son las clasificaciones
+jerárquicas. ESCO, la clasificación europea de competencias, cualificaciones y
+ocupaciones, organiza unas 3.000 ocupaciones con sus habilidades
+asociadas~\cite{esco2022}; ISCO-08 cumple la misma función a escala internacional y es la
+referencia estadística oficial. Ambas comparten el supuesto de que el universo de
+ocupaciones es \emph{cerrado y conocido}: la tarea se reduce a asignar cada texto a una
+etiqueta del catálogo.
+
+Ese supuesto se rompe con vocabulario de nómina real por tres razones distintas, y
+conviene separarlas porque admiten soluciones distintas:
+
+\begin{enumerate}
+  \item \textbf{Granularidad.} Las taxonomías agregan donde el mercado discrimina. Dos
+  puestos que ISCO-08 pone bajo el mismo código pueden tener bandas salariales que no se
+  solapan, y el sistema de esta tesis existe para estimar esas bandas.
+
+  \item \textbf{Cobertura.} La cola larga del catálogo no tiene correspondencia limpia.
+  En los datos de esta tesis, el 78\,\% de los puestos tiene una sola empresa detrás; son
+  exactamente los que una taxonomía no anticipa.
+
+  \item \textbf{Ruido de escritura.} Las taxonomías asumen texto normalizado. La nómina
+  trae abreviaturas, erratas y marcas de género que hay que resolver antes de cualquier
+  comparación semántica.
+\end{enumerate}
+
+La evidencia empírica de esta tesis es contundente al respecto: emparejar por ESCO alcanza
+una exactitud balanceada de 0,542 frente a 0,863 del juez entrenado, una diferencia de
+$-0,321$ con intervalo $[-0,371, -0,271]$.
+% [T-016] ESCO como baseline de equivalencia; ver cap. 5.
+Esto no es un defecto de ESCO: es la consecuencia de usar una herramienta de
+clasificación estadística para una tarea de comparación salarial fina.
+
+El trabajo de Djumalieva, Lima y Sleeman~\cite{djumalieva2018} es relevante justamente
+porque reconoce el problema desde dentro de la tradición estadística: construyen una
+taxonomía de habilidades \emph{dirigida por datos} a partir de anuncios de empleo, en vez
+de partir del catálogo oficial. Su motivación —que las clasificaciones oficiales envejecen
+peor que el mercado que describen— es la misma que motiva esta tesis, aunque el objeto
+difiera.
+
+% ---------------------------------------------------------------------
+\section{Representaciones aprendidas de títulos de cargo}
+\label{sec:representaciones}
+
+La línea que sustituye la etiqueta por un vector arranca con Job2Vec~\cite{zhang2019job2vec},
+que aprende representaciones de títulos a partir de un grafo de transiciones laborales y
+las usa explícitamente para \emph{benchmarking} de cargos. La intuición es que dos títulos
+son equivalentes si las personas transitan entre ellos, no si sus textos se parecen.
+
+JobBERT-v3~\cite{decorte2025jobbert} representa el estado del arte abierto en
+emparejamiento multilingüe de títulos: un modelo contrastivo entrenado específicamente
+para esa tarea, presentado en TalentCLEF 2025. Es el baseline más exigente disponible, y
+esta tesis lo evalúa de frente: en recuperación alcanza r@1 2,7\,\% / r@10 19,2\,\% /
+MRR 0,082, por encima de Vertex (3,3 / 16,7 / 0,079) en r@10 pero por debajo de la
+consulta con título y descripción (4,1 / 22,2 / 0,101).
+% [T-016] tabla de recuperacion; ver cap. 5.
+Como juez de equivalencia, en cambio, queda $-3{,}1$ puntos $[-4{,}6, -1{,}5]$ por debajo
+del enfoque con descripción generada. Ese resultado merece su propia discusión: un modelo
+afinado para \emph{matching} de títulos no domina cuando la tarea pasa a ser decidir
+equivalencia bajo una rúbrica explícita.
+
+LLM4Jobs~\cite{hong2023llm4jobs} marca el giro hacia los modelos generativos: codifica
+ocupaciones sin supervisión, aprovechando que el LLM ya conoce el dominio. Es el
+antecedente directo del uso de Qwen3.5-122B como etiquetador en esta tesis, con una
+diferencia de diseño importante: aquí el LLM no se usa en producción sino como
+\emph{maestro}, y lo que se sirve es un modelo destilado 400 veces más pequeño
+(sección~\ref{sec:destilacion}).
+
+% ---------------------------------------------------------------------
+\section{Emparejamiento de entidades y cross-encoders}
+\label{sec:entitymatching}
+
+Decidir si dos cadenas denotan la misma entidad es un problema clásico de bases de datos.
+Ditto~\cite{li2020ditto} estableció que afinar un modelo de lenguaje preentrenado sobre
+pares serializados supera a los métodos basados en reglas y características, y fijó el
+formato que esta tesis adopta: presentar el par completo a un único codificador en vez de
+comparar vectores calculados por separado.
+
+La distinción entre \emph{bi-encoder} y \emph{cross-encoder} es la decisión arquitectónica
+central del capítulo~\ref{cap:juez}. Un bi-encoder al estilo Sentence-BERT~\cite{reimers2019sbert}
+codifica cada texto una vez y compara por coseno: barato, indexable, y por eso imprescindible
+para recuperar candidatos entre 58.051 títulos. Un cross-encoder ve los dos textos juntos y
+puede modelar su interacción: más caro por par, pero sin la pérdida que impone proyectar cada
+texto a un vector aislado. La arquitectura de esta tesis los combina —recuperar con
+bi-encoder, juzgar con cross-encoder— y mide cuánto aporta cada uno por separado.
+
+El juez se construye sobre mDeBERTa-v3~\cite{he2021debertav3}, que añade atención
+desenredada y un objetivo de preentrenamiento al estilo ELECTRA. La elección de una base
+multilingüe no es cosmética: el catálogo mezcla español, inglés y siglas, y D-050
+documenta cuántos grupos se unen solo por resolver idioma.
+
+% ---------------------------------------------------------------------
+\section{Fiabilidad de la codificación ocupacional}
+\label{sec:fiabilidad}
+
+Antes de evaluar cualquier sistema automático conviene saber qué rendimiento es
+razonable esperar, y la respuesta de la literatura es aleccionadora: \emph{los humanos
+profesionales tampoco se ponen de acuerdo}.
+
+Massing, Wasmer, Wolf y Züll~\cite{massing2019} compararon agencias de codificación
+profesionales alemanas sobre el mismo material y encontraron un acuerdo de
+$\kappa \approx 0{,}5$ al nivel de cuatro dígitos de la clasificación, que sube a
+$0{,}82$--$0{,}90$ para los constructos agregados. Wan \emph{et al.}~\cite{wan2023}
+reportan, para herramientas automáticas de codificación aplicadas a descripciones de
+puesto de un estudio poblacional, acuerdos exactos de entre 17,7 y 26,0\,\%.
+
+Las dos cifras fijan la expectativa realista de este trabajo y tienen tres consecuencias
+directas:
+
+\begin{enumerate}
+  \item Un criterio de $\kappa \geq 0{,}60$ entre anotadores, como el que exige el
+  protocolo de oro humano del capítulo~\ref{cap:estandar}, es \emph{más estricto} que el
+  acuerdo observado entre agencias profesionales a grano fino.
+  \item La diferencia entre el grano fino ($0{,}5$) y el agregado ($0{,}82$--$0{,}90$)
+  anticipa el hallazgo del capítulo~\ref{cap:techo}: la información ocupacional es más
+  estable cuanto más gruesa, y el nivel jerárquico es precisamente un constructo agregado.
+  \item Cualquier evaluación que reporte exactitudes muy altas en esta tarea debería
+  levantar sospecha sobre la dificultad real de su conjunto de prueba.
+\end{enumerate}
+
+% ---------------------------------------------------------------------
+\section{Reconocimiento en conjunto abierto}
+\label{sec:openset}
+
+Un sistema que siempre devuelve el vecino más cercano es útil solo si el cargo consultado
+existe en el catálogo. Con el 78\,\% de los puestos respaldados por una sola empresa, esa
+condición no se cumple, y el problema pasa al dominio del reconocimiento en conjunto
+abierto: el sistema debe poder decir «no sé».
+
+El problema fue formalizado por Scheirer \emph{et al.}~\cite{scheirer2013} como una
+minimización restringida que penaliza el «riesgo de espacio abierto», y la revisión de
+Geng, Huang y Chen~\cite{geng2021openset} recoge la década siguiente de métodos. Conviene
+retener el resultado de Vaze \emph{et al.}~\cite{vaze2022}, que muestran que la capacidad
+de rechazar lo desconocido correlaciona fuertemente con la calidad del clasificador en
+conjunto cerrado: antes de añadir maquinaria de rechazo, conviene asegurarse de que el
+sistema base discrimina bien. Es el orden que sigue esta tesis, que construye y valida el
+juez (capítulos~\ref{cap:juez} y~\ref{cap:estandar}) antes de abrirlo al conjunto abierto.
+
+La literatura de OSR se desarrolló sobre todo en visión por computador y gira alrededor de
+cómo calibrar el umbral de rechazo sin ver las clases desconocidas. Esta tesis traslada
+ese marco al vocabulario de nómina y lo evalúa explícitamente: el método propuesto alcanza
+0,784 frente a 0,645 de un umbral fijo, con una diferencia de $+0{,}139$
+$[+0{,}044, +0{,}225]$.
+% [T-010b / T-019] ver cap. 6.
+Hasta donde alcanzó esta revisión, no hay trabajo previo que evalúe equivalencia
+ocupacional bajo protocolo de conjunto abierto; es uno de los aportes del
+capítulo~\ref{cap:openset}. \pend{Confirmar esta afirmación de novedad con una búsqueda
+sistemática antes de la defensa: es la clase de frase que un tribunal pide sustentar.}
+
+% ---------------------------------------------------------------------
+\section{Destilación de modelos grandes a modelos compactos}
+\label{sec:destilacion}
+
+Usar un LLM de 122\,B parámetros para juzgar millones de pares es inviable en producción.
+La respuesta habitual es la destilación: el modelo grande etiqueta, el pequeño aprende de
+esas etiquetas y es el que se sirve.
+
+Esta tesis aplica esa receta y la somete a una prueba que la literatura suele omitir:
+comparar el alumno \emph{contra su propio maestro} en datos cuya verdad no proviene de
+ninguno de los dos. El resultado es informativo y en parte incómodo. En pares cercanos el
+cross-encoder de 280\,M supera al LLM de 122\,B ($+0{,}032$ $[+0{,}003, +0{,}060]$ en
+exactitud balanceada), pero ese conjunto tiene un sesgo declarado: el LLM generó las
+etiquetas de entrenamiento. En el conjunto con verdad independiente —juicio humano ciego
+sobre 100 pares— la diferencia es $+0{,}046$ con intervalo $[-0{,}044, +0{,}137]$:
+\textbf{no concluyente}. Ni superioridad ni equivalencia.
+% [T-027] ver cap. 5; el tamano necesario para resolverlo esta en el bloque T-028.
+
+Lo que sí queda establecido es el costo: 82$\times$ más rápido por par y 164$\times$ más
+barato, con el LLM sin superar al destilado en ningún conjunto. La afirmación fuerte
+—«280\,M iguala a 122\,B»— no se sostiene con $n=100$, y el capítulo lo reporta como tal.
+
+% ---------------------------------------------------------------------
+\section{Estimación de bandas salariales y el efecto empleador}
+\label{sec:salarios}
+
+La literatura de economía laboral descompone el salario en una parte atribuible al
+trabajador y otra a la empresa. El marco dominante es AKM, de efectos fijos identificados
+por la movilidad de trabajadores entre empresas, y el consenso empírico sitúa el efecto
+empleador alrededor del 20\,\% de la varianza~\cite{card2018firms}.
+\pend{Verificar la cifra exacta y la página en Card, Cardoso, Heining y Kline (2018) antes
+de citarla como consenso.}
+
+Aquí aparece el riesgo metodológico más serio de esta tesis. La medición propia arroja un
+efecto empleador del 34--39\,\%, muy por encima de ese consenso, y
+$\tau = 0{,}2917$ es la cifra que abre el capítulo~\ref{cap:problema} y de la que depende el
+techo del 12,1\,\%. Bakirov, Del Prato y Zacchia~\cite{twice2026} documentan
+exactamente este fallo al presentar TWICE: los enfoques estándar dependen de efectos fijos
+latentes identificados por movilidad, y \emph{las redes ralas inflan las estimaciones de
+varianza}. Su propuesta es sustituir los efectos latentes por particiones sobre
+observables mediante árboles con \emph{gradient boosting}, y reportan que la clasificación
+y las interacciones no aditivas explican más dispersión de la que implican las
+estimaciones AKM estándar.
+
+La consecuencia para esta tesis es directa y se asume en el capítulo~\ref{cap:limitaciones}:
+el techo debe reportarse como intervalo, no como punto, y la posibilidad de que $\tau$ esté
+inflado por movilidad limitada queda declarada como amenaza a la validez.
+
+En el plano regional, el antecedente más cercano es el de Del Pozo-Villafuerte y
+Villacís-Miranda~\cite{delpozo2025}, que construyen inteligencia de mercado laboral
+para Ecuador extrayendo vacantes de Computrabajo, Multitrabajos y Encuentraempleo, y
+estandarizan sector y ocupación con modelos de oraciones (all-mpnet-base-v2,
+Sentence-T5-Large) contra ISIC~4.0, ISCO-08 y ESCO. Las diferencias con este trabajo son
+las que definen su aporte:
+
+\begin{itemize}
+  \item \textbf{Fuente.} Ellos usan \emph{vacantes publicadas}; esta tesis usa
+  \emph{nómina efectivamente pagada}. Una vacante dice lo que una empresa ofrece; la
+  nómina, lo que paga.
+  \item \textbf{Destino.} Ellos \emph{mapean} a una taxonomía internacional; esta tesis
+  argumenta y mide que ese mapeo pierde la granularidad que la estimación salarial
+  necesita (sección~\ref{sec:taxonomias}).
+  \item \textbf{Objetivo.} Ellos producen variables descriptivas del mercado; aquí el
+  criterio de éxito es el error de una banda salarial, medido con \emph{pinball loss}.
+\end{itemize}
+
+% ---------------------------------------------------------------------
+\section{Evaluación: qué existe y qué no cubre}
+\label{sec:benchmarks}
+
+TalentCLEF 2025~\cite{gasco2025talentclef} es la primera campaña de evaluación dedicada a
+inteligencia de títulos y habilidades, con una tarea de emparejamiento multilingüe de
+títulos que incluye español, alemán, inglés y chino, construida sobre solicitudes de
+empleo reales anotadas manualmente. Atrajo 76 equipos y más de 280 envíos, y sus
+resultados confirman que el enfoque dominante son codificadores multilingües afinados con
+aprendizaje contrastivo.
+
+Su existencia es a la vez la mejor validación del problema y la medida exacta de lo que
+falta. TalentCLEF evalúa \emph{emparejamiento} sobre solicitudes de empleo; no evalúa
+nómina, no cubre español ecuatoriano, y —lo decisivo para esta tesis— no mide el efecto
+del emparejamiento sobre una estimación salarial posterior. Un sistema puede ganar
+TalentCLEF y no mejorar ninguna banda.
+
+% ---------------------------------------------------------------------
+\section{El vacío que ocupa esta tesis}
+\label{sec:vacio}
+
+Las tres literaturas anteriores dejan una pregunta sin responder, y es la que organiza
+este trabajo:
+
+\begin{quote}
+\emph{¿Reconocer mejor el cargo mejora la estimación del salario?}
+\end{quote}
+
+La pregunta no es retórica. La literatura de emparejamiento asume que sí —de lo contrario
+no tendría sentido optimizar el reconocimiento— pero evalúa con métricas de recuperación
+que nunca tocan el salario. La literatura de descomposición salarial trata el cargo como
+una etiqueta dada y no se pregunta de dónde sale. Nadie mide el eslabón.
+
+Esta tesis lo mide, y la respuesta resulta ser \textbf{no}, al menos en estos datos. El
+oráculo de reconocimiento —sustituir el juez por la respuesta correcta— \emph{empeora} la
+banda ($+0{,}00261$ $[+0{,}00051, +0{,}00441]$ en pinball), mientras que el oráculo de
+nivel jerárquico la mejora ($-0{,}00140$ $[-0{,}00275, -0{,}00018]$).
+% [T-017] ver cap. 7.
+Reconocer el cargo y estimar el sueldo son, en estos datos, problemas desacoplados.
+
+De ahí los cuatro aportes que el capítulo~\ref{cap:problema} enumera y que los capítulos
+siguientes sostienen: un juez neuronal de equivalencia ocupacional evaluado contra el
+estándar sectorial; su evaluación bajo conjunto abierto; la comparación del destilado
+contra su propio maestro con verdad independiente; y la medición del eslabón que une
+reconocimiento con estimación, cuyo resultado negativo es el hallazgo central.
+
 \chapter{Datos y protocolo de medición}
 \label{cap:protocolo}
 
@@ -681,14 +954,92 @@ queda sin explicar, cerca del $\mathbf{43\,\%}$ de la varianza está fuera del a
 cualquier método que solo mire el título.
 
 \section{Reconciliación con el efecto empleador dentro de celda}
-\pend{sección necesaria. Las dos mediciones conviven y parecen contradecirse: dentro de
-celda de cargo, el efecto empleador domina ($\tau = 0{,}2917$ frente a $\sigma = 0{,}1423$,
-el 81\,\% de la varianza residual); fuera de muestra sobre el total, el cargo explica más
-que la empresa ($57{,}4\,\%$ frente a $26{,}5\,\%$). Son alcances distintos ---varianza
-residual dentro de celda frente a varianza total--- y hay que explicarlo explícitamente, o
-es la primera pregunta del tribunal. Añadir también que $\tau$ puede estar sobreestimado
-por sesgo de movilidad limitada (Andrews et al., 2008), lo que afecta al techo del 12,1\,\%
-del análisis preliminar.}
+\label{sec:reconciliacion}
+
+Dos mediciones de esta tesis conviven y parecen contradecirse. Dentro de una celda de
+cargo, el efecto empleador domina: $\tau = 0{,}2917$ frente a $\sigma = 0{,}1423$, de donde
+
+\begin{equation}
+\frac{\tau^2}{\tau^2 + \sigma^2}
+= \frac{0{,}08509}{0{,}10534} = 0{,}808 ,
+\label{eq:intraclase}
+\end{equation}
+
+es decir el 81\,\% de la varianza residual. Pero la tabla~\ref{tab:varianza} dice que,
+fuera de muestra y sobre el total, el cargo explica más que la empresa (57,4\,\% frente a
+26,5\,\%) y que añadir la empresa a un modelo que ya conoce el cargo rinde apenas 11,0
+puntos. Si la empresa aporta tan poco, ¿cómo puede ser responsable del 81\,\% de algo?
+
+\subsection{Las dos cifras miden sobre marcos distintos}
+
+No hay contradicción, pero tampoco se resuelve con aritmética de porcentajes: las dos
+cantidades \textbf{no son sumables ni despejables una de la otra}, por tres razones
+independientes.
+
+\begin{itemize}
+  \item \textbf{Unidad.} La ecuación~\eqref{eq:intraclase} descompone varianza entre
+  \emph{personas}: $\tau^2$ mide dispersión entre empresas y $\sigma^2$ dispersión entre
+  personas de la misma empresa y el mismo cargo. La tabla~\ref{tab:varianza} opera sobre
+  \emph{votos}, que ya son medianas por empresa y cargo; la variación individual está
+  promediada antes de empezar.
+
+  \item \textbf{Denominador.} El 81\,\% es una proporción de lo que queda \emph{dentro} de
+  una celda. El 11,0\,\% es un incremento de $R^2$ sobre la varianza \emph{total} de los
+  164.096 votos del catálogo, que es 0,477.
+
+  \item \textbf{Penalización.} El 11,0\,\% se mide fuera de muestra, de modo que los 6.719
+  efectos de empresa pagan el costo de generalizar; el 81\,\% no tiene esa penalización.
+\end{itemize}
+
+Ambas son ciertas y responden preguntas distintas. La ecuación~\eqref{eq:intraclase} dice
+que, \emph{fijado un cargo}, lo que distingue a dos personas es casi siempre en qué
+empresa trabajan y no quiénes son: eso es lo que justifica construir la banda sobre
+empresas y no sobre personas, como corrigió D-016. La tabla~\ref{tab:varianza} dice que,
+sobre el catálogo completo y a nivel de voto, la identidad de la empresa añade poco a un
+modelo que ya conoce el cargo. Una describe la estructura \emph{dentro} de una celda; la
+otra, el poder predictivo \emph{sobre todas}.
+
+\subsection{Casi toda la señal del título está en su nivel}
+
+La tabla~\ref{tab:varianza} contiene además el dato que explica el resultado del oráculo.
+El \textbf{nivel jerárquico} —cinco valores— explica por sí solo el 46,3\,\% de la
+varianza, frente al 57,4\,\% del cargo completo: cinco categorías capturan más de cuatro
+quintas partes de lo que capturan 38.715 cargos distintos. Y con la empresa ya conocida,
+la identidad exacta del cargo agrega apenas \textbf{4 puntos} sobre el nivel, de 64,1\,\%
+a 68,4\,\%.
+
+Ese es el mecanismo detrás de \tref{017}. Reconocer que \textsc{coordinador de logística}
+y \textsc{jefe de despachos} son el mismo cargo mejora el reconocimiento, pero casi toda
+la información que ese acierto aporta al \emph{sueldo} ya estaba disponible sabiendo que
+ambos son jefatura. No es que el título no informe: es que \emph{la parte del título que
+informa sobre el sueldo es gruesa}, y una escalera de cinco peldaños ya la contiene.
+
+Conviene notar que esto concuerda con lo que la literatura de codificación ocupacional
+observa entre anotadores humanos: el acuerdo es bajo a grano fino
+($\kappa \approx 0{,}5$) y alto para constructos agregados
+($0{,}82$--$0{,}90$)~\cite{massing2019}. La información ocupacional es más estable cuanto
+más gruesa, tanto para humanos como para el salario.
+
+\subsection{Qué pasa si \texorpdfstring{$\tau$}{tau} está sobreestimado}
+
+La ecuación~\eqref{eq:intraclase} descansa en $\tau = 0{,}2917$, y esa cifra puede estar
+inflada por sesgo de movilidad limitada: los efectos fijos de empresa se identifican a
+partir de trabajadores que cambian de empleador, y en una red rala de movimientos la
+varianza estimada se sobreestima. Bakirov, Del Prato y Zacchia~\cite{twice2026} formulan
+exactamente ese diagnóstico al proponer TWICE, y lo resuelven sustituyendo los efectos
+latentes por particiones sobre observables.
+
+El efecto sobre lo anterior es acotado pero debe declararse: con un $\tau$ menor, el
+81\,\% de la ecuación~\eqref{eq:intraclase} bajaría y el peso relativo de la variación
+individual crecería. El reparto cualitativo —dentro de una celda, la empresa pesa más que
+el individuo— se mantiene mientras $\tau > \sigma$, lo que ocurre con holgura
+($0{,}2917$ frente a $0{,}1423$). Pero la cifra puntual no debe presentarse sin su
+advertencia, y por eso el capítulo~\ref{cap:limitaciones} reporta el techo del 12,1\,\%
+como intervalo y no como punto.
+
+\pend{Verificar en qué subconjunto de celdas se estimaron $\tau$ y $\sigma$. Si provienen
+solo de celdas con respaldo suficiente, decirlo explícitamente: la cola larga del catálogo
+es más dispersa y la cifra no se generaliza a ella.}
 
 \section{Reconocer y pagar son problemas desacoplados}
 
@@ -838,6 +1189,78 @@ Ministerio del Trabajo del Ecuador,
 % \pend{faltan las referencias del eje actual: JobBERT-v3, LLM4Jobs, TalentCLEF, ESCO,
 %  Massing et al. 2019, Wan et al. 2023, la literatura de OSR y la de LLM-as-judge.
 %  Todas están en estado_del_arte.md §9 marcadas como NO verificadas contra la fuente.}
+
+% --- ENTRADAS NUEVAS DEL CAPITULO 2 -----------------------------------
+% Verificadas contra fuente primaria el 2026-11-10.
+% NO incluye zhang2019job2vec, djumalieva2018, twice2026, delpozo2025 ni
+% mdt2019: esas ya existen en tesis.tex y se reutilizan sus claves.
+% OJO djumalieva2018: la entrada vigente cita un solo autor. Son TRES
+% (Djumalieva, Lima y Sleeman), ESCoE-DP-2018-04, marzo 2018. Corregirla.
+
+\bibitem{esco2022}
+European Commission, \emph{ESCO: European Skills, Competences, Qualifications and
+Occupations}. Luxemburgo: Publications Office of the European Union.
+[En línea]. Disponible en: \url{https://esco.ec.europa.eu/en/classification}
+
+\bibitem{decorte2025jobbert}
+J.-J. Decorte, M. De Lange y J. Van Hautte, ``Multilingual JobBERT for cross-lingual job
+title matching,'' en \emph{CLEF 2025 Working Notes}, CEUR Workshop Proceedings, 2025.
+[En línea]. Disponible en: \url{https://arxiv.org/abs/2507.21609}
+
+\bibitem{hong2023llm4jobs}
+\pend{autores} ``LLM4Jobs: Unsupervised occupation extraction and standardization
+leveraging large language models,'' \emph{arXiv:2309.09708}, 2023.
+% Afiliacion verificada: IDLAB, Ghent University. Lista de autores SIN confirmar.
+
+\bibitem{gasco2025talentclef}
+L. Gasco, H. Fabregat, L. García-Sardiña, P. Estrella, D. Deniz y R. Zbib, ``Overview of
+TalentCLEF 2025: Skill and job title intelligence for human capital management,''
+\emph{arXiv:2507.13275}, 2025.
+
+\bibitem{li2020ditto}
+Y. Li, J. Li, Y. Suhara, A. Doan y W.-C. Tan, ``Deep entity matching with pre-trained
+language models,'' \emph{Proc. VLDB Endowment}, vol. 14, n.º 1, 2020.
+
+\bibitem{reimers2019sbert}
+N. Reimers e I. Gurevych, ``Sentence-BERT: Sentence embeddings using Siamese
+BERT-networks,'' en \emph{Proc. EMNLP-IJCNLP}, Hong Kong, China, 2019, pp. 3982--3992.
+
+\bibitem{he2021debertav3}
+P. He, J. Gao y W. Chen, ``DeBERTaV3: Improving DeBERTa using ELECTRA-style pre-training
+with gradient-disentangled embedding sharing,'' \emph{arXiv:2111.09543}, 2021.
+
+\bibitem{massing2019}
+N. Massing, M. Wasmer, C. Wolf y C. Züll, ``How standardized is occupational coding? A
+comparison of results from different coding agencies in Germany,'' \emph{Journal of
+Official Statistics}, 2019.
+% VERIFICADO: cuatro autores, publicado el 1 de marzo de 2019 (GESIS).
+% \pend{confirmar volumen y paginas}
+
+\bibitem{wan2023}
+W. Wan, D. Russ, C. J. O. Baker, S. Locke \emph{et al.}, ``Automated coding of job
+descriptions from a general population study: Overview of existing tools, their
+application and comparison,'' \emph{Annals of Work Exposures and Health}, vol. 67,
+pp. 663--672, 2023. doi: 10.1093/annweh/wxad002.
+% VERIFICADO: revista, volumen, paginas y DOI. \pend{completar la lista de autores}
+
+\bibitem{scheirer2013}
+W. J. Scheirer, A. Rocha, A. Sapkota y T. E. Boult, ``Toward open set recognition,''
+\emph{IEEE Trans. Pattern Analysis and Machine Intelligence}, vol. 35, n.º 7, jul. 2013.
+
+\bibitem{geng2021openset}
+C. Geng, S.-J. Huang y S. Chen, ``Recent advances in open set recognition: A survey,''
+\emph{IEEE Trans. Pattern Analysis and Machine Intelligence}, vol. 43, n.º 10,
+pp. 3614--3631, oct. 2021. doi: 10.1109/TPAMI.2020.2981604.
+
+\bibitem{vaze2022}
+S. Vaze, K. Han, A. Vedaldi y A. Zisserman, ``Open-set recognition: A good closed-set
+classifier is all you need?,'' en \emph{Int. Conf. Learning Representations (ICLR)}, 2022.
+
+\bibitem{card2018firms}
+D. Card, A. R. Cardoso, J. Heining y P. Kline, ``Firms and labor market inequality:
+Evidence and some theory,'' \emph{Journal of Labor Economics}, vol. 36, n.º S1, 2018.
+% \pend{NO VERIFICADO. Confirmar volumen, paginas y la cifra del ~20 % antes de
+% presentarla como consenso.}
 
 \end{thebibliography}
 
