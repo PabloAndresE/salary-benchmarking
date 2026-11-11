@@ -159,7 +159,7 @@ equivalencia ocupacional}: un cross-encoder destilado de un modelo de lenguaje g
 que decide si dos títulos de puesto designan el mismo trabajo. Medido contra la
 taxonomía ocupacional estándar ---ESCO--- en pares cercanos del mismo vocabulario, el
 juez obtiene una exactitud balanceada de $0{,}863$ frente a $0{,}542$, una diferencia
-de $-0{,}321$ con intervalo $[-0{,}371,\ -0{,}271]$;
+a su favor de $+0{,}321$ con intervalo $[+0{,}271,\ +0{,}371]$;
 % [T-016 parte B, 991 pares]
 y supera también a JobBERT-v3, el modelo especializado del dominio, en recuperación de
 sinónimos.
@@ -200,7 +200,8 @@ This work does two things. First, it builds and evaluates a neural judge of occu
 equivalence: a cross-encoder distilled from a large language model that decides whether
 two job titles denote the same work. Measured against the standard occupational taxonomy
 ---ESCO--- on close pairs from the same vocabulary, the judge reaches a balanced accuracy
-of $0.863$ versus $0.542$, a difference of $-0.321$ with interval $[-0.371,\ -0.271]$, and
+of $0.863$ versus $0.542$, a difference in its favour of $+0.321$ with interval
+$[+0.271,\ +0.371]$, and
 it also outperforms JobBERT-v3, the domain-specific model, at synonym retrieval.
 
 Second, and this is the result that names the work: that advantage does not transfer to
@@ -259,13 +260,21 @@ La distribución de ese catálogo es el problema entero:
 \begin{table}[h]
 \centering
 \caption{Espesor del catálogo de cargos}
+% ALTO (2026-11-11): esta tabla y la figura siguiente salen de base_v15. Medido sobre
+% base_v31: mediana de personas por titulo 6 (no 2), mediana de empresas 2 (no 1),
+% personas con respaldo suficiente 92,3 % (no 66,6 %), titulos con una sola empresa
+% 45,3 % cubriendo 1,9 % de las personas (no 78 % / 21 %).
+% ANTES DE CORREGIR hay que decidir que describe la tabla: el catalogo CRUDO o el
+% catalogo YA AGRUPADO. base_v31 tiene 65.181 celdas y 39.143 grupos; si la tabla
+% describe el catalogo antes de agrupar, las dos cifras miden momentos distintos y
+% ninguna esta "mal". Regenerar figuras.py (apunta a base_v15) en cualquier caso.
 \label{tab:espesor}
 \begin{tabular}{lr}
 \toprule
 Títulos distintos & \verificar{65.181} \\
 Mediana de personas por título & 2 \\
 Mediana de empresas por título & 1 \\
-Personas cubiertas por títulos con respaldo suficiente & 66,6\,\% \\
+Personas cubiertas por títulos con respaldo suficiente & \verificar{66,6}\,\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -440,8 +449,8 @@ conviene separarlas porque admiten soluciones distintas:
 \end{enumerate}
 
 La evidencia empírica de esta tesis es contundente al respecto: emparejar por ESCO alcanza
-una exactitud balanceada de 0,542 frente a 0,863 del juez entrenado, una diferencia de
-$-0,321$ con intervalo $[-0,371, -0,271]$.
+una exactitud balanceada de 0,542 frente a 0,863 del juez entrenado: el juez supera a la
+taxonomía por $0{,}321$, con intervalo $[0{,}271,\ 0{,}371]$.
 % [T-016] ESCO como baseline de equivalencia; ver cap. 5.
 Esto no es un defecto de ESCO: es la consecuencia de usar una herramienta de
 clasificación estadística para una tarea de comparación salarial fina.
@@ -494,7 +503,8 @@ comparar vectores calculados por separado.
 La distinción entre \emph{bi-encoder} y \emph{cross-encoder} es la decisión arquitectónica
 central del capítulo~\ref{cap:juez}. Un bi-encoder al estilo Sentence-BERT~\cite{reimers2019sbert}
 codifica cada texto una vez y compara por coseno: barato, indexable, y por eso imprescindible
-para recuperar candidatos entre 58.051 títulos. Un cross-encoder ve los dos textos juntos y
+para recuperar candidatos entre los 65.181 títulos del catálogo.
+% [base_v31: 65.181 celdas / 39.143 grupos. El 58.051 anterior era de base_v16.] Un cross-encoder ve los dos textos juntos y
 puede modelar su interacción: más caro por par, pero sin la pérdida que impone proyectar cada
 texto a un vector aislado. La arquitectura de esta tesis los combina —recuperar con
 bi-encoder, juzgar con cross-encoder— y mide cuánto aporta cada uno por separado.
@@ -684,9 +694,11 @@ el criterio estuviera escrito antes de medirlo.
 \section{El corpus}
 
 Estudios actuariales de nómina de empresas ecuatorianas, 2024 y 2025, cruzados con el
-padrón de la Superintendencia de Compañías. El marco evaluable son \verificar{994.348}
-filas de \verificar{6.710} empresas.
-% [mediciones.md, marco evaluable]
+padrón de la Superintendencia de Compañías. El marco evaluable son \verificar{1.000.490}
+filas de \verificar{6.722} empresas.
+% [base_v31, 2026-11-10: 1.000.490 filas / 6.722 empresas. La cifra anterior
+%  (994.348 / 6.710) venia de mediciones.md, congelada en una version retirada
+%  de la base; los capitulos 5-7 se corren sobre base_v31.]
 La restricción a esos dos años no es arbitraria: son los únicos con plantilla disponible,
 y por tanto los únicos con composición salarial \dref{001}.
 
@@ -839,8 +851,9 @@ modelo de lenguaje, y la pregunta «quién juzga al juez» no tiene respuesta.}
 sistema que siempre empareja es peor que uno que sabe abstenerse.}
 
 \section{Resultados}
-\pend{exactitud balanceada $0{,}784$ frente a $0{,}620$ del producto,
-$+0{,}139$ $[+0{,}044,\ +0{,}225]$.}
+\pend{exactitud balanceada $0{,}784$ frente a $0{,}645$ del umbral fijo del producto,
+$+0{,}139$ $[+0{,}044,\ +0{,}225]$. OJO: el comparador es $0{,}645$ (T-010b). El
+$0{,}620$ que decia antes es de T-019 y no cerraba con el delta.}
 % [T-010b]
 
 \section{Robustez: quitar familias enteras de equivalentes}
@@ -1160,11 +1173,14 @@ se mantiene en la banda aunque la estimación puntual favorezca quitarlo.}
     posteriores quedan fuera del arnés por diseño.}
   \item \textbf{El benchmark mide sueldo base, no ingreso.} Por la
     ecuación~\eqref{eq:objetivo}, la banda no refleja comisiones, horas extras ni otros
-    rubros variables, y el sesgo no es uniforme entre cargos. Medido sobre la base
-    completa, pasar el objetivo a remuneración total mueve el centro entre $+9{,}9\,\%$ y
+    rubros variables, y el sesgo no es uniforme entre cargos. Medido sobre la misma
+    muestra que la base de producción, pasar el objetivo a remuneración total mueve el centro entre $+9{,}9\,\%$ y
     $+19{,}4\,\%$ según el cargo, con los puestos operativos —donde pesan las horas
     extras— más afectados que los gerenciales. No existe un factor constante que convierta
     una banda en la otra.
+    % FUENTE: rama exp/objetivo-remuneracion, salidas/93_objC.json frente a
+    %  salidas/93_v31ctrl.json (2026-11-10). NO confundir con 92_tabla_comparativa.txt,
+    %  que es el brazo pareado A/B restringido a filas con composicion y da otro rango.
     % [exp/objetivo-remuneracion, 2026-11-10] base_objC frente a base_v31, misma muestra,
     % CIIU G4649.22: Asistente Administrativo +9,9 %; Gerente de Operaciones +11,2 %;
     % Jefe de Bodega +15,7 %; Auxiliar de Bodega +18,1 %; Auxiliar de Farmacia +19,4 %.
