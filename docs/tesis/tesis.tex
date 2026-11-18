@@ -259,22 +259,22 @@ La distribución de ese catálogo es el problema entero:
 
 \begin{table}[h]
 \centering
-\caption{Espesor del catálogo de cargos}
-% ALTO (2026-11-11): esta tabla y la figura siguiente salen de base_v15. Medido sobre
-% base_v31: mediana de personas por titulo 6 (no 2), mediana de empresas 2 (no 1),
-% personas con respaldo suficiente 92,3 % (no 66,6 %), titulos con una sola empresa
-% 45,3 % cubriendo 1,9 % de las personas (no 78 % / 21 %).
-% ANTES DE CORREGIR hay que decidir que describe la tabla: el catalogo CRUDO o el
-% catalogo YA AGRUPADO. base_v31 tiene 65.181 celdas y 39.143 grupos; si la tabla
-% describe el catalogo antes de agrupar, las dos cifras miden momentos distintos y
-% ninguna esta "mal". Regenerar figuras.py (apunta a base_v15) en cualquier caso.
+\caption[Espesor del catálogo de cargos]{Espesor del catálogo de cargos,
+\textbf{antes} de agruparlo. Es el problema tal como llega, no como lo deja el sistema.}
+% RESUELTO (2026-11-11): esta tabla describe el catalogo CRUDO, antes de agrupar.
+% NO se corrige con las cifras de base_v31, que describen el catalogo YA AGRUPADO.
+% Confirmado en base_referencia.py:728: "`m`, `W` y `emp` estan indexados por ETIQUETA
+% pero contienen los valores de su GRUPO de fusion". Por eso las sumas de base_v31 se
+% inflan (personas 15,6x, emp 9,0x): cada grafia repite el respaldo de su grupo.
+% Las dos lecturas conviven y juntas son el argumento del capitulo (ver mas abajo).
+% PENDIENTE MENOR: figuras.py:49 sigue apuntando a base_v15; regenerar.
 \label{tab:espesor}
 \begin{tabular}{lr}
 \toprule
 Títulos distintos & \verificar{65.181} \\
 Mediana de personas por título & 2 \\
 Mediana de empresas por título & 1 \\
-Personas cubiertas por títulos con respaldo suficiente & \verificar{66,6}\,\% \\
+Personas cubiertas por títulos con respaldo suficiente & 66,6\,\% \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -406,8 +406,13 @@ se han desarrollado por separado.
   respaldo suficiente ($\geq 10$ empresas y $\geq 10$ personas) y la banda sale de sus
   propios cuantiles; el segundo, cuando no lo tiene y la banda se presta de un vecindario.
   La distinción es central: el 82\,\% de las celdas vive en analogía aunque solo
-  represente el 7,7\,\% de las personas.
-  % [base_v31, verificado 2026-11-10: 65.181 celdas, 18,0% con >=10 empresas -> 92,3% de personas]
+  represente el 7,7\,\% de las personas. Nótese que estas proporciones se miden sobre el
+  catálogo \emph{ya agrupado}; sobre el catálogo crudo, antes de que el sistema preste
+  fuerza entre grafías equivalentes, la cobertura es mucho menor
+  (tabla~\ref{tab:espesor}). Ese contraste es, en una cifra, lo que el sistema hace.
+  % [base_v31, verificado 2026-11-10: 65.181 celdas, 18,0% con >=10 empresas -> 92,3% de
+  %  personas. OJO: emp/personas de base_vXX son del GRUPO, no de la etiqueta
+  %  (base_referencia.py:728), asi que NO son comparables con la tabla 1.1.]
 
   \item[Efecto empleador] La parte de la varianza salarial atribuible a la empresa y no al
   trabajador ni al cargo. Se denota $\tau^2$ en el modelo de dos componentes del
